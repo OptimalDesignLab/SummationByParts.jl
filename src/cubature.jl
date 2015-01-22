@@ -229,8 +229,8 @@ function tetcubature(q::Int, T=Float64; tol=eps(T(10)))
     # P3 + 4 bubble nodes; 6th order cubature
     cub = SymCubatures.TetSymCub{T}(facecentroid=true,
                                     numedge=2, numS31=1)
-    SymCubatures.setweights!(cub, T[0.5 0.5 0.5 0.5 0.5])
-    SymCubatures.setparams!(cub, T[0.25 0.75 0.75])
+    SymCubatures.setweights!(cub, T[0.1 0.1 0.1 0.1 0.1])
+    SymCubatures.setparams!(cub, T[1/5 4/5 5/6])
   else
     error("polynomial degree must be 1, 3, or 5 (presently)\n")
   end
