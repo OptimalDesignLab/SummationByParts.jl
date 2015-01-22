@@ -1,5 +1,7 @@
 using SummationByParts
-using Base.Test
+#using Base.Test
+using FactCheck
 
-# write your own tests here
-@test 1 == 1
+include("test_orthopoly.jl")
+include("test_symcubatures.jl")
+include("test_cubature.jl")
