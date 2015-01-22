@@ -6,7 +6,11 @@ julia:
   - release
   - nightly
 notifications:
-  email: false
+  email: true
+script:
+  - julia -e 'versioninfo(); Pkg.test("SummationByParts", coverage=true)'
+after_success:
+  - julia -e 'cd(Pkg.dir("SummationByParts")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
 # uncomment the following lines to override the default test script
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi

@@ -1,0 +1,25 @@
+# The files matching the patterns below will be ignored by git
+# git-ls-files --others --exclude-from=.git/info/exclude
+# Lines that start with '#' are comments.
+
+# ignore temporary files created by emacs, etc.
+*~
+\#*
+
+# text and latex files
+*.aux 
+*.dvi 
+*.toc
+*.log
+*.ps
+*.toc
+*.idx
+*.ind
+*.ilg
+*.out
+*.pdf
+*.txt
+*screen*
+
+# coverage files
+*.cov
