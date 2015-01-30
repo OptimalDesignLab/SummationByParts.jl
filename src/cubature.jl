@@ -113,7 +113,7 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int; tol=eps(T(10)),
 
   # Levenberg–Marquardt loop
   maxiter = 500
-  nu = 100.0
+  nu = 1000.0 #100.0
   v = zeros(T, (cub.numparams + cub.numweights) )
   v[1:cub.numparams] = cub.params
   v[cub.numparams+1:end] = cub.weights
@@ -195,7 +195,7 @@ function tricubature(q::Int, T=Float64; tol=eps(T(10)))
   w = SymCubatures.calcweights(cub)
   x = zeros(T, (cub.numnodes, 2) )
   x[:,1], x[:,2] = SymCubatures.calcnodes(cub, vtx)
-  return w, x
+  return w, x, SymCubatures.getnumboundarynodes(cub)
 end
 
 @doc """
@@ -228,9 +228,9 @@ function tetcubature(q::Int, T=Float64; tol=eps(T(10)))
   elseif q == 5
     # P3 + 4 bubble nodes; 6th order cubature
     cub = SymCubatures.TetSymCub{T}(facecentroid=true,
-                                    numedge=2, numS31=1)
-    SymCubatures.setweights!(cub, T[0.1 0.1 0.1 0.1 0.1])
-    SymCubatures.setparams!(cub, T[1/5 4/5 5/6])
+                                    numedge=1, numS31=1)
+    SymCubatures.setweights!(cub, T[0.1 0.1 0.1 0.1])
+    SymCubatures.setparams!(cub, T[1/5 1/6])
   else
     error("polynomial degree must be 1, 3, or 5 (presently)\n")
   end
@@ -239,7 +239,7 @@ function tetcubature(q::Int, T=Float64; tol=eps(T(10)))
   w = SymCubatures.calcweights(cub)
   x = zeros(T, (cub.numnodes, 3))
   x[:,1], x[:,2], x[:,3] = SymCubatures.calcnodes(cub, vtx)
-  return w, x
+  return w, x, SymCubatures.getnumboundarynodes(cub)
 end
 
 end
