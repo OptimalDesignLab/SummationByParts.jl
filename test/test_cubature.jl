@@ -50,7 +50,7 @@ facts("Testing Cubature Module...") do
     cub = SymCubatures.TriSymCub{Float64}(midedges=true, centroid=true)
     SymCubatures.setweights!(cub, [0.5, 0.5, 0.5])
     Cubature.solvecubature!(cub, 3, tol=1e-14)
-    w  = SymCubatures.calcweights(cub)
+    w = SymCubatures.calcweights(cub)
     @fact w => roughly([1/10, 1/10, 1/10, 4/15, 4/15, 4/15, 18/20], atol=1e-15)
 
     # create P3 element cubature with 3 bubble nodes
@@ -113,34 +113,40 @@ facts("Testing Cubature Module...") do
 
   context("Testing Cubature.tricubature") do
     # test using Float32, because this has not been done above
-    w, x, numbnd = tricubature(1, Float32)
+    cub, vtx = tricubature(1, Float32)
+    w = SymCubatures.calcweights(cub)
     @fact w => roughly(Float32[2/3, 2/3, 2/3], atol=1e-7)
-    @fact numbnd => 3
-    w, x, numbnd = tricubature(3, Float32)
+    @fact SymCubatures.getnumboundarynodes(cub) => 3
+    cub, vtx = tricubature(3, Float32)
+    w = SymCubatures.calcweights(cub)
     @fact w => roughly(Float32[1/10, 1/10, 1/10, 4/15, 4/15, 4/15, 18/20],
                        atol=1e-7)
-    @fact numbnd => 6
-    w, x, numbnd = tricubature(5, Float32)
+    @fact SymCubatures.getnumboundarynodes(cub) => 6
+    cub, vtx = tricubature(5, Float32)
+    w = SymCubatures.calcweights(cub)
     @fact w =>
     roughly(Float32[0.029745826049641155,0.029745826049641155,0.029745826049641155,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.44155411568082154,0.44155411568082154,0.44155411568082154],
     atol=1e-7)
-    @fact numbnd => 9
+    @fact SymCubatures.getnumboundarynodes(cub) => 9
   end
   
     context("Testing Cubature.tetcubature") do
       # test using Float32, because this has not been done above
-      w, x, numbnd = tetcubature(1, Float32)
+      cub, vtx = tetcubature(1, Float32)
+      w = SymCubatures.calcweights(cub)
       @fact w => roughly(Float32[1/3, 1/3, 1/3, 1/3], atol=1e-7)
-      @fact numbnd => 4
-      w, x, numbnd = tetcubature(3, Float32)
+      @fact SymCubatures.getnumboundarynodes(cub) => 4
+      cub, vtx = tetcubature(3, Float32)
+      w = SymCubatures.calcweights(cub)
       @fact w => roughly([Float32(2/90).*ones(Float32, 4);
                           Float32(8/90).*ones(Float32, 6);
                           Float32[32/45]], atol=1e-7)
-      @fact numbnd => 10
-      w, x, numbnd = tetcubature(5, Float64)
+      @fact SymCubatures.getnumboundarynodes(cub) => 10
+      cub, vtx = tetcubature(5, Float64)
+      w = SymCubatures.calcweights(cub)
       @fact w =>
       roughly([0.004421633248304814,0.004421633248304814,0.004421633248304814,0.004421633248304814,0.06935370366814599,0.06935370366814599,0.06935370366814599,0.06935370366814599,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.2065316361160523,0.2065316361160523,0.2065316361160523,0.2065316361160523], atol=1e-14)
-      @fact numbnd => 20
+      @fact SymCubatures.getnumboundarynodes(cub) => 20
     end
 
 end

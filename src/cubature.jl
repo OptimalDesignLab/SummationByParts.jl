@@ -153,8 +153,8 @@ end
 @doc """
 ### Cubature.tricubature{T}
 
-This high-level function computes and returns the weights and nodes for a
-cubature of requested accuracy on the right-triangle.
+This high-level function computes and returns a symmetric cubature of requested
+accuracy on the right triangle.
 
 **Inputs**
 
@@ -163,8 +163,8 @@ cubature of requested accuracy on the right-triangle.
 
 **Outputs**
 
-* `w`: cubature weights
-* `x`: cubature node coordinates (x,y)
+* `cub`: a symmetric cubature for the right triangle
+* `vtx`: vertices for the right triangle
 
 """->
 function tricubature(q::Int, T=Float64; tol=eps(T(10)))
@@ -192,17 +192,14 @@ function tricubature(q::Int, T=Float64; tol=eps(T(10)))
   end
   vtx = T[-1 -1; 1 -1; -1 1]
   Cubature.solvecubature!(cub, q, tol=tol)
-  w = SymCubatures.calcweights(cub)
-  x = zeros(T, (cub.numnodes, 2) )
-  x[:,1], x[:,2] = SymCubatures.calcnodes(cub, vtx)
-  return w, x, SymCubatures.getnumboundarynodes(cub)
+  return cub, vtx
 end
 
 @doc """
 ### Cubature.tetcubature{T}
 
-This high-level function computes and returns the weights and nodes for a
-cubature of requested accuracy on the right-tetrahedron.
+This high-level function computes and returns a symmetric cubature of requested
+accuracy on the right tetrahedron.
 
 **Inputs**
 
@@ -211,8 +208,8 @@ cubature of requested accuracy on the right-tetrahedron.
 
 **Outputs**
 
-* `w`: cubature weights
-* `x`: cubature node coordinates (x,y,z)
+* `cub`: a symmetric cubature for the right tetrahedron
+* `vtx`: vertices for the right tetrahedron
 
 """->
 function tetcubature(q::Int, T=Float64; tol=eps(T(10)))
@@ -236,10 +233,7 @@ function tetcubature(q::Int, T=Float64; tol=eps(T(10)))
   end
   vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
   Cubature.solvecubature!(cub, q, tol=tol)
-  w = SymCubatures.calcweights(cub)
-  x = zeros(T, (cub.numnodes, 3))
-  x[:,1], x[:,2], x[:,3] = SymCubatures.calcnodes(cub, vtx)
-  return w, x, SymCubatures.getnumboundarynodes(cub)
+  return cub, vtx
 end
 
 end
