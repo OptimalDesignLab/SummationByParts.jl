@@ -84,8 +84,8 @@ facts("Testing SummationByParts Module...") do
             dvdx = zeros(y)
             dvdy = j.*y.^max(0,j-1)
           end
-          @fact u.'*Ex*v => roughly(dudx.'*H*v + u.'*H*dvdx, 1e-15)
-          @fact u.'*Ey*v => roughly(dudy.'*H*v + u.'*H*dvdy, 1e-15)
+          @fact u.'*Ex*v => roughly(dudx.'*H*v + u.'*H*dvdx, atol=1e-15)
+          @fact u.'*Ey*v => roughly(dudy.'*H*v + u.'*H*dvdy, atol=1e-15)
         end
       end
     end   
@@ -160,9 +160,9 @@ facts("Testing SummationByParts Module...") do
               dvdy = zeros(x)
               dvdz = (x.^iv).*(k.*z.^max(0,k-1))
             end
-            @fact u.'*Ex*v => roughly(dudx.'*H*v + u.'*H*dvdx, 1e-15)
-            @fact u.'*Ey*v => roughly(dudy.'*H*v + u.'*H*dvdy, 1e-15)
-            @fact u.'*Ez*v => roughly(dudz.'*H*v + u.'*H*dvdz, 1e-15)
+            @fact u.'*Ex*v => roughly(dudx.'*H*v + u.'*H*dvdx, atol=1e-14)
+            @fact u.'*Ey*v => roughly(dudy.'*H*v + u.'*H*dvdy, atol=1e-14)
+            @fact u.'*Ez*v => roughly(dudz.'*H*v + u.'*H*dvdz, atol=1e-14)
           end
         end
       end   
