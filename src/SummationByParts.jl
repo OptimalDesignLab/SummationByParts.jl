@@ -264,37 +264,99 @@ function massmatrices{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   return w, Ex, Ey, Ez
 end  
 
-# function accuracyequations()
-#   x, y = SymCubatures.calcnodes(cub, vtx)  
-#   # the number of unknowns for both skew-symmetric matrices Qx and Qy
-#   numQvars = cub.numnodes*(cub.numnodes-1)
-#   # the number of accuracy equations
-#   numeqns = cub.numnodes*(d+1)*(d+2)
-#   A = zeros(T, (numeqns, numQvars))
-#   bx = zeros(T, numeqns)
-#   by = zeros(T, numeqns)
+@doc """
+### SummationByParts.accuracyconstraints
 
-#   # loop over ortho polys up to degree d
-#   ptr = 0
-#   for r = 0:d
-#     for j = 0:r
-#       i = r-j
-#       P = OrthoPoly.proriolpoly(x, y, i, j)
-#       dPdx, dPdy = OrthoPoly.diffproriolpoly(x, y, i, j)
-#       # loop over the lower part of skew-symmetric matrix Qx
-#       for row = 2:cub.numnodes
-#         offset = convert(Int, (row-1)*(row-2)/2)
-#         for col = 1:row-1
-#           A(ptr+row, offset+col) += P[col]
-#           A(ptr+col, offset+col) -= P[row]
-#         end
-#       end
-#       bx[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdx - Ex*P
-#       by[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdy - Ey*P
-#       ptr += cub.numnodes
-#     end
-#   end
-# end
+Returns the accuracy constraints on the asymmetric part of the SBP stiffness
+matrices.  These constraints are linear, and for each coordinate-direction
+operator (i.e. Qx, Qy,...) the system matrix `A` is the same; only the
+right-hand side changes.
 
+The columns in `A` are ordered assuming only the strictly lower triangular part
+of the operators are the unknowns.  These unknowns are ordered by row and then
+column.  For example, entry Q_21 = -Q_12 is the number 1 variable, and
+Q_32 = -Q_23 is the number 3 variable.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule for a right triangle
+* `vtx`: vertices of the right triangle
+* `d`: maximum total degree for the Proriol polynomials
+
+**Outputs**
+
+* `A`: the system matrix for the linear accuracy constraints
+* `bx`,`by` (`bz`): the right-hand-sides of the accuracy constraints
+
+"""->
+function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+  x, y = SymCubatures.calcnodes(cub, vtx) 
+  w, Ex, Ey = SummationByParts.massmatrices(cub, vtx, d)
+  # the number of unknowns for in the skew-symmetric matrices
+  numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
+  # the number of accuracy equations
+  numeqns = convert(Int, cub.numnodes*(d+1)*(d+2)/2)
+  A = zeros(T, (numeqns, numQvars))
+  bx = zeros(T, numeqns)
+  by = zeros(T, numeqns)
+  # loop over ortho polys up to degree d
+  ptr = 0
+  for r = 0:d
+    for j = 0:r
+      i = r-j
+      P = OrthoPoly.proriolpoly(x, y, i, j)
+      dPdx, dPdy = OrthoPoly.diffproriolpoly(x, y, i, j)
+      # loop over the lower part of the skew-symmetric matrices
+      for row = 2:cub.numnodes
+        offset = convert(Int, (row-1)*(row-2)/2)
+        for col = 1:row-1
+          A[ptr+row, offset+col] += P[col]
+          A[ptr+col, offset+col] -= P[row]
+        end
+      end
+      bx[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdx - Ex*P
+      by[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdy - Ey*P
+      ptr += cub.numnodes
+    end
+  end
+  return A, bx, by
+end
+
+function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
+  x, y, z = SymCubatures.calcnodes(cub, vtx) 
+  w, Ex, Ey, Ez = SummationByParts.massmatrices(cub, vtx, d)
+  # the number of unknowns for both skew-symmetric matrices Qx, Qy, and Qz
+  numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
+  # the number of accuracy equations
+  numeqns = convert(Int, cub.numnodes*(d+1)*(d+2)*(d+3)/6)
+  A = zeros(T, (numeqns, numQvars))
+  bx = zeros(T, numeqns)
+  by = zeros(T, numeqns)
+  bz = zeros(T, numeqns)
+  # loop over ortho polys up to degree d
+  ptr = 0
+  for r = 0:d
+    for k = 0:r
+      for j = 0:r-k
+        i = r-j-k
+        P = OrthoPoly.proriolpoly(x, y, z, i, j, k)
+        dPdx, dPdy, dPdz = OrthoPoly.diffproriolpoly(x, y, z, i, j, k)
+        # loop over the lower part of the skew-symmetric matrices
+        for row = 2:cub.numnodes
+          offset = convert(Int, (row-1)*(row-2)/2)
+          for col = 1:row-1
+            A[ptr+row, offset+col] += P[col]
+            A[ptr+col, offset+col] -= P[row]
+          end
+        end
+        bx[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdx - Ex*P
+        by[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdy - Ey*P
+        bz[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdz - Ez*P
+        ptr += cub.numnodes
+      end
+    end
+  end
+  return A, bx, by, bz
+end
 
 end # module

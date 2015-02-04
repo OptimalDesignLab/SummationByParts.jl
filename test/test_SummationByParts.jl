@@ -169,4 +169,26 @@ facts("Testing SummationByParts Module...") do
     end
   end
 
+  context("Testing SummationByParts.accuracyconstraints (TriSymCub method)") do
+    # check that the null-space of the constraint Jacobian is the correct size
+    # this is not an adequate unit test.
+    sizenull = [0, 0, 1]
+    for d = 1:3
+      cub, vtx = tricubature(2*d-1, Float64)
+      A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
+      @fact size(null(A),2) => sizenull[d]
+    end
+  end
+
+  context("Testing SummationByParts.accuracyconstraints (TetSymCub method)") do
+    # check that the null-space of the constraint Jacobian is the correct size
+    # this is not an adequate unit test.
+    sizenull = [0, 0, 6]
+    for d = 1:3
+      cub, vtx = tetcubature(2*d-1, Float64)
+      A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d)
+      @fact size(null(A),2) => sizenull[d]
+    end
+  end
+
 end
