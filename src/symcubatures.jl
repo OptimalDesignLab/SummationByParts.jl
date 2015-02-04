@@ -199,13 +199,95 @@ end
 
 @doc """
 ### SymCubatures.getbndryindices
+
+Returns the indices of the nodes that lie on the boundaries.
+
+**Inputs**
+
+* `cub`: a symmetric cubature rule whose boundary-node indices are sought
+
+**Outputs**
+
+* `bndryindices`: indicies of nodes that lie on boundary; there is a separate
+  column of indices for each edge/face.
+
 """->
 function getbndryindices{T}(cub::TriSymCub{T})
-
+  # get the number of nodes on one edge
+  numedge = 0
+  cub.vertices ? numedge += 2 : nothing
+  cub.midedges ? numedge += 1 : nothing
+  numedge += 2*cub.numedge
+  bndryindices = zeros(Int, (numedge,3) )
+  ptr = 0
+  idxptr = 0
+  # add vertices to indices
+  if cub.vertices
+    bndryindices[idxptr+1:idxptr+2,:] = [ptr+1 ptr+2 ptr+3;
+                                         ptr+2 ptr+3 ptr+1] 
+    ptr += 3
+    idxptr += 2
+  end
+  # add midedge nodes to indices
+  if cub.midedges
+    bndryindices[idxptr+1,:] = [ptr+1 ptr+2 ptr+3]
+    ptr += 3
+    idxptr += 1
+  end
+  # add remaining edge nodes to indices
+  for i = 1:cub.numedge
+    bndryindices[idxptr+1:idxptr+2,:] = [ptr+1 ptr+3 ptr+5;
+                                         ptr+2 ptr+4 ptr+6]
+    ptr += 6
+    idxptr += 1
+  end
+  return bndryindices
 end
 
 function getbndryindices{T}(cub::TetSymCub{T})
-
+  # get the number of nodes on one face
+  numface = 0
+  cub.vertices ? numface += 3 : nothing
+  cub.midedges ? numface += 3 : nothing
+  cub.facecentroid ? numface += 1 : nothing
+  numface += 6*cub.numedge
+  bndryindices = zeros(Int, (numface,4) )
+  ptr = 0
+  idxptr = 0
+  # add vertices to indices
+  if cub.vertices
+    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+2 ptr+3 ptr+4;
+                                         ptr+2 ptr+3 ptr+4 ptr+1;
+                                         ptr+3 ptr+4 ptr+1 ptr+2] 
+    ptr += 4
+    idxptr += 3
+  end
+  # add mid-edge to indices
+  if cub.midedges
+    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+2 ptr+3 ptr+1;
+                                         ptr+2 ptr+3 ptr+4 ptr+4;
+                                         ptr+5 ptr+6 ptr+5 ptr+6]
+    ptr += 6
+    idxptr += 3
+  end
+  # add face centroids to indices
+  if cub.facecentroid
+    bndryindices[idxptr+1,:] = [ptr+1 ptr+2 ptr+3 ptr+4]
+    ptr += 4
+    idxptr += 1
+  end
+  # add edge nodes to indices
+  for i = 1:cub.numedge
+    bndryindices[idxptr+1:idxptr+6,:] = [ptr+1 ptr+3 ptr+5 ptr+7;
+                                         ptr+2 ptr+4 ptr+6 ptr+8;
+                                         ptr+3 ptr+5 ptr+7 ptr+1;
+                                         ptr+4 ptr+6 ptr+8 ptr+2;
+                                         ptr+9 ptr+11 ptr+9 ptr+11;
+                                         ptr+10 ptr+12 ptr+10 ptr+12]
+    ptr += 12
+    idxptr += 6
+  end
+  return bndryindices
 end
 
 @doc """
@@ -389,7 +471,7 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
           alpha 0 0 (1-alpha);
           alpha 0 (1-alpha) 0;
           (1-alpha) 0 alpha 0;
-          0 alpha 0 (1-alpha)
+          0 alpha 0 (1-alpha);
           0 (1-alpha) 0 alpha]
     x[ptr+1:ptr+12] = A*vtx[:,1]
     y[ptr+1:ptr+12] = A*vtx[:,2]

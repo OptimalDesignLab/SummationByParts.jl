@@ -51,8 +51,30 @@ facts("Testing SymCubatures Module...") do
   context("Testing getnumboundarynodes (TetSymCub method)") do
     tetcub = TetSymCub{Float64}() # vertex only rule
     @fact SymCubatures.getnumboundarynodes(tetcub) => 4
-    tetcub = TetSymCub{Float64}(numedge = 2, midedges=true, numS31 = 4)
+    tetcub = TetSymCub{Float64}(numedge=2, midedges=true, numS31 = 4)
     @fact SymCubatures.getnumboundarynodes(tetcub) => 4+6+2*12
+  end
+
+  context("Testing getbndryindices (TriSymCub method)") do
+    tricub = TriSymCub{Float64}(numedge=1, midedges=true, numS21 = 4)
+    bndryindices = SymCubatures.getbndryindices(tricub)
+    @fact bndryindices => [1 2 3;
+                           2 3 1;
+                           4 5 6;
+                           7 9 11;
+                           8 10 12]
+  end
+
+  context("Testing getbndryindices (TetSymCub method)") do
+    tetcub = TetSymCub{Float64}(numedge=1, midedges=true, facecentroid=true,
+                                numS31=2)
+    bndryindices = SymCubatures.getbndryindices(tetcub)
+    @fact bndryindices => [1 2 3 4; 2 3 4 1; 3 4 1 2;
+                           5 6 7 5; 6 7 8 8; 9 10 9 10;
+                           11 12 13 14; 15 17 19 21;
+                           16 18 20 22; 17 19 21 15;
+                           18 20 22 16; 23 25 23 25;
+                           24 26 24 26]
   end
 
   for T = (Float32, Float64, Complex64, Complex128)
