@@ -4,7 +4,9 @@ include("orthopoly.jl")
 include("symcubatures.jl")
 include("cubature.jl")
 
-include("experiment.jl")
+using .OrthoPoly
+using .SymCubatures
+using .Cubature
 
 export SBPOperator, TriSBP, TetSBP, cubatureerror
 
