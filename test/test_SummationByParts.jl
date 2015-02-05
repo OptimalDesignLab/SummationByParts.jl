@@ -168,7 +168,7 @@ facts("Testing SummationByParts Module...") do
       end   
     end
   end
-
+  
   context("Testing SummationByParts.accuracyconstraints (TriSymCub method)") do
     # check that the null-space of the constraint Jacobian is the correct size
     # this is not an adequate unit test.
@@ -179,7 +179,7 @@ facts("Testing SummationByParts Module...") do
       @fact size(null(A),2) => sizenull[d]
     end
   end
-
+  
   context("Testing SummationByParts.accuracyconstraints (TetSymCub method)") do
     # check that the null-space of the constraint Jacobian is the correct size
     # this is not an adequate unit test.
@@ -188,6 +188,76 @@ facts("Testing SummationByParts Module...") do
       cub, vtx = tetcubature(2*d-1, Float64)
       A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d)
       @fact size(null(A),2) => sizenull[d]
+    end
+  end
+  
+  context("Testing SummationByParts.commuteerror (TriSymCub method)") do
+    reducedsol = (Float64[], Float64[], Float64[0, 0])
+    error = [0, 0, 0.5*2.324812265031167] # error based on particular Q
+    for d = 1:3
+      cub, vtx = tricubature(2*d-1, Float64)
+      w, Qx, Qy = SummationByParts.massmatrices(cub, vtx, d)    
+      A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
+      # build Q that satisfies the accuracy constraints
+      x = A\bx; y = A\by
+      Qx *= 0.5; Qy *= 0.5
+      for row = 2:cub.numnodes
+        offset = convert(Int, (row-1)*(row-2)/2)
+        for col = 1:row-1
+          Qx[row,col] += x[offset+col]
+          Qx[col,row] -= x[offset+col]
+          Qy[row,col] += y[offset+col]
+          Qy[col,row] -= y[offset+col]
+        end
+      end
+      Z = null(A)
+      f, dfdx = SummationByParts.commuteerror(w, Qx, Qy, Z, reducedsol[d])
+      @fact f => roughly(error[d], atol=1e-15)
+    end
+  end
+  
+  context("Testing SummationByParts.buildoperators (TriSymCub method)") do
+    for d = 1:3
+      cub, vtx = tricubature(2*d-1, Float64)
+      w, Qx, Qy = SummationByParts.buildoperators(cub, vtx, d)
+      Dx = diagm(1./w)*Qx
+      Dy = diagm(1./w)*Qy
+      x, y = SymCubatures.calcnodes(cub, vtx)      
+      for r = 0:d
+        for j = 0:r
+          i = r-j
+          u = (x.^i).*(y.^j)
+          dudx = (i.*x.^max(0,i-1)).*(y.^j)
+          dudy = (x.^i).*(j.*y.^max(0,j-1))
+          @fact Dx*u => roughly(dudx, atol=1e-13)
+          @fact Dy*u => roughly(dudy, atol=1e-13)
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildoperators (TetSymCub method)") do
+    for d = 1:3
+      cub, vtx = tetcubature(2*d-1, Float64)
+      w, Qx, Qy, Qz = SummationByParts.buildoperators(cub, vtx, d)
+      Dx = diagm(1./w)*Qx
+      Dy = diagm(1./w)*Qy
+      Dz = diagm(1./w)*Qz
+      x, y, z = SymCubatures.calcnodes(cub, vtx)      
+      for r = 0:d
+        for k = 0:r
+          for j = 0:r-k
+            i = r-j-k
+            u = (x.^i).*(y.^j).*(z.^k)
+            dudx = (i.*x.^max(0,i-1)).*(y.^j).*(z.^k)
+            dudy = (x.^i).*(j.*y.^max(0,j-1)).*(z.^k)
+            dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
+            @fact Dx*u => roughly(dudx, atol=1e-13)
+            @fact Dy*u => roughly(dudy, atol=1e-13)
+            @fact Dz*u => roughly(dudz, atol=1e-13)
+          end
+        end
+      end
     end
   end
 

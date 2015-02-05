@@ -43,16 +43,18 @@ type TriSBP{T} <: SBPOperator{T}
   w::Array{T}
   Qx::Array{T}
   Qy::Array{T}
-  Ex::Array{T}
-  Ey::Array{T}
+  #Ex::Array{T}
+  #Ey::Array{T}
 
   function TriSBP(;degree::Int=1)
     @assert( degree >= 1 && degree <= 4 )
     cub, vtx = tricubature(2*degree-1, T)
     numnodes = cub.numnodes
-    w = SymCubatures.calcweights(cub)
-    
-    new(degree, numnodes, numbndry, x, w, zeros(numnodes), zeros(numnodes))
+    numbndry = getnumboundarynodes(cub)
+    w, Qx, Qy = SummationByParts.buildoperators(cub, vtx, degree)
+    x = zeros(T, (2, numnodes))
+    x[1,:], x[2,:] = SymCubatures.calcnodes(cub, vtx)
+    new(degree, numnodes, numbndry, x, w, Qx, Qy)
   end
 end
 
@@ -76,11 +78,23 @@ Defines diagonal-norm SBP first-derivative operators on a right-tetrahedron.
 type TetSBP{T} <: SBPOperator{T}
   degree::Int
   numnodes::Int
+  numbndry::Int
   x::Array{T}
   w::Array{T}
   Qx::Array{T}
   Qy::Array{T}
   Qz::Array{T}
+
+  function TetSBP(;degree::Int=1)
+    @assert( degree >= 1 && degree <= 3 )
+    cub, vtx = tetcubature(2*degree-1, T)
+    numnodes = cub.numnodes
+    numbndry = getnumboundarynodes(cub)
+    w, Qx, Qy, Qz = SummationByParts.buildoperators(cub, vtx, degree)
+    x = zeros(T, (3, numnodes))
+    x[1,:], x[2,:], x[3,:] = SymCubatures.calcnodes(cub, vtx)
+    new(degree, numnodes, numbndry, x, w, Qx, Qy, Qz)
+  end
 end
 
 @doc """
@@ -93,8 +107,8 @@ listed by row, then P*E = I, when restricted to the boundary nodes.
 
 **Inputs**
 
-* `cub`: symmetric cubature rule for a right triangle
-* `vtx`: vertices of the right triangle
+* `cub`: symmetric cubature rule
+* `vtx`: vertices of the right simplex
 * `d`: maximum total degree for the Proriol polynomials
 
 **Outputs**
@@ -184,8 +198,8 @@ the boundary facets.
 
 **Inputs**
 
-* `cub`: symmetric cubature rule for a right triangle
-* `vtx`: vertices of the right triangle
+* `cub`: symmetric cubature rule
+* `vtx`: vertices of the right simplex
 * `d`: maximum total degree for the Proriol polynomials
 
 **Outputs**
@@ -281,8 +295,8 @@ Q_32 = -Q_23 is the number 3 variable.
 
 **Inputs**
 
-* `cub`: symmetric cubature rule for a right triangle
-* `vtx`: vertices of the right triangle
+* `cub`: symmetric cubature rule
+* `vtx`: vertices of the right simplex
 * `d`: maximum total degree for the Proriol polynomials
 
 **Outputs**
@@ -294,6 +308,7 @@ Q_32 = -Q_23 is the number 3 variable.
 function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   x, y = SymCubatures.calcnodes(cub, vtx) 
   w, Ex, Ey = SummationByParts.massmatrices(cub, vtx, d)
+  Ex *= 0.5; Ey *= 0.5
   # the number of unknowns for in the skew-symmetric matrices
   numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
   # the number of accuracy equations
@@ -327,6 +342,7 @@ end
 function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   x, y, z = SymCubatures.calcnodes(cub, vtx) 
   w, Ex, Ey, Ez = SummationByParts.massmatrices(cub, vtx, d)
+  Ex *= 0.5; Ey *= 0.5; Ez *= 0.5
   # the number of unknowns for both skew-symmetric matrices Qx, Qy, and Qz
   numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
   # the number of accuracy equations
@@ -359,6 +375,133 @@ function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
     end
   end
   return A, bx, by, bz
+end
+
+@doc """
+### SummationByParts.commuteerror
+
+Returns the commute-error objective value.  For 2D SBP operators, this is
+defined as ||H*(Dx*Dy - Dy*Dx)||^2, where the norm is the Frobenius norm.  For
+3D operators, the error is defined as ||H*(Dx*Dy - Dy*Dx)||^2 + ||H*(Dx*Dz -
+Dz*Dx)||^2 + ||H*(Dy*Dz - Dz*Dx||^2.
+
+**Inputs**
+
+* `w`: cubature rule weights
+* `Qxpart`,`Qypart` (`Qzpart`): Q operators that satisfy the accuracy conditions
+* `Z`: basis for the null space of the accuracy constraints (may be empty)
+* `reducedsol`: the weights for `Z`; the first [1:numnodes] elements are for Qx
+
+**Outputs**
+
+* `f`: commute-error objective value
+
+"""->
+function commuteerror{T,T2}(w::Array{T}, Qxpart::Array{T,2}, Qypart::Array{T,2},
+                            Z::Array{T,2}, reducedsol::Array{T2})
+  # build Qx and Qy
+  Qx = convert(Array{T2,2}, Qxpart)
+  Qy = convert(Array{T2,2}, Qypart)
+  numnodes = length(w)
+  Qxnull = Z*reducedsol[1:size(Z,2)]
+  Qynull = Z*reducedsol[size(Z,2)+1:end]
+  for row = 2:numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      Qx[row,col] += Qxnull[offset+col]
+      Qx[col,row] -= Qxnull[offset+col]
+      Qy[row,col] += Qynull[offset+col]
+      Qy[col,row] -= Qynull[offset+col]
+    end
+  end
+  # compute f = Frobenius_norm(H*(Dx*Dy - Dy*Dx)), and its derivatives
+  f = zero(T2)
+  dfdQx = zeros(Qx)
+  dfdQy = zeros(Qy)
+  for row = 1:numnodes
+    for col = 1:numnodes
+      Aij = zero(T2)
+      for k = 1:numnodes
+        Aij += (Qx[row,k]*Qy[k,col] - Qy[row,k]*Qx[k,col])/w[k]
+      end
+      f += 0.5*Aij*Aij
+      for k = 1:numnodes
+        dfdQx[row,k] += Aij*Qy[k,col]/w[k]
+        dfdQx[k,col] -= Aij*Qy[row,k]/w[k]
+        dfdQy[k,col] += Aij*Qx[row,k]/w[k]
+        dfdQy[row,k] -= Aij*Qx[k,col]/w[k]
+      end
+    end
+  end
+  dfdQxnull = zeros(Qxnull)
+  dfdQynull = zeros(Qynull)
+  for row = 2:numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      dfdQxnull[offset+col] += dfdQx[row,col] - dfdQx[col,row]
+      dfdQynull[offset+col] += dfdQy[row,col] - dfdQy[col,row]
+    end
+  end
+  dfdreducedsol = [Z.'*dfdQxnull; Z.'*dfdQynull]
+  return f, dfdreducedsol
+end
+
+@doc """
+### SummationByParts.buildoperators
+
+Construct and return the SBP matrix operators, specifically the diagonal norm
+matrix and the stiffness matrices.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+* `vtx`: vertices of the right simplex
+* `d`: maximum total degree for the Proriol polynomials
+
+**Outputs**
+
+* `w`: the diagonal norm stored as a 1D array
+* `Qx`,`Qy` (`Qz`): the stiffness matrices
+
+"""->
+function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+  w, Qx, Qy = SummationByParts.massmatrices(cub, vtx, d)
+  A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
+  # use the minimum norm least-squares solution
+  Afact = qrfact(A)
+  x = Afact\bx; y = Afact\by
+  Qx *= 0.5; Qy *= 0.5
+  for row = 2:cub.numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      Qx[row,col] += x[offset+col]
+      Qx[col,row] -= x[offset+col]
+      Qy[row,col] += y[offset+col]
+      Qy[col,row] -= y[offset+col]
+    end
+  end
+  return w, Qx, Qy
+end
+
+function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
+  w, Qx, Qy, Qz = SummationByParts.massmatrices(cub, vtx, d)
+  A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d)
+  # use the minimum norm least-squares solution
+  Afact = qrfact(A)
+  x = Afact\bx; y = Afact\by; z = Afact\bz
+  Qx *= 0.5; Qy *= 0.5; Qz *= 0.5
+  for row = 2:cub.numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      Qx[row,col] += x[offset+col]
+      Qx[col,row] -= x[offset+col]
+      Qy[row,col] += y[offset+col]
+      Qy[col,row] -= y[offset+col]
+      Qz[row,col] += z[offset+col]
+      Qz[col,row] -= z[offset+col]
+    end
+  end
+  return w, Qx, Qy, Qz
 end
 
 end # module
