@@ -112,7 +112,7 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int; tol=eps(T(10)),
   end
 
   # Levenberg–Marquardt loop
-  maxiter = 500
+  maxiter = 200
   nu = 1000.0 #100.0
   v = zeros(T, (cub.numparams + cub.numweights) )
   v[1:cub.numparams] = cub.params
@@ -172,21 +172,31 @@ function tricubature(q::Int, T=Float64; tol=eps(T(10)))
   if q == 1
     # P1 (vertices only); 2nd order cubature
     cub = SymCubatures.TriSymCub{T}() 
-    SymCubatures.setweights!(cub, T[0.5])
+    SymCubatures.setweights!(cub, T[2/3])
   elseif q == 3
     # P2 + 1 bubble node; 4th order cubature
     cub = SymCubatures.TriSymCub{T}(midedges=true, centroid=true)
-    SymCubatures.setweights!(cub, T[0.5, 0.5, 0.5])
+    SymCubatures.setweights!(cub, T[1/10, 4/15, 9/10])
   elseif q == 5
     # P3 + 3 bubble nodes; 6th order cubature
     cub = SymCubatures.TriSymCub{T}(numedge=1, numS21=1)
-    SymCubatures.setweights!(cub, T[0.5, 0.5, 0.5])
-    SymCubatures.setparams!(cub, T[0.25, 0.25])
+    SymCubatures.setweights!(cub, T[0.02974582604964118,0.09768336246810204,
+                                    0.4415541156808217])
+    SymCubatures.setparams!(cub, T[0.29346955590904017,0.41469035132718185])
   elseif q == 7
     # P4 + 6 bubble nodes; 8th order cubature
     cub = SymCubatures.TriSymCub{T}(midedges=true, numedge=1, numS21=2)
-    SymCubatures.setweights!(cub, T[0.5, 0.5, 0.5, 0.5, 0.5])
-    SymCubatures.setparams!(cub, T[0.25, 0.25, 0.75])
+    SymCubatures.setweights!(cub, T[0.012698412698412695,0.05079365079365077,
+                                    0.04285714285714284,0.2023354595827503,
+                                    0.3151248578775673])
+    SymCubatures.setparams!(cub, T[0.2113248654051872,0.2615831876594899,
+                                   0.8495279234516212])
+  elseif q == 9
+    # P5 + 10 bubble nodes; 10th order cubature
+    cub = SymCubatures.TriSymCub{T}(numedge=2, centroid=true, numS21=1,
+                                    numS111=1)
+    SymCubatures.setweights!(cub, T[0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+    SymCubatures.setparams!(cub, T[0.1 0.25 0.1 0.2 0.6])
   else
     error("polynomial degree must be 1, 3, 5, or 7 (presently)\n")
   end
@@ -213,23 +223,34 @@ accuracy on the right tetrahedron.
 
 """->
 function tetcubature(q::Int, T=Float64; tol=eps(T(10)))
-  @assert( q >= 1 && q <= 5 && mod(q,2) == 1)
+  @assert( q >= 1 && q <= 7 && mod(q,2) == 1)
   if q == 1
     # P1 (vertices only); 2nd order cubature
     cub = SymCubatures.TetSymCub{T}()
-    SymCubatures.setweights!(cub, T[0.5])
+    SymCubatures.setweights!(cub, T[1/3])
   elseif q == 3
     # P2 + 1 bubble node; 4th order cubature
     cub = SymCubatures.TetSymCub{T}(midedges=true, centroid=true)
-    SymCubatures.setweights!(cub, T[0.5, 0.5, 0.5])
+    SymCubatures.setweights!(cub, T[1/45 4/45 32/45])
   elseif q == 5
     # P3 + 4 bubble nodes; 6th order cubature
     cub = SymCubatures.TetSymCub{T}(facecentroid=true,
                                     numedge=1, numS31=1)
-    SymCubatures.setweights!(cub, T[0.1 0.1 0.1 0.1])
-    SymCubatures.setparams!(cub, T[1/5 1/6])
+    SymCubatures.setweights!(cub, T[0.004421633248304776 0.06935370366814568 
+                                    0.0176754534336105 0.20653163611605146])
+    SymCubatures.setparams!(cub, T[0.30480589839889616 0.45720884759834435])
+  elseif q == 7
+    # P3 + 11 bubble nodes; 8th order cubature
+    cub = SymCubatures.TetSymCub{T}(midedges=true, centroid=true, numedge=1,
+                                    numfaceS21=1, numS31=1, numS22=1)
+    SymCubatures.setweights!(cub, T[0.0015106273303336273,0.004038881996228382,
+                                    0.005696088152131421,0.02424296133613638,
+                                    0.08113091859465722,0.060490542374353584,
+                                    0.10344930834722398])
+    SymCubatures.setparams!(cub, T[0.7426272531851917,0.45008848310824695,
+                                   0.28418700275470193,0.21742832019555544])
   else
-    error("polynomial degree must be 1, 3, or 5 (presently)\n")
+    error("polynomial degree must be 1, 3, 5, or 7 (presently)\n")
   end
   vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
   Cubature.solvecubature!(cub, q, tol=tol)

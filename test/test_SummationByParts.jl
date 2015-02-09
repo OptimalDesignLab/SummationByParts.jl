@@ -8,7 +8,7 @@ facts("Testing SummationByParts Module...") do
 
   context("Testing SummationByParts.bndrynodalexpansion (TriSymCub method)") do
     # check that P*E produces the identity matrix on the boundary
-    for d = 1:3
+    for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
       E = SummationByParts.bndrynodalexpansion(cub, vtx, d)
       x, y = SymCubatures.calcnodes(cub, vtx)
@@ -30,7 +30,7 @@ facts("Testing SummationByParts Module...") do
 
   context("Testing SummationByParts.bndrynodalexpansion (TetSymCub method)") do
     # check that P*E produces the identity matrix on the boundary
-    for d = 1:3
+    for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64)
       E = SummationByParts.bndrynodalexpansion(cub, vtx, d)
       x, y, z = SymCubatures.calcnodes(cub, vtx)
@@ -48,13 +48,13 @@ facts("Testing SummationByParts Module...") do
       end
       A = P*E
       numbndry = SymCubatures.getnumboundarynodes(cub)
-      @fact A[1:numbndry,1:numbndry] => roughly(eye(numbndry), atol=1e-15)
+      @fact A[1:numbndry,1:numbndry] => roughly(eye(numbndry), atol=1e-14)
     end
   end
 
   context("Testing SummationByParts.massmatrices (TriSymCub method)") do
     # check Ex, Ey by comparing with appropriate integral of divergence
-    for d = 1:3
+    for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
       w, Ex, Ey = SummationByParts.massmatrices(cub, vtx, d)
       H = diagm(w)
@@ -93,7 +93,7 @@ facts("Testing SummationByParts Module...") do
 
   context("Testing SummationByParts.massmatrices (TetSymCub method)") do
     # check Ex, Ey, Ez by comparing with appropriate integral of divergence
-    for d = 1:3
+    for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64)
       w, Ex, Ey, Ez = SummationByParts.massmatrices(cub, vtx, d)
       H = diagm(w)
@@ -172,22 +172,22 @@ facts("Testing SummationByParts Module...") do
   context("Testing SummationByParts.accuracyconstraints (TriSymCub method)") do
     # check that the null-space of the constraint Jacobian is the correct size
     # this is not an adequate unit test.
-    sizenull = [0, 0, 1]
-    for d = 1:3
+    sizenull = [0, 0, 1, 3]
+    for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
       A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
-      @fact size(null(A),2) => sizenull[d]
+      @fact size(nullspace(A),2) => sizenull[d]
     end
   end
   
   context("Testing SummationByParts.accuracyconstraints (TetSymCub method)") do
     # check that the null-space of the constraint Jacobian is the correct size
     # this is not an adequate unit test.
-    sizenull = [0, 0, 6]
-    for d = 1:3
+    sizenull = [0, 0, 6, 45]
+    for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64)
       A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d)
-      @fact size(null(A),2) => sizenull[d]
+      @fact size(nullspace(A),2) => sizenull[d]
     end
   end
   
@@ -210,7 +210,7 @@ facts("Testing SummationByParts Module...") do
           Qy[col,row] -= y[offset+col]
         end
       end
-      Z = null(A)
+      Z = nullspace(A)
       f, dfdx = SummationByParts.commuteerror(w, Qx, Qy, Z, reducedsol[d])
       @fact f => roughly(error[d], atol=1e-15)
     end
@@ -237,7 +237,7 @@ facts("Testing SummationByParts Module...") do
   end
 
   context("Testing SummationByParts.buildoperators (TetSymCub method)") do
-    for d = 1:3
+    for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64)
       w, Qx, Qy, Qz = SummationByParts.buildoperators(cub, vtx, d)
       Dx = diagm(1./w)*Qx
@@ -252,9 +252,9 @@ facts("Testing SummationByParts Module...") do
             dudx = (i.*x.^max(0,i-1)).*(y.^j).*(z.^k)
             dudy = (x.^i).*(j.*y.^max(0,j-1)).*(z.^k)
             dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
-            @fact Dx*u => roughly(dudx, atol=1e-13)
-            @fact Dy*u => roughly(dudy, atol=1e-13)
-            @fact Dz*u => roughly(dudz, atol=1e-13)
+            @fact Dx*u => roughly(dudx, atol=1e-12)
+            @fact Dy*u => roughly(dudy, atol=1e-12)
+            @fact Dz*u => roughly(dudz, atol=1e-12)
           end
         end
       end
