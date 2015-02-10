@@ -275,16 +275,16 @@ function getbndryindices{T}(cub::TetSymCub{T})
   # add vertices to indices
   if cub.vertices
     bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+2 ptr+3 ptr+4;
-                                         ptr+2 ptr+3 ptr+4 ptr+1;
-                                         ptr+3 ptr+4 ptr+1 ptr+2] 
+                                         ptr+3 ptr+3 ptr+1 ptr+1;
+                                         ptr+2 ptr+4 ptr+4 ptr+2] 
     ptr += 4
     idxptr += 3
   end
   # add mid-edge to indices
   if cub.midedges
-    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+2 ptr+3 ptr+1;
-                                         ptr+2 ptr+3 ptr+4 ptr+4;
-                                         ptr+5 ptr+6 ptr+5 ptr+6]
+    bndryindices[idxptr+1:idxptr+3,:] = [ptr+5 ptr+2 ptr+5 ptr+4;
+                                         ptr+2 ptr+3 ptr+4 ptr+1;
+                                         ptr+1 ptr+6 ptr+3 ptr+6]
     ptr += 6
     idxptr += 3
   end
@@ -296,12 +296,12 @@ function getbndryindices{T}(cub::TetSymCub{T})
   end
   # add edge nodes to indices
   for i = 1:cub.numedge
-    bndryindices[idxptr+1:idxptr+6,:] = [ptr+1 ptr+3 ptr+5 ptr+7;
-                                         ptr+2 ptr+4 ptr+6 ptr+8;
-                                         ptr+3 ptr+5 ptr+7 ptr+1;
-                                         ptr+4 ptr+6 ptr+8 ptr+2;
-                                         ptr+9 ptr+11 ptr+9 ptr+11;
-                                         ptr+10 ptr+12 ptr+10 ptr+12]
+    bndryindices[idxptr+1:idxptr+6,:] = [ptr+9  ptr+3  ptr+10 ptr+8;
+                                         ptr+10 ptr+4  ptr+9  ptr+7;
+                                         ptr+4  ptr+5  ptr+7  ptr+1;
+                                         ptr+3  ptr+6  ptr+8  ptr+2;
+                                         ptr+2  ptr+12 ptr+6  ptr+11;
+                                         ptr+1  ptr+11 ptr+5  ptr+12]
     ptr += 12
     idxptr += 6
   end
@@ -507,8 +507,8 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
           0 (1-alpha) alpha 0;
           0 0 alpha (1-alpha);
           0 0 (1-alpha) alpha;
-          (1-alpha) 0 0 alpha;
           alpha 0 0 (1-alpha);
+          (1-alpha) 0 0 alpha;
           alpha 0 (1-alpha) 0;
           (1-alpha) 0 alpha 0;
           0 alpha 0 (1-alpha);
@@ -526,8 +526,8 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
           (1-2*alpha) alpha alpha;
           alpha (1-2*alpha) alpha]
     facevtx = [1 2 3 4;
-               2 3 4 1;
-               3 4 1 2]
+               3 3 1 1;
+               2 4 4 2]
     for face = 1:4
       x[ptr+1:ptr+3] = A*vtx[facevtx[:,face],1]
       y[ptr+1:ptr+3] = A*vtx[facevtx[:,face],2]
@@ -681,8 +681,8 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
         0 -1 1 0;
         0 0 1 -1;
         0 0 -1 1;
-        -1 0 0 1;
         1 0 0 -1;
+        -1 0 0 1;
         1 0 -1 0;
         -1 0 1 0;
         0 1 0 -1;
@@ -700,8 +700,8 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
         -1 0.5 0.5;
         0.5 -1 0.5]
   facevtx = [1 2 3 4;
-             2 3 4 1;
-             3 4 1 2]
+             3 3 1 1;
+             2 4 4 2]
   for i = 1:cub.numfaceS21
     for face = 1:4
       for j = 1:3

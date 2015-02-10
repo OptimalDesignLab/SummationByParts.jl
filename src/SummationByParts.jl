@@ -50,7 +50,7 @@ type TriSBP{T} <: SBPOperator{T}
     @assert( degree >= 1 && degree <= 4 )
     cub, vtx = tricubature(2*degree-1, T)
     numnodes = cub.numnodes
-    numbndry = getnumboundarynodes(cub)
+    numbndry = SymCubatures.getnumboundarynodes(cub)
     w, Qx, Qy = SummationByParts.buildoperators(cub, vtx, degree)
     x = zeros(T, (2, numnodes))
     x[1,:], x[2,:] = SymCubatures.calcnodes(cub, vtx)
@@ -89,7 +89,7 @@ type TetSBP{T} <: SBPOperator{T}
     @assert( degree >= 1 && degree <= 3 )
     cub, vtx = tetcubature(2*degree-1, T)
     numnodes = cub.numnodes
-    numbndry = getnumboundarynodes(cub)
+    numbndry = SymCubatures.getnumboundarynodes(cub)
     w, Qx, Qy, Qz = SummationByParts.buildoperators(cub, vtx, degree)
     x = zeros(T, (3, numnodes))
     x[1,:], x[2,:], x[3,:] = SymCubatures.calcnodes(cub, vtx)
@@ -189,12 +189,12 @@ function bndrynodalexpansion{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
 end
 
 @doc """
-### SummationByParts.massmatrices
+### SummationByParts.boundaryoperators
 
 Finds and returns the element mass matrix, `w`, as well as the symmetric part of
 the SBP operators, `Ex`, `Ey` (`Ez`).  The latter operators coorespond to
-boundary integrals in the divergence theorem, hence they are mass matrices of
-the boundary facets.
+boundary integrals in the divergence theorem, and are related to the mass
+matrices of the boundary facets.
 
 **Inputs**
 
@@ -204,11 +204,10 @@ the boundary facets.
 
 **Outputs**
 
-* `w`: diagonal element mass matrix, stored as a 1D array
 * `Ex`, `Ey` (`Ez`): symmetric parts of the SBP first derivative operators
 
 """->
-function massmatrices{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+function boundaryoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   numbndry = SymCubatures.getnumboundarynodes(cub)
   N = convert(Int, (d+1)*(d+2)/2 )
   # compute the derivatives of the ortho polys
@@ -229,7 +228,7 @@ function massmatrices{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   P *= E
   dPdx *= E
   dPdy *= E
-  # compute and return the mass matrices
+  # compute and return the boundary operators
   w = SymCubatures.calcweights(cub)
   Ex = zeros(T, (cub.numnodes,cub.numnodes) )
   Ey = zeros(Ex)
@@ -237,10 +236,10 @@ function massmatrices{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   Ex[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   Q = P.'*diagm(w)*dPdy
   Ey[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
-  return w, Ex, Ey
+  return Ex, Ey
 end
 
-function massmatrices{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
+function boundaryoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   numbndry = SymCubatures.getnumboundarynodes(cub)
   N = convert(Int, (d+1)*(d+2)*(d+3)/6 )
   # compute the derivatives of the ortho polys
@@ -266,7 +265,7 @@ function massmatrices{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   dPdx *= E
   dPdy *= E
   dPdz *= E
-  # compute and return the mass matrices
+  # compute and return the boundary operators
   w = SymCubatures.calcweights(cub)
   Ex = zeros(T, (cub.numnodes,cub.numnodes) )
   Ey = zeros(Ex)
@@ -277,8 +276,63 @@ function massmatrices{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   Ey[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   Q = P.'*diagm(w)*dPdz
   Ez[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
-  return w, Ex, Ey, Ez
+  return Ex, Ey, Ez
 end  
+
+@doc """
+### SummationByParts.boundarymassmatrix
+
+Returns the (dense) mass matrix for a set of nodes on a reference boundary.
+This mass matrix can be used for boundary integration or to impose boundary
+conditions weakly.  The array `bndryindices` is also returned, which is a list
+of element-node indices for each boundary (see also
+SymCubatures.getbndryindices).
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+* `vtx`: vertices of the right simplex
+* `d`: maximum total degree for the polynomials
+
+**Outputs**
+
+* `Hbndry`: reference boundary mass matrix
+* `bndryindices`: list of nodes that lie on each boundary
+
+"""->
+function boundarymassmatrix{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+  bndryindices = SymCubatures.getbndryindices(cub)
+  numbndrynodes = size(bndryindices,1)
+  x, y = SymCubatures.calcnodes(cub, vtx)
+  xbndry = x[bndryindices[:,1]]
+  P = zeros(T, (numbndrynodes,numbndrynodes))
+  for j = 0:d
+    P[:,j+1] = OrthoPoly.jacobipoly(xbndry, 0.0, 0.0, j)
+  end
+  A = inv(P)
+  Hbndry = A.'*A
+  return Hbndry, bndryindices
+end
+
+function boundarymassmatrix{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
+  bndryindices = SymCubatures.getbndryindices(cub)
+  numbndrynodes = size(bndryindices,1)
+  x, y, z = SymCubatures.calcnodes(cub, vtx)
+  xbndry = x[bndryindices[:,1]]
+  ybndry = y[bndryindices[:,1]]
+  P = zeros(T, (numbndrynodes,numbndrynodes))
+  ptr = 1
+  for r = 0:d
+    for j = 0:r
+      i = r-j
+      P[:,ptr] = OrthoPoly.proriolpoly(xbndry, ybndry, i, j)
+      ptr += 1
+    end
+  end
+  A = inv(P)
+  Hbndry = A.'*A
+  return Hbndry, bndryindices
+end
 
 @doc """
 ### SummationByParts.accuracyconstraints
@@ -307,7 +361,8 @@ Q_32 = -Q_23 is the number 3 variable.
 """->
 function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   x, y = SymCubatures.calcnodes(cub, vtx) 
-  w, Ex, Ey = SummationByParts.massmatrices(cub, vtx, d)
+  Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
+  w = SymCubatures.calcweights(cub)
   Ex *= 0.5; Ey *= 0.5
   # the number of unknowns for in the skew-symmetric matrices
   numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
@@ -341,7 +396,8 @@ end
 
 function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   x, y, z = SymCubatures.calcnodes(cub, vtx) 
-  w, Ex, Ey, Ez = SummationByParts.massmatrices(cub, vtx, d)
+  Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
+  w = SymCubatures.calcweights(cub)
   Ex *= 0.5; Ey *= 0.5; Ez *= 0.5
   # the number of unknowns for both skew-symmetric matrices Qx, Qy, and Qz
   numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
@@ -465,7 +521,8 @@ matrix and the stiffness matrices.
 
 """->
 function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
-  w, Qx, Qy = SummationByParts.massmatrices(cub, vtx, d)
+  w = SymCubatures.calcweights(cub)
+  Qx, Qy = SummationByParts.boundaryoperators(cub, vtx, d)
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
   # use the minimum norm least-squares solution
   Afact = qrfact(A)
@@ -484,7 +541,8 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
 end
 
 function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
-  w, Qx, Qy, Qz = SummationByParts.massmatrices(cub, vtx, d)
+  w = SymCubatures.calcweights(cub)
+  Qx, Qy, Qz = SummationByParts.boundaryoperators(cub, vtx, d)
   A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d)
   # use the minimum norm least-squares solution
   Afact = qrfact(A)

@@ -82,15 +82,13 @@ facts("Testing SymCubatures Module...") do
     tetcub = TetSymCub{Float64}(numedge=1, midedges=true, facecentroid=true,
                                 numfaceS21=1, numS31=2)
     bndryindices = SymCubatures.getbndryindices(tetcub)
-    @fact bndryindices => [1 2 3 4; 2 3 4 1; 3 4 1 2;
-                           5 6 7 5; 6 7 8 8; 9 10 9 10;
-                           11 12 13 14; 15 17 19 21;
-                           16 18 20 22; 17 19 21 15;
-                           18 20 22 16; 23 25 23 25;
-                           24 26 24 26; 
-                           27 30 33 36;
-                           28 31 34 37;
-                           29 32 35 38]
+    @fact bndryindices => [1 2 3 4; 3 3 1 1; 2 4 4 2;
+                           9 6 9 8; 6 7 8 5; 5 10 7 10;
+                           11 12 13 14; 23 17 24 22;
+                           24 18 23 21; 18 19 21 15;
+                           17 20 22 16; 16 26 20 25;
+                           15 25 19 26; 27 30 33 36;
+                           28 31 34 37; 29 32 35 38]
   end
 
   for T = (Float32, Float64, Complex64, Complex128)
@@ -154,9 +152,9 @@ facts("Testing SymCubatures Module...") do
                  0 alpha (1-alpha) 0;
                  0 (1-alpha) alpha 0;
                  0 0 alpha (1-alpha);
-                 0 0 (1-alpha) alpha;
-                 (1-alpha) 0 0 alpha;
+                 0 0 (1-alpha) alpha;                 
                  alpha 0 0 (1-alpha);
+                 (1-alpha) 0 0 alpha;
                  alpha 0 (1-alpha) 0;
                  (1-alpha) 0 alpha 0;
                  0 alpha 0 (1-alpha)
@@ -175,8 +173,8 @@ facts("Testing SymCubatures Module...") do
                  (1-2*alpha) alpha alpha;
                  alpha (1-2*alpha) alpha]
         facevtx = [1 2 3 4;
-                   2 3 4 1;
-                   3 4 1 2]
+                   3 3 1 1;
+                   2 4 4 2]
         x, y, z = SymCubatures.calcnodes(tetcub, vtx)
         @fact x.' => [vtx[:,1].' (A*vtx[facevtx[:,1],1]).' (A*vtx[facevtx[:,2],1]).' (A*vtx[facevtx[:,3],1]).' (A*vtx[facevtx[:,4],1]).']
         @fact y.' => [vtx[:,2].' (A*vtx[facevtx[:,1],2]).' (A*vtx[facevtx[:,2],2]).' (A*vtx[facevtx[:,3],2]).' (A*vtx[facevtx[:,4],2]).']

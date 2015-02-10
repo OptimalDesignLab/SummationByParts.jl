@@ -52,11 +52,12 @@ facts("Testing SummationByParts Module...") do
     end
   end
 
-  context("Testing SummationByParts.massmatrices (TriSymCub method)") do
+  context("Testing SummationByParts.boundaryoperators (TriSymCub method)") do
     # check Ex, Ey by comparing with appropriate integral of divergence
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
-      w, Ex, Ey = SummationByParts.massmatrices(cub, vtx, d)
+      w = SymCubatures.calcweights(cub)
+      Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
       H = diagm(w)
       x, y = SymCubatures.calcnodes(cub, vtx)      
       for r = 0:2*d-1
@@ -91,11 +92,12 @@ facts("Testing SummationByParts Module...") do
     end   
   end
 
-  context("Testing SummationByParts.massmatrices (TetSymCub method)") do
+  context("Testing SummationByParts.boundaryoperators (TetSymCub method)") do
     # check Ex, Ey, Ez by comparing with appropriate integral of divergence
     for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64)
-      w, Ex, Ey, Ez = SummationByParts.massmatrices(cub, vtx, d)
+      w = SymCubatures.calcweights(cub)
+      Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
       H = diagm(w)
       x, y, z = SymCubatures.calcnodes(cub, vtx)      
       for r = 0:2*d-1
@@ -168,7 +170,45 @@ facts("Testing SummationByParts Module...") do
       end   
     end
   end
-  
+
+  context("Testing SummationByParts.boundarymassmatrix (TriSymCub method)") do
+    # check that mass matrix can be assembled into Ex and Ey
+    for d = 1:4
+      cub, vtx = tricubature(2*d-1, Float64)
+      Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
+      Hbndry, bndindx = SummationByParts.boundarymassmatrix(cub, vtx, d)
+      Ex_inject = zeros(Ex)
+      Ey_inject = zeros(Ey)
+      Ex_inject[bndindx[:,2],bndindx[:,2]] = Hbndry
+      Ex_inject[bndindx[:,3],bndindx[:,3]] -= Hbndry
+      Ey_inject[bndindx[:,1],bndindx[:,1]] -= Hbndry
+      Ey_inject[bndindx[:,2],bndindx[:,2]] += Hbndry
+      @fact Ex_inject => roughly(Ex, atol=1e-15)
+      @fact Ey_inject => roughly(Ey, atol=1e-15)
+    end
+  end
+
+  context("Testing SummationByParts.boundarymassmatrix (TetSymCub method)") do
+    # check that mass matrix can be assembled into Ex and Ey
+    for d = 1:4
+      cub, vtx = tetcubature(2*d-1, Float64)
+      Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
+      Hbndry, bndindx = SummationByParts.boundarymassmatrix(cub, vtx, d)
+      Ex_inject = zeros(Ex)
+      Ey_inject = zeros(Ey)
+      Ez_inject = zeros(Ez)
+      Ex_inject[bndindx[:,2],bndindx[:,2]] += Hbndry
+      Ex_inject[bndindx[:,3],bndindx[:,3]] -= Hbndry
+      Ey_inject[bndindx[:,2],bndindx[:,2]] += Hbndry
+      Ey_inject[bndindx[:,4],bndindx[:,4]] -= Hbndry
+      Ez_inject[bndindx[:,2],bndindx[:,2]] += Hbndry
+      Ez_inject[bndindx[:,1],bndindx[:,1]] -= Hbndry
+      @fact Ex_inject => roughly(Ex, atol=1e-15)
+      @fact Ey_inject => roughly(Ey, atol=1e-15)
+      @fact Ez_inject => roughly(Ez, atol=1e-15)
+    end
+  end
+
   context("Testing SummationByParts.accuracyconstraints (TriSymCub method)") do
     # check that the null-space of the constraint Jacobian is the correct size
     # this is not an adequate unit test.
@@ -196,7 +236,8 @@ facts("Testing SummationByParts Module...") do
     error = [0, 0, 0.5*2.324812265031167] # error based on particular Q
     for d = 1:3
       cub, vtx = tricubature(2*d-1, Float64)
-      w, Qx, Qy = SummationByParts.massmatrices(cub, vtx, d)    
+      w = SymCubatures.calcweights(cub)
+      Qx, Qy = SummationByParts.boundaryoperators(cub, vtx, d)    
       A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
       # build Q that satisfies the accuracy constraints
       x = A\bx; y = A\by
