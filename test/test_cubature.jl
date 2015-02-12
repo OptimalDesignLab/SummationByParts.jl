@@ -1,7 +1,3 @@
-# Tests for Cubature module
-using SummationByParts.Cubature
-using SummationByParts.SymCubatures
-
 facts("Testing Cubature Module...") do
 
   context("Testing Cubature.cubatureresidual (TriSymCub method)") do

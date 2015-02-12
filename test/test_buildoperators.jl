@@ -1,10 +1,4 @@
-# Tests for Cubature module
-using SummationByParts
-using SummationByParts.OrthoPoly
-using SummationByParts.Cubature
-using SummationByParts.SymCubatures
-
-facts("Testing SummationByParts Module...") do
+facts("Testing SummationByParts Module (buildoperators.jl file)...") do
 
   context("Testing SummationByParts.bndrynodalexpansion (TriSymCub method)") do
     # check that P*E produces the identity matrix on the boundary

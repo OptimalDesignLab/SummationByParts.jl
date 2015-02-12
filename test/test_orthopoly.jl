@@ -1,6 +1,3 @@
-# Tests for OrthoPoly module
-using SummationByParts.OrthoPoly
-
 facts("Testing OrthoPoly Module...") do
 
   for T = (Float32, Float64, Complex64, Complex128)

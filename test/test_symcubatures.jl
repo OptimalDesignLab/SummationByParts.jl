@@ -1,6 +1,3 @@
-# Tests for SymCubatures module
-using SummationByParts.SymCubatures
-
 facts("Testing SymCubatures Module...") do
   
   for T = (Float32, Float64, Complex64, Complex128)
