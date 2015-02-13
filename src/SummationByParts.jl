@@ -8,7 +8,7 @@ using .OrthoPoly
 using .SymCubatures
 using .Cubature
 
-export SBPOperator, TriSBP, TetSBP, applyQ!, applyD!, applyH!
+export SBPOperator, TriSBP, TetSBP, applyQ!, applyD!, applyH!, mappingjacobian!
 
 @doc """
 ### SBP.SBPOperator
