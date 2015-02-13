@@ -8,7 +8,7 @@ using .OrthoPoly
 using .SymCubatures
 using .Cubature
 
-export SBPOperator, TriSBP, TetSBP
+export SBPOperator, TriSBP, TetSBP, applyQ!, applyD!, applyH!
 
 @doc """
 ### SBP.SBPOperator
@@ -38,7 +38,8 @@ type TriSBP{T} <: SBPOperator{T}
   degree::Int
   numnodes::Int
   numbndry::Int
-  x::Array{T}
+  #x::Array{T}
+  cub::TriSymCub{T}
   w::Array{T}
   Q::Array{T}
 
@@ -50,8 +51,8 @@ type TriSBP{T} <: SBPOperator{T}
     Q = zeros(T, (numnodes, numnodes, 2))
     w, Q[:,:,1], Q[:,:,2] = SummationByParts.buildoperators(cub, vtx, degree)
     x = zeros(T, (2, numnodes))
-    x[1,:], x[2,:] = SymCubatures.calcnodes(cub, vtx)
-    new(degree, numnodes, numbndry, x, w, Q)
+    #x[1,:], x[2,:] = SymCubatures.calcnodes(cub, vtx)
+    new(degree, numnodes, numbndry, cub, w, Q)
   end
 end
 
@@ -74,12 +75,13 @@ type TetSBP{T} <: SBPOperator{T}
   degree::Int
   numnodes::Int
   numbndry::Int
-  x::Array{T}
+  #x::Array{T}
+  cub::TetSymCub{T}
   w::Array{T}
-  Qx::Array{T}
+  Q::Array{T}
 
   function TetSBP(;degree::Int=1)
-    @assert( degree >= 1 && degree <= 3 )
+    @assert( degree >= 1 && degree <= 4 )
     cub, vtx = tetcubature(2*degree-1, T)
     numnodes = cub.numnodes
     numbndry = SymCubatures.getnumboundarynodes(cub)
@@ -87,11 +89,11 @@ type TetSBP{T} <: SBPOperator{T}
     w, Q[:,:,1], Q[:,:,2], Q[:,:,3] = SummationByParts.buildoperators(cub, vtx, degree)
     x = zeros(T, (3, numnodes))
     x[1,:], x[2,:], x[3,:] = SymCubatures.calcnodes(cub, vtx)
-    new(degree, numnodes, numbndry, x, w, Q)
+    new(degree, numnodes, numbndry, cub, w, Q)
   end
 end
 
 include("buildoperators.jl") #<--- functions related to building SBP operators
-#include("useoperators.jl") #<--- functions for applying SBP operators
+include("useoperators.jl") #<--- functions for applying SBP operators
 
 end # module
