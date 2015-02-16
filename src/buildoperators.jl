@@ -464,3 +464,94 @@ function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   end
   return w, Qx, Qy, Qz
 end
+
+@doc """
+### SummationByParts.getnodepermutation
+
+The node ordering produced by SymCubature is not convenient for mapping local to
+global node indices in the global residual assembly procedure.  This function
+returns a reordering that is more suited for local-to-global mapping.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+* `d`: maximum polynomial degree for which the SBP operator is exact
+
+**Outputs**
+
+* `perm`: a permutation vector of indices
+
+"""->
+function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
+  perm = zeros(Int, (cub.numnodes))
+  perm[1:3] = [1;2;3] # vertices are unchanged
+  ptr = 3 # index pointer for TriSymCub nodes
+  permptr = 3 # index pointer for reordered nodes
+  paramptr = 0 # index pointer for free-node parameters
+
+  # permute edge nodes; there are d-1 nodes on an edge, if vertices are excluded
+  if cub.midedges
+    # if midedges present there must be an odd number of nodes along the edge
+    perm[permptr + div(d-1,2) + 1] = 4
+    perm[permptr + (d-1) + div(d-1,2) + 1] = 5
+    perm[permptr + 2*(d-1) + div(d-1,2) + 1] = 6
+    ptr += 3
+  end
+  # edge nodes in sequence along an edge, which requires that we order the
+  # respective edge parameters, accounting for symmetry about alpha = 1/2
+  edgeparam = cub.params[paramptr+1:paramptr+cub.numedge]
+  for i = 1:cub.numedge
+    edgeparam[i] > 0.5 ? edgeparam[i] = 1 - edgeparam[i] : nothing
+  end
+  # smaller parameters are further from the nodes, so do a reverse sort
+  edgeperm = sortperm(edgeparam, rev=true)
+  for i = 1:cub.numedge
+    perm[permptr + i] = ptr + (edgeperm[i]-1)*6 + 2
+    perm[permptr + (d-1) - i + 1] = ptr + (edgeperm[i]-1)*6 + 1
+    perm[permptr + (d-1) + i] = ptr + (edgeperm[i]-1)*6 + 4
+    perm[permptr + 2*(d-1) - i + 1] = ptr + (edgeperm[i]-1)*6 + 3
+    perm[permptr + 2*(d-1) + i] = ptr + (edgeperm[i]-1)*6 + 5
+    perm[permptr + 3*(d-1) - i + 1] = ptr + (edgeperm[i]-1)*6 + 6
+  end
+  ptr += 6*cub.numedge
+  permptr += 3*(d-1)
+  # Now the internal nodes; these have the same ordering as TriSymCub
+  perm[permptr+1:end] = [ptr+1:cub.numnodes]
+  return perm
+end
+
+function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
+  error("Not implemented yet")
+end
+
+@doc """
+### SummationByParts.calcnodes
+
+This function returns the node coordinates for an SBP operator.  The nodes are
+ordered first by vertex, then by edge (with nodes ordered in sequence along the
+directed edge), then by face (if appropriate), and then finally by volumn nodes.
+This function assumes the element mapping is linear, i.e. edges are lines.
+
+**Inputs**
+
+* `sbp`: an SBP operator
+* `vtx`: the vertices that define the element
+
+**Outputs**
+
+* `x`: the node coordinates; 1st dimension is the coordinate, the second the node
+
+"""->
+function calcnodes{T}(sbp::TriSBP{T}, vtx::Array{T})
+  perm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
+  x = zeros(T, (2, sbp.numnodes))
+  x[1,:], x[2,:] = SymCubatures.calcnodes(sbp.cub, vtx)
+  return x[:,perm]
+end
+
+function calcnodes{T}(sbp::TetSBP{T}, vtx::Array{T})
+  perm = [1:sbp.numnodes] #SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
+  x = zeros(T, (3, sbp.numnodes))
+  x[1,:], x[2,:], x[3,:] = SymCubatures.calcnodes(sbp.cub, vtx)
+  return x[:,perm]
+end

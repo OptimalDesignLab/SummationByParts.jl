@@ -296,4 +296,30 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.getnodepermutation (TriSymCub method)") do
+    # check that vertices are first and edge nodes are ordered correctly
+    for d = 1:4
+      cub, vtx = tricubature(2*d-1, Float64)
+      perm = SummationByParts.getnodepermutation(cub, d)
+      x, y = SymCubatures.calcnodes(cub, vtx)
+      x = x[perm]
+      y = y[perm]
+      # check vertices
+      @fact x[1:3] => roughly(vtx[:,1], atol=1e-15)
+      @fact y[1:3] => roughly(vtx[:,2], atol=1e-15)
+      ptr = 3
+      # check ordering of x nodes on first edge
+      @fact issorted(x[ptr+1:ptr+d-1]) => true
+      @fact y[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      ptr += (d-1)
+      # check ordering of x and y nodes on second edge
+      @fact issorted(x[ptr+1:ptr+d-1], rev=true) => true
+      @fact issorted(y[ptr+1:ptr+d-1]) => true
+      ptr += (d-1)
+      # check ordering of y nodes on third edge
+      @fact x[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(y[ptr+1:ptr+d-1]) => true
+    end
+  end
+
 end

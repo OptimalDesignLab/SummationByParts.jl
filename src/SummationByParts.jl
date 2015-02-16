@@ -50,8 +50,11 @@ type TriSBP{T} <: SBPOperator{T}
     numbndry = SymCubatures.getnumboundarynodes(cub)
     Q = zeros(T, (numnodes, numnodes, 2))
     w, Q[:,:,1], Q[:,:,2] = SummationByParts.buildoperators(cub, vtx, degree)
-    x = zeros(T, (2, numnodes))
-    #x[1,:], x[2,:] = SymCubatures.calcnodes(cub, vtx)
+    # reorder the nodes
+    perm = SummationByParts.getnodepermutation(cub, degree)
+    w = w[perm]
+    Q[:,:,1] = Q[perm,perm,1]
+    Q[:,:,2] = Q[perm,perm,2]
     new(degree, numnodes, numbndry, cub, w, Q)
   end
 end
