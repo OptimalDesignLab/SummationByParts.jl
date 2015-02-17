@@ -523,35 +523,3 @@ end
 function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
   error("Not implemented yet")
 end
-
-@doc """
-### SummationByParts.calcnodes
-
-This function returns the node coordinates for an SBP operator.  The nodes are
-ordered first by vertex, then by edge (with nodes ordered in sequence along the
-directed edge), then by face (if appropriate), and then finally by volumn nodes.
-This function assumes the element mapping is linear, i.e. edges are lines.
-
-**Inputs**
-
-* `sbp`: an SBP operator
-* `vtx`: the vertices that define the element
-
-**Outputs**
-
-* `x`: the node coordinates; 1st dimension is the coordinate, the second the node
-
-"""->
-function calcnodes{T}(sbp::TriSBP{T}, vtx::Array{T})
-  perm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
-  x = zeros(T, (2, sbp.numnodes))
-  x[1,:], x[2,:] = SymCubatures.calcnodes(sbp.cub, vtx)
-  return x[:,perm]
-end
-
-function calcnodes{T}(sbp::TetSBP{T}, vtx::Array{T})
-  perm = [1:sbp.numnodes] #SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
-  x = zeros(T, (3, sbp.numnodes))
-  x[1,:], x[2,:], x[3,:] = SymCubatures.calcnodes(sbp.cub, vtx)
-  return x[:,perm]
-end

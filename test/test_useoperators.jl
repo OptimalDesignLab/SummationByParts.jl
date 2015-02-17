@@ -32,9 +32,9 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       sbp = TriSBP{Float64}(degree=p)
       vtx = [0. 0.; 1. 0.; 0. 1.]
       x = zeros(Float64, (2,sbp.numnodes,2))
-      x[:,:,1] = SummationByParts.calcnodes(sbp, vtx)
+      x[:,:,1] = calcnodes(sbp, vtx)
       vtx = [1. 0.; 1. 1.; 0. 1.]
-      x[:,:,2] = SummationByParts.calcnodes(sbp, vtx)
+      x[:,:,2] = calcnodes(sbp, vtx)
       di = 1
       res = zeros(x)
       applyQ!(sbp, di, x, res)
@@ -52,7 +52,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       sbp = TetSBP{Float64}(degree=p)
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x = zeros(Float64, (3,sbp.numnodes,1))
-      x[:,:,1] = SummationByParts.calcnodes(sbp, vtx)
+      x[:,:,1] = calcnodes(sbp, vtx)
       di = 1
       res = zeros(x)
       applyQ!(sbp, di, x, res)
@@ -94,9 +94,9 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       sbp = TriSBP{Float64}(degree=p)
       vtx = [0. 0.; 1. 0.; 0. 1.]
       x = zeros(Float64, (2,sbp.numnodes,2))
-      x[:,:,1] = SummationByParts.calcnodes(sbp, vtx)
+      x[:,:,1] = calcnodes(sbp, vtx)
       vtx = [1. 0.; 1. 1.; 0. 1.]
-      x[:,:,2] = SummationByParts.calcnodes(sbp, vtx)
+      x[:,:,2] = calcnodes(sbp, vtx)
       di = 1
       res = zeros(x)
       applyD!(sbp, di, x, res)
@@ -114,7 +114,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       sbp = TetSBP{Float64}(degree=p)
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x = zeros(Float64, (3,sbp.numnodes,1))
-      x[:,:,1] = SummationByParts.calcnodes(sbp, vtx)
+      x[:,:,1] = calcnodes(sbp, vtx)
       di = 1
       res = zeros(x)
       applyD!(sbp, di, x, res)
@@ -183,9 +183,9 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       sbp = TriSBP{Float64}(degree=p)
       vtx = [0. 0.; 1. 0.; 0. 1.]
       x = zeros(Float64, (2,sbp.numnodes,2))
-      x[:,:,1] = SummationByParts.calcnodes(sbp, vtx)
+      x[:,:,1] = calcnodes(sbp, vtx)
       vtx = [1. 0.; 1. 1.; 0. 1.]
-      x[:,:,2] = SummationByParts.calcnodes(sbp, vtx)
+      x[:,:,2] = calcnodes(sbp, vtx)
       dxidx = zeros(Float64, (2,2,sbp.numnodes,2))
       jac = zeros(Float64, (sbp.numnodes,2))
       mappingjacobian!(sbp, x, dxidx, jac)
