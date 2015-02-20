@@ -288,12 +288,6 @@ function getbndryindices{T}(cub::TetSymCub{T})
     ptr += 6
     idxptr += 3
   end
-  # add face centroids to indices
-  if cub.facecentroid
-    bndryindices[idxptr+1,:] = [ptr+1 ptr+2 ptr+3 ptr+4]
-    ptr += 4
-    idxptr += 1
-  end
   # add edge nodes to indices
   for i = 1:cub.numedge
     bndryindices[idxptr+1:idxptr+6,:] = [ptr+9  ptr+3  ptr+10 ptr+8;
@@ -304,6 +298,12 @@ function getbndryindices{T}(cub::TetSymCub{T})
                                          ptr+1  ptr+11 ptr+5  ptr+12]
     ptr += 12
     idxptr += 6
+  end
+  # add face centroids to indices
+  if cub.facecentroid
+    bndryindices[idxptr+1,:] = [ptr+1 ptr+2 ptr+3 ptr+4]
+    ptr += 4
+    idxptr += 1
   end
   # add face S21 orbits to indices
   for i = 1:cub.numfaceS21
@@ -486,18 +486,6 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
     z[ptr+1:ptr+6] = A*vtx[:,3]
     ptr += 6
   end
-  # set face centroids
-  if cub.facecentroid
-    alpha = (T)(1/3)
-    A = T[alpha alpha alpha 0;
-          0 alpha alpha alpha;
-          alpha 0 alpha alpha;
-          alpha alpha 0 alpha]
-    x[ptr+1:ptr+4] = A*vtx[:,1]
-    y[ptr+1:ptr+4] = A*vtx[:,2]
-    z[ptr+1:ptr+4] = A*vtx[:,3]
-    ptr += 4
-  end
   # set edge nodes
   for i = 1:cub.numedge
     alpha = cub.params[paramptr+1]
@@ -518,6 +506,18 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
     z[ptr+1:ptr+12] = A*vtx[:,3]
     ptr += 12
     paramptr += 1
+  end
+  # set face centroids
+  if cub.facecentroid
+    alpha = (T)(1/3)
+    A = T[alpha alpha alpha 0;
+          0 alpha alpha alpha;
+          alpha 0 alpha alpha;
+          alpha alpha 0 alpha]
+    x[ptr+1:ptr+4] = A*vtx[:,1]
+    y[ptr+1:ptr+4] = A*vtx[:,2]
+    z[ptr+1:ptr+4] = A*vtx[:,3]
+    ptr += 4
   end
   # set face nodes corresponding to S21 orbit
   for i = 1:cub.numfaceS21
@@ -671,9 +671,6 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   if cub.midedges
     ptr += 6 # block of zeros, because the midedges are not parameterized
   end
-  if cub.facecentroid
-    ptr += 4 # block of zeros, because the midedges are not parameterized
-  end
   # set Jacobian for edge nodes
   A = T[1 -1 0 0;
         -1 1 0 0;
@@ -694,6 +691,9 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
     end
     ptr += 12
     paramptr += 1
+  end
+  if cub.facecentroid
+    ptr += 4 # block of zeros, because the face centroids are not parameterized
   end
   # set Jacobian for face nodes corresponding to S21 orbit
   A = T[0.5 0.5 -1;
@@ -825,16 +825,16 @@ function calcweights{T}(cub::TetSymCub{T})
     ptr += 6
     wptr += 1
   end
-  # set face centroid weights
-  if cub.facecentroid
-    w[ptr+1:ptr+4] = cub.weights[wptr+1]
-    ptr += 4
-    wptr += 1
-  end
   # set edge weights
   for i = 1:cub.numedge
     w[ptr+1:ptr+12] = cub.weights[wptr+1]
     ptr += 12
+    wptr += 1
+  end
+  # set face centroid weights
+  if cub.facecentroid
+    w[ptr+1:ptr+4] = cub.weights[wptr+1]
+    ptr += 4
     wptr += 1
   end
   # set face S21 weights
@@ -951,16 +951,16 @@ function calcjacobianofweights{T}(cub::TetSymCub{T})
     ptr += 6
     wptr += 1
   end
-  # set Jacobian of face centroid weights
-  if cub.facecentroid
-    Jac[ptr+1:ptr+4,wptr+1] = ones(T, (4,1))
-    ptr += 4
-    wptr += 1
-  end
   # set Jacobian of edge nodes
   for i = 1:cub.numedge
     Jac[ptr+1:ptr+12,wptr+1] = ones(T, (12,1))
     ptr += 12
+    wptr += 1
+  end
+  # set Jacobian of face centroid weights
+  if cub.facecentroid
+    Jac[ptr+1:ptr+4,wptr+1] = ones(T, (4,1))
+    ptr += 4
     wptr += 1
   end
   # set Jacobian of face S21 nodes

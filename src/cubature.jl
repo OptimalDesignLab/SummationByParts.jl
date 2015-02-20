@@ -236,8 +236,8 @@ function tetcubature(q::Int, T=Float64; tol=eps(T(10)))
     # P3 + 4 bubble nodes; 6th order cubature
     cub = SymCubatures.TetSymCub{T}(facecentroid=true,
                                     numedge=1, numS31=1)
-    SymCubatures.setweights!(cub, T[0.004421633248304776 0.06935370366814568 
-                                    0.0176754534336105 0.20653163611605146])
+    SymCubatures.setweights!(cub, T[0.004421633248304776 0.0176754534336105 
+                                    0.06935370366814568 0.20653163611605146])
     SymCubatures.setparams!(cub, T[0.30480589839889616 0.45720884759834435])
   elseif q == 7
     # P3 + 11 bubble nodes; 8th order cubature
