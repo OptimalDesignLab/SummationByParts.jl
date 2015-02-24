@@ -20,7 +20,7 @@ facts("Testing OrthoPoly Module...") do
     @eval begin
       context("Testing OrthoPoly.jacobipoly for DataType "string($T)) do
         # compare against 5th degree Legendre polynomial
-        x = ($T)[-1:0.1:1]
+        x = ($T)[-1:0.1:1;]
         L = OrthoPoly.jacobipoly(x, 0.0, 0.0, 5)
         L ./= L[21] # necessary for standardization
         @fact L => roughly( (63.*x.^5 -70.*x.^3 + 15.*x)/8, atol=1e-15)
@@ -31,7 +31,7 @@ facts("Testing OrthoPoly Module...") do
   context("Testing OrthoPoly.diffjacobipoly") do
     alpha = 0.3
     beta = 0.65
-    x = Float64[-1:0.1:1]
+    x = Float64[-1:0.1:1;]
     eps_step = 1e-60
     for N = 1:10
       dP = OrthoPoly.diffjacobipoly(x, alpha, beta, N)

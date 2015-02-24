@@ -28,7 +28,7 @@ Contact: gregvw@chtm.unm.edu
 function lglnodes(N, T=Float64)
 N1 = N+1
 # Use the Chebyshev-Gauss-Lobatto nodes as an initial guess
-x = -cos(pi*[0:N]/N)
+x = -cos(pi*[0:N;]/N)
 # The Legendre Vandermonde Matrix 
 P = zeros(T, (N1,N1))
 # Compute P_(N) using the recursion relation; compute its first and second

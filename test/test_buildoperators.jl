@@ -322,4 +322,68 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.getnodepermutation (TetSymCub method)") do
+    # check that vertices are first, edge nodes are ordered correctly, and face
+    # nodes lie on the expected faces
+    for d = 1:4
+      cub, vtx = tetcubature(2*d-1, Float64)
+      perm = SummationByParts.getnodepermutation(cub, d)
+      x, y, z = SymCubatures.calcnodes(cub, vtx)
+      x = x[perm]
+      y = y[perm]
+      z = z[perm]
+      # check vertices
+      @fact x[1:4] => roughly(vtx[:,1], atol=1e-15)
+      @fact y[1:4] => roughly(vtx[:,2], atol=1e-15)
+      @fact z[1:4] => roughly(vtx[:,3], atol=1e-15)
+      ptr = 4
+      # check ordering of x nodes on first edge
+      @fact issorted(x[ptr+1:ptr+d-1]) => true
+      @fact y[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact z[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      ptr += (d-1)
+      # check ordering of x and y nodes on second edge
+      @fact issorted(x[ptr+1:ptr+d-1], rev=true) => true
+      @fact issorted(y[ptr+1:ptr+d-1]) => true
+      @fact z[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      ptr += (d-1)
+      # check ordering of y and z nodes on third edge
+      @fact x[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(y[ptr+1:ptr+d-1], rev=true) => true
+      @fact issorted(z[ptr+1:ptr+d-1]) => true
+      ptr += (d-1)
+      # check ordering of z on fourth edge
+      @fact x[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact y[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(z[ptr+1:ptr+d-1]) => true
+      ptr += (d-1)
+      # check ordering of y on fifth edge
+      @fact x[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(y[ptr+1:ptr+d-1]) => true
+      @fact z[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      ptr += (d-1)
+      # check ordering of x and z on sixth edge
+      @fact issorted(x[ptr+1:ptr+d-1], rev=true) => true
+      @fact y[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(z[ptr+1:ptr+d-1]) => true
+      ptr += (d-1)
+      # check that face nodes lie on appropriate faces
+      numface = div((d-1)*(d-2),2)
+      # check that z = -1 on face 1
+      @fact z[ptr+1:ptr+numface] => roughly(-ones(numface), atol=1e-15)
+      ptr += numface
+      # check that z = -1 - x - y on face 2
+      @fact z[ptr+1:ptr+numface] => roughly(-ones(numface)
+                                            -x[ptr+1:ptr+numface]
+                                            -y[ptr+1:ptr+numface], atol=1e-15)
+      ptr += numface
+      # check that x = -1 on face 3
+      @fact x[ptr+1:ptr+numface] => roughly(-ones(numface), atol=1e-15)
+      ptr += numface
+      # check that y = -1 on face 4
+      @fact y[ptr+1:ptr+numface] => roughly(-ones(numface), atol=1e-15)
+      ptr += numface
+    end
+  end
+
 end

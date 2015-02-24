@@ -472,6 +472,8 @@ The node ordering produced by SymCubature is not convenient for mapping local to
 global node indices in the global residual assembly procedure.  This function
 returns a reordering that is more suited for local-to-global mapping.
 
+*Note*: the edge parameters of `cub` are assumed to be less than 0.5.
+
 **Inputs**
 
 * `cub`: symmetric cubature rule
@@ -500,9 +502,9 @@ function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
   # edge nodes in sequence along an edge, which requires that we order the
   # respective edge parameters, accounting for symmetry about alpha = 1/2
   edgeparam = cub.params[paramptr+1:paramptr+cub.numedge]
-  for i = 1:cub.numedge
-    edgeparam[i] > 0.5 ? edgeparam[i] = 1 - edgeparam[i] : nothing
-  end
+  #for i = 1:cub.numedge
+  #  edgeparam[i] > 0.5 ? edgeparam[i] = 1 - edgeparam[i] : nothing
+  #end
   # smaller parameters are further from the nodes, so do a reverse sort
   edgeperm = sortperm(edgeparam, rev=true)
   for i = 1:cub.numedge
@@ -516,10 +518,68 @@ function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
   ptr += 6*cub.numedge
   permptr += 3*(d-1)
   # Now the internal nodes; these have the same ordering as TriSymCub
-  perm[permptr+1:end] = [ptr+1:cub.numnodes]
+  perm[permptr+1:end] = [ptr+1:cub.numnodes;]
   return perm
 end
 
 function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
-  error("Not implemented yet")
+  @assert(d >= 1 && d <= 4, "implemented for d in [1,4] only")
+  perm = zeros(Int, (cub.numnodes))
+  perm[1:4] = [1;2;3;4] # vertices are unchanged
+  ptr = 4 # index pointer for TetSymCub nodes
+  permptr = 4 # index pointer for reordered nodes
+  paramptr = 0 # index pointer for free-node parameters
+
+  # permute edge nodes; there are d-1 nodes on an edge, if vertices are excluded
+  if cub.midedges
+    # if midedges present there must be an odd number of nodes along the edge
+    for edge = 1:6
+      perm[permptr + (edge-1)*(d-1) + div(d-1,2) + 1] = ptr + edge
+    end
+    ptr += 6
+  end
+
+  # edge nodes in sequence along an edge, which requires that we order the
+  # respective edge parameters, accounting for symmetry about alpha = 1/2
+  edgeparam = cub.params[paramptr+1:paramptr+cub.numedge]
+  #for i = 1:cub.numedge
+  #  edgeparam[i] > 0.5 ? edgeparam[i] = 1.0 - edgeparam[i] : nothing
+  #end
+  # smaller parameters are further from the nodes, so do a reverse sort
+  edgeperm = sortperm(edgeparam, rev=true)
+  for i = 1:cub.numedge
+    for edge = 1:6
+      perm[permptr + (edge-1)*(d-1) + i] = ptr + (edgeperm[i]-1)*12 + 2*edge 
+      perm[permptr + edge*(d-1) - i + 1] = ptr + (edgeperm[i]-1)*12 + 2*edge - 1
+    end
+  end
+  ptr += 12*cub.numedge
+  permptr += 6*(d-1)
+  
+  # Face nodes; the following would need to change for d > 4
+  numface = div((d-1)*(d-2),2)
+  fc = 0
+  if cub.facecentroid
+    # assume these are first in the face ordering
+    for face = 1:4
+      perm[permptr + (face-1)*numface + 1] = ptr + face
+    end
+    ptr += 4
+    fc = 1
+  end
+  
+  for i = 1:cub.numfaceS21
+    for face = 1:4
+      for j = 1:3
+        # the + fc after permptr is for the face centroid
+        perm[permptr + fc + (face-1)*numface + 3*(i-1) + j] = ptr + j
+      end
+      ptr += 3
+    end
+  end
+  permptr += 4*numface
+  
+  # Finally the internal nodes; these have the same ordering as TetSymCub
+  perm[permptr+1:end] = [ptr+1:cub.numnodes;]
+  return perm
 end

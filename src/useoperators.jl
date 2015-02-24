@@ -26,7 +26,7 @@ function calcnodes{T}(sbp::TriSBP{T}, vtx::Array{T})
 end
 
 function calcnodes{T}(sbp::TetSBP{T}, vtx::Array{T})
-  perm = [1:sbp.numnodes] #SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
+  perm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
   x = zeros(T, (3, sbp.numnodes))
   x[1,:], x[2,:], x[3,:] = SymCubatures.calcnodes(sbp.cub, vtx)
   return x[:,perm]

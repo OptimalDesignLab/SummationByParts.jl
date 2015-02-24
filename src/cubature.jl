@@ -247,7 +247,7 @@ function tetcubature(q::Int, T=Float64; tol=eps(T(10)))
                                     0.005696088152131421,0.02424296133613638,
                                     0.08113091859465722,0.060490542374353584,
                                     0.10344930834722398])
-    SymCubatures.setparams!(cub, T[0.7426272531851917,0.45008848310824695,
+    SymCubatures.setparams!(cub, T[0.25737274681480826,0.45008848310824695,
                                    0.28418700275470193,0.21742832019555544])
   else
     error("polynomial degree must be 1, 3, 5, or 7 (presently)\n")
