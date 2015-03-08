@@ -60,7 +60,8 @@ operator sbp.
 * `res`: where the result of applying Q[:,:,di] to u is stored
 
 """->
-function applyQ!{T}(sbp::SBPOperator{T}, di::Int, u::Array{T,2}, res::Array{T,2})
+function applyQ!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,2},
+                    res::AbstractArray{T,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -73,7 +74,8 @@ function applyQ!{T}(sbp::SBPOperator{T}, di::Int, u::Array{T,2}, res::Array{T,2}
   end
 end
 
-function applyQ!{T}(sbp::SBPOperator{T}, di::Int, u::Array{T,3}, res::Array{T,3})
+function applyQ!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,3},
+                    res::AbstractArray{T,3})
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -117,7 +119,8 @@ operator sbp.
 * `res`: where the result of applying inv(H)*Q[:,:,di] to u is stored
 
 """->
-function applyD!{T}(sbp::SBPOperator{T}, di::Int, u::Array{T,2}, res::Array{T,2})
+function applyD!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,2},
+                    res::AbstractArray{T,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -132,7 +135,8 @@ function applyD!{T}(sbp::SBPOperator{T}, di::Int, u::Array{T,2}, res::Array{T,2}
   end
 end
 
-function applyD!{T}(sbp::SBPOperator{T}, di::Int, u::Array{T,3}, res::Array{T,3})
+function applyD!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,3},
+                    res::AbstractArray{T,3})
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -179,7 +183,8 @@ operator sbp.
 * `res`: where the result of applying H to u is stored
 
 """->
-function applyH!{T}(sbp::SBPOperator{T}, u::Array{T,2}, res::Array{T,2})
+function applyH!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,2},
+                    res::AbstractArray{T,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   for elem = 1:size(u,2)
@@ -189,7 +194,8 @@ function applyH!{T}(sbp::SBPOperator{T}, u::Array{T,2}, res::Array{T,2})
   end
 end
 
-function applyH!{T}(sbp::SBPOperator{T}, u::Array{T,3}, res::Array{T,3})
+function applyH!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,3},
+                    res::AbstractArray{T,3})
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   for elem = 1:size(u,3)
@@ -219,12 +225,12 @@ frame use the scaled Jacobian.
 **In/Outs**
 
 * `dxidx`: the scaled Jacobian of the mapping; 1st dim = ref coord, 2nd dim =
-  phys coord, 3rd dim = node, 3rd dim = elem.
-* `jac`: the determinant of the Jacobian
+  phys coord, 3rd dim = node, 3rd dim = elem
+* `jac`: the determinant of the Jacobian; 1st dim = node, 2nd dim = elem
 
 """->
-function mappingjacobian!{T}(sbp::TriSBP{T}, x::Array{T,3}, dxidx::Array{T,4},
-                             jac::Array{T,2})
+function mappingjacobian!{T}(sbp::TriSBP{T}, x::AbstractArray{T,3},
+                             dxidx::AbstractArray{T,4}, jac::AbstractArray{T,2})
   @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dxidx,3) )
   @assert( size(x,3) == size(dxidx,4) )
   @assert( size(x,1) == 2 && size(dxidx,1) == 2 && size(dxidx,2) == 2 )
@@ -249,10 +255,60 @@ function mappingjacobian!{T}(sbp::TriSBP{T}, x::Array{T,3}, dxidx::Array{T,4},
   # check for negative jac here?
 end
 
-function mappingjacobian!{T}(sbp::TetSBP{T}, x::Array{T,3}, dxidx::Array{T,4},
-                             jac::Array{T,2})
+function mappingjacobian!{T}(sbp::TetSBP{T}, x::AbstractArray{T,3},
+                             dxidx::AbstractArray{T,4}, jac::AbstractArray{T,2})
   @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dxidx,3) )
   @assert( size(x,3) == size(dxidx,4) )
   @assert( size(x,1) == 3 && size(dxidx,1) == 3 && size(dxidx,2) == 3 )
-  error("not implemented yet")
+  numelem = size(x,3)
+  dxdxi = zeros(T, (3,sbp.numnodes,numelem,3))
+  # calculate the derivative of the coordinates with respect to (xi,eta,zeta)
+  # using the SBP operator
+  for di = 1:3
+    applyD!(sbp, di, x, sub(dxdxi,:,:,:,di)) 
+  end
+  fill!(dxidx, zero(T))
+  # calculate the metrics: the outer loop calculates the derivatives of
+  # coordinates-times-coordinate-derivatives, for example, d/deta( z * d(y)/d
+  # zeta), and this contribution is added to the relevant metric.
+  for di = 1:3
+    it1 = mod(di,3)+1
+    it2 = mod(di+1,3)+1
+    for elem = 1:numelem
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          # the 0.5 factor in the SBP entry accounts for the averaging over the
+          # two possible analytical formulations
+          coeff = 0.5*sbp.Q[i,j,di]
+          # this second set of indices (di2, it21, it22) denote the x-, y-,
+          # z-coordinate indices, while the first set (di, it1, it2) denotes the xi-,
+          # eta-, zeta-indices
+          for di2 = 1:3
+            it21 = mod(di2,3)+1
+            it22 = mod(di2+1,3)+1
+            dxidx[it1,di2,i,elem] += 
+            coeff*(x[it22,j,elem]*dxdxi[it21,j,elem,it2] -
+                   x[it21,j,elem]*dxdxi[it22,j,elem,it2])            
+            dxidx[it2,di2,i,elem] += 
+            coeff*(x[it21,j,elem]*dxdxi[it22,j,elem,it1] -
+                   x[it22,j,elem]*dxdxi[it21,j,elem,it1])
+          end
+        end
+      end
+    end
+  end
+  # scale metrics by norm and calculate the determinant of the mapping
+  for elem = 1:numelem
+    for i = 1:sbp.numnodes
+      dxidx[:,:,i,elem] /= sbp.w[i]
+      jac[i,elem] = 1.0/(
+                         dxdxi[1,i,elem,1]*dxdxi[2,i,elem,2]*dxdxi[3,i,elem,3] +
+                         dxdxi[1,i,elem,2]*dxdxi[2,i,elem,3]*dxdxi[3,i,elem,1] +
+                         dxdxi[1,i,elem,3]*dxdxi[2,i,elem,1]*dxdxi[3,i,elem,2] -
+                         dxdxi[1,i,elem,1]*dxdxi[2,i,elem,3]*dxdxi[3,i,elem,2] -
+                         dxdxi[1,i,elem,2]*dxdxi[2,i,elem,1]*dxdxi[3,i,elem,3] -
+                         dxdxi[1,i,elem,3]*dxdxi[2,i,elem,2]*dxdxi[3,i,elem,1])
+    end
+  end
+  # check for negative jac here?
 end
