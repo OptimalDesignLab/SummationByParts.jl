@@ -215,6 +215,38 @@ function getnumboundarynodes{T}(cub::TetSymCub{T})
 end
 
 @doc """
+### SymCubatures.getnumfacetnodes
+
+Returns the number of nodes on an individual facet (i.e. side) of the element.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+
+**Outputs**
+
+* `numfacetnodes`: number of nodes on a facet
+
+"""->
+function getnumfacetnodes{T}(cub::TriSymCub{T})
+  numfacetnodes = 0
+  cub.vertices ? numfacetnodes += 2 : nothing
+  cub.midedges ? numfacetnodes += 1 : nothing
+  numfacetnodes += 2*cub.numedge
+  return numfacetnodes
+end
+
+function getnumfacetnodes{T}(cub::TetSymCub{T})
+  numfacetnodes = 0
+  cub.vertices ? numfacetnodes += 3 : nothing
+  cub.midedges ? numfacetnodes += 3 : nothing
+  cub.facecentroid ? numfacetnodes += 1 : nothing
+  numfacetnodes += 6*cub.numedge
+  numfacetnodes += 3*cub.numfaceS21
+  return numfacetnodes
+end
+
+@doc """
 ### SymCubatures.getbndryindices
 
 Returns the indices of the nodes that lie on the boundaries.
@@ -231,10 +263,7 @@ Returns the indices of the nodes that lie on the boundaries.
 """->
 function getbndryindices{T}(cub::TriSymCub{T})
   # get the number of nodes on one edge
-  numedge = 0
-  cub.vertices ? numedge += 2 : nothing
-  cub.midedges ? numedge += 1 : nothing
-  numedge += 2*cub.numedge
+  numedge = getnumfacetnodes(cub)
   bndryindices = zeros(Int, (numedge,3) )
   ptr = 0
   idxptr = 0
@@ -263,12 +292,7 @@ end
 
 function getbndryindices{T}(cub::TetSymCub{T})
   # get the number of nodes on one face
-  numface = 0
-  cub.vertices ? numface += 3 : nothing
-  cub.midedges ? numface += 3 : nothing
-  cub.facecentroid ? numface += 1 : nothing
-  numface += 6*cub.numedge
-  numface += 3*cub.numfaceS21
+  numface = getnumfacetnodes(cub)
   bndryindices = zeros(Int, (numface,4) )
   ptr = 0
   idxptr = 0

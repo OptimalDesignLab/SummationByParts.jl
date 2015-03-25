@@ -252,12 +252,12 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   end
   
   context("Testing SummationByParts.buildoperators (TriSymCub method)") do
-    for d = 1:3
+    for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
       w, Qx, Qy = SummationByParts.buildoperators(cub, vtx, d)
       Dx = diagm(1./w)*Qx
       Dy = diagm(1./w)*Qy
-      x, y = SymCubatures.calcnodes(cub, vtx)      
+      x, y = SymCubatures.calcnodes(cub, vtx)  
       for r = 0:d
         for j = 0:r
           i = r-j

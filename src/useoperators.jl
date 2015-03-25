@@ -33,7 +33,7 @@ function calcnodes{T}(sbp::TetSBP{T}, vtx::Array{T})
 end
 
 @doc """
-### SummationByParts.applyQ!
+### SummationByParts.weakdifferentiate!
 
 Applies the SBP Q matrix operator to data in `u` and stores the result in `res`.
 Different methods are available depending on the rank of `u`:
@@ -60,8 +60,8 @@ operator sbp.
 * `res`: where the result of applying Q[:,:,di] to u is stored
 
 """->
-function applyQ!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,2},
-                    res::AbstractArray{T,2})
+function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
+                               u::AbstractArray{T,2}, res::AbstractArray{T,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -74,8 +74,8 @@ function applyQ!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,2},
   end
 end
 
-function applyQ!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,3},
-                    res::AbstractArray{T,3})
+function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
+                               u::AbstractArray{T,3}, res::AbstractArray{T,3})
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -91,7 +91,7 @@ function applyQ!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,3},
 end
 
 @doc """
-### SummationByParts.applyD!
+### SummationByParts.differentiate!
 
 Applies the SBP differentiation matrix operator, D, to data in `u` and stores
 the result in `res`.  Different methods are available depending on the rank of
@@ -119,8 +119,8 @@ operator sbp.
 * `res`: where the result of applying inv(H)*Q[:,:,di] to u is stored
 
 """->
-function applyD!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,2},
-                    res::AbstractArray{T,2})
+function differentiate!{T}(sbp::SBPOperator{T}, di::Int,
+                                u::AbstractArray{T,2}, res::AbstractArray{T,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -135,8 +135,8 @@ function applyD!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,2},
   end
 end
 
-function applyD!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,3},
-                    res::AbstractArray{T,3})
+function differentiate!{T}(sbp::SBPOperator{T}, di::Int,
+                                u::AbstractArray{T,3}, res::AbstractArray{T,3})
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -156,7 +156,7 @@ function applyD!{T}(sbp::SBPOperator{T}, di::Int, u::AbstractArray{T,3},
 end
 
 @doc """
-### SummationByParts.applyH!
+### SummationByParts.volumeintegrate!
 
 Applies the SBP mass matrix operator, H, to data in `u` and stores
 the result in `res`.  Different methods are available depending on the rank of
@@ -183,8 +183,8 @@ operator sbp.
 * `res`: where the result of applying H to u is stored
 
 """->
-function applyH!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,2},
-                    res::AbstractArray{T,2})
+function volumeintegrate!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,2},
+                            res::AbstractArray{T,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   for elem = 1:size(u,2)
@@ -194,8 +194,8 @@ function applyH!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,2},
   end
 end
 
-function applyH!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,3},
-                    res::AbstractArray{T,3})
+function volumeintegrate!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,3},
+                            res::AbstractArray{T,3})
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   for elem = 1:size(u,3)
@@ -237,12 +237,12 @@ function mappingjacobian!{T}(sbp::TriSBP{T}, x::AbstractArray{T,3},
   fill!(dxidx, zero(T))
   dxdxi = zeros(T, (2,sbp.numnodes,size(x,3)))
   # compute d(x,y)/dxi and set deta/dx and deta/dy
-  applyD!(sbp, 1, x, dxdxi)
+  differentiate!(sbp, 1, x, dxdxi)
   dxidx[2,1,:,:] = -dxdxi[2,:,:]
   dxidx[2,2,:,:] = dxdxi[1,:,:]
   # compute d(x,y)/deta and set dxi/dx and dxi/dy
   fill!(dxdxi, zero(T))
-  applyD!(sbp, 2, x, dxdxi)
+  differentiate!(sbp, 2, x, dxdxi)
   dxidx[1,2,:,:] = -dxdxi[1,:,:]
   dxidx[1,1,:,:] = dxdxi[2,:,:]
   # compute the determinant of the Jacobian
@@ -265,7 +265,7 @@ function mappingjacobian!{T}(sbp::TetSBP{T}, x::AbstractArray{T,3},
   # calculate the derivative of the coordinates with respect to (xi,eta,zeta)
   # using the SBP operator
   for di = 1:3
-    applyD!(sbp, di, x, sub(dxdxi,:,:,:,di)) 
+    differentiate!(sbp, di, x, sub(dxdxi,:,:,:,di)) 
   end
   fill!(dxidx, zero(T))
   # calculate the metrics: the outer loop calculates the derivatives of
