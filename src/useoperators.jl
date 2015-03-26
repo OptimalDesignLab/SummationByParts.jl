@@ -1,6 +1,26 @@
 # This file gathers together functions related to using the SBP operators
 
 @doc """
+### SBP.Boundary
+
+Used to identify boundary faces in a finite-element grid.
+
+**Fields**
+
+* `element` : index of the element to which the boundary face belongs
+* `face` : the face index of the boundary (local index to the element)
+
+**Example**
+
+To mark face 2 of element 7 to be a boundary face, use `Boundary(7,2)`
+
+"""->
+immutable Boundary
+  element::UInt64
+  face::UInt8
+end
+
+@doc """
 ### SummationByParts.calcnodes
 
 This function returns the node coordinates for an SBP operator.  The nodes are
@@ -35,8 +55,8 @@ end
 @doc """
 ### SummationByParts.weakdifferentiate!
 
-Applies the SBP Q matrix operator to data in `u` and stores the result in `res`.
-Different methods are available depending on the rank of `u`:
+Applies the SBP stiffness matrix to data in `u` and **adds** the result to
+`res`.  Different methods are available depending on the rank of `u`:
 
 * For *scalar* fields, it is assumed that `u` is a rank-2 array, with the first
 dimension for the local-node index, and the second dimension for the element
@@ -93,8 +113,8 @@ end
 @doc """
 ### SummationByParts.differentiate!
 
-Applies the SBP differentiation matrix operator, D, to data in `u` and stores
-the result in `res`.  Different methods are available depending on the rank of
+Applies the SBP differentiation matrix operator, D, to data in `u` and **adds**
+the result to `res`.  Different methods are available depending on the rank of
 `u`:
 
 * For *scalar* fields, it is assumed that `u` is a rank-2 array, with the first
@@ -208,11 +228,83 @@ function volumeintegrate!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,3},
 end
 
 @doc """
+### SummationByParts.boundaryintegrate!
+
+Integrates a numerical flux over a boundary using appropriate mass matrices
+defined on the element faces.  Different methods are available depending on the
+rank of `u`:
+
+* For *scalar* fields, it is assumed that `u` is a rank-2 array, with the first
+dimension for the local-node index, and the second dimension for the element
+index.
+* For *vector* fields, `u` is a rank-3 array, with the first dimension for the
+index of the vector field, the second dimension for the local-node index, and
+the third dimension for the element index.
+
+Naturally, the number of entries in the dimension of `u` (and `res`)
+corresponding to the nodes must be equal to the number of nodes in the SBP
+operator sbp.
+
+**Inputs**
+
+* `sbp`: an SBP operator type
+* `bndryfaces`: list of boundary faces stored as an array of `Boundary`s
+* `u`: the array of data that the boundary integral depends on
+* `dξdx`: Jacobian of the element mapping (as output from `mappingjacobian!`)
+* `bndryflux`: function to compute the numerical flux over the boundary
+
+**In/Outs**
+
+* `res`: where the result of the integration is stored
+
+"""->
+function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
+                               u::AbstractArray{T,2}, dξdx::AbstractArray{T,4},
+                               bndryflux::Function, res::AbstractArray{T,2})
+  @assert( sbp.numnodes == size(u,1) == size(res,1) == size(dξdx,3) )
+  @assert( size(dξdx,4) == size(u,2) == size(res,2) )
+  @assert( length(u) == length(res) )
+  for bndry in bndryfaces
+    for i = 1:sbp.numfacenodes
+      # j = element-local index for ith node on face 
+      j = sbp.facenodes[i, bndry.face]
+      flux = bndryflux(u[j,bndry.element], dξdx[:,:,j,bndry.element],
+                       sbp.facenormal[:,bndry.face])
+      for i2 = 1:sbp.numfacenodes
+        j2 = sbp.facenodes[i2, bndry.face]
+        res[j2,bndry.element] += sbp.wface[i2,i]*flux
+      end
+    end
+  end
+end
+
+function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
+                               u::AbstractArray{T,3}, dξdx::AbstractArray{T,4},
+                               bndryflux::Function, res::AbstractArray{T,3})
+  @assert( sbp.numnodes == size(u,2) == size(res,2) == size(dξdx,3) )
+  @assert( size(dξdx,4) == size(u,3) == size(res,3) )
+  @assert( length(u) == length(res) )
+  flux = zeros(T, (size(u,1)))
+  for bndry in bndryfaces
+    for i = 1:sbp.numfacenodes
+      # j = element-local index for ith node on face 
+      j = sbp.facenodes[i, bndry.face]
+      flux = bndryflux(u[:,j,bndry.element], dξdx[:,:,j,bndry.element],
+                       sbp.facenormal[:,bndry.face])
+      for i2 = 1:sbp.numfacenodes
+        j2 = sbp.facenodes[i2, bndry.face]
+        res[:,j2,bndry.element] += sbp.wface[i2,i]*flux
+      end
+    end
+  end
+end
+
+@doc """
 ### SummationByParts.mappingjacobian!
 
 Evaluates the (scaled) Jacobian of the mapping from reference coordinates to
 physical coordinates, as well as the determinant of the Jacobian.  The values
-returned in dxidx are scaled by the determinant, so they have the same units as
+returned in dξdx are scaled by the determinant, so they have the same units as
 the boundary measure (i.e. length in 2D, or length^2 in 3D).  This scaling is
 adopted, because conservation laws written in conservative form in the reference
 frame use the scaled Jacobian.
@@ -224,50 +316,50 @@ frame use the scaled Jacobian.
 
 **In/Outs**
 
-* `dxidx`: the scaled Jacobian of the mapping; 1st dim = ref coord, 2nd dim =
+* `dξdx`: the scaled Jacobian of the mapping; 1st dim = ref coord, 2nd dim =
   phys coord, 3rd dim = node, 3rd dim = elem
 * `jac`: the determinant of the Jacobian; 1st dim = node, 2nd dim = elem
 
 """->
 function mappingjacobian!{T}(sbp::TriSBP{T}, x::AbstractArray{T,3},
-                             dxidx::AbstractArray{T,4}, jac::AbstractArray{T,2})
-  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dxidx,3) )
-  @assert( size(x,3) == size(dxidx,4) )
-  @assert( size(x,1) == 2 && size(dxidx,1) == 2 && size(dxidx,2) == 2 )
-  fill!(dxidx, zero(T))
-  dxdxi = zeros(T, (2,sbp.numnodes,size(x,3)))
+                             dξdx::AbstractArray{T,4}, jac::AbstractArray{T,2})
+  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
+  @assert( size(x,3) == size(dξdx,4) )
+  @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
+  fill!(dξdx, zero(T))
+  dxdξ = zeros(T, (2,sbp.numnodes,size(x,3)))
   # compute d(x,y)/dxi and set deta/dx and deta/dy
-  differentiate!(sbp, 1, x, dxdxi)
-  dxidx[2,1,:,:] = -dxdxi[2,:,:]
-  dxidx[2,2,:,:] = dxdxi[1,:,:]
+  differentiate!(sbp, 1, x, dxdξ)
+  dξdx[2,1,:,:] = -dxdξ[2,:,:]
+  dξdx[2,2,:,:] = dxdξ[1,:,:]
   # compute d(x,y)/deta and set dxi/dx and dxi/dy
-  fill!(dxdxi, zero(T))
-  differentiate!(sbp, 2, x, dxdxi)
-  dxidx[1,2,:,:] = -dxdxi[1,:,:]
-  dxidx[1,1,:,:] = dxdxi[2,:,:]
+  fill!(dxdξ, zero(T))
+  differentiate!(sbp, 2, x, dxdξ)
+  dξdx[1,2,:,:] = -dxdξ[1,:,:]
+  dξdx[1,1,:,:] = dxdξ[2,:,:]
   # compute the determinant of the Jacobian
   for elem = 1:size(x,3)
     for i = 1:sbp.numnodes
-      jac[i,elem] = dxidx[1,1,i,elem]*dxidx[2,2,i,elem] - 
-      dxidx[1,2,i,elem]*dxidx[2,1,i,elem]
+      jac[i,elem] = dξdx[1,1,i,elem]*dξdx[2,2,i,elem] - 
+      dξdx[1,2,i,elem]*dξdx[2,1,i,elem]
     end
   end
   # check for negative jac here?
 end
 
 function mappingjacobian!{T}(sbp::TetSBP{T}, x::AbstractArray{T,3},
-                             dxidx::AbstractArray{T,4}, jac::AbstractArray{T,2})
-  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dxidx,3) )
-  @assert( size(x,3) == size(dxidx,4) )
-  @assert( size(x,1) == 3 && size(dxidx,1) == 3 && size(dxidx,2) == 3 )
+                             dξdx::AbstractArray{T,4}, jac::AbstractArray{T,2})
+  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
+  @assert( size(x,3) == size(dξdx,4) )
+  @assert( size(x,1) == 3 && size(dξdx,1) == 3 && size(dξdx,2) == 3 )
   numelem = size(x,3)
-  dxdxi = zeros(T, (3,sbp.numnodes,numelem,3))
+  dxdξ = zeros(T, (3,sbp.numnodes,numelem,3))
   # calculate the derivative of the coordinates with respect to (xi,eta,zeta)
   # using the SBP operator
   for di = 1:3
-    differentiate!(sbp, di, x, sub(dxdxi,:,:,:,di)) 
+    differentiate!(sbp, di, x, sub(dxdξ,:,:,:,di)) 
   end
-  fill!(dxidx, zero(T))
+  fill!(dξdx, zero(T))
   # calculate the metrics: the outer loop calculates the derivatives of
   # coordinates-times-coordinate-derivatives, for example, d/deta( z * d(y)/d
   # zeta), and this contribution is added to the relevant metric.
@@ -286,12 +378,12 @@ function mappingjacobian!{T}(sbp::TetSBP{T}, x::AbstractArray{T,3},
           for di2 = 1:3
             it21 = mod(di2,3)+1
             it22 = mod(di2+1,3)+1
-            dxidx[it1,di2,i,elem] += 
-            coeff*(x[it22,j,elem]*dxdxi[it21,j,elem,it2] -
-                   x[it21,j,elem]*dxdxi[it22,j,elem,it2])            
-            dxidx[it2,di2,i,elem] += 
-            coeff*(x[it21,j,elem]*dxdxi[it22,j,elem,it1] -
-                   x[it22,j,elem]*dxdxi[it21,j,elem,it1])
+            dξdx[it1,di2,i,elem] += 
+            coeff*(x[it22,j,elem]*dxdξ[it21,j,elem,it2] -
+                   x[it21,j,elem]*dxdξ[it22,j,elem,it2])            
+            dξdx[it2,di2,i,elem] += 
+            coeff*(x[it21,j,elem]*dxdξ[it22,j,elem,it1] -
+                   x[it22,j,elem]*dxdξ[it21,j,elem,it1])
           end
         end
       end
@@ -300,14 +392,14 @@ function mappingjacobian!{T}(sbp::TetSBP{T}, x::AbstractArray{T,3},
   # scale metrics by norm and calculate the determinant of the mapping
   for elem = 1:numelem
     for i = 1:sbp.numnodes
-      dxidx[:,:,i,elem] /= sbp.w[i]
+      dξdx[:,:,i,elem] /= sbp.w[i]
       jac[i,elem] = 1.0/(
-                         dxdxi[1,i,elem,1]*dxdxi[2,i,elem,2]*dxdxi[3,i,elem,3] +
-                         dxdxi[1,i,elem,2]*dxdxi[2,i,elem,3]*dxdxi[3,i,elem,1] +
-                         dxdxi[1,i,elem,3]*dxdxi[2,i,elem,1]*dxdxi[3,i,elem,2] -
-                         dxdxi[1,i,elem,1]*dxdxi[2,i,elem,3]*dxdxi[3,i,elem,2] -
-                         dxdxi[1,i,elem,2]*dxdxi[2,i,elem,1]*dxdxi[3,i,elem,3] -
-                         dxdxi[1,i,elem,3]*dxdxi[2,i,elem,2]*dxdxi[3,i,elem,1])
+                         dxdξ[1,i,elem,1]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,3] +
+                         dxdξ[1,i,elem,2]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,1] +
+                         dxdξ[1,i,elem,3]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,2] -
+                         dxdξ[1,i,elem,1]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,2] -
+                         dxdξ[1,i,elem,2]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,3] -
+                         dxdξ[1,i,elem,3]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,1])
     end
   end
   # check for negative jac here?

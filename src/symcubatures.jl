@@ -215,9 +215,9 @@ function getnumboundarynodes{T}(cub::TetSymCub{T})
 end
 
 @doc """
-### SymCubatures.getnumfacetnodes
+### SymCubatures.getnumfacenodes
 
-Returns the number of nodes on an individual facet (i.e. side) of the element.
+Returns the number of nodes on an individual face (i.e. side) of the element.
 
 **Inputs**
 
@@ -225,25 +225,25 @@ Returns the number of nodes on an individual facet (i.e. side) of the element.
 
 **Outputs**
 
-* `numfacetnodes`: number of nodes on a facet
+* `numfacenodes`: number of nodes on a face
 
 """->
-function getnumfacetnodes{T}(cub::TriSymCub{T})
-  numfacetnodes = 0
-  cub.vertices ? numfacetnodes += 2 : nothing
-  cub.midedges ? numfacetnodes += 1 : nothing
-  numfacetnodes += 2*cub.numedge
-  return numfacetnodes
+function getnumfacenodes{T}(cub::TriSymCub{T})
+  numfacenodes = 0
+  cub.vertices ? numfacenodes += 2 : nothing
+  cub.midedges ? numfacenodes += 1 : nothing
+  numfacenodes += 2*cub.numedge
+  return numfacenodes
 end
 
-function getnumfacetnodes{T}(cub::TetSymCub{T})
-  numfacetnodes = 0
-  cub.vertices ? numfacetnodes += 3 : nothing
-  cub.midedges ? numfacetnodes += 3 : nothing
-  cub.facecentroid ? numfacetnodes += 1 : nothing
-  numfacetnodes += 6*cub.numedge
-  numfacetnodes += 3*cub.numfaceS21
-  return numfacetnodes
+function getnumfacenodes{T}(cub::TetSymCub{T})
+  numfacenodes = 0
+  cub.vertices ? numfacenodes += 3 : nothing
+  cub.midedges ? numfacenodes += 3 : nothing
+  cub.facecentroid ? numfacenodes += 1 : nothing
+  numfacenodes += 6*cub.numedge
+  numfacenodes += 3*cub.numfaceS21
+  return numfacenodes
 end
 
 @doc """
@@ -263,7 +263,7 @@ Returns the indices of the nodes that lie on the boundaries.
 """->
 function getbndryindices{T}(cub::TriSymCub{T})
   # get the number of nodes on one edge
-  numedge = getnumfacetnodes(cub)
+  numedge = getnumfacenodes(cub)
   bndryindices = zeros(Int, (numedge,3) )
   ptr = 0
   idxptr = 0
@@ -292,7 +292,7 @@ end
 
 function getbndryindices{T}(cub::TetSymCub{T})
   # get the number of nodes on one face
-  numface = getnumfacetnodes(cub)
+  numface = getnumfacenodes(cub)
   bndryindices = zeros(Int, (numface,4) )
   ptr = 0
   idxptr = 0

@@ -97,7 +97,7 @@ end
 Finds and returns the element mass matrix, `w`, as well as the symmetric part of
 the SBP operators, `Ex`, `Ey` (`Ez`).  The latter operators coorespond to
 boundary integrals in the divergence theorem, and are related to the mass
-matrices of the boundary facets.
+matrices of the boundary faces.
 
 **Inputs**
 
