@@ -92,6 +92,119 @@ function bndrynodalexpansion{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
 end
 
 @doc """
+### SummationByParts.nodalexpansion
+
+Computes the transformation matrix that maps the Proriol orthogonal polynomials
+to polynomials that are nodal on the cubature nodes, i.e. if C is the
+transformation matrix and P is the matrix of Proriol polys, with the polynomials
+listed by row, then P*C = I, when restricted to the nodes.  This function can be
+used to construct the operators in the spectral-element method of Giraldo and
+Tayler.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+* `vtx`: vertices of the right simplex
+* `d`: maximum total degree on the edges
+* `e`: maximum degree of bubble functions on the interior
+
+**Outputs**
+
+* `C`: transformation matrix
+
+"""->
+function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
+  numbndry = SymCubatures.getnumboundarynodes(cub)
+  numbub = cub.numnodes - numbndry
+  N = convert(Int64, (d+1)*(d+2)/2)
+
+  # Step 1: compute the degree d expansion for the edge nodes.  Note that
+  # (xaug[1:N],yaug[1:N]) is composed of the boundary nodes + interior nodes that
+  # make Vandermonde unisolvent.  The last numint nodes in (xaug,yaug) are the
+  # actual interior nodes.
+  xaug = zeros(T, N+numbub)
+  yaug = zeros(T, N+numbub)
+  x, y = SymCubatures.calcnodes(cub, vtx)
+  xaug[1:numbndry] = x[1:numbndry]
+  yaug[1:numbndry] = y[1:numbndry]
+  ptr = numbndry+1
+  # set uniform nodes on interior to make Vandermonde unisolvent
+  for j = 1:(d-2)
+    eta = 2.*j/d-1
+    for i = 1:(d-j-1)
+      xi = 2.*i/d-1
+      xaug[ptr] = xi
+      yaug[ptr] = eta
+      ptr += 1
+    end
+  end
+  # these are the actual interior nodes used for the cubature
+  xaug[N+1:end] = x[numbndry+1:end]
+  yaug[N+1:end] = y[numbndry+1:end]
+
+  Vbndry = zeros(T, (N, N))
+  Pbub = zeros(T, (numbub, N))
+  ptr = 1
+  for r = 0:d
+    for j = 0:r
+      i = r-j
+      P = OrthoPoly.proriolpoly(xaug, yaug, i, j)
+      Vbndry[:,ptr] = P[1:N]
+      Pbub[:,ptr] = P[N+1:end]
+      ptr += 1
+    end
+  end
+
+  # Step 2: compute error in boundary basis at interior nodes
+  invVbndry = inv(Vbndry)
+  Perr = Pbub*invVbndry
+
+  # Step 3: construct an augmented set of nodes that will be used to correct the
+  # boundary basis expansion and create the interior basis expansion
+  Naug = convert(Int, (e+1)*(e+2)/2)
+  xaug = zeros(T, (Naug) )
+  yaug = zeros(T, (Naug) )
+  xaug[1:numbub] = x[numbndry+1:end]
+  yaug[1:numbub] = y[numbndry+1:end]
+  ptr = numbub+1
+  for j = 0:e-1
+    xi = 2.*j/e-1
+    # bottom side
+    xaug[ptr] = xi
+    yaug[ptr] = -1.0
+    ptr += 1
+    # left side
+    xaug[ptr] = -1.0
+    yaug[ptr] = -xi
+    ptr += 1
+    # hypotenuse
+    xaug[ptr] = -xi
+    yaug[ptr] = xi
+    ptr += 1
+  end
+  
+  # Step 4: find the boundary corrections and interior basis expansion
+  Vbub = zeros(T, (Naug, Naug) )
+  ptr = 1
+  for r = 0:e
+    for j = 0:r
+      i = r-j
+      Vbub[:,ptr] = OrthoPoly.proriolpoly(xaug, yaug, i, j)
+      ptr += 1
+    end
+  end
+  invVbub = inv(Vbub)
+  C = zeros(T, (Naug, cub.numnodes))
+  C[1:N,1:N] = invVbndry
+  C[:,numbndry+1:end] += invVbub[:,1:numbub]
+  # corrections 
+  for i = 1:N
+    C[:,i] -= invVbub[:,1:numbub]*Perr[:,i]
+  end
+  return C
+end
+
+@doc """
 ### SummationByParts.boundaryoperators
 
 Finds and returns the element mass matrix, `w`, as well as the symmetric part of

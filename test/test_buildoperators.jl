@@ -46,6 +46,27 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.nodalexpansion (TriSymCub method)") do
+    # check that P*E produces the identity matrix at the nodes
+    e = [1;3;4;5]
+    for d = 1:4
+      cub, vtx = tricubature(2*d-1, Float64)
+      C = SummationByParts.nodalexpansion(cub, vtx, d, e[d])
+      x, y = SymCubatures.calcnodes(cub, vtx)
+      N = convert(Int, (e[d]+1)*(e[d]+2)/2 )
+      P = zeros(cub.numnodes, N)
+      ptr = 1
+      for r = 0:e[d]
+        for j = 0:r
+          i = r-j
+          P[:,ptr] = OrthoPoly.proriolpoly(x, y, i, j)
+          ptr += 1
+        end
+      end
+      @fact P*C => roughly(eye(cub.numnodes), atol=1e-14)
+    end
+  end
+
   context("Testing SummationByParts.boundaryoperators (TriSymCub method)") do
     # check Ex, Ey by comparing with appropriate integral of divergence
     for d = 1:4

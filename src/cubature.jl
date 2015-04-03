@@ -7,7 +7,7 @@ using ..SymCubatures
 export tricubature, tetcubature
 
 @doc """
-### Cubature.cubatureresidual{TetSymCub{T}}
+### Cubature.cubatureresidual
 
 This method computes the residuals, `F`, between a cubature, defined by `cub`,
 and the true value of an integral.  Each residual corresponds with an orthogonal
