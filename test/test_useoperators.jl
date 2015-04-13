@@ -194,13 +194,13 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       @fact dξdx[1,2,:,1] => roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
       @fact dξdx[2,2,:,1] => roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
       @fact dξdx[2,1,:,1] => roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
-      @fact jac[:,1] => roughly(0.25*ones(sbp.numnodes), atol=1e-13)
+      @fact jac[:,1] => roughly(4.0*ones(sbp.numnodes), atol=1e-13)
       # verify on element 2
       @fact dξdx[1,1,:,2] => roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
       @fact dξdx[1,2,:,2] => roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
       @fact dξdx[2,2,:,2] => roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
       @fact dξdx[2,1,:,2] => roughly(-0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact jac[:,2] => roughly(0.25*ones(sbp.numnodes), atol=1e-13)
+      @fact jac[:,2] => roughly(4.0*ones(sbp.numnodes), atol=1e-13)
     end
   end
   

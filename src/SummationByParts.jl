@@ -51,7 +51,8 @@ type TriSBP{T} <: SBPOperator{T}
   wface::Array{T}
   Q::Array{T}
 
-  function TriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3])
+  function TriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
+                  bubble::Int=-1)
     @assert( degree >= 1 && degree <= 4 )
     cub, vtx = tricubature(2*degree-1, T)
     numnodes = cub.numnodes
@@ -60,8 +61,12 @@ type TriSBP{T} <: SBPOperator{T}
     wface, facenodes = boundarymassmatrix(cub, vtx, degree)
     facenormal = T[0 -1; 1 1; -1 0].'
     Q = zeros(T, (numnodes, numnodes, 2))
-    w, Q[:,:,1], Q[:,:,2] = SummationByParts.buildoperators(cub, vtx, degree)
-
+    if bubble < 0
+      w, Q[:,:,1], Q[:,:,2] = SummationByParts.buildoperators(cub, vtx, degree)
+    else
+      w, Q[:,:,1], Q[:,:,2] = SummationByParts.buildoperators(cub, vtx, degree,
+                                                              bubble)
+    end
     # reorder the nodes
     perm = SummationByParts.getnodepermutation(cub, degree)
     w = w[perm]

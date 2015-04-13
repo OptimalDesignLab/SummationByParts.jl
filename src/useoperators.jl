@@ -340,8 +340,8 @@ function mappingjacobian!{T}(sbp::TriSBP{T}, x::AbstractArray{T,3},
   # compute the determinant of the Jacobian
   for elem = 1:size(x,3)
     for i = 1:sbp.numnodes
-      jac[i,elem] = dξdx[1,1,i,elem]*dξdx[2,2,i,elem] - 
-      dξdx[1,2,i,elem]*dξdx[2,1,i,elem]
+      jac[i,elem] = 1.0/(dξdx[1,1,i,elem]*dξdx[2,2,i,elem] - 
+      dξdx[1,2,i,elem]*dξdx[2,1,i,elem])
     end
   end
   # check for negative jac here?

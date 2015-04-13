@@ -317,6 +317,27 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.buildoperators (spectral-element method)") do
+    e = [1;3;4;5]
+    for d = 1:4
+      cub, vtx = tricubature(2*d-1, Float64)
+      w, Qx, Qy = SummationByParts.buildoperators(cub, vtx, d, e[d])
+      Dx = diagm(1./w)*Qx
+      Dy = diagm(1./w)*Qy
+      x, y = SymCubatures.calcnodes(cub, vtx)
+      for r = 0:d
+        for j = 0:r
+          i = r-j
+          u = (x.^i).*(y.^j)
+          dudx = (i.*x.^max(0,i-1)).*(y.^j)
+          dudy = (x.^i).*(j.*y.^max(0,j-1))
+          @fact Dx*u => roughly(dudx, atol=1e-13)
+          @fact Dy*u => roughly(dudy, atol=1e-13)
+        end
+      end
+    end
+  end
+
   context("Testing SummationByParts.getnodepermutation (TriSymCub method)") do
     # check that vertices are first and edge nodes are ordered correctly
     for d = 1:4

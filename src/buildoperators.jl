@@ -579,6 +579,43 @@ function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
 end
 
 @doc """
+  
+**Note**: when a fifth input is included, it is interpreted as the degree of the
+  interior bubble functions, and the Q operators returned are the
+  spectral-element differentiation operators of Giraldo and Taylor
+
+"""->
+function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
+  w = SymCubatures.calcweights(cub)
+  N = convert(Int, (e+1)*(e+2)/2 )
+  # compute the derivatives of the ortho polys
+  P = zeros(T, (cub.numnodes, N) )
+  dPdx = zeros(P)
+  dPdy = zeros(P)
+  x, y = SymCubatures.calcnodes(cub, vtx)
+  ptr = 1
+  for r = 0:e
+    for j = 0:r
+      i = r-j
+      P[:,ptr] = OrthoPoly.proriolpoly(x, y, i, j)
+      dPdx[:,ptr], dPdy[:,ptr] = OrthoPoly.diffproriolpoly(x, y, i, j)
+      ptr += 1
+    end
+  end
+  C = SummationByParts.nodalexpansion(cub, vtx, d, e)
+  P *= C
+  dPdx *= C
+  dPdy *= C
+  # compute and return the operators
+  w = SymCubatures.calcweights(cub)
+  Qx = zeros(T, (cub.numnodes,cub.numnodes) )
+  Qy = zeros(Qx)
+  Qx = P.'*diagm(w)*dPdx
+  Qy = P.'*diagm(w)*dPdy
+  return w, Qx, Qy  
+end
+
+@doc """
 ### SummationByParts.getnodepermutation
 
 The node ordering produced by SymCubature is not convenient for mapping local to
