@@ -55,8 +55,9 @@ end
 @doc """
 ### SummationByParts.weakdifferentiate!
 
-Applies the SBP stiffness matrix to data in `u` and **adds** the result to
-`res`.  Different methods are available depending on the rank of `u`:
+Applies the SBP stiffness matrix (or its transpose) to data in `u` and **adds**
+the result to `res`.  Different methods are available depending on the rank of
+`u`:
 
 * For *scalar* fields, it is assumed that `u` is a rank-2 array, with the first
 dimension for the local-node index, and the second dimension for the element
@@ -74,6 +75,7 @@ operator sbp.
 * `sbp`: an SBP operator type
 * `di`: direction index of the operator that is desired (di=1 for Qx, etc)
 * `u`: the array that the operator is applied to
+* `trans` (optional): if true, the transpose operation is applied
 
 **In/Outs**
 
@@ -81,29 +83,53 @@ operator sbp.
 
 """->
 function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                               u::AbstractArray{T,2}, res::AbstractArray{T,2})
+                               u::AbstractArray{T,2}, res::AbstractArray{T,2};
+                               trans::Bool=false)
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
-  for elem = 1:size(u,2)
-    for i = 1:sbp.numnodes
-      for j = 1:sbp.numnodes
-        res[i,elem] += sbp.Q[i,j,di]*u[j,elem]
+  if trans # apply transposed Q
+    for elem = 1:size(u,2)
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          res[i,elem] += sbp.Q[j,i,di]*u[j,elem]
+        end
+      end
+    end
+  else # apply Q
+    for elem = 1:size(u,2)
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          res[i,elem] += sbp.Q[i,j,di]*u[j,elem]
+        end
       end
     end
   end
 end
 
 function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                               u::AbstractArray{T,3}, res::AbstractArray{T,3})
+                               u::AbstractArray{T,3}, res::AbstractArray{T,3};
+                               trans::Bool=false)
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
-  for elem = 1:size(u,3)
-    for i = 1:sbp.numnodes
-      for j = 1:sbp.numnodes
-        for field = 1:size(u,1)
-          res[field,i,elem] += sbp.Q[i,j,di]*u[field,j,elem]
+  if trans # apply transposed Q
+    for elem = 1:size(u,3)
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          for field = 1:size(u,1)
+            res[field,i,elem] += sbp.Q[j,i,di]*u[field,j,elem]
+          end
+        end
+      end
+    end
+  else # apply Q
+    for elem = 1:size(u,3)
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          for field = 1:size(u,1)
+            res[field,i,elem] += sbp.Q[i,j,di]*u[field,j,elem]
+          end
         end
       end
     end
