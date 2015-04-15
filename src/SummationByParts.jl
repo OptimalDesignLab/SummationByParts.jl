@@ -39,7 +39,7 @@ Defines diagonal-norm SBP first-derivative operators on a right-triangle.
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """->
-type TriSBP{T} <: SBPOperator{T}
+immutable TriSBP{T} <: SBPOperator{T}
   degree::Int
   numnodes::Int
   numbndry::Int
@@ -105,7 +105,7 @@ Defines diagonal-norm SBP first-derivative operators on a right-tetrahedron.
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """->
-type TetSBP{T} <: SBPOperator{T}
+immutable TetSBP{T} <: SBPOperator{T}
   degree::Int
   numnodes::Int
   numbndry::Int

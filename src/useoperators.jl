@@ -276,6 +276,7 @@ operator sbp.
 * `sbp`: an SBP operator type
 * `bndryfaces`: list of boundary faces stored as an array of `Boundary`s
 * `u`: the array of data that the boundary integral depends on
+* `x` (optional): Cartesian coordinates stored in (coord,node,element) format
 * `dξdx`: Jacobian of the element mapping (as output from `mappingjacobian!`)
 * `bndryflux`: function to compute the numerical flux over the boundary
 
@@ -317,6 +318,49 @@ function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
       j = sbp.facenodes[i, bndry.face]
       flux = bndryflux(u[:,j,bndry.element], dξdx[:,:,j,bndry.element],
                        sbp.facenormal[:,bndry.face])
+      for i2 = 1:sbp.numfacenodes
+        j2 = sbp.facenodes[i2, bndry.face]
+        res[:,j2,bndry.element] += sbp.wface[i2,i]*flux
+      end
+    end
+  end
+end
+
+function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
+                               u::AbstractArray{T,2}, x::AbstractArray{T,3},
+                               dξdx::AbstractArray{T,4}, bndryflux::Function,
+                               res::AbstractArray{T,2})
+  @assert( sbp.numnodes == size(u,1) == size(res,1) == size(dξdx,3) == size(x,2) )
+  @assert( size(dξdx,4) == size(u,2) == size(res,2) == size(x,3) )
+  @assert( length(u) == length(res) )
+  for bndry in bndryfaces
+    for i = 1:sbp.numfacenodes
+      # j = element-local index for ith node on face 
+      j = sbp.facenodes[i, bndry.face]
+      flux = bndryflux(u[j,bndry.element], x[:,j,bndry.element], 
+                       dξdx[:,:,j,bndry.element], sbp.facenormal[:,bndry.face])
+      for i2 = 1:sbp.numfacenodes
+        j2 = sbp.facenodes[i2, bndry.face]
+        res[j2,bndry.element] += sbp.wface[i2,i]*flux
+      end
+    end
+  end
+end
+
+function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
+                               u::AbstractArray{T,3}, x::AbstractArray{T,3},
+                               dξdx::AbstractArray{T,4}, bndryflux::Function,
+                               res::AbstractArray{T,3})
+  @assert( sbp.numnodes == size(u,2) == size(res,2) == size(dξdx,3) == size(x,2) )
+  @assert( size(dξdx,4) == size(u,3) == size(res,3) == size(x,3) )
+  @assert( length(u) == length(res) )
+  flux = zeros(T, (size(u,1)))
+  for bndry in bndryfaces
+    for i = 1:sbp.numfacenodes
+      # j = element-local index for ith node on face 
+      j = sbp.facenodes[i, bndry.face]
+      flux = bndryflux(u[:,j,bndry.element], x[:,j,bndry.element], 
+                       dξdx[:,:,j,bndry.element], sbp.facenormal[:,bndry.face])
       for i2 = 1:sbp.numfacenodes
         j2 = sbp.facenodes[i2, bndry.face]
         res[:,j2,bndry.element] += sbp.wface[i2,i]*flux
