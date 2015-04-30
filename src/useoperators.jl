@@ -1,7 +1,7 @@
 # This file gathers together functions related to using the SBP operators
 
 @doc """
-### SBP.Boundary
+### SummationByParts.Boundary
 
 Used to identify boundary faces in a finite-element grid.
 
@@ -18,6 +18,32 @@ To mark face 2 of element 7 to be a boundary face, use `Boundary(7,2)`
 immutable Boundary
   element::UInt64
   face::UInt8
+end
+
+@doc """
+### SummationByParts.Interface
+
+Used to identify interfaces between elements in a finite-element grid.
+
+**Fields**
+
+* `elementL` : index of the so-called left element in the pair
+* `elementR` : index of the so-called right element in the pair
+* `faceL` : the face index of the interface with respect to the left element
+* `faceR` : the face index of the interface with respect to the right element
+
+**Example**
+
+Consider an interface between elements 2 and 5.  Suppose the interface is on
+face 1 of element 2 and face 3 of element 5.  This can be indicated as
+`Interface(2,5,1,3)`
+
+"""->
+immutable Interface
+  elementL::UInt64
+  elementR::UInt64
+  faceL::UInt8
+  faceR::UInt8
 end
 
 @doc """

@@ -8,8 +8,9 @@ using .OrthoPoly
 using .SymCubatures
 using .Cubature
 
-export SBPOperator, TriSBP, TetSBP, Boundary, calcnodes, weakdifferentiate!,
-  differentiate!, volumeintegrate!, mappingjacobian!, boundaryintegrate!
+export SBPOperator, TriSBP, TetSBP, Boundary, Interface, calcnodes,
+  weakdifferentiate!, differentiate!, volumeintegrate!, mappingjacobian!,
+  boundaryintegrate!
 
 @doc """
 ### SBP.SBPOperator
