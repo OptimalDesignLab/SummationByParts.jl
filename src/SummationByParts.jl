@@ -9,8 +9,9 @@ using .SymCubatures
 using .Cubature
 
 export SBPOperator, TriSBP, TetSBP, Boundary, Interface, calcnodes,
-  weakdifferentiate!, differentiate!, volumeintegrate!, mappingjacobian!,
-  boundaryintegrate!
+  weakdifferentiate!, differentiate!, directionaldifferentiate, 
+  volumeintegrate!, mappingjacobian!, boundaryintegrate!,
+  edgestabilize!
 
 @doc """
 ### SBP.SBPOperator
@@ -77,7 +78,6 @@ immutable TriSBP{T} <: SBPOperator{T}
     for k = 1:3
       facenodes[:,k] = perminv[facenodes[:,k]]
     end
-
     # reorder the faces
     facenodes[:,:] = facenodes[:,faceorder]
     facenormal = facenormal[:,faceorder]

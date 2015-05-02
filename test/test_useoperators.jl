@@ -124,6 +124,78 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.directionaldifferentiate (TriSBP, scalar field method)") do
+    # build a single element grid, define u = x+y, and verify that Ddir = 2
+    for p = 1:4 
+      sbp = TriSBP{Float64}(degree=p)
+      x = zeros(Float64, (2,sbp.numnodes))
+      vtx = [-1. -1.; -1. 1.; 1. -1.]
+      x[:,:] = calcnodes(sbp, vtx)
+      u = ones(Float64, (sbp.numnodes))
+      u = squeeze(x[1,:] + x[2,:],1)
+      dir = [1.;1.]
+      for i = 1:sbp.numnodes
+        Ddir = directionaldifferentiate(sbp, dir, u, i)
+        @fact Ddir => roughly(2.0, atol=1e-13)
+      end
+    end
+  end
+
+  context("Testing SummationByParts.directionaldifferentiate (TetSBP, scalar field method)") do
+    # build a single element grid, define u = x+y+z, and verify that Ddir = 3.0
+    for p = 1:4 
+      sbp = TetSBP{Float64}(degree=p)
+      vtx = [-1. -1. -1.; 1. -1. -1.; -1. 1. -1.; -1. -1. 1.]
+      x = zeros(Float64, (3,sbp.numnodes))
+      x[:,:] = calcnodes(sbp, vtx)
+      u = ones(Float64, (sbp.numnodes))
+      u = squeeze(x[1,:] + x[2,:] + x[3,:],1)
+      dir = [1.;1.;1.]
+      for i = 1:sbp.numnodes
+        Ddir = directionaldifferentiate(sbp, dir, u, i)
+        @fact Ddir => roughly(3.0, atol=1e-13)
+      end
+    end
+  end
+
+  context("Testing SummationByParts.directionaldifferentiate (TriSBP, vector field method)") do
+    # build a single element grid, define u = x+y, and verify that Ddir = 2
+    for p = 1:4 
+      sbp = TriSBP{Float64}(degree=p)
+      x = zeros(Float64, (2,sbp.numnodes))
+      vtx = [-1. -1.; -1. 1.; 1. -1.]
+      x[:,:] = calcnodes(sbp, vtx)
+      u = ones(Float64, (2, sbp.numnodes))
+      u[1,:] = squeeze(x[1,:] + x[2,:],1)
+      u[2,:] = -u[1,:]
+      dir = [1.;1.]
+      for i = 1:sbp.numnodes
+        Ddir = directionaldifferentiate(sbp, dir, u, i)
+        @fact Ddir[1] => roughly(2.0, atol=1e-13)
+        @fact Ddir[2] => roughly(-2.0, atol=1e-13)
+      end
+    end
+  end
+
+  context("Testing SummationByParts.directionaldifferentiate (TetSBP, vector field method)") do
+    # build a single element grid, define u = x+y+z, and verify that Ddir = 3.0
+    for p = 1:4 
+      sbp = TetSBP{Float64}(degree=p)
+      vtx = [-1. -1. -1.; 1. -1. -1.; -1. 1. -1.; -1. -1. 1.]
+      x = zeros(Float64, (3,sbp.numnodes))
+      x[:,:] = calcnodes(sbp, vtx)
+      u = ones(Float64, (2, sbp.numnodes))
+      u[1,:] = squeeze(x[1,:] + x[2,:] + x[3,:],1)
+      u[2,:] = -u[1,:]
+      dir = [1.;1.;1.]
+      for i = 1:sbp.numnodes
+        Ddir = directionaldifferentiate(sbp, dir, u, i)
+        @fact Ddir[1] => roughly(3.0, atol=1e-13)
+        @fact Ddir[2] => roughly(-3.0, atol=1e-13)
+      end
+    end
+  end
+
   context("Testing SummationByParts.volumeintegrate! (TriSBP, scalar field method)") do
     # build a two element grid, and verify that ones*H*ones = vol
     for p = 1:4
@@ -452,6 +524,81 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
           end
         end
       end
+    end
+  end
+
+  context("Testing SummationByParts.edgestabilize! (TriSBP, scalar field method)") do
+    # build a two element grid, and verify that edgestabilize does nothing when
+    # given a linear field
+    function stabscale(u, dξdx, nrm)
+      return 1.0
+    end
+    for p = 1:4
+      sbp = TriSBP{Float64}(degree=p)
+      x = zeros(Float64, (2,sbp.numnodes,2))
+      vtx = [0. 0.; 1. 0.; 0. 1.]
+      x[:,:,1] = calcnodes(sbp, vtx)
+      vtx = [1. 0.; 1. 1.; 0. 1.]
+      x[:,:,2] = calcnodes(sbp, vtx)
+      dξdx = zeros(Float64, (2,2,sbp.numnodes,2))
+      jac = zeros(Float64, (sbp.numnodes,2))
+      mappingjacobian!(sbp, x, dξdx, jac)
+      α = zeros(dξdx)
+      for k = 1:2
+        for i = 1:sbp.numnodes
+          for di1 = 1:2
+            for di2 = 1:2
+              α[di1,di2,i,k] = (dξdx[di1,1,i,k].*dξdx[di2,1,i,k] + 
+                                dξdx[di1,2,i,k].*dξdx[di2,2,i,k])*jac[i,k]
+            end
+          end
+        end
+      end
+      ifaces = Array(Interface, 1)
+      ifaces[1] = Interface(1,2,2,3)
+      u = zeros(Float64, (sbp.numnodes,2))
+      u = squeeze(x[1,:,:] + x[2,:,:], 1)
+      res = zeros(u)
+      edgestabilize!(sbp, ifaces, u, x, dξdx, jac, α, stabscale, res)
+      @fact res => roughly(zeros(res), atol=1e-11)
+    end
+  end
+
+  context("Testing SummationByParts.edgestabilize! (TriSBP, vector field method)") do
+    # build a two element grid, and verify that edgestabilize does nothing when
+    # given a linear field
+    function stabscale(u, dξdx, nrm)
+      return 1.0
+    end
+    for p = 1:4
+      sbp = TriSBP{Float64}(degree=p)
+      x = zeros(Float64, (2,sbp.numnodes,2))
+      vtx = [0. 0.; 1. 0.; 0. 1.]
+      x[:,:,1] = calcnodes(sbp, vtx)
+      vtx = [1. 0.; 1. 1.; 0. 1.]
+      x[:,:,2] = calcnodes(sbp, vtx)
+      dξdx = zeros(Float64, (2,2,sbp.numnodes,2))
+      jac = zeros(Float64, (sbp.numnodes,2))
+      mappingjacobian!(sbp, x, dξdx, jac)
+      α = zeros(dξdx)
+      for k = 1:2
+        for i = 1:sbp.numnodes
+          for di1 = 1:2
+            for di2 = 1:2
+              α[di1,di2,i,k] = (dξdx[di1,1,i,k].*dξdx[di2,1,i,k] + 
+                                dξdx[di1,2,i,k].*dξdx[di2,2,i,k])*jac[i,k]
+            end
+          end
+        end
+      end
+      ifaces = Array(Interface, 1)
+      ifaces[1] = Interface(1,2,2,3)
+      u = zeros(Float64, (2,sbp.numnodes,2))
+      u[1,:,:] = x[1,:,:] + x[2,:,:]
+      u[2,:,:] = u[1,:,:]
+      res = zeros(u)
+      edgestabilize!(sbp, ifaces, u, x, dξdx, jac, α, stabscale, res)
+      @fact res => roughly(zeros(res), atol=1e-11)
     end
   end
 
