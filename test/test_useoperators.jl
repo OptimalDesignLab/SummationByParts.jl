@@ -370,6 +370,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
           elseif i != 0 && j != 0
             exact = 1/(j+1) + 1/(i+1)
           end
+          #println("i,j = ",i,",",j,": i+j = ",i+j)
           @fact sum(res) => roughly(exact, atol=1e-13)
         end
       end
@@ -425,6 +426,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
               j != 0 ? exact += 1/((i+1)*(k+1)) : nothing
               k != 0 ? exact += 1/((i+1)*(j+1)) : nothing
             end
+            #println("i,j,k = ",i,",",j,",",k," : i+j+k = ",i+j+k)
             @fact sum(res) => roughly(exact, atol=1e-13)
           end
         end
