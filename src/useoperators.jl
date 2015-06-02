@@ -84,6 +84,17 @@ This function assumes the element mapping is linear, i.e. edges are lines.
 
 * `x`: the node coordinates; 1st dimension is the coordinate, the second the node
 
+**Example**
+```
+  # define a third-order accurate SBP on triangles
+  sbp = TriSBP{Float64}(degree=2)
+  # build a simple 2-element grid on a square domain
+  x = zeros(Float64, (2,sbp.numnodes,2))
+  vtx = [0. 0.; 1. 0.; 0. 1.]
+  x[:,:,1] = calcnodes(sbp, vtx)
+  vtx = [1. 0.; 1. 1.; 0. 1.]
+  x[:,:,2] = calcnodes(sbp, vtx)
+```
 """->
 function calcnodes{T}(sbp::TriSBP{T}, vtx::Array{T})
   perm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
@@ -135,11 +146,12 @@ function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
+  Q = sbp.Q::Array{T,3} # necessary so JIT can reason about type
   if trans # apply transposed Q
     for elem = 1:size(u,2)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          res[i,elem] += sbp.Q[j,i,di]*u[j,elem]
+          res[i,elem] += Q[j,i,di]*u[j,elem] 
         end
       end
     end
@@ -147,7 +159,7 @@ function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
     for elem = 1:size(u,2)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          res[i,elem] += sbp.Q[i,j,di]*u[j,elem]
+          res[i,elem] += Q[i,j,di]*u[j,elem] 
         end
       end
     end
@@ -160,12 +172,13 @@ function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
+  Q = sbp.Q[:,:,:]::Array{T,3} # necessary so JIT can reason about type
   if trans # apply transposed Q
     for elem = 1:size(u,3)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
           for field = 1:size(u,1)
-            res[field,i,elem] += sbp.Q[j,i,di]*u[field,j,elem]
+            res[field,i,elem] += Q[j,i,di]*u[field,j,elem]
           end
         end
       end
@@ -175,7 +188,7 @@ function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
           for field = 1:size(u,1)
-            res[field,i,elem] += sbp.Q[i,j,di]*u[field,j,elem]
+            res[field,i,elem] += Q[i,j,di]*u[field,j,elem]
           end
         end
       end
@@ -213,15 +226,16 @@ operator sbp.
 
 """->
 function differentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                                u::AbstractArray{T,2}, res::AbstractArray{T,2})
+                           u::AbstractArray{T,2}, res::AbstractArray{T,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
-  Hinv = 1./sbp.w
+  Hinv = 1./sbp.w::Array{T}
+  Q = sbp.Q[:,:,:]::Array{T,3} # necessary so JIT can reason about type
   for elem = 1:size(u,2)
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
-        res[i,elem] += sbp.Q[i,j,di]*u[j,elem]
+        res[i,elem] += Q[i,j,di]*u[j,elem]
       end
       res[i,elem] *= Hinv[i]
     end
@@ -233,12 +247,13 @@ function differentiate!{T}(sbp::SBPOperator{T}, di::Int,
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
-  Hinv = 1./sbp.w
+  Hinv = 1./sbp.w::Array{T}
+  Q = sbp.Q[:,:,:]::Array{T,3} # necessary so JIT can reason about type
   for elem = 1:size(u,3)
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
         for field = 1:size(u,1)
-          res[field,i,elem] += sbp.Q[i,j,di]*u[field,j,elem]
+          res[field,i,elem] += Q[i,j,di]*u[field,j,elem]
         end
       end
       for field = 1:size(u,1)
@@ -271,12 +286,14 @@ function directionaldifferentiate{T}(sbp::SBPOperator{T}, dir::Array{T,1},
                                      u::AbstractArray{T,1}, i::Int)
   @assert( size(sbp.Q, 3) == size(dir,1) )
   Ddir = zero(T)
-  for di = 1:size(sbp.Q, 3)
+  Hinv = 1./sbp.w::Array{T}
+  Q = sbp.Q[:,:,:]::Array{T,3} # necessary so JIT can reason about type
+  for di = 1:size(Q, 3)
     tmp = zero(T)
     for j = 1:sbp.numnodes
-      tmp += sbp.Q[i,j,di]*u[j]
+      tmp += Q[i,j,di]*u[j]
     end
-    Ddir += dir[di]*tmp/sbp.w[i]
+    Ddir += dir[di]*tmp*Hinv[i]
   end
   return Ddir
 end
@@ -285,12 +302,14 @@ function directionaldifferentiate{T}(sbp::SBPOperator{T}, dir::Array{T,1},
                                      u::AbstractArray{T,2}, i::Int)
   @assert( size(sbp.Q, 3) == size(dir,1) )
   Ddir = zeros(T, size(u,1))
-  for di = 1:size(sbp.Q, 3)
+  Hinv = 1./sbp.w::Array{T}
+  Q = sbp.Q[:,:,:]::Array{T,3} # necessary so JIT can reason about type
+  for di = 1:size(Q, 3)
     tmp = zeros(Ddir)
     for j = 1:sbp.numnodes
-      tmp[:] += sbp.Q[i,j,di]*u[:,j]
+      tmp[:] += Q[i,j,di]*u[:,j]
     end
-    Ddir[:] += dir[di]*tmp[:]/sbp.w[i]
+    Ddir[:] += dir[di]*tmp[:]*Hinv[i]
   end
   return Ddir
 end
@@ -327,9 +346,10 @@ function volumeintegrate!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,2},
                             res::AbstractArray{T,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
+  H = sbp.w::Array{T}
   for elem = 1:size(u,2)
     for i = 1:sbp.numnodes
-      res[i,elem] += sbp.w[i]*u[i,elem]
+      res[i,elem] += H[i]*u[i,elem]
     end
   end
 end
@@ -338,10 +358,11 @@ function volumeintegrate!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,3},
                             res::AbstractArray{T,3})
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
+  H = sbp.w::Array{T}
   for elem = 1:size(u,3)
     for i = 1:sbp.numnodes
       for field = 1:size(u,1)
-        res[field,i,elem] += sbp.w[i]*u[field,i,elem]
+        res[field,i,elem] += H[i]*u[field,i,elem]
       end
     end
   end
@@ -385,15 +406,18 @@ function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
   @assert( sbp.numnodes == size(u,1) == size(res,1) == size(dξdx,3) )
   @assert( size(dξdx,4) == size(u,2) == size(res,2) )
   @assert( length(u) == length(res) )
+  wface = sbp.wface::Array{T,2}
+  facenormal = sbp.facenormal::Array{T,2}
+  facenodes = sbp.facenodes::Array{Int,2}
   for bndry in bndryfaces
     for i = 1:sbp.numfacenodes
       # j = element-local index for ith node on face 
-      j = sbp.facenodes[i, bndry.face]
+      j = facenodes[i, bndry.face]
       flux = bndryflux(u[j,bndry.element], dξdx[:,:,j,bndry.element],
-                       sbp.facenormal[:,bndry.face])
+                       facenormal[:,bndry.face])::T
       for i2 = 1:sbp.numfacenodes
-        j2 = sbp.facenodes[i2, bndry.face]
-        res[j2,bndry.element] += sbp.wface[i2,i]*flux
+        j2 = facenodes[i2, bndry.face]
+        res[j2,bndry.element] += wface[i2,i]*flux
       end
     end
   end
@@ -406,15 +430,18 @@ function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
   @assert( size(dξdx,4) == size(u,3) == size(res,3) )
   @assert( length(u) == length(res) )
   flux = zeros(T, (size(u,1)))
+  wface = sbp.wface::Array{T,2}
+  facenormal = sbp.facenormal::Array{T,2}
+  facenodes = sbp.facenodes::Array{Int,2}
   for bndry in bndryfaces
     for i = 1:sbp.numfacenodes
       # j = element-local index for ith node on face 
-      j = sbp.facenodes[i, bndry.face]
+      j = facenodes[i, bndry.face]
       flux = bndryflux(u[:,j,bndry.element], dξdx[:,:,j,bndry.element],
-                       sbp.facenormal[:,bndry.face])
+                       facenormal[:,bndry.face])::Array{T}
       for i2 = 1:sbp.numfacenodes
-        j2 = sbp.facenodes[i2, bndry.face]
-        res[:,j2,bndry.element] += sbp.wface[i2,i]*flux
+        j2 = facenodes[i2, bndry.face]
+        res[:,j2,bndry.element] += wface[i2,i]*flux
       end
     end
   end
@@ -427,15 +454,18 @@ function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
   @assert( sbp.numnodes == size(u,1) == size(res,1) == size(dξdx,3) == size(x,2) )
   @assert( size(dξdx,4) == size(u,2) == size(res,2) == size(x,3) )
   @assert( length(u) == length(res) )
+  wface = sbp.wface::Array{T,2}
+  facenormal = sbp.facenormal::Array{T,2}
+  facenodes = sbp.facenodes::Array{Int,2}
   for bndry in bndryfaces
     for i = 1:sbp.numfacenodes
       # j = element-local index for ith node on face 
-      j = sbp.facenodes[i, bndry.face]
+      j = facenodes[i, bndry.face]
       flux = bndryflux(u[j,bndry.element], x[:,j,bndry.element], 
-                       dξdx[:,:,j,bndry.element], sbp.facenormal[:,bndry.face])
+                       dξdx[:,:,j,bndry.element], facenormal[:,bndry.face])::T
       for i2 = 1:sbp.numfacenodes
-        j2 = sbp.facenodes[i2, bndry.face]
-        res[j2,bndry.element] += sbp.wface[i2,i]*flux
+        j2 = facenodes[i2, bndry.face]
+        res[j2,bndry.element] += wface[i2,i]*flux
       end
     end
   end
@@ -449,15 +479,19 @@ function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
   @assert( size(dξdx,4) == size(u,3) == size(res,3) == size(x,3) )
   @assert( length(u) == length(res) )
   flux = zeros(T, (size(u,1)))
+  wface = sbp.wface::Array{T,2}
+  facenormal = sbp.facenormal::Array{T,2}
+  facenodes = sbp.facenodes::Array{Int,2}
   for bndry in bndryfaces
     for i = 1:sbp.numfacenodes
       # j = element-local index for ith node on face 
-      j = sbp.facenodes[i, bndry.face]
+      j = facenodes[i, bndry.face]
       flux = bndryflux(u[:,j,bndry.element], x[:,j,bndry.element], 
-                       dξdx[:,:,j,bndry.element], sbp.facenormal[:,bndry.face])
+                       dξdx[:,:,j,bndry.element], facenormal[:,bndry.face]
+                       )::Array{T}
       for i2 = 1:sbp.numfacenodes
-        j2 = sbp.facenodes[i2, bndry.face]
-        res[:,j2,bndry.element] += sbp.wface[i2,i]*flux
+        j2 = facenodes[i2, bndry.face]
+        res[:,j2,bndry.element] += wface[i2,i]*flux
       end
     end
   end
@@ -643,27 +677,29 @@ function edgestabilize!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
   dirR = zeros(3)
   tmpL = zero(T)
   tmpR = zero(T)
+  facenormal = sbp.facenormal::Array{T,2}
+  facenodes = sbp.facenodes::Array{Int,2}
   for face in ifaces
     EDn = zeros(T, (sbp.numfacenodes) )
     for i = 1:sbp.numfacenodes
       # iL = element-local index for ith node on left element face
       # iR = element-local index for ith node on right element face
-      iL = sbp.facenodes[i, face.faceL]
-      iR = sbp.facenodes[getnbrnodeindex(sbp, face, i), face.faceR]
+      iL = facenodes[i, face.faceL]
+      iR = facenodes[getnbrnodeindex(sbp, face, i), face.faceR]
       # apply the normal-derivative difference operator along the face
-      dir = α[:,:,iL,face.elementL]*sbp.facenormal[:,face.faceL]
+      dir = α[:,:,iL,face.elementL]*facenormal[:,face.faceL]
       Dn = directionaldifferentiate(sbp, dir, u[:,face.elementL], iL)
-      dir = α[:,:,iR,face.elementR]*sbp.facenormal[:,face.faceR]
+      dir = α[:,:,iR,face.elementR]*facenormal[:,face.faceR]
       Dn += directionaldifferentiate(sbp, dir, u[:,face.elementR], iR)
       # get differential area element: need 1/ds for each Dn term (here and loop
       # below)to get unit normal, and then need ds for integration, so net
       # result is 1/ds
-      nrm = sbp.facenormal[:,face.faceL]
+      nrm = facenormal[:,face.faceL]
       dξ = dξdx[:,:,iL,face.elementL]
       ds = norm(nrm[1]*dξ[1,:] + nrm[2]*dξ[2,:])
       # apply the scaling function
       Dn *= stabscale(u[iL,face.elementL], dξdx[:,:,iL,face.elementL],
-                      sbp.facenormal[:,face.faceL])./ds # note that u[iL] = u[iR]
+                      facenormal[:,face.faceL])./ds # note that u[iL] = u[iR]
       # add the face-mass matrix contribution
       for j = 1:sbp.numfacenodes
         EDn[j] += sbp.wface[j,i]*Dn
@@ -672,10 +708,10 @@ function edgestabilize!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
     # here we use hand-coded reverse-mode to apply the transposed
     # normal-derivative difference operator
     for i = 1:sbp.numfacenodes
-      iL = sbp.facenodes[i, face.faceL]
-      iR = sbp.facenodes[getnbrnodeindex(sbp, face, i), face.faceR]
-      dirL = α[:,:,iL,face.elementL]*sbp.facenormal[:,face.faceL]
-      dirR = α[:,:,iR,face.elementR]*sbp.facenormal[:,face.faceR]
+      iL = facenodes[i, face.faceL]
+      iR = facenodes[getnbrnodeindex(sbp, face, i), face.faceR]
+      dirL = α[:,:,iL,face.elementL]*facenormal[:,face.faceL]
+      dirR = α[:,:,iR,face.elementR]*facenormal[:,face.faceR]
       for di = 1:size(sbp.Q, 3)
         tmpL = dirL[di]*EDn[i]/sbp.w[iL]
         tmpR = dirR[di]*EDn[i]/sbp.w[iR]
@@ -700,37 +736,39 @@ function edgestabilize!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
   Dn = zeros(T, (size(u,1)) )
   tmpL = zeros(Dn)
   tmpR = zeros(Dn)
+  facenormal = sbp.facenormal::Array{T,2}
+  facenodes = sbp.facenodes::Array{Int,2}
   for face in ifaces
     EDn = zeros(T, (size(u,1), sbp.numfacenodes) )
     for i = 1:sbp.numfacenodes
       # iL = element-local index for ith node on left element face
       # iR = element-local index for ith node on right element face
-      iL = sbp.facenodes[i, face.faceL]
-      iR = sbp.facenodes[getnbrnodeindex(sbp, face, i), face.faceR]
+      iL = facenodes[i, face.faceL]
+      iR = facenodes[getnbrnodeindex(sbp, face, i), face.faceR]
       # apply the normal-derivative difference operator along the face
-      dir = α[:,:,iL,face.elementL]*sbp.facenormal[:,face.faceL]
+      dir = α[:,:,iL,face.elementL]*facenormal[:,face.faceL]
       Dn[:] = directionaldifferentiate(sbp, dir, u[:,:,face.elementL], iL)
-      dir = α[:,:,iR,face.elementR]*sbp.facenormal[:,face.faceR]
+      dir = α[:,:,iR,face.elementR]*facenormal[:,face.faceR]
       Dn[:] += directionaldifferentiate(sbp, dir, u[:,:,face.elementR], iR)
       # get differential area element: need 1/ds for each Dn term (here and loop
       # below) to get unit normals, and then need ds for integration, so net
       # result is 1/ds
-      nrm = sbp.facenormal[:,face.faceL]
+      nrm = facenormal[:,face.faceL]
       dξ = dξdx[:,:,iL,face.elementL]
       ds = norm(nrm[1]*dξ[1,:] + nrm[2]*dξ[2,:])
       # apply the scaling function
       Dn[:] *= stabscale(u[:,iL,face.elementL], dξdx[:,:,iL,face.elementL],
-                         sbp.facenormal[:,face.faceL])./ds # note that u[iL] = u[iR]
+                         facenormal[:,face.faceL])./ds # note that u[iL] = u[iR]
       # add the face-mass matrix contribution
       for j = 1:sbp.numfacenodes
         EDn[:,j] += sbp.wface[j,i]*Dn[:]
       end
     end
     for i = 1:sbp.numfacenodes
-      iL = sbp.facenodes[i, face.faceL]
-      iR = sbp.facenodes[getnbrnodeindex(sbp, face, i), face.faceR]
-      dirL = α[:,:,iL,face.elementL]*sbp.facenormal[:,face.faceL]
-      dirR = α[:,:,iR,face.elementR]*sbp.facenormal[:,face.faceR]
+      iL = facenodes[i, face.faceL]
+      iR = facenodes[getnbrnodeindex(sbp, face, i), face.faceR]
+      dirL = α[:,:,iL,face.elementL]*facenormal[:,face.faceL]
+      dirR = α[:,:,iR,face.elementR]*facenormal[:,face.faceR]
       # here we use hand-coded reverse-mode to apply the transposed
       # normal-derivative difference operator
       for di = 1:size(sbp.Q, 3)
