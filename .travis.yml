@@ -6,6 +6,8 @@ julia:
   - nightly # - release
 notifications:
   email: true
+before_install:
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
   - julia --check-bounds=yes -e 'versioninfo(); Pkg.clone(pwd()); Pkg.build("SummationByParts"); Pkg.test("SummationByParts"; coverage=true)'
 after_success:
