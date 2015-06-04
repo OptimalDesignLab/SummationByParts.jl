@@ -135,7 +135,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       u = squeeze(x[1,:] + x[2,:],1)
       dir = [1.;1.]
       for i = 1:sbp.numnodes
-        Ddir = directionaldifferentiate(sbp, dir, u, i)
+        Ddir = directionaldifferentiate!(sbp, dir, u, i)
         @fact Ddir => roughly(2.0, atol=1e-13)
       end
     end
@@ -152,7 +152,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       u = squeeze(x[1,:] + x[2,:] + x[3,:],1)
       dir = [1.;1.;1.]
       for i = 1:sbp.numnodes
-        Ddir = directionaldifferentiate(sbp, dir, u, i)
+        Ddir = directionaldifferentiate!(sbp, dir, u, i)
         @fact Ddir => roughly(3.0, atol=1e-13)
       end
     end
@@ -169,8 +169,10 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       u[1,:] = squeeze(x[1,:] + x[2,:],1)
       u[2,:] = -u[1,:]
       dir = [1.;1.]
+      Ddir = zeros(Float64, size(u,1))
       for i = 1:sbp.numnodes
-        Ddir = directionaldifferentiate(sbp, dir, u, i)
+        fill!(Ddir, 0.0)
+        directionaldifferentiate!(sbp, dir, u, i, Ddir)
         @fact Ddir[1] => roughly(2.0, atol=1e-13)
         @fact Ddir[2] => roughly(-2.0, atol=1e-13)
       end
@@ -188,8 +190,10 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       u[1,:] = squeeze(x[1,:] + x[2,:] + x[3,:],1)
       u[2,:] = -u[1,:]
       dir = [1.;1.;1.]
+      Ddir = zeros(Float64, size(u,1))
       for i = 1:sbp.numnodes
-        Ddir = directionaldifferentiate(sbp, dir, u, i)
+        fill!(Ddir, 0.0)
+        directionaldifferentiate!(sbp, dir, u, i, Ddir)
         @fact Ddir[1] => roughly(3.0, atol=1e-13)
         @fact Ddir[2] => roughly(-3.0, atol=1e-13)
       end
@@ -436,8 +440,12 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
 
   context("Testing SummationByParts.boundaryintegrate! (TriSBP, vector field method)") do
     # build a two element grid, and verify the accuracy of the boundary integration
-    function bndryflux(u, dξdx, nrm)
-      return u*sum(nrm.'*dξdx)
+    function bndryflux{T}(u::AbstractArray{T,1}, dξdx::AbstractArray{T,2}, 
+                          nrm::AbstractArray{T,1}, flux::AbstractArray{T,1})
+      tmp = sum(nrm.'*dξdx)
+      for field = 1:size(u,1)
+        flux[field] = u[field]*tmp
+      end
     end
     for p = 1:4
       sbp = TriSBP{Float64}(degree=p)
@@ -455,11 +463,11 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       bndryfaces[3] = Boundary(2,1)
       bndryfaces[4] = Boundary(2,2)
 
-      u = zeros(Float64, (1,sbp.numnodes,4))
+      u = zeros(Float64, (1,sbp.numnodes,2))
       for d = 0:p
         for j = 0:d
           i = d-j
-          u = (x[1,:,:].^i).*(x[2,:,:].^j)
+          u[1,:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)          
           res = zeros(u)
           boundaryintegrate!(sbp, bndryfaces, u, dξdx, bndryflux, res)
           exact = 0.0
@@ -476,8 +484,12 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
   context("Testing SummationByParts.boundaryintegrate! (TetSBP, vector field method)") do
     # build a four element grid, and verify the accuracy of the boundary
     # integration
-    function bndryflux(u, dξdx, nrm)
-      return u*sum(nrm.'*dξdx)
+    function bndryflux{T}(u::AbstractArray{T,1}, dξdx::AbstractArray{T,2}, 
+                          nrm::AbstractArray{T,1}, flux::AbstractArray{T,1})
+      tmp = sum(nrm.'*dξdx)
+      for field = 1:size(u,1)
+        flux[field] = u[field]*tmp
+      end
     end
     for p = 1:4
       sbp = TetSBP{Float64}(degree=p)

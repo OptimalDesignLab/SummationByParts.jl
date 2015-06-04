@@ -4,12 +4,13 @@ include("orthopoly.jl")
 include("symcubatures.jl")
 include("cubature.jl")
 
+using ArrayViews
 using .OrthoPoly
 using .SymCubatures
 using .Cubature
 
 export SBPOperator, TriSBP, TetSBP, Boundary, Interface, calcnodes,
-  weakdifferentiate!, differentiate!, directionaldifferentiate, 
+  weakdifferentiate!, differentiate!, directionaldifferentiate!, 
   volumeintegrate!, mappingjacobian!, boundaryintegrate!,
   edgestabilize!
 
@@ -46,12 +47,12 @@ immutable TriSBP{T} <: SBPOperator{T}
   numnodes::Int
   numbndry::Int
   numfacenodes::Int
-  facenodes::Array{Int}
-  facenormal::Array{T}
+  facenodes::Array{Int,2}
+  facenormal::Array{T,2}
   cub::TriSymCub{T}
-  w::Array{T}
-  wface::Array{T}
-  Q::Array{T}
+  w::Array{T,1}
+  wface::Array{T,2}
+  Q::Array{T,3}
 
   function TriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
                   bubble::Int=-1)
@@ -111,12 +112,12 @@ immutable TetSBP{T} <: SBPOperator{T}
   numnodes::Int
   numbndry::Int
   numfacenodes::Int
-  facenodes::Array{Int}
-  facenormal::Array{T}
+  facenodes::Array{Int,2}
+  facenormal::Array{T,2}
   cub::TetSymCub{T}
-  w::Array{T}
-  wface::Array{T}
-  Q::Array{T}
+  w::Array{T,1}
+  wface::Array{T,2}
+  Q::Array{T,3}
 
   function TetSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4])
     @assert( degree >= 1 && degree <= 4 )
