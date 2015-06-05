@@ -625,7 +625,7 @@ end
 
 function getfacearea{T}(nrm::AbstractArray{T,1}, dξ::AbstractArray{T,2},
                         workvec::AbstractArray{T,1})
-  #workvec = zeros(nrm)
+  fill!(workvec, zero(T))
   for di1 = 1:size(nrm,1)
     for di2 = 1:size(nrm,1)
       workvec[di2] += nrm[di1]*dξ[di1,di2]
@@ -633,7 +633,6 @@ function getfacearea{T}(nrm::AbstractArray{T,1}, dξ::AbstractArray{T,2},
   end
   return norm(workvec)
 end
-
 
 @doc """
 ### SummationByParts.edgestabilize!
