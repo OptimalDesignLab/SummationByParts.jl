@@ -624,6 +624,8 @@ returns a reordering that is more suited for local-to-global mapping.
 
 *Note*: the edge parameters of `cub` are assumed to be less than 0.5.
 
+*WARNING*: the `faceperm` array has not been thoroughly tested
+
 **Inputs**
 
 * `cub`: symmetric cubature rule
@@ -632,6 +634,7 @@ returns a reordering that is more suited for local-to-global mapping.
 **Outputs**
 
 * `perm`: a permutation vector of indices
+* `faceperm`: a permutation vector for the face indices
 
 """->
 function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
@@ -668,8 +671,25 @@ function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
   ptr += 6*cub.numedge
   permptr += 3*(d-1)
   # Now the internal nodes; these have the same ordering as TriSymCub
-  perm[permptr+1:end] = [ptr+1:cub.numnodes;]
-  return perm
+  perm[permptr+1:end] = Array(ptr+1:cub.numnodes)
+
+  # Next, find the permutation for the face nodes
+  numbndrynodes = SymCubatures.getnumfacenodes(cub)
+  faceperm = zeros(Int, (numbndrynodes))
+  faceperm[1] = 1
+  faceperm[numbndrynodes] = 2
+  if cub.midedges
+    # if midedges present there must be an odd number of nodes along the edge
+    midnode = div(d+2,2)
+    faceperm[midnode] = 3
+    faceperm[2:(midnode-1)] = edgeperm + size(edgeperm,1) + 3
+    faceperm[midnode+1:end-1] = midnode + edgeperm
+  else
+    faceperm[2:size(edgeperm,1)+1] = edgeperm + size(edgeperm,1) + 2
+    faceperm[size(edgeperm,1)+2:end-1] = edgeperm + size(edgeperm,1) + 1
+  end
+
+  return perm, faceperm
 end
 
 function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
@@ -729,7 +749,15 @@ function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
   end
   permptr += 4*numface
   
-  # Finally the internal nodes; these have the same ordering as TetSymCub
-  perm[permptr+1:end] = [ptr+1:cub.numnodes;]
-  return perm
+  # Now the internal nodes; these have the same ordering as TetSymCub
+  perm[permptr+1:end] = Array(ptr+1:cub.numnodes)
+
+  # Next, find the permutation for the face nodes
+  numbndrynodes = SymCubatures.getnumfacenodes(cub)
+  faceperm = zeros(Int, (numbndrynodes))
+
+  # TEMP: this must be corrected
+  faceperm = Array(1:numbndrynodes)
+
+  return perm, faceperm
 end

@@ -541,6 +541,70 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.interiorfaceintegrate! (TriSBP, scalar field method)") do
+    function fluxfunc(uL, uR, dξdxL, dξdxR, jacL, jacR, αL, αR, nrmL, nrmR)
+      flux = sum(nrmL.'*dξdxL)
+      flux >= zero(flux) ? flux *= uL : flux *= uR
+      return flux
+    end
+    function bndryflux(u, dξdx, nrm)
+      return u*sum(nrm.'*dξdx)
+    end
+    # build a two element grid and verify that interiorfaceintegrate does
+    # nothing when given a continuous linear field
+    for p = 1:4
+      sbp = TriSBP{Float64}(degree=p)
+      x = zeros(Float64, (2,sbp.numnodes,2))
+      vtx = [0. 0.; 1. 0.; 0. 1.]
+      x[:,:,1] = calcnodes(sbp, vtx)
+      vtx = [1. 0.; 1. 1.; 0. 1.]
+      x[:,:,2] = calcnodes(sbp, vtx)
+      dξdx = zeros(Float64, (2,2,sbp.numnodes,2))
+      jac = zeros(Float64, (sbp.numnodes,2))
+      mappingjacobian!(sbp, x, dξdx, jac)
+      α = zeros(dξdx)
+      for k = 1:2
+        for i = 1:sbp.numnodes
+          for di1 = 1:2
+            for di2 = 1:2
+              α[di1,di2,i,k] = (dξdx[di1,1,i,k].*dξdx[di2,1,i,k] + 
+                                dξdx[di1,2,i,k].*dξdx[di2,2,i,k])*jac[i,k]
+            end
+          end
+        end
+      end
+      ifaces = Array(Interface, 1)
+      ifaces[1] = Interface(1,2,2,3)
+      bndryfaces = Array(Boundary, 4)
+      bndryfaces[1] = Boundary(1,1)
+      bndryfaces[2] = Boundary(1,3)
+      bndryfaces[3] = Boundary(2,1)
+      bndryfaces[4] = Boundary(2,2)
+      u = zeros(Float64, (sbp.numnodes,2))
+      u = squeeze(x[1,:,:] + x[2,:,:], 1)
+      res = zeros(u)
+      Fξ = zeros(u)
+      Fη = zeros(u)
+      for k = 1:2
+        for i = 1:sbp.numnodes
+          Fξ[i,k] = u[i,k]*(dξdx[1,1,i,k] + dξdx[1,2,i,k])
+          Fη[i,k] = u[i,k]*(dξdx[2,1,i,k] + dξdx[2,2,i,k])
+        end
+      end
+      weakdifferentiate!(sbp, 1, Fξ, res, trans=true)
+      weakdifferentiate!(sbp, 2, Fη, res, trans=true)
+      res *= -1.0
+      boundaryintegrate!(sbp, bndryfaces, u, dξdx, bndryflux, res)
+      interiorfaceintegrate!(sbp, ifaces, u, dξdx, jac, α, fluxfunc, res)
+      for k = 1:2
+        for i = 1:sbp.numnodes
+          res[i,k] /= (sbp.w[i]/jac[i,k])
+        end
+      end
+      @fact res => roughly(2.0*ones(res), atol=1e-11)
+    end
+  end 
+
   context("Testing SummationByParts.edgestabilize! (TriSBP, scalar field method)") do
     # build a two element grid, and verify that edgestabilize does nothing when
     # given a linear field

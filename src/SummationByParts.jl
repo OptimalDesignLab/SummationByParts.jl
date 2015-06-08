@@ -12,7 +12,7 @@ using .Cubature
 export SBPOperator, TriSBP, TetSBP, Boundary, Interface, calcnodes,
   weakdifferentiate!, differentiate!, directionaldifferentiate!, 
   volumeintegrate!, mappingjacobian!, boundaryintegrate!,
-  edgestabilize!
+  interiorfaceintegrate!, edgestabilize!
 
 @doc """
 ### SBP.SBPOperator
@@ -55,7 +55,7 @@ immutable TriSBP{T} <: SBPOperator{T}
   Q::Array{T,3}
 
   function TriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
-                  bubble::Int=-1)
+                  bubble::Int=-1, reorder=true)
     @assert( degree >= 1 && degree <= 4 )
     cub, vtx = tricubature(2*degree-1, T)
     numnodes = cub.numnodes
@@ -70,18 +70,21 @@ immutable TriSBP{T} <: SBPOperator{T}
       w, Q[:,:,1], Q[:,:,2] = SummationByParts.buildoperators(cub, vtx, degree,
                                                               bubble)
     end
-    # reorder the nodes
-    perm = SummationByParts.getnodepermutation(cub, degree)
-    w = w[perm]
-    Q[:,:,1] = Q[perm,perm,1]
-    Q[:,:,2] = Q[perm,perm,2]
-    perminv = invperm(perm)
-    for k = 1:3
-      facenodes[:,k] = perminv[facenodes[:,k]]
+    if reorder
+      # reorder the nodes
+      perm, faceperm = SummationByParts.getnodepermutation(cub, degree)
+      w = w[perm]
+      Q[:,:,1] = Q[perm,perm,1]
+      Q[:,:,2] = Q[perm,perm,2]
+      perminv = invperm(perm)
+      for k = 1:3
+        facenodes[:,k] = perminv[facenodes[:,k]]
+      end
+      wface = wface[faceperm,faceperm]
+      # reorder the faces
+      facenodes[:,:] = facenodes[faceperm,faceorder]
+      facenormal = facenormal[:,faceorder]
     end
-    # reorder the faces
-    facenodes[:,:] = facenodes[:,faceorder]
-    facenormal = facenormal[:,faceorder]
 
     new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
         w, wface, Q)
@@ -119,7 +122,8 @@ immutable TetSBP{T} <: SBPOperator{T}
   wface::Array{T,2}
   Q::Array{T,3}
 
-  function TetSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4])
+  function TetSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4],
+                  reorder=true)
     @assert( degree >= 1 && degree <= 4 )
     cub, vtx = tetcubature(2*degree-1, T)
     numnodes = cub.numnodes
@@ -130,20 +134,22 @@ immutable TetSBP{T} <: SBPOperator{T}
     Q = zeros(T, (numnodes, numnodes, 3))
     w, Q[:,:,1], Q[:,:,2], Q[:,:,3] = SummationByParts.buildoperators(cub, vtx, degree)
 
-    # reorder the nodes
-    perm = SummationByParts.getnodepermutation(cub, degree)
-    w = w[perm]
-    Q[:,:,1] = Q[perm,perm,1]
-    Q[:,:,2] = Q[perm,perm,2]
-    Q[:,:,3] = Q[perm,perm,3]
-    perminv = invperm(perm)
-    for k = 1:4
-      facenodes[:,k] = perminv[facenodes[:,k]]
+    if reorder
+      # reorder the nodes
+      perm, faceperm = SummationByParts.getnodepermutation(cub, degree)
+      w = w[perm]
+      Q[:,:,1] = Q[perm,perm,1]
+      Q[:,:,2] = Q[perm,perm,2]
+      Q[:,:,3] = Q[perm,perm,3]
+      perminv = invperm(perm)
+      for k = 1:4
+        facenodes[:,k] = perminv[facenodes[:,k]]
+      end
+      wface = wface[faceperm,faceperm]
+      # reorder the faces
+      facenodes[:,:] = facenodes[faceperm,faceorder]
+      facenormal = facenormal[:,faceorder]
     end
-
-    # reorder the faces
-    facenodes[:,:] = facenodes[:,faceorder]
-    facenormal = facenormal[:,faceorder]
 
     new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
         w, wface, Q)

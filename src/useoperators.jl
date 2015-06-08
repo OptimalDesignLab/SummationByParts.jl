@@ -97,14 +97,14 @@ This function assumes the element mapping is linear, i.e. edges are lines.
 ```
 """->
 function calcnodes{T}(sbp::TriSBP{T}, vtx::Array{T})
-  perm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
+  perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
   x = zeros(T, (2, sbp.numnodes))
   x[1,:], x[2,:] = SymCubatures.calcnodes(sbp.cub, vtx)
   return x[:,perm]
 end
 
 function calcnodes{T}(sbp::TetSBP{T}, vtx::Array{T})
-  perm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
+  perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
   x = zeros(T, (3, sbp.numnodes))
   x[1,:], x[2,:], x[3,:] = SymCubatures.calcnodes(sbp.cub, vtx)
   return x[:,perm]
@@ -508,6 +508,49 @@ function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
 end
 
 @doc """
+### SummationByParts.interiorfaceintegrate!
+"""->
+function interiorfaceintegrate!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
+                                   u::AbstractArray{T,2}, dξdx::AbstractArray{T,4},
+                                   jac::AbstractArray{T,2}, α::AbstractArray{T,4}, 
+                                   fluxfunc::Function, res::AbstractArray{T,2})
+  @assert( sbp.numnodes == size(u,1) == size(res,1) == size(dξdx,3) == size(α,3) )
+  @assert( size(dξdx,4) == size(α,4) == size(u,2) == size(res,2) )
+  @assert( length(u) == length(res) )
+  dim = size(sbp.Q, 3)
+
+  # JEH: temporary, until nbrnodeindex is part of sbp type
+  nbrnodeindex = Array(sbp.numfacenodes:-1:1)
+
+  flux = zero(T)
+  for face in ifaces
+    flux = zero(T)
+    for i = 1:sbp.numfacenodes
+      # iL = element-local index for ith node on left element face
+      # iR = element-local index for ith node on right element face
+      iL = sbp.facenodes[i, face.faceL]::Int
+      #iR = sbp.facenodes[getnbrnodeindex(sbp, face, i)::Int, face.faceR]::Int
+      iR = sbp.facenodes[nbrnodeindex[i], face.faceR]::Int
+      flux = fluxfunc(u[iL,face.elementL], u[iR,face.elementR],
+                         view(dξdx,:,:,iL,face.elementL),
+                         view(dξdx,:,:,iR,face.elementR),
+                         jac[iL,face.elementL], jac[iR,face.elementR],
+                         view(α,:,:,iL,face.elementL),
+                         view(α,:,:,iR,face.elementR),
+                         view(sbp.facenormal,:,face.faceL),
+                         view(sbp.facenormal,:,face.faceR))
+      # add the face-mass matrix contribution
+      for j = 1:sbp.numfacenodes
+        jL = sbp.facenodes[j, face.faceL]::Int
+        jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
+        res[jL,face.elementL] += sbp.wface[j,i]*flux
+        res[jR,face.elementR] -= sbp.wface[j,i]*flux
+      end
+    end
+  end
+end
+
+@doc """
 ### SummationByParts.mappingjacobian!
 
 Evaluates the (scaled) Jacobian of the mapping from reference coordinates to
@@ -613,6 +656,22 @@ function mappingjacobian!{T}(sbp::TetSBP{T}, x::AbstractArray{T,3},
   # check for negative jac here?
 end
 
+@doc """
+### SummationByParts.getdir!
+
+This is a helper function for edgestabilize!  It is nothing more than a
+matrix-vector product, but seems to run faster than a Julia's native matvec.
+
+**Inputs**
+
+* `α`: the matrix multiplying from the left
+* `nrm`: the vector being multiplied
+
+**Outputs**
+
+* `dir`: the result of the product
+
+"""->
 function getdir!{T}(α::AbstractArray{T,2}, nrm::AbstractArray{T,1},
                    dir::AbstractArray{T,1})
   for di1 = 1:size(nrm,1)
@@ -623,8 +682,24 @@ function getdir!{T}(α::AbstractArray{T,2}, nrm::AbstractArray{T,1},
   end
 end
 
-function getfacearea{T}(nrm::AbstractArray{T,1}, dξ::AbstractArray{T,2},
-                        workvec::AbstractArray{T,1})
+@doc """
+### SummationByParts.getdiffelementarea
+
+Returns the (approximate) differential element area of a facet node.  Actually,
+nothing more than a transposed-matrix-vector product between `dξ` and `nrm`.
+
+**Inputs**
+
+* `nrm`: sbp-defined normal vector to the surface
+* `dξ`: mapping Jacobian (scaled by determinant)
+
+**Outputs**
+
+* `workvec`: a work array of the size of `nrm`
+
+"""->
+function getdiffelementarea{T}(nrm::AbstractArray{T,1}, dξ::AbstractArray{T,2},
+                               workvec::AbstractArray{T,1})
   fill!(workvec, zero(T))
   for di1 = 1:size(nrm,1)
     for di2 = 1:size(nrm,1)
@@ -705,7 +780,7 @@ function edgestabilize!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
   dim = size(sbp.Q, 3)
 
   # JEH: temporary, until nbrnodeindex is part of sbp type
-  nbrnodeindex = [2; 1; sbp.numfacenodes:-1:3]
+  nbrnodeindex = Array(sbp.numfacenodes:-1:1)
 
   Dn = zero(T)
   dirL = zeros(T, (dim))
@@ -731,8 +806,8 @@ function edgestabilize!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
       # get differential area element: need 1/ds for each Dn term (here and loop
       # below)to get unit normal, and then need ds for integration, so net
       # result is 1/ds
-      ds = getfacearea(view(sbp.facenormal,:,face.faceL),
-                       view(dξdx,:,:,iL,face.elementL), workvec)::T
+      ds = getdiffelementarea(view(sbp.facenormal,:,face.faceL),
+                              view(dξdx,:,:,iL,face.elementL), workvec)::T
       # apply the scaling function
       Dn *= stabscale(u[iL,face.elementL], view(dξdx,:,:,iL,face.elementL),
                       view(sbp.facenormal,:,face.faceL))::T/ds # note that u[iL] = u[iR]
@@ -773,7 +848,7 @@ function edgestabilize!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
   dim = size(sbp.Q, 3)
 
   # JEH: temporary, until nbrnodeindex is part of sbp type
-  nbrnodeindex = [2; 1; sbp.numfacenodes:-1:3]
+  nbrnodeindex = Array(sbp.numfacenodes:-1:1)
 
   Dn = zeros(T, size(u,1))
   dirL = zeros(T, (dim))
@@ -799,8 +874,8 @@ function edgestabilize!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
       # get differential area element: need 1/ds for each Dn term (here and loop
       # below) to get unit normals, and then need ds for integration, so net
       # result is 1/ds
-      ds = getfacearea(view(sbp.facenormal,:,face.faceL),
-                       view(dξdx,:,:,iL,face.elementL), workvec)::T      
+      ds = getdiffelementarea(view(sbp.facenormal,:,face.faceL),
+                              view(dξdx,:,:,iL,face.elementL), workvec)::T      
       # apply the scaling function
       scale = stabscale(view(u,:,iL,face.elementL), view(dξdx,:,:,iL,face.elementL),
                          view(sbp.facenormal,:,face.faceL))::T./ds # note that u[iL] = u[iR]
