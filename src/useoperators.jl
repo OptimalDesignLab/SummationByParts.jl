@@ -377,6 +377,76 @@ end
 @doc """
 ### SummationByParts.boundaryintegrate!
 
+Integrates a given flux over a boundary using appropriate mass matrices defined
+on the element faces.  Different methods are available depending on the rank of
+`flux`:
+
+* For *scalar* fields, it is assumed that `flux` is a rank-2 array, with the
+first dimension for the face-node index, and the second dimension for the
+boundary index.
+
+* For *vector* fields, `flux` is a rank-3 array, with the first dimension for
+the index of the vector field, the second dimension for the face-node index, and
+the third dimension for the boundary index.
+
+The dimensions of `res` are still based on elements; the last dimension is for
+the element index and the second-last dimension is for the element-local node
+index.
+
+**Inputs**
+
+* `sbp`: an SBP operator type
+* `bndryfaces`: list of boundary faces stored as an array of `Boundary`s
+* `flux`: array of flux data that is being integrated
+
+**In/Outs**
+
+* `res`: where the result of the integration is stored
+
+**WARNING**: the order of the boundaries in `bndryfaces` and `flux` must be
+  consistent.
+
+"""->
+function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
+                               flux::AbstractArray{T,2}, res::AbstractArray{T,2})
+  @assert( sbp.numnodes == size(res,1) )
+  @assert( sbp.numfacenodes == size(flux,1) )
+  @assert( size(bndryfaces,1) == size(flux,2) )
+  @inbounds begin
+    for (bindex, bndry) in enumerate(bndryfaces)
+      for i = 1:sbp.numfacenodes        
+        for j = 1:sbp.numfacenodes
+          jB = sbp.facenodes[j, bndry.face] # element index for jth node on face 
+          res[jB,bndry.element] += sbp.wface[j,i]*flux[i,bindex]
+        end
+      end
+    end
+  end
+end
+
+function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
+                               flux::AbstractArray{T,3}, res::AbstractArray{T,3})
+  @assert( size(res,1) == size(flux,1) )
+  @assert( sbp.numnodes == size(res,2) )
+  @assert( sbp.numfacenodes == size(flux,2) )
+  @assert( size(bndryfaces,1) == size(flux,3) )
+  @inbounds begin
+    for (bindex, bndry) in enumerate(bndryfaces)
+      for i = 1:sbp.numfacenodes        
+        for j = 1:sbp.numfacenodes
+          jB = sbp.facenodes[j, bndry.face] # element index for jth node on face
+          for field = 1:size(res,1)
+            res[field,jB,bndry.element] += sbp.wface[j,i]*flux[field,i,bindex]
+          end
+        end
+      end
+    end
+  end
+end
+
+@doc """
+### SummationByParts.boundaryintegrate!
+
 Integrates a numerical flux over a boundary using appropriate mass matrices
 defined on the element faces.  Different methods are available depending on the
 rank of `u`:
