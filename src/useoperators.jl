@@ -579,42 +579,75 @@ end
 
 @doc """
 ### SummationByParts.interiorfaceintegrate!
+
+Integrates a given flux over interior element interfaces using appropriate mass
+matrices defined on the element faces.  Different methods are available
+depending on the rank of `flux`:
+
+* For *scalar* fields, it is assumed that `flux` is a rank-2 array, with the
+first dimension for the face-node index, and the second dimension for the
+interface index.
+
+* For *vector* fields, `flux` is a rank-3 array, with the first dimension for
+the index of the vector field, the second dimension for the face-node index, and
+the third dimension for the interface index.
+
+The dimensions of `res` are still based on elements; the last dimension is for
+the element index and the second-last dimension is for the element-local node
+index.
+
+**Inputs**
+
+* `sbp`: an SBP operator type
+* `ifaces`: list of element interfaces stored as an array of `Interface`s
+* `flux`: array of flux data that is being integrated
+
+**In/Outs**
+
+* `res`: where the result of the integration is stored
+
+**WARNING**: the order of the interfaces in `ifaces` and `flux` must be
+  consistent.
+
 """->
 function interiorfaceintegrate!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
-                                   u::AbstractArray{T,2}, dξdx::AbstractArray{T,4},
-                                   jac::AbstractArray{T,2}, α::AbstractArray{T,4}, 
-                                   fluxfunc::Function, res::AbstractArray{T,2})
-  @assert( sbp.numnodes == size(u,1) == size(res,1) == size(dξdx,3) == size(α,3) )
-  @assert( size(dξdx,4) == size(α,4) == size(u,2) == size(res,2) )
-  @assert( length(u) == length(res) )
-  dim = size(sbp.Q, 3)
-
+                                   flux::AbstractArray{T,2},
+                                   res::AbstractArray{T,2})
+  @assert( sbp.numnodes == size(res,1) )
+  @assert( sbp.numfacenodes == size(flux,1) )
+  @assert( size(ifaces,1) == size(flux,2) )
   # JEH: temporary, until nbrnodeindex is part of sbp type
   nbrnodeindex = Array(sbp.numfacenodes:-1:1)
-
-  flux = zero(T)
-  for face in ifaces
-    flux = zero(T)
-    for i = 1:sbp.numfacenodes
-      # iL = element-local index for ith node on left element face
-      # iR = element-local index for ith node on right element face
-      iL = sbp.facenodes[i, face.faceL]::Int
-      #iR = sbp.facenodes[getnbrnodeindex(sbp, face, i)::Int, face.faceR]::Int
-      iR = sbp.facenodes[nbrnodeindex[i], face.faceR]::Int
-      flux = fluxfunc(u[iL,face.elementL], u[iR,face.elementR],
-                         view(dξdx,:,:,iL,face.elementL),
-                         view(dξdx,:,:,iR,face.elementR),
-                         jac[iL,face.elementL], jac[iR,face.elementR],
-                         view(α,:,:,iL,face.elementL),
-                         view(α,:,:,iR,face.elementR),
-                         view(sbp.facenormal,:,face.faceL),
-                         view(sbp.facenormal,:,face.faceR))
-      # add the face-mass matrix contribution
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbp.numfacenodes    
       for j = 1:sbp.numfacenodes
         jL = sbp.facenodes[j, face.faceL]::Int
         jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
-        res[jL,face.elementL] += sbp.wface[j,i]*flux
-        res[jR,face.elementR] -= sbp.wface[j,i]*flux
+        res[jL,face.elementL] += sbp.wface[j,i]*flux[i,findex]
+        res[jR,face.elementR] -= sbp.wface[j,i]*flux[i,findex]
+      end
+    end
+  end
+end
+
+function interiorfaceintegrate!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
+                                   flux::AbstractArray{T,3},
+                                   res::AbstractArray{T,3})
+  @assert( size(res,1) == size(flux,1) )
+  @assert( sbp.numnodes == size(res,2) )
+  @assert( sbp.numfacenodes == size(flux,2) )
+  @assert( size(ifaces,1) == size(flux,3) )
+  # JEH: temporary, until nbrnodeindex is part of sbp type
+  nbrnodeindex = Array(sbp.numfacenodes:-1:1)
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbp.numfacenodes    
+      for j = 1:sbp.numfacenodes
+        jL = sbp.facenodes[j, face.faceL]::Int
+        jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
+        for field = 1:size(res,1)
+          res[field,jL,face.elementL] += sbp.wface[j,i]*flux[field,i,findex]
+          res[field,jR,face.elementR] -= sbp.wface[j,i]*flux[field,i,findex]
+        end
       end
     end
   end

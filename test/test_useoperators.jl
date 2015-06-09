@@ -844,7 +844,24 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       weakdifferentiate!(sbp, 2, Fη, res, trans=true)
       res *= -1.0
       boundaryintegrate!(sbp, bndryfaces, u, dξdx, bndryflux, res)
-      interiorfaceintegrate!(sbp, ifaces, u, dξdx, jac, α, fluxfunc, res)
+
+      flux = zeros(sbp.numfacenodes,size(ifaces,1))
+      for findex = 1:size(ifaces,1)
+        for i = 1:sbp.numfacenodes
+          iL = sbp.facenodes[i, ifaces[findex].faceL]
+          iR = sbp.facenodes[sbp.numfacenodes-i+1, ifaces[findex].faceR]
+          flux[i,findex] = 
+          fluxfunc(u[iL,ifaces[findex].elementL], u[iR,ifaces[findex].elementR],
+                   view(dξdx,:,:,iL,ifaces[findex].elementL),
+                   view(dξdx,:,:,iR,ifaces[findex].elementR),
+                   jac[iL,ifaces[findex].elementL], jac[iR,ifaces[findex].elementR],
+                   view(α,:,:,iL,ifaces[findex].elementL),
+                   view(α,:,:,iR,ifaces[findex].elementR),
+                   view(sbp.facenormal,:,ifaces[findex].faceL),
+                   view(sbp.facenormal,:,ifaces[findex].faceR))
+        end
+      end
+      interiorfaceintegrate!(sbp, ifaces, flux, res)
       for k = 1:2
         for i = 1:sbp.numnodes
           res[i,k] /= (sbp.w[i]/jac[i,k])

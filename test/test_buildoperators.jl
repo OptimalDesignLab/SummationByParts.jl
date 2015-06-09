@@ -342,7 +342,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     # check that vertices are first and edge nodes are ordered correctly
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
-      perm = SummationByParts.getnodepermutation(cub, d)
+      perm, faceperm = SummationByParts.getnodepermutation(cub, d)
       x, y = SymCubatures.calcnodes(cub, vtx)
       x = x[perm]
       y = y[perm]
@@ -369,7 +369,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     # nodes lie on the expected faces
     for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64)
-      perm = SummationByParts.getnodepermutation(cub, d)
+      perm, faceperm = SummationByParts.getnodepermutation(cub, d)
       x, y, z = SymCubatures.calcnodes(cub, vtx)
       x = x[perm]
       y = y[perm]
