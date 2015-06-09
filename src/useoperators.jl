@@ -113,18 +113,18 @@ end
 @doc """
 ### SummationByParts.weakdifferentiate!
 
-Applies the SBP stiffness matrix (or its transpose) to data in `u` and **adds**
-the result to `res`.  Different methods are available depending on the rank of
-`u`:
+Applies the SBP stiffness matrix (or its transpose) to data in `flux` and
+**adds** the result to `res`.  Different methods are available depending on the
+rank of `flux`:
 
-* For *scalar* fields, it is assumed that `u` is a rank-2 array, with the first
-dimension for the local-node index, and the second dimension for the element
-index.
-* For *vector* fields, `u` is a rank-3 array, with the first dimension for the
-index of the vector field, the second dimension for the local-node index, and
-the third dimension for the element index.
+* For *scalar* fields, it is assumed that `flux` is a rank-2 array, with the
+first dimension for the local-node index, and the second dimension for the
+element index.
+* For *vector* fields, `flux` is a rank-3 array, with the first dimension for
+the index of the vector field, the second dimension for the local-node index,
+and the third dimension for the element index.
 
-Naturally, the number of entries in the dimension of `u` (and `res`)
+Naturally, the number of entries in the dimension of `flux` (and `res`)
 corresponding to the nodes must be equal to the number of nodes in the SBP
 operator sbp.
 
@@ -132,7 +132,7 @@ operator sbp.
 
 * `sbp`: an SBP operator type
 * `di`: direction index of the operator that is desired (di=1 for Qx, etc)
-* `u`: the array that the operator is applied to
+* `flux`: the array that the operator is applied to
 * `trans` (optional): if true, the transpose operation is applied
 
 **In/Outs**
@@ -140,25 +140,25 @@ operator sbp.
 * `res`: where the result of applying Q[:,:,di] to u is stored
 
 """->
-function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                               u::AbstractArray{T,2}, res::AbstractArray{T,2};
+function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int, 
+                               flux::AbstractArray{T,2}, res::AbstractArray{T,2};
                                trans::Bool=false)
-  @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
-  @assert( length(u) == length(res) )
+  @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
+  @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
   if trans # apply transposed Q
-    for elem = 1:size(u,2)
+    for elem = 1:size(flux,2)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          @inbounds res[i,elem] += sbp.Q[j,i,di]*u[j,elem] 
+          @inbounds res[i,elem] += sbp.Q[j,i,di]*flux[j,elem] 
         end
       end
     end
   else # apply Q
-    for elem = 1:size(u,2)
+    for elem = 1:size(flux,2)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          @inbounds res[i,elem] += sbp.Q[i,j,di]*u[j,elem] 
+          @inbounds res[i,elem] += sbp.Q[i,j,di]*flux[j,elem] 
         end
       end
     end
@@ -166,27 +166,27 @@ function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
 end
 
 function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                               u::AbstractArray{T,3}, res::AbstractArray{T,3};
+                               flux::AbstractArray{T,3}, res::AbstractArray{T,3};
                                trans::Bool=false)
-  @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
-  @assert( length(u) == length(res) )
+  @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
+  @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
   if trans # apply transposed Q
-    for elem = 1:size(u,3)
+    for elem = 1:size(flux,3)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          for field = 1:size(u,1)
-            @inbounds res[field,i,elem] += sbp.Q[j,i,di]*u[field,j,elem]
+          for field = 1:size(flux,1)
+            @inbounds res[field,i,elem] += sbp.Q[j,i,di]*flux[field,j,elem]
           end
         end
       end
     end
   else # apply Q
-    for elem = 1:size(u,3)
+    for elem = 1:size(flux,3)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          for field = 1:size(u,1)
-            @inbounds res[field,i,elem] += sbp.Q[i,j,di]*u[field,j,elem]
+          for field = 1:size(flux,1)
+            @inbounds res[field,i,elem] += sbp.Q[i,j,di]*flux[field,j,elem]
           end
         end
       end
@@ -197,18 +197,18 @@ end
 @doc """
 ### SummationByParts.differentiate!
 
-Applies the SBP differentiation matrix operator, D, to data in `u` and **adds**
-the result to `res`.  Different methods are available depending on the rank of
-`u`:
+Applies the SBP differentiation matrix operator, D, to data in `flux` and
+**adds** the result to `res`.  Different methods are available depending on the
+rank of `flux`:
 
-* For *scalar* fields, it is assumed that `u` is a rank-2 array, with the first
-dimension for the local-node index, and the second dimension for the element
-index.
-* For *vector* fields, `u` is a rank-3 array, with the first dimension for the
-index of the vector field, the second dimension for the local-node index, and
-the third dimension for the element index.
+* For *scalar* fields, it is assumed that `flux` is a rank-2 array, with the
+first dimension for the local-node index, and the second dimension for the
+element index.
+* For *vector* fields, `flux` is a rank-3 array, with the first dimension for
+the index of the vector field, the second dimension for the local-node index,
+and the third dimension for the element index.
 
-Naturally, the number of entries in the dimension of `u` (and `res`)
+Naturally, the number of entries in the dimension of `flux` (and `res`)
 corresponding to the nodes must be equal to the number of nodes in the SBP
 operator sbp.
 
@@ -216,7 +216,7 @@ operator sbp.
 
 * `sbp`: an SBP operator type
 * `di`: direction index of the operator that is desired (di=1 for Dx, etc)
-* `u`: the array that the operator is applied to
+* `flux`: the array that the operator is applied to
 
 **In/Outs**
 
@@ -224,16 +224,16 @@ operator sbp.
 
 """->
 function differentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                           u::AbstractArray{T,2}, res::AbstractArray{T,2})
-  @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
-  @assert( length(u) == length(res) )
+                           flux::AbstractArray{T,2}, res::AbstractArray{T,2})
+  @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
+  @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
   Hinv = 1./sbp.w
   @inbounds begin
-    for elem = 1:size(u,2)
+    for elem = 1:size(flux,2)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          res[i,elem] += sbp.Q[i,j,di]*u[j,elem]
+          res[i,elem] += sbp.Q[i,j,di]*flux[j,elem]
         end
         res[i,elem] *= Hinv[i]
       end
@@ -242,20 +242,20 @@ function differentiate!{T}(sbp::SBPOperator{T}, di::Int,
 end
 
 function differentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                           u::AbstractArray{T,3}, res::AbstractArray{T,3})
-  @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
-  @assert( length(u) == length(res) )
+                           flux::AbstractArray{T,3}, res::AbstractArray{T,3})
+  @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
+  @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
   Hinv = 1./sbp.w
   @inbounds begin
-    for elem = 1:size(u,3)
+    for elem = 1:size(flux,3)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          for field = 1:size(u,1)
-            res[field,i,elem] += sbp.Q[i,j,di]*u[field,j,elem]
+          for field = 1:size(flux,1)
+            res[field,i,elem] += sbp.Q[i,j,di]*flux[field,j,elem]
           end
         end
-        for field = 1:size(u,1)
+        for field = 1:size(flux,1)
           res[field,i,elem] *= Hinv[i]
         end
       end
@@ -384,7 +384,6 @@ on the element faces.  Different methods are available depending on the rank of
 * For *scalar* fields, it is assumed that `flux` is a rank-2 array, with the
 first dimension for the face-node index, and the second dimension for the
 boundary index.
-
 * For *vector* fields, `flux` is a rank-3 array, with the first dimension for
 the index of the vector field, the second dimension for the face-node index, and
 the third dimension for the boundary index.
@@ -416,7 +415,7 @@ function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
     for (bindex, bndry) in enumerate(bndryfaces)
       for i = 1:sbp.numfacenodes        
         for j = 1:sbp.numfacenodes
-          jB = sbp.facenodes[j, bndry.face] # element index for jth node on face 
+          jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
           res[jB,bndry.element] += sbp.wface[j,i]*flux[i,bindex]
         end
       end
@@ -434,7 +433,7 @@ function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
     for (bindex, bndry) in enumerate(bndryfaces)
       for i = 1:sbp.numfacenodes        
         for j = 1:sbp.numfacenodes
-          jB = sbp.facenodes[j, bndry.face] # element index for jth node on face
+          jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
           for field = 1:size(res,1)
             res[field,jB,bndry.element] += sbp.wface[j,i]*flux[field,i,bindex]
           end
