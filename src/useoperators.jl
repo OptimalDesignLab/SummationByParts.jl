@@ -194,6 +194,33 @@ function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
   end
 end
 
+function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
+                               fluxjac::AbstractArray{T,2},
+                               resjac::AbstractArray{T,3};
+                               trans::Bool=false)
+  @assert( sbp.numnodes == size(fluxjac,1) && sbp.numnodes == size(resjac,1) &&
+           sbp.numnodes == size(resjac,2) )
+  @assert( size(fluxjac,2) == size(resjac,3) )
+  @assert( di > 0 && di <= size(sbp.Q,3) )
+  if trans # apply transposed Q
+    for elem = 1:size(fluxjac,2)
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          @inbounds resjac[i,j,elem] += sbp.Q[j,i,di]*fluxjac[i,elem]
+        end
+      end
+    end
+  else # apply Q
+    for elem = 1:size(fluxjac,2)
+      for j = 1:sbp.numnodes
+        for i = 1:sbp.numnodes
+          @inbounds resjac[i,j,elem] += sbp.Q[i,j,di]*fluxjac[i,elem]
+        end
+      end
+    end
+  end
+end
+
 @doc """
 ### SummationByParts.differentiate!
 
@@ -444,139 +471,6 @@ function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
 end
 
 @doc """
-### SummationByParts.boundaryintegrate!
-
-Integrates a numerical flux over a boundary using appropriate mass matrices
-defined on the element faces.  Different methods are available depending on the
-rank of `u`:
-
-* For *scalar* fields, it is assumed that `u` is a rank-2 array, with the first
-dimension for the local-node index, and the second dimension for the element
-index.
-* For *vector* fields, `u` is a rank-3 array, with the first dimension for the
-index of the vector field, the second dimension for the local-node index, and
-the third dimension for the element index.
-
-Naturally, the number of entries in the dimension of `u` (and `res`)
-corresponding to the nodes must be equal to the number of nodes in the SBP
-operator sbp.
-
-**Inputs**
-
-* `sbp`: an SBP operator type
-* `bndryfaces`: list of boundary faces stored as an array of `Boundary`s
-* `u`: the array of data that the boundary integral depends on
-* `x` (optional): Cartesian coordinates stored in (coord,node,element) format
-* `dξdx`: Jacobian of the element mapping (as output from `mappingjacobian!`)
-* `bndryflux`: function to compute the numerical flux over the boundary
-
-**In/Outs**
-
-* `res`: where the result of the integration is stored
-
-"""->
-function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
-                               u::AbstractArray{T,2}, dξdx::AbstractArray{T,4},
-                               bndryflux::Function, res::AbstractArray{T,2})
-  @assert( sbp.numnodes == size(u,1) == size(res,1) == size(dξdx,3) )
-  @assert( size(dξdx,4) == size(u,2) == size(res,2) )
-  @assert( length(u) == length(res) )
-  flux = zero(T)
-  @inbounds begin
-    for bndry in bndryfaces
-      for i = 1:sbp.numfacenodes
-        # j = element-local index for ith node on face 
-        j = sbp.facenodes[i, bndry.face]
-        flux = bndryflux(u[j,bndry.element], view(dξdx,:,:,j,bndry.element),
-                         view(sbp.facenormal,:,bndry.face))::T
-        for i2 = 1:sbp.numfacenodes
-          j2 = sbp.facenodes[i2, bndry.face]
-          res[j2,bndry.element] += sbp.wface[i2,i]*flux
-        end
-      end
-    end
-  end
-end
-
-function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
-                               u::AbstractArray{T,3}, dξdx::AbstractArray{T,4},
-                               bndryflux::Function, res::AbstractArray{T,3})
-  @assert( sbp.numnodes == size(u,2) == size(res,2) == size(dξdx,3) )
-  @assert( size(dξdx,4) == size(u,3) == size(res,3) )
-  @assert( length(u) == length(res) )
-  flux = zeros(T, (size(u,1)))  
-  @inbounds begin
-    for bndry in bndryfaces
-      for i = 1:sbp.numfacenodes
-        # j = element-local index for ith node on face 
-        j = sbp.facenodes[i, bndry.face]
-        bndryflux(view(u,:,j,bndry.element),
-                  view(dξdx,:,:,j,bndry.element),
-                  view(sbp.facenormal,:,bndry.face), flux) #::Array{T}
-        for i2 = 1:sbp.numfacenodes
-          j2 = sbp.facenodes[i2, bndry.face]
-          for field = 1:size(u,1)
-            res[field,j2,bndry.element] += sbp.wface[i2,i]*flux[field]
-          end
-        end
-      end
-    end
-  end
-end
-
-function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
-                               u::AbstractArray{T,2}, x::AbstractArray{T,3},
-                               dξdx::AbstractArray{T,4}, bndryflux::Function,
-                               res::AbstractArray{T,2})
-  @assert( sbp.numnodes == size(u,1) == size(res,1) == size(dξdx,3) == size(x,2) )
-  @assert( size(dξdx,4) == size(u,2) == size(res,2) == size(x,3) )
-  @assert( length(u) == length(res) )
-  flux = zero(T)
-  @inbounds begin
-    for bndry in bndryfaces
-      for i = 1:sbp.numfacenodes
-        # j = element-local index for ith node on face 
-        j = sbp.facenodes[i, bndry.face]
-        flux = bndryflux(u[j,bndry.element], view(x,:,j,bndry.element),
-                         view(dξdx,:,:,j,bndry.element),
-                         view(sbp.facenormal,:,bndry.face))::T
-        for i2 = 1:sbp.numfacenodes
-          j2 = sbp.facenodes[i2, bndry.face]
-          res[j2,bndry.element] += sbp.wface[i2,i]*flux
-        end
-      end
-    end
-  end
-end
-
-function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
-                               u::AbstractArray{T,3}, x::AbstractArray{T,3},
-                               dξdx::AbstractArray{T,4}, bndryflux::Function,
-                               res::AbstractArray{T,3})
-  @assert( sbp.numnodes == size(u,2) == size(res,2) == size(dξdx,3) == size(x,2) )
-  @assert( size(dξdx,4) == size(u,3) == size(res,3) == size(x,3) )
-  @assert( length(u) == length(res) )
-  flux = zeros(T, (size(u,1)))
-  @inbounds begin
-    for bndry in bndryfaces
-      for i = 1:sbp.numfacenodes
-        # j = element-local index for ith node on face 
-        j = sbp.facenodes[i, bndry.face]
-        bndryflux(view(u,:,j,bndry.element), view(x,:,j,bndry.element), 
-                  view(dξdx,:,:,j,bndry.element),
-                  view(sbp.facenormal,:,bndry.face), flux)
-        for i2 = 1:sbp.numfacenodes
-          j2 = sbp.facenodes[i2, bndry.face]
-          for field = 1:size(u,1)
-            res[field,j2,bndry.element] += sbp.wface[i2,i]*flux[field]
-          end
-        end
-      end
-    end
-  end
-end
-
-@doc """
 ### SummationByParts.interiorfaceintegrate!
 
 Integrates a given flux over interior element interfaces using appropriate mass
@@ -617,13 +511,15 @@ function interiorfaceintegrate!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface}
   @assert( size(ifaces,1) == size(flux,2) )
   # JEH: temporary, until nbrnodeindex is part of sbp type
   nbrnodeindex = Array(sbp.numfacenodes:-1:1)
-  for (findex, face) in enumerate(ifaces)
-    for i = 1:sbp.numfacenodes    
-      for j = 1:sbp.numfacenodes
-        jL = sbp.facenodes[j, face.faceL]::Int
-        jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
-        res[jL,face.elementL] += sbp.wface[j,i]*flux[i,findex]
-        res[jR,face.elementR] -= sbp.wface[j,i]*flux[i,findex]
+  @inbounds begin
+    for (findex, face) in enumerate(ifaces)
+      for i = 1:sbp.numfacenodes    
+        for j = 1:sbp.numfacenodes
+          jL = sbp.facenodes[j, face.faceL]::Int
+          jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
+          res[jL,face.elementL] += sbp.wface[j,i]*flux[i,findex]
+          res[jR,face.elementR] -= sbp.wface[j,i]*flux[i,findex]
+        end
       end
     end
   end
@@ -638,14 +534,16 @@ function interiorfaceintegrate!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface}
   @assert( size(ifaces,1) == size(flux,3) )
   # JEH: temporary, until nbrnodeindex is part of sbp type
   nbrnodeindex = Array(sbp.numfacenodes:-1:1)
-  for (findex, face) in enumerate(ifaces)
-    for i = 1:sbp.numfacenodes    
-      for j = 1:sbp.numfacenodes
-        jL = sbp.facenodes[j, face.faceL]::Int
-        jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
-        for field = 1:size(res,1)
-          res[field,jL,face.elementL] += sbp.wface[j,i]*flux[field,i,findex]
-          res[field,jR,face.elementR] -= sbp.wface[j,i]*flux[field,i,findex]
+  @inbounds begin
+    for (findex, face) in enumerate(ifaces)
+      for i = 1:sbp.numfacenodes    
+        for j = 1:sbp.numfacenodes
+          jL = sbp.facenodes[j, face.faceL]::Int
+          jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
+          for field = 1:size(res,1)
+            res[field,jL,face.elementL] += sbp.wface[j,i]*flux[field,i,findex]
+            res[field,jR,face.elementR] -= sbp.wface[j,i]*flux[field,i,findex]
+          end
         end
       end
     end
@@ -683,13 +581,21 @@ function mappingjacobian!{T}(sbp::TriSBP{T}, x::AbstractArray{T,3},
   dxdξ = zeros(T, (2,sbp.numnodes,size(x,3)))
   # compute d(x,y)/dxi and set deta/dx and deta/dy
   differentiate!(sbp, 1, x, dxdξ)
-  dξdx[2,1,:,:] = -dxdξ[2,:,:]
-  dξdx[2,2,:,:] = dxdξ[1,:,:]
+  for elem = 1:size(x,3)
+    for i = 1:size(x,2)
+      dξdx[2,1,i,elem] = -dxdξ[2,i,elem]
+      dξdx[2,2,i,elem] = dxdξ[1,i,elem]
+    end
+  end
   # compute d(x,y)/deta and set dxi/dx and dxi/dy
   fill!(dxdξ, zero(T))
   differentiate!(sbp, 2, x, dxdξ)
-  dξdx[1,2,:,:] = -dxdξ[1,:,:]
-  dξdx[1,1,:,:] = dxdξ[2,:,:]
+  for elem = 1:size(x,3)
+    for i = 1:size(x,2)
+      dξdx[1,2,i,elem] = -dxdξ[1,i,elem]
+      dξdx[1,1,i,elem] = dxdξ[2,i,elem]
+    end
+  end
   # compute the determinant of the Jacobian
   for elem = 1:size(x,3)
     for i = 1:sbp.numnodes
@@ -758,259 +664,3 @@ function mappingjacobian!{T}(sbp::TetSBP{T}, x::AbstractArray{T,3},
   # check for negative jac here?
 end
 
-@doc """
-### SummationByParts.getdir!
-
-This is a helper function for edgestabilize!  It is nothing more than a
-matrix-vector product, but seems to run faster than a Julia's native matvec.
-
-**Inputs**
-
-* `α`: the matrix multiplying from the left
-* `nrm`: the vector being multiplied
-
-**Outputs**
-
-* `dir`: the result of the product
-
-"""->
-function getdir!{T}(α::AbstractArray{T,2}, nrm::AbstractArray{T,1},
-                   dir::AbstractArray{T,1})
-  for di1 = 1:size(nrm,1)
-    dir[di1] = zero(T)
-    for di2 = 1:size(nrm,1)
-      dir[di1] += α[di1,di2]*nrm[di2]
-    end
-  end
-end
-
-@doc """
-### SummationByParts.getdiffelementarea
-
-Returns the (approximate) differential element area of a facet node.  Actually,
-nothing more than a transposed-matrix-vector product between `dξ` and `nrm`.
-
-**Inputs**
-
-* `nrm`: sbp-defined normal vector to the surface
-* `dξ`: mapping Jacobian (scaled by determinant)
-
-**Outputs**
-
-* `workvec`: a work array of the size of `nrm`
-
-"""->
-function getdiffelementarea{T}(nrm::AbstractArray{T,1}, dξ::AbstractArray{T,2},
-                               workvec::AbstractArray{T,1})
-  fill!(workvec, zero(T))
-  for di1 = 1:size(nrm,1)
-    for di2 = 1:size(nrm,1)
-      workvec[di2] += nrm[di1]*dξ[di1,di2]
-    end
-  end
-  return norm(workvec)
-end
-
-@doc """
-### SummationByParts.edgestabilize!
-
-Adds edge-stabilization (see Burman and Hansbo, doi:10.1016/j.cma.2003.12.032)
-to a given residual.  Different methods are available depending on the rank of
-`u`:
-
-* For *scalar* fields, it is assumed that `u` is a rank-2 array, with the first
-dimension for the local-node index, and the second dimension for the element
-index.
-* For *vector* fields, `u` is a rank-3 array, with the first dimension for the
-index of the vector field, the second dimension for the local-node index, and
-the third dimension for the element index.
-
-Naturally, the number of entries in the dimension of `u` (and `res`)
-corresponding to the nodes must be equal to the number of nodes in the SBP
-operator `sbp`.
-
-**Inputs**
-
-* `sbp`: an SBP operator type
-* `ifaces`: list of element interfaces stored as an array of `Interface`s
-* `u`: the array of solution data
-* `x`: Cartesian coordinates stored in (coord,node,element) format
-* `dξdx`: scaled Jacobian of the mapping (as output from `mappingjacobian!`)
-* `jac`: determinant of the Jacobian
-* `α`: array of transformation terms (see below)
-* `stabscale`: function to compute the edge-stabilization scaling (see below)
-
-**In/Outs**
-
-* `res`: where the result of the integration is stored
-
-**Details**
-
-The array `α` is used to compute the directional derivative normal to the faces.
-For a 2-dimensional problem, it can be computed as follows:
-
-      for k = 1:mesh.numelem
-        for i = 1:sbp.numnodes
-          for di1 = 1:2
-            for di2 = 1:2
-              α[di1,di2,i,k] = (dξdx[di1,1,i,k].*dξdx[di2,1,i,k] + 
-                                dξdx[di1,2,i,k].*dξdx[di2,2,i,k])*jac[i,k]
-            end
-          end
-        end
-      end
-
-The function `stabscale` has the signature
-
-  function stabscale(u, dξdx, nrm)
-
-where `u` is the solution at a node, `dξdx` is the (scaled) Jacobian at the same
-node, and `nrm` is the normal to the edge in reference space.  `stabscale`
-should return the necessary scaling to ensure the edge-stabilization has the
-desired asymptotic convergence rate.
-
-"""->
-function edgestabilize!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
-                           u::AbstractArray{T,2}, x::AbstractArray{T,3},
-                           dξdx::AbstractArray{T,4}, jac::AbstractArray{T,2},
-                           α::AbstractArray{T,4}, stabscale::Function,
-                           res::AbstractArray{T,2})
-  @assert( sbp.numnodes == size(u,1) == size(res,1) == size(dξdx,3) == size(x,2) 
-          == size(α,3) )
-  @assert( size(dξdx,4) == size(α,4) == size(u,2) == size(res,2) == size(x,3) )
-  @assert( length(u) == length(res) )
-  dim = size(sbp.Q, 3)
-
-  # JEH: temporary, until nbrnodeindex is part of sbp type
-  nbrnodeindex = Array(sbp.numfacenodes:-1:1)
-
-  Dn = zero(T)
-  dirL = zeros(T, (dim))
-  dirR = zeros(T, (dim))
-  workvec = zeros(T, (dim))
-  tmpL = zero(T)
-  tmpR = zero(T)
-  EDn = zeros(T, (sbp.numfacenodes) )
-  for face in ifaces
-    fill!(EDn, zero(T))
-    for i = 1:sbp.numfacenodes
-      # iL = element-local index for ith node on left element face
-      # iR = element-local index for ith node on right element face
-      iL = sbp.facenodes[i, face.faceL]::Int
-      #iR = sbp.facenodes[getnbrnodeindex(sbp, face, i)::Int, face.faceR]::Int
-      iR = sbp.facenodes[nbrnodeindex[i], face.faceR]::Int
-      # apply the normal-derivative difference operator along the face
-      getdir!(view(α,:,:,iL,face.elementL), view(sbp.facenormal,:,face.faceL), dirL)
-      Dn = zero(T)
-      Dn = directionaldifferentiate!(sbp, dirL, view(u,:,face.elementL), iL)
-      getdir!(view(α,:,:,iR,face.elementR), view(sbp.facenormal,:,face.faceR), dirR)
-      Dn += directionaldifferentiate!(sbp, dirR, view(u,:,face.elementR), iR)
-      # get differential area element: need 1/ds for each Dn term (here and loop
-      # below)to get unit normal, and then need ds for integration, so net
-      # result is 1/ds
-      ds = getdiffelementarea(view(sbp.facenormal,:,face.faceL),
-                              view(dξdx,:,:,iL,face.elementL), workvec)::T
-      # apply the scaling function
-      Dn *= stabscale(u[iL,face.elementL], view(dξdx,:,:,iL,face.elementL),
-                      view(sbp.facenormal,:,face.faceL))::T/ds # note that u[iL] = u[iR]
-      # add the face-mass matrix contribution
-      for j = 1:sbp.numfacenodes
-        EDn[j] += sbp.wface[j,i]*Dn
-      end
-    end
-    # here we use hand-coded reverse-mode to apply the transposed
-    # normal-derivative difference operator
-    for i = 1:sbp.numfacenodes
-      iL = sbp.facenodes[i, face.faceL]::Int
-      #iR = sbp.facenodes[getnbrnodeindex(sbp, face, i), face.faceR]::Int
-      iR = sbp.facenodes[nbrnodeindex[i], face.faceR]::Int
-      getdir!(view(α,:,:,iL,face.elementL), view(sbp.facenormal,:,face.faceL), dirL)
-      getdir!(view(α,:,:,iR,face.elementR), view(sbp.facenormal,:,face.faceR), dirR)
-      for di = 1:dim
-        tmpL = dirL[di]*EDn[i]/sbp.w[iL]
-        tmpR = dirR[di]*EDn[i]/sbp.w[iR]
-        for j = 1:sbp.numnodes
-          res[j,face.elementL] += sbp.Q[iL,j,di]*tmpL
-          res[j,face.elementR] += sbp.Q[iR,j,di]*tmpR
-        end
-      end
-    end
-  end
-end
-
-function edgestabilize!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
-                           u::AbstractArray{T,3}, x::AbstractArray{T,3},
-                           dξdx::AbstractArray{T,4}, jac::AbstractArray{T,2},
-                           α::AbstractArray{T,4}, stabscale::Function,
-                           res::AbstractArray{T,3})
-  @assert( sbp.numnodes == size(u,2) == size(res,2) == size(dξdx,3) == size(x,2) 
-          == size(α,3) )
-  @assert( size(dξdx,4) == size(α,4) == size(u,3) == size(res,3) == size(x,3) )
-  @assert( length(u) == length(res) )
-  dim = size(sbp.Q, 3)
-
-  # JEH: temporary, until nbrnodeindex is part of sbp type
-  nbrnodeindex = Array(sbp.numfacenodes:-1:1)
-
-  Dn = zeros(T, size(u,1))
-  dirL = zeros(T, (dim))
-  dirR = zeros(T, (dim))
-  workvec = zeros(T, (dim))
-  tmpL = zero(Dn)
-  tmpR = zero(Dn)
-  EDn = zeros(T, (size(u,1),sbp.numfacenodes) )
-  for face in ifaces
-    fill!(EDn, zero(T))
-    for i = 1:sbp.numfacenodes
-      # iL = element-local index for ith node on left element face
-      # iR = element-local index for ith node on right element face
-      iL = sbp.facenodes[i, face.faceL]::Int
-      #iR = sbp.facenodes[getnbrnodeindex(sbp, face, i), face.faceR]
-      iR = sbp.facenodes[nbrnodeindex[i], face.faceR]::Int
-      # apply the normal-derivative difference operator along the face
-      getdir!(view(α,:,:,iL,face.elementL), view(sbp.facenormal,:,face.faceL), dirL)
-      fill!(Dn, zero(T))
-      directionaldifferentiate!(sbp, dirL, view(u,:,:,face.elementL), iL, Dn)
-      getdir!(view(α,:,:,iR,face.elementR), view(sbp.facenormal,:,face.faceR), dirR)
-      directionaldifferentiate!(sbp, dirR, view(u,:,:,face.elementR), iR, Dn)
-      # get differential area element: need 1/ds for each Dn term (here and loop
-      # below) to get unit normals, and then need ds for integration, so net
-      # result is 1/ds
-      ds = getdiffelementarea(view(sbp.facenormal,:,face.faceL),
-                              view(dξdx,:,:,iL,face.elementL), workvec)::T      
-      # apply the scaling function
-      scale = stabscale(view(u,:,iL,face.elementL), view(dξdx,:,:,iL,face.elementL),
-                         view(sbp.facenormal,:,face.faceL))::T./ds # note that u[iL] = u[iR]
-      for field = 1:size(u,1)
-        Dn[field] *= scale
-      end
-      # add the face-mass matrix contribution
-      for j = 1:sbp.numfacenodes
-        for field = 1:size(u,1)
-          EDn[field,j] += sbp.wface[j,i]*Dn[field]
-        end
-      end
-    end
-    for i = 1:sbp.numfacenodes
-      iL = sbp.facenodes[i, face.faceL]::Int
-      #iR = sbp.facenodes[getnbrnodeindex(sbp, face, i), face.faceR]
-      iR = sbp.facenodes[nbrnodeindex[i], face.faceR]::Int
-      getdir!(view(α,:,:,iL,face.elementL), view(sbp.facenormal,:,face.faceL), dirL)
-      getdir!(view(α,:,:,iR,face.elementR), view(sbp.facenormal,:,face.faceR), dirR)
-      # here we use hand-coded reverse-mode to apply the transposed
-      # normal-derivative difference operator
-      for di = 1:size(sbp.Q, 3)
-        for field = 1:size(u,1)
-          tmpL[field] = dirL[di]*EDn[field,i]/sbp.w[iL]
-          tmpR[field] = dirR[di]*EDn[field,i]/sbp.w[iR]
-        end
-        for j = 1:sbp.numnodes
-          for field = 1:size(u,1)
-            res[field,j,face.elementL] += sbp.Q[iL,j,di]*tmpL[field]
-            res[field,j,face.elementR] += sbp.Q[iR,j,di]*tmpR[field]
-          end
-        end
-      end
-    end
-  end
-end

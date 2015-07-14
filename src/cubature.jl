@@ -96,7 +96,8 @@ defined by `cub`, which is a parametric abstract type (see domainsymorbits.jl).
   on exit, defines the nodes and weights that satisfy the desired accuracy.
 
 """->
-function solvecubature!{T}(cub::SymCub{T}, q::Int; tol=eps(T(10)),
+function solvecubature!{T}(cub::SymCub{T}, q::Int;
+                           tol=10*eps(typeof(real(one(T)))),
                            hist::Bool=false)
   Jac = SymCubatures.calcjacobian(cub)
 
@@ -167,7 +168,7 @@ accuracy on the right triangle.
 * `vtx`: vertices for the right triangle
 
 """->
-function tricubature(q::Int, T=Float64; tol=eps(T(10)))
+function tricubature(q::Int, T=Float64; tol=10*eps(typeof(real(one(T)))))
   @assert( q >= 1 && q <= 7 && mod(q,2) == 1 )
   if q == 1
     # P1 (vertices only); 2nd order cubature
@@ -222,7 +223,7 @@ accuracy on the right tetrahedron.
 * `vtx`: vertices for the right tetrahedron
 
 """->
-function tetcubature(q::Int, T=Float64; tol=eps(T(10)))
+function tetcubature(q::Int, T=Float64; tol=10*eps(typeof(real(one(T)))))
   @assert( q >= 1 && q <= 7 && mod(q,2) == 1)
   if q == 1
     # P1 (vertices only); 2nd order cubature

@@ -21,7 +21,8 @@ export SBPOperator, TriSBP, TetSBP, Boundary, Interface, calcnodes,
 finite-difference operators.
 
 """->
-abstract SBPOperator{T<:FloatingPoint}
+abstract SBPOperator{T<:Number}
+#abstract SBPOperator{T<:FloatingPoint}
 
 @doc """
 ### SBP.TriSBP
