@@ -543,7 +543,8 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   # use the minimum norm least-squares solution
   Afact = qrfact(A)
   x = Afact\bx; y = Afact\by
-  Qx *= 0.5; Qy *= 0.5
+  scale!(Qx, 0.5)
+  scale!(Qy, 0.5)
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
     for col = 1:row-1
@@ -563,7 +564,9 @@ function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   # use the minimum norm least-squares solution
   Afact = qrfact(A)
   x = Afact\bx; y = Afact\by; z = Afact\bz
-  Qx *= 0.5; Qy *= 0.5; Qz *= 0.5
+  scale!(Qx, 0.5)
+  scale!(Qy, 0.5)
+  scale!(Qz, 0.5)
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
     for col = 1:row-1
@@ -757,7 +760,7 @@ function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
   faceperm = zeros(Int, (numbndrynodes))
 
   # TEMP: this must be corrected
-  faceperm = Array(1:numbndrynodes)
+  faceperm = [1:numbndrynodes;]
 
   return perm, faceperm
 end

@@ -141,9 +141,9 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int;
       SymCubatures.setparams!(cub, v[1:cub.numparams])
       SymCubatures.setweights!(cub, v[cub.numparams+1:end])
       F, dF = Cubature.cubatureresidual(cub, q)
-      nu *= 4
+      nu *= 4.0
     else
-      nu /= 2
+      nu /= 2.0
       res_old = res
     end
 

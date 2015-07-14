@@ -49,8 +49,8 @@ type TriSymCub{T} <: SymCub{T}
   numedge::Int
   numS21::Int
   numS111::Int
-  params::Array{T}
-  weights::Array{T}
+  params::Array{T,1}
+  weights::Array{T,1}
 
   function TriSymCub(;numedge::Int=0, numS21::Int=0, numS111::Int=0,
                      vertices::Bool=true, midedges::Bool=false,
@@ -83,8 +83,8 @@ type TriSymCub{T} <: SymCub{T}
     numnodes += 6*numS111 # (6 permutations) X (number of S111 orbits)
     numweights += numS111
     # initialize parameter arrays
-    params = zeros(T, (numparams))
-    weights = zeros(T, (numweights))
+    params = zeros(T, numparams)
+    weights = zeros(T, numweights)
     new(numparams, numweights, numnodes, vertices, midedges, centroid,
         numedge, numS21, numS111, params, weights)
   end
@@ -130,8 +130,8 @@ type TetSymCub{T} <: SymCub{T}
   numfaceS21::Int
   numS31::Int
   numS22::Int
-  params::Array{T}
-  weights::Array{T}
+  params::Array{T,1}
+  weights::Array{T,1}
 
   function TetSymCub(;numedge::Int=0, numfaceS21::Int=0, numS31::Int=0,
                      numS22::Int=0, vertices::Bool=true, midedges::Bool=false,
@@ -171,8 +171,8 @@ type TetSymCub{T} <: SymCub{T}
     numnodes += 6*numS22 # (6 permutations) X (number of S22 orbits)
     numweights += numS22
     # initialize parameter arrays
-    params = zeros(T, (numparams))
-    weights = zeros(T, (numweights))
+    params = zeros(T, numparams)
+    weights = zeros(T, numweights)
     new(numparams, numweights, numnodes, vertices, midedges, centroid,
         facecentroid, numedge, numfaceS21, numS31, numS22, params, weights)
   end
@@ -356,14 +356,12 @@ Sets the nodal parameters for any parameterized symmetry orbits in the cubature.
 """->
 function setparams!{T}(cub::TriSymCub{T}, params::Array{T})
   @assert( length(params) == cub.numparams )
-  size(params) == size(cub.params) ? cub.params = params :
-  cub.params = params.'
+  cub.params = vec(params)
 end
 
 function setparams!{T}(cub::TetSymCub{T}, params::Array{T})
   @assert( length(params) == cub.numparams )
-  size(params) == size(cub.params) ? cub.params = params :
-  cub.params = params.'
+  cub.params = vec(params)
 end
 
 @doc """
@@ -382,14 +380,12 @@ Sets a cubature's (unique) weights.
 """->
 function setweights!{T}(cub::TriSymCub{T}, weights::Array{T})
   @assert( length(weights) == cub.numweights )
-  size(weights) == size(cub.weights) ? cub.weights = weights : 
-  cub.weights = weights.'
+  cub.weights = vec(weights)
 end
 
 function setweights!{T}(cub::TetSymCub{T}, weights::Array{T})
   @assert( length(weights) == cub.numweights )
-  size(weights) == size(cub.weights) ? cub.weights = weights :
-  cub.weights = weights.'
+  cub.weights = vec(weights)
 end
 
 @doc """

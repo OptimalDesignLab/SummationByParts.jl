@@ -510,7 +510,7 @@ function interiorfaceintegrate!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface}
   @assert( sbp.numfacenodes == size(flux,1) )
   @assert( size(ifaces,1) == size(flux,2) )
   # JEH: temporary, until nbrnodeindex is part of sbp type
-  nbrnodeindex = Array(sbp.numfacenodes:-1:1)
+  nbrnodeindex = [sbp.numfacenodes:-1:1;]
   @inbounds begin
     for (findex, face) in enumerate(ifaces)
       for i = 1:sbp.numfacenodes    
@@ -533,7 +533,7 @@ function interiorfaceintegrate!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface}
   @assert( sbp.numfacenodes == size(flux,2) )
   @assert( size(ifaces,1) == size(flux,3) )
   # JEH: temporary, until nbrnodeindex is part of sbp type
-  nbrnodeindex = Array(sbp.numfacenodes:-1:1)
+  nbrnodeindex = [sbp.numfacenodes:-1:1;]
   @inbounds begin
     for (findex, face) in enumerate(ifaces)
       for i = 1:sbp.numfacenodes    

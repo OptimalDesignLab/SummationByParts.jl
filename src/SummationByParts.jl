@@ -12,7 +12,7 @@ using .Cubature
 export SBPOperator, TriSBP, TetSBP, Boundary, Interface, calcnodes,
   weakdifferentiate!, differentiate!, directionaldifferentiate!, 
   volumeintegrate!, mappingjacobian!, boundaryintegrate!,
-  interiorfaceintegrate!, edgestabilize!
+  interiorfaceintegrate!
 
 @doc """
 ### SBP.SBPOperator
