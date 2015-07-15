@@ -124,7 +124,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.directionaldifferentiate (TriSBP, scalar field method)") do
+  context("Testing SummationByParts.directionaldifferentiate! (TriSBP, scalar field method)") do
     # build a single element grid, define u = x+y, and verify that Ddir = 2
     for p = 1:4 
       sbp = TriSBP{Float64}(degree=p)
@@ -141,7 +141,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.directionaldifferentiate (TetSBP, scalar field method)") do
+  context("Testing SummationByParts.directionaldifferentiate! (TetSBP, scalar field method)") do
     # build a single element grid, define u = x+y+z, and verify that Ddir = 3.0
     for p = 1:4 
       sbp = TetSBP{Float64}(degree=p)
@@ -158,7 +158,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.directionaldifferentiate (TriSBP, vector field method)") do
+  context("Testing SummationByParts.directionaldifferentiate! (TriSBP, vector field method)") do
     # build a single element grid, define u = x+y, and verify that Ddir = 2
     for p = 1:4 
       sbp = TriSBP{Float64}(degree=p)
@@ -179,7 +179,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.directionaldifferentiate (TetSBP, vector field method)") do
+  context("Testing SummationByParts.directionaldifferentiate! (TetSBP, vector field method)") do
     # build a single element grid, define u = x+y+z, and verify that Ddir = 3.0
     for p = 1:4 
       sbp = TetSBP{Float64}(degree=p)

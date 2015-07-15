@@ -140,81 +140,64 @@ operator sbp.
 * `res`: where the result of applying Q[:,:,di] to u is stored
 
 """->
-function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int, 
-                               flux::AbstractArray{T,2}, res::AbstractArray{T,2};
-                               trans::Bool=false)
+function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int, 
+                                             flux::AbstractArray{Tflx,2},
+                                             res::AbstractArray{Tres,2};
+                                             trans::Bool=false)
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
   if trans # apply transposed Q
-    for elem = 1:size(flux,2)
-      for i = 1:sbp.numnodes
-        for j = 1:sbp.numnodes
-          @inbounds res[i,elem] += sbp.Q[j,i,di]*flux[j,elem] 
+    @inbounds begin
+      for elem = 1:size(flux,2)
+        for i = 1:sbp.numnodes
+          for j = 1:sbp.numnodes
+            res[i,elem] += sbp.Q[j,i,di]*flux[j,elem] 
+          end
         end
       end
     end
   else # apply Q
-    for elem = 1:size(flux,2)
-      for i = 1:sbp.numnodes
-        for j = 1:sbp.numnodes
-          @inbounds res[i,elem] += sbp.Q[i,j,di]*flux[j,elem] 
+    @inbounds begin
+      for elem = 1:size(flux,2)
+        for i = 1:sbp.numnodes
+          for j = 1:sbp.numnodes
+            res[i,elem] += sbp.Q[i,j,di]*flux[j,elem] 
+          end
         end
       end
     end
   end
 end
 
-function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                               flux::AbstractArray{T,3}, res::AbstractArray{T,3};
-                               trans::Bool=false)
+function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
+                                             flux::AbstractArray{Tflx,3},
+                                             res::AbstractArray{Tres,3};
+                                             trans::Bool=false)
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
   if trans # apply transposed Q
-    for elem = 1:size(flux,3)
-      for i = 1:sbp.numnodes
-        for j = 1:sbp.numnodes
-          for field = 1:size(flux,1)
-            @inbounds res[field,i,elem] += sbp.Q[j,i,di]*flux[field,j,elem]
-          end
-        end
-      end
-    end
-  else # apply Q
-    for elem = 1:size(flux,3)
-      for i = 1:sbp.numnodes
-        for j = 1:sbp.numnodes
-          for field = 1:size(flux,1)
-            @inbounds res[field,i,elem] += sbp.Q[i,j,di]*flux[field,j,elem]
-          end
-        end
-      end
-    end
-  end
-end
-
-function weakdifferentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                               fluxjac::AbstractArray{T,2},
-                               resjac::AbstractArray{T,3};
-                               trans::Bool=false)
-  @assert( sbp.numnodes == size(fluxjac,1) && sbp.numnodes == size(resjac,1) &&
-           sbp.numnodes == size(resjac,2) )
-  @assert( size(fluxjac,2) == size(resjac,3) )
-  @assert( di > 0 && di <= size(sbp.Q,3) )
-  if trans # apply transposed Q
-    for elem = 1:size(fluxjac,2)
-      for i = 1:sbp.numnodes
-        for j = 1:sbp.numnodes
-          @inbounds resjac[i,j,elem] += sbp.Q[j,i,di]*fluxjac[i,elem]
-        end
-      end
-    end
-  else # apply Q
-    for elem = 1:size(fluxjac,2)
-      for j = 1:sbp.numnodes
+    @inbounds begin
+      for elem = 1:size(flux,3)
         for i = 1:sbp.numnodes
-          @inbounds resjac[i,j,elem] += sbp.Q[i,j,di]*fluxjac[i,elem]
+          for j = 1:sbp.numnodes
+            for field = 1:size(flux,1)
+              res[field,i,elem] += sbp.Q[j,i,di]*flux[field,j,elem]
+            end
+          end
+        end
+      end
+    end
+  else # apply Q
+    @inbounds begin
+      for elem = 1:size(flux,3)
+        for i = 1:sbp.numnodes
+          for j = 1:sbp.numnodes
+            for field = 1:size(flux,1)
+              res[field,i,elem] += sbp.Q[i,j,di]*flux[field,j,elem]
+            end
+          end
         end
       end
     end
@@ -250,8 +233,9 @@ operator sbp.
 * `res`: where the result of applying inv(H)*Q[:,:,di] to u is stored
 
 """->
-function differentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                           flux::AbstractArray{T,2}, res::AbstractArray{T,2})
+function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
+                                         flux::AbstractArray{Tflx,2},
+                                         res::AbstractArray{Tres,2})
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -268,8 +252,9 @@ function differentiate!{T}(sbp::SBPOperator{T}, di::Int,
   end
 end
 
-function differentiate!{T}(sbp::SBPOperator{T}, di::Int,
-                           flux::AbstractArray{T,3}, res::AbstractArray{T,3})
+function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
+                                         flux::AbstractArray{Tflx,3},
+                                         res::AbstractArray{Tres,3})
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -312,13 +297,15 @@ single element**, not a collection of elements.
 * `Ddir`: derivative of `u` in direction `dir`
 
 """->
-function directionaldifferentiate!{T}(sbp::SBPOperator{T}, dir::Array{T,1}, 
-                                      u::AbstractArray{T,1}, i::Int)
+function directionaldifferentiate!{Tsbp,Tmsh,Tsol}(sbp::SBPOperator{Tsbp},
+                                                   dir::Array{Tmsh,1},
+                                                   u::AbstractArray{Tsol,1},
+                                                   i::Int)
   @assert( size(sbp.Q, 3) == size(dir,1) )
-  Ddir = zero(T)
+  Ddir = zero(Tmsh)*zero(Tsol)
   @inbounds begin
     for di = 1:size(sbp.Q, 3)
-      tmp = zero(T)
+      tmp = zero(Tmsh)*zero(Tsol)
       for j = 1:sbp.numnodes
         tmp += sbp.Q[i,j,di]*u[j]
       end
@@ -328,9 +315,11 @@ function directionaldifferentiate!{T}(sbp::SBPOperator{T}, dir::Array{T,1},
   return Ddir
 end
 
-function directionaldifferentiate!{T}(sbp::SBPOperator{T}, dir::Array{T,1}, 
-                                     u::AbstractArray{T,2}, i::Int,
-                                     Ddir::Array{T,1})
+function directionaldifferentiate!{Tsbp,Tmsh,Tsol,Tres}(sbp::SBPOperator{Tsbp},
+                                                        dir::Array{Tmsh,1}, 
+                                                        u::AbstractArray{Tsol,2},
+                                                        i::Int,
+                                                        Ddir::Array{Tres,1})
   @assert( size(sbp.Q, 3) == size(dir,1) )
   @inbounds begin
     for di = 1:size(sbp.Q, 3)
@@ -375,27 +364,33 @@ operator sbp.
 * `res`: where the result of applying H to u is stored
 
 """->
-function volumeintegrate!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,2},
-                             res::AbstractArray{T,2})
+function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::SBPOperator{Tsbp},
+                                          u::AbstractArray{Tsol,2},
+                                          res::AbstractArray{Tres,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   H = sbp.w
-  for elem = 1:size(u,2)
-    for i = 1:sbp.numnodes
-      @inbounds res[i,elem] += H[i]*u[i,elem]
+  @inbounds begin
+    for elem = 1:size(u,2)
+      for i = 1:sbp.numnodes
+        res[i,elem] += H[i]*u[i,elem]
+      end
     end
   end
 end
 
-function volumeintegrate!{T}(sbp::SBPOperator{T}, u::AbstractArray{T,3},
-                             res::AbstractArray{T,3})
+function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::SBPOperator{Tsbp},
+                                          u::AbstractArray{Tsol,3},
+                                          res::AbstractArray{Tres,3})
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   H = sbp.w
-  for elem = 1:size(u,3)
-    for i = 1:sbp.numnodes
-      for field = 1:size(u,1)
-        @inbounds res[field,i,elem] += H[i]*u[field,i,elem]
+  @inbounds begin
+    for elem = 1:size(u,3)
+      for i = 1:sbp.numnodes
+        for field = 1:size(u,1)
+          res[field,i,elem] += H[i]*u[field,i,elem]
+        end
       end
     end
   end
@@ -433,8 +428,10 @@ index.
   consistent.
 
 """->
-function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
-                               flux::AbstractArray{T,2}, res::AbstractArray{T,2})
+function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
+                                            bndryfaces::Array{Boundary},
+                                            flux::AbstractArray{Tflx,2},
+                                            res::AbstractArray{Tres,2})
   @assert( sbp.numnodes == size(res,1) )
   @assert( sbp.numfacenodes == size(flux,1) )
   @assert( size(bndryfaces,1) == size(flux,2) )
@@ -450,8 +447,10 @@ function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
   end
 end
 
-function boundaryintegrate!{T}(sbp::SBPOperator{T}, bndryfaces::Array{Boundary},
-                               flux::AbstractArray{T,3}, res::AbstractArray{T,3})
+function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
+                                            bndryfaces::Array{Boundary},
+                                            flux::AbstractArray{Tflx,3},
+                                            res::AbstractArray{Tres,3})
   @assert( size(res,1) == size(flux,1) )
   @assert( sbp.numnodes == size(res,2) )
   @assert( sbp.numfacenodes == size(flux,2) )
@@ -503,9 +502,10 @@ index.
   consistent.
 
 """->
-function interiorfaceintegrate!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
-                                   flux::AbstractArray{T,2},
-                                   res::AbstractArray{T,2})
+function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
+                                                ifaces::Array{Interface},
+                                                flux::AbstractArray{Tflx,2},
+                                                res::AbstractArray{Tres,2})
   @assert( sbp.numnodes == size(res,1) )
   @assert( sbp.numfacenodes == size(flux,1) )
   @assert( size(ifaces,1) == size(flux,2) )
@@ -525,9 +525,10 @@ function interiorfaceintegrate!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface}
   end
 end
 
-function interiorfaceintegrate!{T}(sbp::SBPOperator{T}, ifaces::Array{Interface},
-                                   flux::AbstractArray{T,3},
-                                   res::AbstractArray{T,3})
+function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
+                                                ifaces::Array{Interface},
+                                                flux::AbstractArray{Tflx,3},
+                                                res::AbstractArray{Tres,3})
   @assert( size(res,1) == size(flux,1) )
   @assert( sbp.numnodes == size(res,2) )
   @assert( sbp.numfacenodes == size(flux,2) )
@@ -572,13 +573,15 @@ frame use the scaled Jacobian.
 * `jac`: the determinant of the Jacobian; 1st dim = node, 2nd dim = elem
 
 """->
-function mappingjacobian!{T}(sbp::TriSBP{T}, x::AbstractArray{T,3},
-                             dξdx::AbstractArray{T,4}, jac::AbstractArray{T,2})
+function mappingjacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
+                                     x::AbstractArray{Tmsh,3},
+                                     dξdx::AbstractArray{Tmsh,4},
+                                     jac::AbstractArray{Tmsh,2})
   @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
   @assert( size(x,3) == size(dξdx,4) )
   @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
-  fill!(dξdx, zero(T))
-  dxdξ = zeros(T, (2,sbp.numnodes,size(x,3)))
+  fill!(dξdx, zero(Tmsh))
+  dxdξ = zeros(Tmsh, (2,sbp.numnodes,size(x,3)))
   # compute d(x,y)/dxi and set deta/dx and deta/dy
   differentiate!(sbp, 1, x, dxdξ)
   for elem = 1:size(x,3)
@@ -588,7 +591,7 @@ function mappingjacobian!{T}(sbp::TriSBP{T}, x::AbstractArray{T,3},
     end
   end
   # compute d(x,y)/deta and set dxi/dx and dxi/dy
-  fill!(dxdξ, zero(T))
+  fill!(dxdξ, zero(Tmsh))
   differentiate!(sbp, 2, x, dxdξ)
   for elem = 1:size(x,3)
     for i = 1:size(x,2)
@@ -599,26 +602,28 @@ function mappingjacobian!{T}(sbp::TriSBP{T}, x::AbstractArray{T,3},
   # compute the determinant of the Jacobian
   for elem = 1:size(x,3)
     for i = 1:sbp.numnodes
-      jac[i,elem] = 1.0/(dξdx[1,1,i,elem]*dξdx[2,2,i,elem] - 
-      dξdx[1,2,i,elem]*dξdx[2,1,i,elem])
+      jac[i,elem] = one(Tmsh)/(dξdx[1,1,i,elem]*dξdx[2,2,i,elem] - 
+                               dξdx[1,2,i,elem]*dξdx[2,1,i,elem])
     end
   end
   # check for negative jac here?
 end
 
-function mappingjacobian!{T}(sbp::TetSBP{T}, x::AbstractArray{T,3},
-                             dξdx::AbstractArray{T,4}, jac::AbstractArray{T,2})
+function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
+                                     x::AbstractArray{Tmsh,3},
+                                     dξdx::AbstractArray{Tmsh,4},
+                                     jac::AbstractArray{Tmsh,2})
   @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
   @assert( size(x,3) == size(dξdx,4) )
   @assert( size(x,1) == 3 && size(dξdx,1) == 3 && size(dξdx,2) == 3 )
   numelem = size(x,3)
-  dxdξ = zeros(T, (3,sbp.numnodes,numelem,3))
+  dxdξ = zeros(Tmsh, (3,sbp.numnodes,numelem,3))
   # calculate the derivative of the coordinates with respect to (xi,eta,zeta)
   # using the SBP operator
   for di = 1:3
     differentiate!(sbp, di, x, sub(dxdξ,:,:,:,di)) 
   end
-  fill!(dξdx, zero(T))
+  fill!(dξdx, zero(Tmsh))
   # calculate the metrics: the outer loop calculates the derivatives of
   # coordinates-times-coordinate-derivatives, for example, d/deta( z * d(y)/d
   # zeta), and this contribution is added to the relevant metric.
@@ -652,13 +657,12 @@ function mappingjacobian!{T}(sbp::TetSBP{T}, x::AbstractArray{T,3},
   for elem = 1:numelem
     for i = 1:sbp.numnodes
       dξdx[:,:,i,elem] /= sbp.w[i]
-      jac[i,elem] = 1.0/(
-                         dxdξ[1,i,elem,1]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,3] +
-                         dxdξ[1,i,elem,2]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,1] +
-                         dxdξ[1,i,elem,3]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,2] -
-                         dxdξ[1,i,elem,1]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,2] -
-                         dxdξ[1,i,elem,2]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,3] -
-                         dxdξ[1,i,elem,3]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,1])
+      jac[i,elem] = one(Tmsh)/(dxdξ[1,i,elem,1]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,3] +
+                               dxdξ[1,i,elem,2]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,1] +
+                               dxdξ[1,i,elem,3]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,2] -
+                               dxdξ[1,i,elem,1]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,2] -
+                               dxdξ[1,i,elem,2]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,3] -
+                               dxdξ[1,i,elem,3]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,1])
     end
   end
   # check for negative jac here?
