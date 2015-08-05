@@ -1,52 +1,6 @@
 # This file gathers together functions related to using the SBP operators
 
 @doc """
-### SummationByParts.Boundary
-
-Used to identify boundary faces in a finite-element grid.
-
-**Fields**
-
-* `element` : index of the element to which the boundary face belongs
-* `face` : the face index of the boundary (local index to the element)
-
-**Example**
-
-To mark face 2 of element 7 to be a boundary face, use `Boundary(7,2)`
-
-"""->
-immutable Boundary
-  element::UInt64
-  face::UInt8
-end
-
-@doc """
-### SummationByParts.Interface
-
-Used to identify interfaces between elements in a finite-element grid.
-
-**Fields**
-
-* `elementL` : index of the so-called left element in the pair
-* `elementR` : index of the so-called right element in the pair
-* `faceL` : the face index of the interface with respect to the left element
-* `faceR` : the face index of the interface with respect to the right element
-
-**Example**
-
-Consider an interface between elements 2 and 5.  Suppose the interface is on
-face 1 of element 2 and face 3 of element 5.  This can be indicated as
-`Interface(2,5,1,3)`
-
-"""->
-immutable Interface
-  elementL::UInt64
-  elementR::UInt64
-  faceL::UInt8
-  faceR::UInt8
-end
-
-@doc """
 ### SummationByParts.getnbrnodeindex
 
 Returns the face-node index on `face.faceR` equivalent to index `i` on
@@ -141,9 +95,9 @@ operator sbp.
 
 """->
 function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int, 
-                                             flux::AbstractArray{Tflx,2},
-                                             res::AbstractArray{Tres,2};
-                                             trans::Bool=false)
+                                            flux::AbstractArray{Tflx,2},
+                                            res::AbstractArray{Tres,2};
+                                            trans::Bool=false)
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -171,9 +125,9 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
 end
 
 function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
-                                             flux::AbstractArray{Tflx,3},
-                                             res::AbstractArray{Tres,3};
-                                             trans::Bool=false)
+                                            flux::AbstractArray{Tflx,3},
+                                            res::AbstractArray{Tres,3};
+                                            trans::Bool=false)
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -203,6 +157,43 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
     end
   end
 end
+
+# macro update(x,op,y)
+#   return :($x=$op($x,$y))
+# end
+# function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int, 
+#                                             flux::AbstractArray{Tflx,2},
+#                                             res::AbstractArray{Tres,2},
+#                                             op::Function; trans::Bool=false)
+#   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
+#   @assert( length(flux) == length(res) )
+#   @assert( di > 0 && di <= size(sbp.Q,3) )
+#   if trans # apply transposed Q
+#     @inbounds begin
+#       for elem = 1:size(flux,2)
+#         for i = 1:sbp.numnodes
+#           for j = 1:sbp.numnodes
+#             # for op = + the following is equivalent to
+#             # res[i,elem] += sbp.Q[j,i,di]*flux[j,elem] 
+#             @update(res[i,elem], op, sbp.Q[j,i,di]*flux[j,elem])
+#           end
+#         end
+#       end
+#     end
+#   else # apply Q
+#     @inbounds begin
+#       for elem = 1:size(flux,2)
+#         for i = 1:sbp.numnodes
+#           for j = 1:sbp.numnodes
+#             # for op = + the following is equivalent to
+#             # res[i,elem] += sbp.Q[i,j,di]*flux[j,elem] 
+#             @update(res[i,elem], op, sbp.Q[i,j,di]*flux[j,elem])
+#           end
+#         end
+#       end
+#     end
+#   end
+# end
 
 @doc """
 ### SummationByParts.differentiate!
@@ -234,8 +225,8 @@ operator sbp.
 
 """->
 function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
-                                         flux::AbstractArray{Tflx,2},
-                                         res::AbstractArray{Tres,2})
+                                        flux::AbstractArray{Tflx,2},
+                                        res::AbstractArray{Tres,2})
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -253,8 +244,8 @@ function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
 end
 
 function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
-                                         flux::AbstractArray{Tflx,3},
-                                         res::AbstractArray{Tres,3})
+                                        flux::AbstractArray{Tflx,3},
+                                        res::AbstractArray{Tres,3})
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )

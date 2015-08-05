@@ -28,6 +28,26 @@ if true
     println()
   end
 
+  # context("Timing SummationByParts.weakdifferentiate! (TriSBP, scalar, op)") do
+  #   # warm-up 
+  #   sbp = TriSBP{Float64}(degree=1)
+  #   u = ones(Float64, (sbp.numnodes,2))
+  #   di = 1
+  #   res = zeros(u)
+  #   print("\tIgnore this --->")
+  #   @time weakdifferentiate!(sbp, di, u, res, op=:-, trans=true)
+  #   numelem = 10000
+  #   for p = 1:4
+  #     sbp = TriSBP{Float64}(degree=p)
+  #     u = ones(Float64, (sbp.numnodes,numelem))
+  #     di = 1
+  #     res = zeros(u)
+  #     print("p = ",p,": ")
+  #     @time weakdifferentiate!(sbp, di, u, res, op=:-, trans=true)
+  #   end
+  #   println()
+  # end
+
   context("Timing SummationByParts.weakdifferentiate! (TetSBP, scalar field method)") do
     # warm-up 
     sbp = TetSBP{Float64}(degree=1)
