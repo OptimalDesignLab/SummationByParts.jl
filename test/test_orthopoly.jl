@@ -4,14 +4,19 @@ facts("Testing OrthoPoly Module...") do
     @eval begin
       context("Testing OrthoPoly.lglnodes for DataType "string($T)) do
         x, w = OrthoPoly.lglnodes(2, ($T))
-        @fact x --> roughly(($T)[-1, 0, 1], atol=1e-15)
-        @fact w --> roughly(($T)[1/3, 4/3, 1/3], atol=1e-15)
+        @fact x --> roughly(($T)[-1, 0, 1], atol=10*eps(typeof(real(one($T)))) )
+        @fact w --> roughly(($T)[1/3, 4/3, 1/3],
+                            atol=10*eps(typeof(real(one($T)))) )
         x, w = OrthoPoly.lglnodes(3, ($T))
-        @fact x --> roughly(($T)[-1, -1/sqrt(5), 1/sqrt(5), 1], atol=1e-15)
-        @fact w --> roughly(($T)[1/6, 5/6, 5/6, 1/6], atol=1e-15)
+        @fact x --> roughly(($T)[-1, -1/sqrt(5), 1/sqrt(5), 1],
+                            atol=10*eps(typeof(real(one($T)))) )
+        @fact w --> roughly(($T)[1/6, 5/6, 5/6, 1/6],
+                            atol=10*eps(typeof(real(one($T)))) )
         x, w = OrthoPoly.lglnodes(4, ($T))
-        @fact x --> roughly(($T)[-1, -sqrt(3/7), 0, sqrt(3/7), 1], atol=1e-15)
-        @fact w --> roughly(($T)[1/10, 49/90, 32/45, 49/90, 1/10], atol=1e-15)
+        @fact x --> roughly(($T)[-1, -sqrt(3/7), 0, sqrt(3/7), 1], 
+                            atol=10*eps(typeof(real(one($T)))) )
+        @fact w --> roughly(($T)[1/10, 49/90, 32/45, 49/90, 1/10],
+                            atol=10*eps(typeof(real(one($T)))) )
       end
     end
   end
@@ -23,7 +28,8 @@ facts("Testing OrthoPoly Module...") do
         x = ($T)[-1:0.1:1;]
         L = OrthoPoly.jacobipoly(x, 0.0, 0.0, 5)
         L ./= L[21] # necessary for standardization
-        @fact L --> roughly( (63.*x.^5 -70.*x.^3 + 15.*x)/8, atol=1e-15)
+        @fact L --> roughly( (63.*x.^5 -70.*x.^3 + 15.*x)/8,
+                            atol=10*eps(typeof(real(one($T)))) )
       end
     end
   end
