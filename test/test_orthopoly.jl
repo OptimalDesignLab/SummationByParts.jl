@@ -4,14 +4,14 @@ facts("Testing OrthoPoly Module...") do
     @eval begin
       context("Testing OrthoPoly.lglnodes for DataType "string($T)) do
         x, w = OrthoPoly.lglnodes(2, ($T))
-        @fact x => roughly(($T)[-1, 0, 1], atol=1e-15)
-        @fact w => roughly(($T)[1/3, 4/3, 1/3], atol=1e-15)
+        @fact x --> roughly(($T)[-1, 0, 1], atol=1e-15)
+        @fact w --> roughly(($T)[1/3, 4/3, 1/3], atol=1e-15)
         x, w = OrthoPoly.lglnodes(3, ($T))
-        @fact x => roughly(($T)[-1, -1/sqrt(5), 1/sqrt(5), 1], atol=1e-15)
-        @fact w => roughly(($T)[1/6, 5/6, 5/6, 1/6], atol=1e-15)
+        @fact x --> roughly(($T)[-1, -1/sqrt(5), 1/sqrt(5), 1], atol=1e-15)
+        @fact w --> roughly(($T)[1/6, 5/6, 5/6, 1/6], atol=1e-15)
         x, w = OrthoPoly.lglnodes(4, ($T))
-        @fact x => roughly(($T)[-1, -sqrt(3/7), 0, sqrt(3/7), 1], atol=1e-15)
-        @fact w => roughly(($T)[1/10, 49/90, 32/45, 49/90, 1/10], atol=1e-15)
+        @fact x --> roughly(($T)[-1, -sqrt(3/7), 0, sqrt(3/7), 1], atol=1e-15)
+        @fact w --> roughly(($T)[1/10, 49/90, 32/45, 49/90, 1/10], atol=1e-15)
       end
     end
   end
@@ -23,7 +23,7 @@ facts("Testing OrthoPoly Module...") do
         x = ($T)[-1:0.1:1;]
         L = OrthoPoly.jacobipoly(x, 0.0, 0.0, 5)
         L ./= L[21] # necessary for standardization
-        @fact L => roughly( (63.*x.^5 -70.*x.^3 + 15.*x)/8, atol=1e-15)
+        @fact L --> roughly( (63.*x.^5 -70.*x.^3 + 15.*x)/8, atol=1e-15)
       end
     end
   end
@@ -38,7 +38,7 @@ facts("Testing OrthoPoly Module...") do
       xc = complex(x, eps_step)
       Pc = OrthoPoly.jacobipoly(xc, alpha, beta, N)
       dP_cmplx = imag(Pc)/eps_step
-      @fact dP => roughly(dP_cmplx, atol=1e-15)
+      @fact dP --> roughly(dP_cmplx, atol=1e-15)
     end
   end
 
@@ -77,7 +77,7 @@ facts("Testing OrthoPoly Module...") do
     end
     # verify that integral inner products produce identity
     innerprod = P.'*diagm(w_q)*P
-    @fact innerprod => roughly(eye(N), atol=1e-14)
+    @fact innerprod --> roughly(eye(N), atol=1e-14)
   end
 
   context("Testing OrthoPoly.proriolpoly (Tetrahedron method)") do
@@ -122,7 +122,7 @@ facts("Testing OrthoPoly Module...") do
     end
     # verify that integral inner products produce identity
     innerprod = P.'*diagm(w_q)*P
-    @fact innerprod => roughly(eye(N), atol=1e-14)
+    @fact innerprod --> roughly(eye(N), atol=1e-14)
   end
 
   context("Testing OrthoPoly.diffproriolpoly") do
@@ -148,10 +148,10 @@ facts("Testing OrthoPoly Module...") do
         xc = complex(x, 0)
         yc = complex(y, -eps_step)
         Pc = OrthoPoly.proriolpoly(xc, yc, i, j)
-        @fact dPdy => roughly(-imag(Pc)/eps_step, atol=1e-14)
+        @fact dPdy --> roughly(-imag(Pc)/eps_step, atol=1e-14)
         xc -= eps_step*im
         Pc = OrthoPoly.proriolpoly(xc, yc, i, j)
-        @fact dPdx => roughly(-imag(Pc)/eps_step - dPdy, atol=1e-12)
+        @fact dPdx --> roughly(-imag(Pc)/eps_step - dPdy, atol=1e-12)
       end
     end
   end

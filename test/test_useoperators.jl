@@ -8,8 +8,8 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(u)
       weakdifferentiate!(sbp, di, u, res)
-      @fact res[:,1] => roughly(zeros(sbp.numnodes), atol=1e-13)
-      @fact res[:,2] => roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact res[:,2] --> roughly(zeros(sbp.numnodes), atol=1e-13)
     end
   end 
 
@@ -21,7 +21,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(u)
       weakdifferentiate!(sbp, di, u, res)
-      @fact res[:,1] => roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=1e-13)
     end
   end 
 
@@ -38,10 +38,10 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(x)
       weakdifferentiate!(sbp, di, x, res)
-      @fact sum(res[1,:,1]) => roughly(1.0, atol=1e-15)
-      @fact sum(res[2,:,1]) => roughly(0.0, atol=1e-15)
-      @fact sum(res[1,:,2]) => roughly(0.0, atol=1e-15)
-      @fact sum(res[2,:,2]) => roughly(1.0, atol=1e-15)
+      @fact sum(res[1,:,1]) --> roughly(1.0, atol=1e-15)
+      @fact sum(res[2,:,1]) --> roughly(0.0, atol=1e-15)
+      @fact sum(res[1,:,2]) --> roughly(0.0, atol=1e-15)
+      @fact sum(res[2,:,2]) --> roughly(1.0, atol=1e-15)
     end
   end
 
@@ -56,9 +56,9 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(x)
       weakdifferentiate!(sbp, di, x, res)
-      @fact sum(res[1,:,1]) => roughly(2/3, atol=1e-15)
-      @fact sum(res[2,:,1]) => roughly(0.0, atol=1e-15)
-      @fact sum(res[3,:,1]) => roughly(0.0, atol=1e-15)
+      @fact sum(res[1,:,1]) --> roughly(2/3, atol=1e-15)
+      @fact sum(res[2,:,1]) --> roughly(0.0, atol=1e-15)
+      @fact sum(res[3,:,1]) --> roughly(0.0, atol=1e-15)
     end
   end
 
@@ -70,8 +70,8 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(u)
       differentiate!(sbp, di, u, res)
-      @fact res[:,1] => roughly(zeros(sbp.numnodes), atol=1e-13)
-      @fact res[:,2] => roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact res[:,2] --> roughly(zeros(sbp.numnodes), atol=1e-13)
     end
   end 
 
@@ -83,7 +83,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(u)
       differentiate!(sbp, di, u, res)
-      @fact res[:,1] => roughly(zeros(sbp.numnodes), atol=5e-13)
+      @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=5e-13)
     end
   end 
 
@@ -100,10 +100,10 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(x)
       differentiate!(sbp, di, x, res)
-      @fact res[1,:,1] => roughly(0.5.*ones(1,sbp.numnodes), atol=1e-13)
-      @fact res[2,:,1] => roughly(zeros(1,sbp.numnodes), atol=1e-13)
-      @fact res[1,:,2] => roughly(zeros(1,sbp.numnodes), atol=1e-13)
-      @fact res[2,:,2] => roughly(0.5.*ones(1,sbp.numnodes), atol=1e-13)
+      @fact res[1,:,1] --> roughly(0.5.*ones(1,sbp.numnodes), atol=1e-13)
+      @fact res[2,:,1] --> roughly(zeros(1,sbp.numnodes), atol=1e-13)
+      @fact res[1,:,2] --> roughly(zeros(1,sbp.numnodes), atol=1e-13)
+      @fact res[2,:,2] --> roughly(0.5.*ones(1,sbp.numnodes), atol=1e-13)
     end
   end
 
@@ -118,9 +118,9 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(x)
       differentiate!(sbp, di, x, res)
-      @fact res[1,:,1] => roughly(0.5.*ones(1,sbp.numnodes), atol=1e-13)
-      @fact res[2,:,1] => roughly(zeros(1,sbp.numnodes), atol=1e-13)
-      @fact res[3,:,1] => roughly(zeros(1,sbp.numnodes), atol=1e-13)
+      @fact res[1,:,1] --> roughly(0.5.*ones(1,sbp.numnodes), atol=1e-13)
+      @fact res[2,:,1] --> roughly(zeros(1,sbp.numnodes), atol=1e-13)
+      @fact res[3,:,1] --> roughly(zeros(1,sbp.numnodes), atol=1e-13)
     end
   end
 
@@ -136,7 +136,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       dir = [1.;1.]
       for i = 1:sbp.numnodes
         Ddir = directionaldifferentiate!(sbp, dir, u, i)
-        @fact Ddir => roughly(2.0, atol=1e-13)
+        @fact Ddir --> roughly(2.0, atol=1e-13)
       end
     end
   end
@@ -153,7 +153,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       dir = [1.;1.;1.]
       for i = 1:sbp.numnodes
         Ddir = directionaldifferentiate!(sbp, dir, u, i)
-        @fact Ddir => roughly(3.0, atol=1e-13)
+        @fact Ddir --> roughly(3.0, atol=1e-13)
       end
     end
   end
@@ -173,8 +173,8 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       for i = 1:sbp.numnodes
         fill!(Ddir, 0.0)
         directionaldifferentiate!(sbp, dir, u, i, Ddir)
-        @fact Ddir[1] => roughly(2.0, atol=1e-13)
-        @fact Ddir[2] => roughly(-2.0, atol=1e-13)
+        @fact Ddir[1] --> roughly(2.0, atol=1e-13)
+        @fact Ddir[2] --> roughly(-2.0, atol=1e-13)
       end
     end
   end
@@ -194,8 +194,8 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       for i = 1:sbp.numnodes
         fill!(Ddir, 0.0)
         directionaldifferentiate!(sbp, dir, u, i, Ddir)
-        @fact Ddir[1] => roughly(3.0, atol=1e-13)
-        @fact Ddir[2] => roughly(-3.0, atol=1e-13)
+        @fact Ddir[1] --> roughly(3.0, atol=1e-13)
+        @fact Ddir[2] --> roughly(-3.0, atol=1e-13)
       end
     end
   end
@@ -207,8 +207,8 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       u = ones(Float64, (sbp.numnodes,2))
       res = zeros(u)
       volumeintegrate!(sbp, u, res)
-      @fact sum(res[:,1]) => roughly(2.0, atol=1e-14)
-      @fact sum(res[:,2]) => roughly(2.0, atol=1e-14)
+      @fact sum(res[:,1]) --> roughly(2.0, atol=1e-14)
+      @fact sum(res[:,2]) --> roughly(2.0, atol=1e-14)
     end
   end
   
@@ -219,7 +219,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       u = ones(Float64, (sbp.numnodes,1))
       res = zeros(u)
       volumeintegrate!(sbp, u, res)
-      @fact sum(res[:,1]) => roughly(4/3, atol=1e-14)
+      @fact sum(res[:,1]) --> roughly(4/3, atol=1e-14)
     end
   end
   
@@ -231,10 +231,10 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       u[1,:,:] *= 0.5
       res = zeros(u)
       volumeintegrate!(sbp, u, res)
-      @fact sum(res[1,:,1]) => roughly(1.0, atol=1e-14)
-      @fact sum(res[2,:,1]) => roughly(2.0, atol=1e-14)
-      @fact sum(res[1,:,2]) => roughly(1.0, atol=1e-14)
-      @fact sum(res[2,:,2]) => roughly(2.0, atol=1e-14)
+      @fact sum(res[1,:,1]) --> roughly(1.0, atol=1e-14)
+      @fact sum(res[2,:,1]) --> roughly(2.0, atol=1e-14)
+      @fact sum(res[1,:,2]) --> roughly(1.0, atol=1e-14)
+      @fact sum(res[2,:,2]) --> roughly(2.0, atol=1e-14)
     end
   end
   
@@ -247,8 +247,8 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       u[2,:,:] *= 3/2
       res = zeros(u)
       volumeintegrate!(sbp, u, res)
-      @fact sum(res[1,:,1]) => roughly(1.0, atol=1e-14)
-      @fact sum(res[2,:,1]) => roughly(2.0, atol=1e-14)
+      @fact sum(res[1,:,1]) --> roughly(1.0, atol=1e-14)
+      @fact sum(res[2,:,1]) --> roughly(2.0, atol=1e-14)
     end
   end
     
@@ -266,17 +266,17 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       jac = zeros(Float64, (sbp.numnodes,2))
       mappingjacobian!(sbp, x, dξdx, jac)
       # verify on element 1
-      @fact dξdx[1,1,:,1] => roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[1,2,:,1] => roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[2,2,:,1] => roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[2,1,:,1] => roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
-      @fact jac[:,1] => roughly(4.0*ones(sbp.numnodes), atol=1e-13)
+      @fact dξdx[1,1,:,1] --> roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
+      @fact dξdx[1,2,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
+      @fact dξdx[2,2,:,1] --> roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
+      @fact dξdx[2,1,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
+      @fact jac[:,1] --> roughly(4.0*ones(sbp.numnodes), atol=1e-13)
       # verify on element 2
-      @fact dξdx[1,1,:,2] => roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[1,2,:,2] => roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[2,2,:,2] => roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[2,1,:,2] => roughly(-0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact jac[:,2] => roughly(4.0*ones(sbp.numnodes), atol=1e-13)
+      @fact dξdx[1,1,:,2] --> roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
+      @fact dξdx[1,2,:,2] --> roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
+      @fact dξdx[2,2,:,2] --> roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
+      @fact dξdx[2,1,:,2] --> roughly(-0.5*ones(1,1,sbp.numnodes), atol=1e-13)
+      @fact jac[:,2] --> roughly(4.0*ones(sbp.numnodes), atol=1e-13)
     end
   end
   
@@ -292,19 +292,19 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       jac = zeros(Float64, (sbp.numnodes,1))
       mappingjacobian!(sbp, x, dξdx, jac)
       # dxi/dx = (1,0,0)
-      @fact dξdx[1,1,:,1] => roughly(ones(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[1,2,:,1] => roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[1,3,:,1] => roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
+      @fact dξdx[1,1,:,1] --> roughly(ones(1,1,sbp.numnodes), atol=5e-12)
+      @fact dξdx[1,2,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
+      @fact dξdx[1,3,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
       # deta/dx = (0,1,0)
-      @fact dξdx[2,1,:,1] => roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[2,2,:,1] => roughly(ones(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[2,3,:,1] => roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
+      @fact dξdx[2,1,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
+      @fact dξdx[2,2,:,1] --> roughly(ones(1,1,sbp.numnodes), atol=5e-12)
+      @fact dξdx[2,3,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
       # dzeta/dx = (0,1,0)
-      @fact dξdx[3,1,:,1] => roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[3,2,:,1] => roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[3,3,:,1] => roughly(ones(1,1,sbp.numnodes), atol=5e-12)
+      @fact dξdx[3,1,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
+      @fact dξdx[3,2,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
+      @fact dξdx[3,3,:,1] --> roughly(ones(1,1,sbp.numnodes), atol=5e-12)
       # jac = 1
-      @fact jac[:,1] => roughly(ones(sbp.numnodes), atol=5e-12)
+      @fact jac[:,1] --> roughly(ones(sbp.numnodes), atol=5e-12)
     end
   end
   
@@ -331,7 +331,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
   #           differentiate!(sbp, 1, slice(dξdx,1,:,:,:), invariant)
   #           differentiate!(sbp, 2, slice(dξdx,2,:,:,:), invariant)
   #           differentiate!(sbp, 3, slice(dξdx,3,:,:,:), invariant)
-  #           @fact invariant => roughly(zeros(Float64, (3,sbp.numnodes,1)), atol=1e-13)
+  #           @fact invariant --> roughly(zeros(Float64, (3,sbp.numnodes,1)), atol=1e-13)
   #         end
   #       end
   #     end
@@ -384,7 +384,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
             exact = 1/(j+1) + 1/(i+1)
           end
           #println("i,j = ",i,",",j,": i+j = ",i+j)
-          @fact sum(res) => roughly(exact, atol=1e-13)
+          @fact sum(res) --> roughly(exact, atol=1e-13)
         end
       end
     end
@@ -448,7 +448,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
               k != 0 ? exact += 1/((i+1)*(j+1)) : nothing
             end
             #println("i,j,k = ",i,",",j,",",k," : i+j+k = ",i+j+k)
-            @fact sum(res) => roughly(exact, atol=1e-13)
+            @fact sum(res) --> roughly(exact, atol=1e-13)
           end
         end
       end
@@ -507,7 +507,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
             exact = 1/(j+1) + 1/(i+1)
           end
           #println("i,j = ",i,",",j,": i+j = ",i+j)
-          @fact sum(res) => roughly(exact, atol=1e-13)
+          @fact sum(res) --> roughly(exact, atol=1e-13)
         end
       end
     end
@@ -576,7 +576,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
               k != 0 ? exact += 1/((i+1)*(j+1)) : nothing
             end
             #println("i,j,k = ",i,",",j,",",k," : i+j+k = ",i+j+k)
-            @fact sum(res) => roughly(exact, atol=1e-13)
+            @fact sum(res) --> roughly(exact, atol=1e-13)
           end
         end
       end
@@ -673,7 +673,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
           res[i,k] /= (sbp.w[i]/jac[i,k])
         end
       end
-      @fact res => roughly(2.0*ones(res), atol=1e-11)
+      @fact res --> roughly(2.0*ones(res), atol=1e-11)
     end
   end 
 

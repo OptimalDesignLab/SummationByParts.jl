@@ -18,7 +18,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       end
       A = P*E
       numbndry = SymCubatures.getnumboundarynodes(cub)
-      @fact A[1:numbndry,1:numbndry] => roughly(eye(numbndry), atol=1e-15)
+      @fact A[1:numbndry,1:numbndry] --> roughly(eye(numbndry), atol=1e-15)
     end
   end
 
@@ -42,7 +42,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       end
       A = P*E
       numbndry = SymCubatures.getnumboundarynodes(cub)
-      @fact A[1:numbndry,1:numbndry] => roughly(eye(numbndry), atol=1e-14)
+      @fact A[1:numbndry,1:numbndry] --> roughly(eye(numbndry), atol=1e-14)
     end
   end
 
@@ -63,7 +63,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
           ptr += 1
         end
       end
-      @fact P*C => roughly(eye(cub.numnodes), atol=1e-14)
+      @fact P*C --> roughly(eye(cub.numnodes), atol=1e-14)
     end
   end
 
@@ -100,8 +100,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
             dvdx = zeros(y)
             dvdy = j.*y.^max(0,j-1)
           end
-          @fact u.'*Ex*v => roughly(dudx.'*H*v + u.'*H*dvdx, atol=1e-14)
-          @fact u.'*Ey*v => roughly(dudy.'*H*v + u.'*H*dvdy, atol=1e-14)
+          @fact u.'*Ex*v --> roughly(dudx.'*H*v + u.'*H*dvdx, atol=1e-14)
+          @fact u.'*Ey*v --> roughly(dudy.'*H*v + u.'*H*dvdy, atol=1e-14)
         end
       end
     end   
@@ -177,9 +177,9 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
               dvdy = zeros(x)
               dvdz = (x.^iv).*(k.*z.^max(0,k-1))
             end
-            @fact u.'*Ex*v => roughly(dudx.'*H*v + u.'*H*dvdx, atol=1e-14)
-            @fact u.'*Ey*v => roughly(dudy.'*H*v + u.'*H*dvdy, atol=1e-14)
-            @fact u.'*Ez*v => roughly(dudz.'*H*v + u.'*H*dvdz, atol=1e-14)
+            @fact u.'*Ex*v --> roughly(dudx.'*H*v + u.'*H*dvdx, atol=1e-14)
+            @fact u.'*Ey*v --> roughly(dudy.'*H*v + u.'*H*dvdy, atol=1e-14)
+            @fact u.'*Ez*v --> roughly(dudz.'*H*v + u.'*H*dvdz, atol=1e-14)
           end
         end
       end   
@@ -198,8 +198,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       Ex_inject[bndindx[:,3],bndindx[:,3]] -= Hbndry
       Ey_inject[bndindx[:,1],bndindx[:,1]] -= Hbndry
       Ey_inject[bndindx[:,2],bndindx[:,2]] += Hbndry
-      @fact Ex_inject => roughly(Ex, atol=1e-15)
-      @fact Ey_inject => roughly(Ey, atol=1e-15)
+      @fact Ex_inject --> roughly(Ex, atol=1e-15)
+      @fact Ey_inject --> roughly(Ey, atol=1e-15)
     end
   end
 
@@ -218,9 +218,9 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       Ey_inject[bndindx[:,4],bndindx[:,4]] -= Hbndry
       Ez_inject[bndindx[:,2],bndindx[:,2]] += Hbndry
       Ez_inject[bndindx[:,1],bndindx[:,1]] -= Hbndry
-      @fact Ex_inject => roughly(Ex, atol=1e-15)
-      @fact Ey_inject => roughly(Ey, atol=1e-15)
-      @fact Ez_inject => roughly(Ez, atol=1e-15)
+      @fact Ex_inject --> roughly(Ex, atol=1e-15)
+      @fact Ey_inject --> roughly(Ey, atol=1e-15)
+      @fact Ez_inject --> roughly(Ez, atol=1e-15)
     end
   end
 
@@ -231,7 +231,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
       A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
-      @fact size(nullspace(A),2) => sizenull[d]
+      @fact size(nullspace(A),2) --> sizenull[d]
     end
   end
   
@@ -242,7 +242,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64)
       A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d)
-      @fact size(nullspace(A),2) => sizenull[d]
+      @fact size(nullspace(A),2) --> sizenull[d]
     end
   end
   
@@ -268,7 +268,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       end
       Z = nullspace(A)
       f, dfdx = SummationByParts.commuteerror(w, Qx, Qy, Z, reducedsol[d])
-      @fact f => roughly(error[d], atol=1e-15)
+      @fact f --> roughly(error[d], atol=1e-15)
     end
   end
   
@@ -285,8 +285,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
           u = (x.^i).*(y.^j)
           dudx = (i.*x.^max(0,i-1)).*(y.^j)
           dudy = (x.^i).*(j.*y.^max(0,j-1))
-          @fact Dx*u => roughly(dudx, atol=1e-13)
-          @fact Dy*u => roughly(dudy, atol=1e-13)
+          @fact Dx*u --> roughly(dudx, atol=1e-13)
+          @fact Dy*u --> roughly(dudy, atol=1e-13)
         end
       end
     end
@@ -308,9 +308,9 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
             dudx = (i.*x.^max(0,i-1)).*(y.^j).*(z.^k)
             dudy = (x.^i).*(j.*y.^max(0,j-1)).*(z.^k)
             dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
-            @fact Dx*u => roughly(dudx, atol=1e-12)
-            @fact Dy*u => roughly(dudy, atol=1e-12)
-            @fact Dz*u => roughly(dudz, atol=1e-12)
+            @fact Dx*u --> roughly(dudx, atol=1e-12)
+            @fact Dy*u --> roughly(dudy, atol=1e-12)
+            @fact Dz*u --> roughly(dudz, atol=1e-12)
           end
         end
       end
@@ -331,8 +331,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
           u = (x.^i).*(y.^j)
           dudx = (i.*x.^max(0,i-1)).*(y.^j)
           dudy = (x.^i).*(j.*y.^max(0,j-1))
-          @fact Dx*u => roughly(dudx, atol=1e-13)
-          @fact Dy*u => roughly(dudy, atol=1e-13)
+          @fact Dx*u --> roughly(dudx, atol=1e-13)
+          @fact Dy*u --> roughly(dudy, atol=1e-13)
         end
       end
     end
@@ -347,20 +347,20 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       x = x[perm]
       y = y[perm]
       # check vertices
-      @fact x[1:3] => roughly(vtx[:,1], atol=1e-15)
-      @fact y[1:3] => roughly(vtx[:,2], atol=1e-15)
+      @fact x[1:3] --> roughly(vtx[:,1], atol=1e-15)
+      @fact y[1:3] --> roughly(vtx[:,2], atol=1e-15)
       ptr = 3
       # check ordering of x nodes on first edge
-      @fact issorted(x[ptr+1:ptr+d-1]) => true
-      @fact y[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(x[ptr+1:ptr+d-1]) --> true
+      @fact y[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
       ptr += (d-1)
       # check ordering of x and y nodes on second edge
-      @fact issorted(x[ptr+1:ptr+d-1], rev=true) => true
-      @fact issorted(y[ptr+1:ptr+d-1]) => true
+      @fact issorted(x[ptr+1:ptr+d-1], rev=true) --> true
+      @fact issorted(y[ptr+1:ptr+d-1]) --> true
       ptr += (d-1)
       # check ordering of y nodes on third edge
-      @fact x[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
-      @fact issorted(y[ptr+1:ptr+d-1]) => true
+      @fact x[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(y[ptr+1:ptr+d-1]) --> true
     end
   end
 
@@ -375,55 +375,55 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       y = y[perm]
       z = z[perm]
       # check vertices
-      @fact x[1:4] => roughly(vtx[:,1], atol=1e-15)
-      @fact y[1:4] => roughly(vtx[:,2], atol=1e-15)
-      @fact z[1:4] => roughly(vtx[:,3], atol=1e-15)
+      @fact x[1:4] --> roughly(vtx[:,1], atol=1e-15)
+      @fact y[1:4] --> roughly(vtx[:,2], atol=1e-15)
+      @fact z[1:4] --> roughly(vtx[:,3], atol=1e-15)
       ptr = 4
       # check ordering of x nodes on first edge
-      @fact issorted(x[ptr+1:ptr+d-1]) => true
-      @fact y[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
-      @fact z[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(x[ptr+1:ptr+d-1]) --> true
+      @fact y[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact z[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
       ptr += (d-1)
       # check ordering of x and y nodes on second edge
-      @fact issorted(x[ptr+1:ptr+d-1], rev=true) => true
-      @fact issorted(y[ptr+1:ptr+d-1]) => true
-      @fact z[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(x[ptr+1:ptr+d-1], rev=true) --> true
+      @fact issorted(y[ptr+1:ptr+d-1]) --> true
+      @fact z[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
       ptr += (d-1)
       # check ordering of y and z nodes on third edge
-      @fact x[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
-      @fact issorted(y[ptr+1:ptr+d-1], rev=true) => true
-      @fact issorted(z[ptr+1:ptr+d-1]) => true
+      @fact x[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(y[ptr+1:ptr+d-1], rev=true) --> true
+      @fact issorted(z[ptr+1:ptr+d-1]) --> true
       ptr += (d-1)
       # check ordering of z on fourth edge
-      @fact x[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
-      @fact y[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
-      @fact issorted(z[ptr+1:ptr+d-1]) => true
+      @fact x[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact y[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(z[ptr+1:ptr+d-1]) --> true
       ptr += (d-1)
       # check ordering of y on fifth edge
-      @fact x[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
-      @fact issorted(y[ptr+1:ptr+d-1]) => true
-      @fact z[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
+      @fact x[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(y[ptr+1:ptr+d-1]) --> true
+      @fact z[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
       ptr += (d-1)
       # check ordering of x and z on sixth edge
-      @fact issorted(x[ptr+1:ptr+d-1], rev=true) => true
-      @fact y[ptr+1:ptr+d-1] => roughly(-ones(d-1), atol=1e-15)
-      @fact issorted(z[ptr+1:ptr+d-1]) => true
+      @fact issorted(x[ptr+1:ptr+d-1], rev=true) --> true
+      @fact y[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(z[ptr+1:ptr+d-1]) --> true
       ptr += (d-1)
       # check that face nodes lie on appropriate faces
       numface = div((d-1)*(d-2),2)
       # check that z = -1 on face 1
-      @fact z[ptr+1:ptr+numface] => roughly(-ones(numface), atol=1e-15)
+      @fact z[ptr+1:ptr+numface] --> roughly(-ones(numface), atol=1e-15)
       ptr += numface
       # check that z = -1 - x - y on face 2
-      @fact z[ptr+1:ptr+numface] => roughly(-ones(numface)
+      @fact z[ptr+1:ptr+numface] --> roughly(-ones(numface)
                                             -x[ptr+1:ptr+numface]
                                             -y[ptr+1:ptr+numface], atol=1e-15)
       ptr += numface
       # check that x = -1 on face 3
-      @fact x[ptr+1:ptr+numface] => roughly(-ones(numface), atol=1e-15)
+      @fact x[ptr+1:ptr+numface] --> roughly(-ones(numface), atol=1e-15)
       ptr += numface
       # check that y = -1 on face 4
-      @fact y[ptr+1:ptr+numface] => roughly(-ones(numface), atol=1e-15)
+      @fact y[ptr+1:ptr+numface] --> roughly(-ones(numface), atol=1e-15)
       ptr += numface
     end
   end
