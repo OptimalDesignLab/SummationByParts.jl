@@ -65,6 +65,32 @@ function calcnodes{T}(sbp::TetSBP{T}, vtx::Array{T})
 end
 
 @doc """
+### SummationByParts.calcminnodedistance
+
+Returns the minimum distance between distinct nodes on an element with straight sides
+
+**Inputs**
+
+* `sbp`: an SBP operator
+* `vtx`: the vertices that define the element
+
+**Returns**
+
+* `mindist`: the minimum distance between distinct nodes
+
+"""->
+function calcminnodedistance{T}(sbp::SBPOperator{T}, vtx::Array{T})
+  x = calcnodes(sbp, vtx)
+  mindist = convert(T, Inf)
+  for i = 1:size(x,2)
+    for j = i+1:size(x,2)
+      mindist = min(mindist, norm(x[:,i] - x[:,j]))
+    end
+  end
+  return mindist
+end
+
+@doc """
 ### SummationByParts.weakdifferentiate!
 
 Applies the SBP stiffness matrix (or its transpose) to data in `flux` and
