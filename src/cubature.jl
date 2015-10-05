@@ -4,7 +4,7 @@ module Cubature
 using ..OrthoPoly
 using ..SymCubatures
 
-export tricubature, tetcubature
+export quadrature, tricubature, tetcubature
 
 @doc """
 ### Cubature.cubatureresidual
@@ -150,6 +150,73 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int;
   end
   error("calccubature failed to find solution in ",maxiter," iterations")
 end
+
+@doc """
+### Cubature.quadrature{T}
+
+This high-level function computes and returns a symmetric cubature of requested
+accuracy on the interval [-1,1]
+
+**Inputs**
+
+* `q`: maximum degree of polynomial for which the cubature is exact
+* `T`: the data type used to represent the cubature
+* `internal`: if true, all nodes are strictly internal (default false)
+* `tol`: tolerance with which to solve the cubature
+
+**Outputs**
+
+* `cub`: a symmetric cubature for the interval [-1,1]
+* `vtx`: vertices, [-1,1]
+
+"""->
+function quadrature(q::Int, T=Float64; internal::Bool=false)
+  if internal
+    # all nodes are internal (LG quadrature)
+    N = div(q+2,2)
+    x, w = OrthoPoly.lgnodes(N, T)
+    alpha = zeros(T, (div(N,2)))
+    weight = zeros(T, (div(N+1,2)))
+    for i = 1:div(N,2)
+      alpha[i] = (1 + x[i])/2
+      weight[i] = w[i]
+    end
+    if rem(N,2) == 0
+      centroid = false
+    else
+      centroid = true
+      weight[div(N+1,2)] = w[div(N+1,2)]
+    end
+    quad = LineSymCub{T}(vertices=false, centroid=centroid,
+                         numedge=div(N,2))
+    SymCubatures.setparams!(quad, alpha)
+    SymCubatures.setweights!(quad, weight)
+  else
+    # vertices are included (LGL quadrature)
+    N = div(q+4,2)
+    x, w = OrthoPoly.lglnodes(N-1, T)
+    alpha = zeros(T, (div(N-2,2)))
+    weight = zeros(T, (div(N+1,2)))
+    weight[1] = w[1]
+    for i = 1:div(N-2,2)
+      alpha[i] = (1 - x[i+1])/2
+      weight[i+1] = w[i+1]
+    end
+    if rem(N,2) == 0 
+      centroid=false
+    else
+      centroid=true
+      weight[div(N+1,2)] = w[div(N+1,2)]
+    end
+    quad = LineSymCub{T}(vertices=true, centroid=centroid,
+                         numedge=div(N-2,2))
+    SymCubatures.setparams!(quad, alpha)
+    SymCubatures.setweights!(quad, weight)
+  end
+  vtx = reshape(T[-1; 1], (2,1))
+  return quad, vtx
+end
+
 
 @doc """
 ### Cubature.tricubature{T}

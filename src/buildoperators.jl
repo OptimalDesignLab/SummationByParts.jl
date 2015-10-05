@@ -296,6 +296,18 @@ function boundaryoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
 end  
 
 @doc """
+### SummationByParts.boundaryoperators2
+
+The following will eventually supercede current version
+"""->
+function boundaryoperators2{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+  # get boundary cubature
+
+
+  return
+end
+
+@doc """
 ### SummationByParts.boundarymassmatrix
 
 Returns the (dense) mass matrix for a set of nodes on a reference boundary.

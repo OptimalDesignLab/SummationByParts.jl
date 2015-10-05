@@ -2,7 +2,7 @@ module SymCubatures
 # types and methods for mapping between symmetry groups and nodes for cubatures
 # on various domains
 
-export SymCub, TriSymCub, TetSymCub
+export SymCub, LineSymCub, TriSymCub, TetSymCub
 
 @doc """
 ### SymCubatures.SymCub
@@ -13,6 +13,60 @@ implementations of arbitrary precision types.  The parameterization also permits
 the use of the complex-step method for verification.
 
 """-> abstract SymCub{T<:Number}
+
+@doc """
+### SymCubatures.LineSymCub
+  
+Defines a symmetric quadrature rule on the interval [-1,1].  Current choices are
+Legendre-Gauss-Lobatto (LGL) or Legendre-Gauss (LG) rules.
+
+**Fields**
+
+* `numparams` : total number of nodal degrees of freedom
+* `numweights` : total number of unique weights
+* `numnodes` : total number of nodes
+* `vertices` : if true, vertices (ends of interval) are in the set of nodes
+* `centroid` : if true, centroid is present in set of nodes
+* `numedge` : number of unique edge parameters
+* `params` : the actual values of the orbit nodal parameters
+* `weights` : values of the unique weights
+
+"""->
+type LineSymCub{T} <: SymCub{T}
+  numparams::Int
+  numweights::Int
+  numnodes::Int
+  vertices::Bool
+  centroid::Bool
+  numedge::Int
+  params::Array{T,1}
+  weights::Array{T,1}
+
+  function LineSymCub(;numedge::Int=0, vertices::Bool=true, centroid::Bool=false)
+    @assert(numedge >= 0)
+    # compute the number of degrees of freedom and unique weights
+    numparams = 0
+    numweights = 0
+    numparams += numedge
+    # compute the number of nodes
+    numnodes = 0
+    if vertices
+      numnodes += 2
+      numweights += 1
+    end
+    if centroid
+      numnodes += 1
+      numweights += 1
+    end
+    numnodes += 2*numedge # 2 * (3 edges) X (number of edge parameters)
+    numweights += numedge
+    # initialize parameter arrays
+    params = zeros(T, numparams)
+    weights = zeros(T, numweights)
+    new(numparams, numweights, numnodes, vertices, centroid, numedge, params,
+        weights)
+  end
+end
 
 @doc """
 ### SymCubatures.TriSymCub
@@ -196,6 +250,10 @@ boundary-node count returned.
 * `numboundary`: number of boundary nodes
 
 """->
+function getnumboundarynodes{T}(cub::LineSymCub{T})
+  cub.vertices ? (return 2) : (return 0)
+end
+
 function getnumboundarynodes{T}(cub::TriSymCub{T})
   numboundary = 0
   cub.vertices ? numboundary += 3 : nothing
@@ -228,6 +286,10 @@ Returns the number of nodes on an individual face (i.e. side) of the element.
 * `numfacenodes`: number of nodes on a face
 
 """->
+function getnumfacenodes{T}(cub::LineSymCub{T})
+  cub.vertices ? (return 1) : (return 0)
+end
+
 function getnumfacenodes{T}(cub::TriSymCub{T})
   numfacenodes = 0
   cub.vertices ? numfacenodes += 2 : nothing
@@ -261,6 +323,16 @@ Returns the indices of the nodes that lie on the boundaries.
   column of indices for each edge/face.
 
 """->
+function getbndryindices{T}(cub::LineSymCub{T})
+  numedge = getnumfacenodes(cub)
+  bndryindices = zeros(Int, (numedge,2) )
+  # add vertices to indices
+  if cub.vertices
+    bndryindices[:,:] = [1 2]
+  end
+  return bndryindices
+end
+
 function getbndryindices{T}(cub::TriSymCub{T})
   # get the number of nodes on one edge
   numedge = getnumfacenodes(cub)
@@ -354,12 +426,7 @@ Sets the nodal parameters for any parameterized symmetry orbits in the cubature.
 * `cub`: symmetric cubature rule whose nodal parameters are being updated
 
 """->
-function setparams!{T}(cub::TriSymCub{T}, params::Array{T})
-  @assert( length(params) == cub.numparams )
-  cub.params = vec(params)
-end
-
-function setparams!{T}(cub::TetSymCub{T}, params::Array{T})
+function setparams!{T}(cub::SymCub{T}, params::Array{T})
   @assert( length(params) == cub.numparams )
   cub.params = vec(params)
 end
@@ -378,12 +445,7 @@ Sets a cubature's (unique) weights.
 * `cub`: symmetric cubature rule whose weights are being updated
 
 """->
-function setweights!{T}(cub::TriSymCub{T}, weights::Array{T})
-  @assert( length(weights) == cub.numweights )
-  cub.weights = vec(weights)
-end
-
-function setweights!{T}(cub::TetSymCub{T}, weights::Array{T})
+function setweights!{T}(cub::SymCub{T}, weights::Array{T})
   @assert( length(weights) == cub.numweights )
   cub.weights = vec(weights)
 end
@@ -403,6 +465,36 @@ Use the orbital parameter values to compute a cubature's nodal coordinates.
 * `x`,`y` (`z`): cubature's nodal coordinates
 
 """->
+function calcnodes{T}(cub::LineSymCub{T}, vtx::Array{T,2})
+  @assert(cub.numparams >= 0)
+  @assert(cub.numnodes >= 1)
+  x = zeros(T, (cub.numnodes))
+  ptr = 0
+  paramptr = 0
+  # set vertices
+  if cub.vertices
+    x[1:2] = vtx[:,1]
+    ptr = 2
+  end
+  # set edge nodes
+  for i = 1:cub.numedge
+    alpha = cub.params[paramptr+1]
+    A = T[alpha (1-alpha);
+          (1-alpha) alpha]
+    x[ptr+1:ptr+2] = A*vtx[:,1]
+    ptr += 2
+    paramptr += 1
+  end
+  # Now set internal nodes, if any,...
+  # set centroid
+  if cub.centroid
+    A = T[1/2 1/2]
+    x[ptr+1:ptr+1] = A*vtx[:,1]
+    ptr += 1
+  end
+  return x
+end
+
 function calcnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
@@ -778,6 +870,34 @@ Map the unique cubature weights to the weights of all nodes.
 * `w`: cubature's weights at all nodes
 
 """->
+function calcweights{T}(cub::LineSymCub{T})
+  @assert(cub.numweights >= 0)
+  @assert(cub.numnodes >= 1)
+  w = zeros(T, (cub.numnodes))
+  ptr = 0
+  wptr = 0
+  # set vertices weights
+  if cub.vertices
+    w[1:2] = cub.weights[wptr+1]
+    ptr += 2
+    wptr += 1
+  end
+  # set edge weights
+  for i = 1:cub.numedge
+    w[ptr+1:ptr+2] = cub.weights[wptr+1]
+    ptr += 2
+    wptr += 1
+  end
+  # Now set volume weights, if any,...
+  # set centroid weight
+  if cub.centroid
+    w[ptr+1:ptr+1] = cub.weights[wptr+1]
+    ptr += 1
+    wptr += 1
+  end
+  return w
+end
+
 function calcweights{T}(cub::TriSymCub{T})
   @assert(cub.numweights >= 0)
   @assert(cub.numnodes >= 1)

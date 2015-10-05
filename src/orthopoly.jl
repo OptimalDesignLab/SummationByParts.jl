@@ -4,7 +4,7 @@ module OrthoPoly
 @doc """
 ### OrthoPoly.lglnodes
 
-Computes the Legendre-Gauss-Lobatto (LGL) quadrature nodes and weights and the
+Computes the Legendre-Gauss-Lobatto (LGL) quadrature nodes and weights on the
 interval [-1,1].  The LGL nodes are the zeros of (1-x^2)*P'_N(x), where P_N(x)
 denotes the Nth Legendre polynomial.
 
@@ -26,25 +26,74 @@ Contact: gregvw@chtm.unm.edu
  
 """->
 function lglnodes(N, T=Float64)
-N1 = N+1
-# Use the Chebyshev-Gauss-Lobatto nodes as an initial guess
-x = -cos(π*[0:N;]/N)
-# The Legendre Vandermonde Matrix 
-P = zeros(T, (N1,N1))
-# Compute P_(N) using the recursion relation; compute its first and second
-# derivatives and update x using the Newton-Raphson method.
-xold = (T)(2)
-while maxabs(real(x-xold)) > eps(real((T)(1)))
-  xold = x
-  P[:,1] = one(T)
-  P[:,2] = x
-  for k=2:N
-    P[:,k+1]= ((2k-1)*x.*P[:,k]-(k-1)*P[:,k-1])/k
+  N1 = N+1
+  # Use the Chebyshev-Gauss-Lobatto nodes as an initial guess
+  x = -cos(π*[0:N;]/N)
+  # The Legendre Vandermonde Matrix 
+  P = zeros(T, (N1,N1))
+  # Compute P_(N) using the recursion relation; compute its first and second
+  # derivatives and update x using the Newton-Raphson method.
+  xold = (T)(2)
+  while maxabs(real(x-xold)) > eps(real((T)(1)))
+    xold = x
+    P[:,1] = one(T)
+    P[:,2] = x
+    for k=2:N
+      P[:,k+1]= ((2k-1)*x.*P[:,k]-(k-1)*P[:,k-1])/k
+    end
+    x = xold - ( x.*P[:,N1]-P[:,N] )./( N1*P[:,N1] )           
   end
-  x = xold - ( x.*P[:,N1]-P[:,N] )./( N1*P[:,N1] )           
+  w = 2./(N*N1*P[:,N1].^2)
+  return x, w
 end
-w = 2./(N*N1*P[:,N1].^2)
-return x, w
+
+@doc """
+### OrthoPoly.lgnodes
+
+Computes the Legendre-Gauss (LG) quadrature nodes and weights on the
+interval [-1,1].  The LG nodes are the zeros of P_N(x), where P_N(x)
+denotes the Nth Legendre polynomial.
+
+**Inputs**
+
+* `N`: number of nodes
+* `T`: number type
+
+**Outputs**
+
+* `x`: the LG nodes
+* `w`: the LG weights
+
+Julia version adapted from Matlab code written by Greg von Winckel - 02/25/2004
+Contact: gregvw@chtm.unm.edu
+ 
+"""->
+function lgnodes(N, T=Float64)
+  Nm1 = N-1; Np1 = N+1
+  N == 1 ? xu = [0.0] : xu = linspace(-1,1,N)
+  # initial guess
+  x = -cos((2*[0:Nm1;]+1)*pi/(2*Nm1+2)) - (0.27/N)*sin(pi*xu*Nm1/Np1)
+  # Legendre-Gauss Vandermonde Matrix and its derivative
+  L = zeros(N,Np1)
+  Lp = zeros(N)
+  # compute the zeros of the Legendre Polynomial using the recursion relation
+  # and Newton's method; loop until new points are uniformly within epsilon of
+  # old points
+  xold = (T)(2)
+  iter = 1; maxiter = 30
+  while maxabs(real(x-xold)) > 0.1*eps(real((T)(1))) && iter < maxiter
+    iter += 1
+    L[:,1] = one(T)
+    L[:,2] = x
+    for k = 2:N
+      L[:,k+1] = ((2*k-1)*x.*L[:,k]-(k-1)*L[:,k-1])/k
+    end
+    Lp[:] = (Np1)*(L[:,N]-x.*L[:,Np1])./(1-x.^2)
+    xold = x
+    x -= L[:,Np1]./Lp
+  end
+  w = 2./((1-x.^2).*Lp.^2)*(Np1/N)^2
+  return x, w
 end
 
 @doc """

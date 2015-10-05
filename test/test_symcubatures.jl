@@ -2,6 +2,25 @@ facts("Testing SymCubatures Module...") do
   
   for T = (Float32, Float64, Complex64, Complex128)
     @eval begin
+      context("Testing LineSymCub Inner Constructor for DataType "string($T)) do
+        quad = LineSymCub{($T)}(vertices=false)
+        @fact quad.numparams --> 0
+        @fact quad.numweights --> 0
+        @fact quad.numnodes --> 0
+        quad = LineSymCub{($T)}(numedge=2)
+        @fact quad.numparams --> 2
+        @fact quad.numweights --> 3
+        @fact quad.numnodes --> 2+2*2
+        quad = LineSymCub{($T)}(numedge=3, centroid=true)
+        @fact quad.numparams --> 3
+        @fact quad.numweights --> 5
+        @fact quad.numnodes --> 2+2*3+1
+      end
+    end
+  end
+
+  for T = (Float32, Float64, Complex64, Complex128)
+    @eval begin
       context("Testing TriSymCub Inner Constructor for DataType "string($T)) do
         tricub = TriSymCub{($T)}(vertices=false)
         @fact tricub.numparams --> 0
@@ -50,6 +69,13 @@ facts("Testing SymCubatures Module...") do
     end
   end
 
+  context("Testing getnumboundarynodes (LineSymCub method)") do
+    quad = LineSymCub{Float64}() # vertex only rule
+    @fact SymCubatures.getnumboundarynodes(quad) --> 2
+    quad = LineSymCub{Float64}(numedge = 2, centroid=true, vertices=false)
+    @fact SymCubatures.getnumboundarynodes(quad) --> 0
+  end
+
   context("Testing getnumboundarynodes (TriSymCub method)") do
     tricub = TriSymCub{Float64}() # vertex only rule
     @fact SymCubatures.getnumboundarynodes(tricub) --> 3
@@ -65,6 +91,13 @@ facts("Testing SymCubatures Module...") do
     @fact SymCubatures.getnumboundarynodes(tetcub) --> 4+6+2*12+3*12
   end
 
+  context("Testing getnumfacenodes (LineSymCub method)") do
+    quad = LineSymCub{Float64}() # vertex only rule
+    @fact SymCubatures.getnumfacenodes(quad) --> 1
+    quad = LineSymCub{Float64}(numedge = 2, centroid=true, vertices=false)
+    @fact SymCubatures.getnumfacenodes(quad) --> 0
+  end
+
   context("Testing getnumfacenodes (TriSymCub method)") do
     tricub = TriSymCub{Float64}() # vertex only rule
     @fact SymCubatures.getnumfacenodes(tricub) --> 2
@@ -78,6 +111,12 @@ facts("Testing SymCubatures Module...") do
     tetcub = TetSymCub{Float64}(numedge=2, midedges=true, numfaceS21=3,
                                 numS31 = 4)
     @fact SymCubatures.getnumfacenodes(tetcub) --> 3+3+2*6+3*3
+  end
+
+  context("Testing getbndryindices (LineSymCub method)") do
+    quad = LineSymCub{Float64}(numedge=1, centroid=true)
+    bndryindices = SymCubatures.getbndryindices(quad)
+    @fact bndryindices --> [1 2]
   end
 
   context("Testing getbndryindices (TriSymCub method)") do
@@ -102,6 +141,31 @@ facts("Testing SymCubatures Module...") do
                             23 24 25 26; 27 30 33 36;
                             28 31 34 37; 29 32 35 38]
   end
+
+  for T = (Float32, Float64, Complex64, Complex128)
+    @eval begin
+      context("Testing calcnodes (LineSymCub method) for DataType "string($T)) do
+        vtx = reshape(($T)[-1; 1], (2,1))
+        quad = LineSymCub{($T)}()
+        @fact SymCubatures.calcnodes(quad, vtx) --> vtx[:,1]
+
+        quad = LineSymCub{($T)}(numedge=1)
+        alpha = ($T)(1/pi)
+        A = ($T)[alpha (1-alpha);
+                 (1-alpha) alpha]
+        SymCubatures.setparams!(quad, [alpha])
+        x = SymCubatures.calcnodes(quad, vtx)
+        @fact x.' --> [vtx[:,1].' (A*vtx[:,1]).']
+
+        # uniformly spaced 7 nodes between (-1,1) (no vertices)
+        quad = LineSymCub{($T)}(numedge=3, centroid=true, vertices=false)
+        SymCubatures.setparams!(quad, ($T)[5/8 6/8 7/8])
+        x = SymCubatures.calcnodes(quad, vtx)
+        @fact sort(real(x)).' --> roughly(linspace(-0.75,0.75,7).',
+                                          atol=eps(real(one($T))) )
+      end
+    end
+  end           
 
   for T = (Float32, Float64, Complex64, Complex128)
     @eval begin
@@ -214,6 +278,25 @@ facts("Testing SymCubatures Module...") do
         @fact y.' --> [vtx[:,2].' (A*vtx[:,2]).']
         @fact z.' --> [vtx[:,3].' (A*vtx[:,3]).']
         
+      end
+    end
+  end
+
+  for T = (Float32, Float64, Complex64, Complex128)
+    @eval begin
+      context("Testing calcweights (LineSymCub method) for DataType "string($T)) do
+        quad = LineSymCub{($T)}()
+        wgt = ($T)(1)
+        SymCubatures.setweights!(quad, [wgt])
+        @fact SymCubatures.calcweights(quad) --> roughly(fill(wgt, (2)))
+
+        quad = LineSymCub{($T)}(numedge=2, centroid=true, vertices=false)
+        w = ($T)[1/3 1/4 1/5]
+        SymCubatures.setweights!(quad, w)
+        @fact SymCubatures.calcweights(quad) -->
+        roughly([w[1]*ones(($T), (2))
+                 w[2]*ones(($T), (2))
+                 w[3]], atol=1e-15)
       end
     end
   end

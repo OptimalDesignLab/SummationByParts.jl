@@ -113,6 +113,28 @@ facts("Testing Cubature Module...") do
 
   end
 
+  context("Testing Cubature.quadrature (internal=false)") do
+    # verify by checking that polynomials are integrated exactly
+    for q = 1:10
+      quad, vtx = quadrature(q, Float64)
+      x = SymCubatures.calcnodes(quad, vtx)
+      w = SymCubatures.calcweights(quad)
+      f = 0.5*dot(w, (0.5.*x + 0.5).^q)
+      @fact f --> roughly(1/(q+1), atol=1e-15)      
+    end
+  end 
+
+  context("Testing Cubature.quadrature (internal=true)") do
+    # verify by checking that polynomials are integrated exactly
+    for q = 1:10
+      quad, vtx = quadrature(q, Float64, internal=true)
+      x = SymCubatures.calcnodes(quad, vtx)
+      w = SymCubatures.calcweights(quad)
+      f = 0.5*dot(w, (0.5.*x + 0.5).^q)
+      @fact f --> roughly(1/(q+1), atol=1e-15)
+    end
+  end
+
   context("Testing Cubature.tricubature (internal=false)") do
     # test using Float32, because this has not been done above
     cub, vtx = tricubature(1, Float32)
@@ -186,6 +208,18 @@ facts("Testing Cubature Module...") do
     roughly([0.0015106273303336273,0.0015106273303336273,0.0015106273303336273,0.0015106273303336273,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.08113091859465722,0.060490542374353584,0.060490542374353584,0.060490542374353584,0.060490542374353584,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.10344930834722398], atol=1e-14)
     @fact SymCubatures.getnumboundarynodes(cub) --> 34
     
+  end
+
+  context("Testing Cubature.tetcubature (internal=true)") do
+    cub, vtx = tetcubature(2, Float64, internal=true)
+    @fact cub.weights --> roughly([1/3], atol=1e-14)
+    @fact cub.params --> roughly([(1 - sqrt(5)/5)*3/4], atol=1e-14)
+
+    cub, vtx = tetcubature(3, Float64, internal=true)
+    @fact cub.weights --> roughly([0.06483158243276162;
+                                   0.17900116726703835], atol=1e-14)
+    @fact cub.params --> roughly([0.22511815489558668;
+                                  0.18771315212883505], atol=1e-14)
   end
   
 end

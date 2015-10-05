@@ -23,6 +23,32 @@ facts("Testing OrthoPoly Module...") do
 
   for T = (Float32, Float64, Complex64, Complex128)
     @eval begin
+      context("Testing OrthoPoly.lgnodes for DataType "string($T)) do
+        x, w = OrthoPoly.lgnodes(2, ($T))
+        @fact x --> roughly(($T)[-1/sqrt(3), 1/sqrt(3)],
+                            atol=10*eps(typeof(real(one($T)))) )
+        @fact w --> roughly(($T)[1, 1],
+                            atol=10*eps(typeof(real(one($T)))) )
+        x, w = OrthoPoly.lgnodes(3, ($T))
+        @fact x --> roughly(($T)[-sqrt(3/5), 0, sqrt(3/5)],
+                            atol=10*eps(typeof(real(one($T)))) )
+        @fact w --> roughly(($T)[5/9, 8/9, 5/9],
+                            atol=10*eps(typeof(real(one($T)))) )
+        x, w = OrthoPoly.lgnodes(4, ($T))
+        @fact x --> roughly(($T)[-sqrt(3/7 + (2/7)*sqrt(6/5)),
+                                 -sqrt(3/7 - (2/7)*sqrt(6/5)),
+                                 sqrt(3/7 - (2/7)*sqrt(6/5)),
+                                 sqrt(3/7 + (2/7)*sqrt(6/5))], 
+                            atol=10*eps(typeof(real(one($T)))) )
+        @fact w --> roughly(($T)[(18-sqrt(30))/36, (18+sqrt(30))/36,
+                                 (18+sqrt(30))/36, (18-sqrt(30))/36],
+                            atol=10*eps(typeof(real(one($T)))) )
+      end
+    end
+  end
+
+  for T = (Float32, Float64, Complex64, Complex128)
+    @eval begin
       context("Testing OrthoPoly.jacobipoly for DataType "string($T)) do
         # compare against 5th degree Legendre polynomial
         x = ($T)[-1:0.1:1;]
