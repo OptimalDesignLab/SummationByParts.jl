@@ -668,8 +668,10 @@ function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
     perm[permptr + (d-1) - i + 1] = ptr + (edgeperm[i]-1)*6 + 1
     perm[permptr + (d-1) + i] = ptr + (edgeperm[i]-1)*6 + 4
     perm[permptr + 2*(d-1) - i + 1] = ptr + (edgeperm[i]-1)*6 + 3
-    perm[permptr + 2*(d-1) + i] = ptr + (edgeperm[i]-1)*6 + 5
-    perm[permptr + 3*(d-1) - i + 1] = ptr + (edgeperm[i]-1)*6 + 6
+    #perm[permptr + 2*(d-1) + i] = ptr + (edgeperm[i]-1)*6 + 5
+    #perm[permptr + 3*(d-1) - i + 1] = ptr + (edgeperm[i]-1)*6 + 6
+    perm[permptr + 3*(d-1) - i + 1] = ptr + (edgeperm[i]-1)*6 + 5
+    perm[permptr + 2*(d-1) + i] = ptr + (edgeperm[i]-1)*6 + 6
   end
   ptr += 6*cub.numedge
   permptr += 3*(d-1)
