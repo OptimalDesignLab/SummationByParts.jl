@@ -299,12 +299,54 @@ end
 ### SummationByParts.boundaryoperators2
 
 The following will eventually supercede current version
+- requires vtx to be equalateral tri/tet
 """->
-function boundaryoperators2{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+function boundaryoperators2{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
+                               internal::Bool=false)
   # get boundary cubature
-
-
-  return
+  bndrycub, bndryvtx = quadrature(2*d, Float64, internal=true)
+  numbndry = bndrycub.numedge # number of symmetric nodes
+  bndrycub.centroid ? numbndry += 1 : nothing
+  # need some way to compute the unique cubature nodes (new method?)
+  xi = SymCubatures.calcnodes(bndrycub, bndryvtx)
+  xb = -0.5 + xi[1:2:end]./2; yb = -1 + (xi[1:2:end] + 1).*(0.5*sqrt(3))
+  
+  if internal
+    # evaluate the basis at the volume and cubature nodes
+    N = convert(Int, (d+1)*(d+2)/2 )
+    P = zeros(T, (cub.numnodes,N) )  
+    Pb = zeros(T, (numbndry,N) ) 
+    x, y = SymCubatures.calcnodes(cub, vtx)
+    ptr = 1
+    for r = 0:d
+      for j = 0:r
+        i = r-j
+        P[:,ptr] = OrthoPoly.proriolpoly(x, y, i, j)
+        Pb[:,ptr] = OrthoPoly.proriolpoly(xb, yb, i, j)
+        ptr += 1
+      end
+    end
+  else
+    # evaluate the basis at the boundary nodes and cubature nodes
+    N = convert(Int, (d+1)*(d+2)/2 ) #d+1
+    P = zeros(T, (cub.numnodes,N) )
+    Pb = zeros(T, (numbndry,N) )
+    x, y = SymCubatures.calcnodes(cub, vtx)
+    #bndryindices = SymCubatures.getbndryindices(cub)
+    #x = xvol[bndryindices[:,3]]
+    #y = yvol[bndryindices[:,3]]
+    ptr = 1
+    for r = 0:d
+      for j = 0:r
+        i = r-j
+        P[:,ptr] = OrthoPoly.proriolpoly(x, y, i, j)
+        Pb[:,ptr] = OrthoPoly.proriolpoly(xb, yb, i, j)
+        ptr += 1
+      end
+    end
+  end
+  R = Pb/P
+  return R, bndrycub.weights
 end
 
 @doc """
