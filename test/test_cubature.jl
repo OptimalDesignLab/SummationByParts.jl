@@ -41,7 +41,7 @@ facts("Testing Cubature Module...") do
     SymCubatures.setparams!(cub, [0.25])
     Cubature.solvecubature!(cub, 3, tol=1e-14)
     w  = SymCubatures.calcweights(cub)
-    @fact w --> roughly([-18/16, 50/48, 50/48, 50/48], atol=1e-15)
+    @fact w --> roughly([50/48, 50/48, 50/48, -18/16], atol=1e-15)
 
     # create P2 element cubature with 1 bubble node at the centroid
     cub = SymCubatures.TriSymCub{Float64}(midedges=true, centroid=true)
@@ -56,7 +56,7 @@ facts("Testing Cubature Module...") do
     SymCubatures.setparams!(cub, [0.25, 0.25])
     Cubature.solvecubature!(cub, 5, tol=1e-14)
     w  = SymCubatures.calcweights(cub)
-    @fact w --> roughly([0.029745826049641155,0.029745826049641155,0.029745826049641155,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.44155411568082154,0.44155411568082154,0.44155411568082154], atol=1e-15)
+    @fact w --> roughly([0.029745826049641155,0.029745826049641155,0.029745826049641155,0.44155411568082154,0.44155411568082154,0.44155411568082154,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102], atol=1e-15)
   end
 
   context("Testing Cubature.solvecubature (TetSymCub method)") do
@@ -149,7 +149,7 @@ facts("Testing Cubature Module...") do
     cub, vtx = tricubature(5, Float32)
     w = SymCubatures.calcweights(cub)
     @fact w -->
-    roughly(Float32[0.029745826049641155,0.029745826049641155,0.029745826049641155,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.44155411568082154,0.44155411568082154,0.44155411568082154],
+    roughly(Float32[0.029745826049641155,0.029745826049641155,0.029745826049641155,0.44155411568082154,0.44155411568082154,0.44155411568082154,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102],
     atol=1e-7)
     @fact SymCubatures.getnumboundarynodes(cub) --> 9
   end
@@ -166,9 +166,9 @@ facts("Testing Cubature Module...") do
                                   0.18315242701954149], atol=1e-14)
 
     cub, vtx = tricubature(5, Float64, internal=true)
-    @fact cub.weights --> roughly([0.39801697799105223;
-                                   0.11550472674301035;
-                                   0.20924480696331949], atol=1e-14)
+    @fact cub.weights --> roughly([0.11550472674301035;
+                                   0.20924480696331949;
+                                   0.39801697799105223], atol=1e-14)
     @fact cub.params --> roughly([0.13862330627662678;
                                   0.14215944055500324;
                                   0.6226442585632832], atol=1e-14)

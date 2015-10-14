@@ -113,26 +113,51 @@ facts("Testing SymCubatures Module...") do
     @fact SymCubatures.getnumfacenodes(tetcub) --> 3+3+2*6+3*3
   end
 
-  context("Testing getbndryindices (LineSymCub method)") do
+  context("Testing getbndrynodeindices (LineSymCub method)") do
     quad = LineSymCub{Float64}(numedge=1, centroid=true)
-    bndryindices = SymCubatures.getbndryindices(quad)
+    bndryindices = SymCubatures.getbndrynodeindices(quad)
+    @fact bndryindices --> [1;2]
+  end
+
+  context("Testing getbndrynodeindices (TriSymCub method)") do
+    tricub = TriSymCub{Float64}(numedge=1, midedges=true, numS21 = 4)
+    bndryindices = SymCubatures.getbndrynodeindices(tricub)
+    @fact bndryindices --> [1; 2; 3; 4; 5; 6; 19; 20; 21; 22; 23; 24]
+  end
+
+  context("Testing getinteriornodeindices (LineSymCub method)") do
+    quad = LineSymCub{Float64}(numedge=1, centroid=true)
+    indices = SymCubatures.getinteriornodeindices(quad)
+    @fact indices --> [3;4;5]
+  end
+
+  context("Testing getinteriornodeindices (TriSymCub method)") do
+    tricub = TriSymCub{Float64}(numedge=1, midedges=true, numS21=4,
+                                centroid=true)
+    indices = SymCubatures.getinteriornodeindices(tricub)
+    @fact indices --> [7:18; 25]
+  end
+
+  context("Testing getfacenodeindices (LineSymCub method)") do
+    quad = LineSymCub{Float64}(numedge=1, centroid=true)
+    bndryindices = SymCubatures.getfacenodeindices(quad)
     @fact bndryindices --> [1 2]
   end
 
-  context("Testing getbndryindices (TriSymCub method)") do
+  context("Testing getfacenodeindices (TriSymCub method)") do
     tricub = TriSymCub{Float64}(numedge=1, midedges=true, numS21 = 4)
-    bndryindices = SymCubatures.getbndryindices(tricub)
+    bndryindices = SymCubatures.getfacenodeindices(tricub)
     @fact bndryindices --> [1 2 3;
                             2 3 1;
                             4 5 6;
-                            7 9 11;
-                            8 10 12]
+                            19 21 23;
+                            20 22 24]
   end
 
-  context("Testing getbndryindices (TetSymCub method)") do
+  context("Testing getfacenodeindices (TetSymCub method)") do
     tetcub = TetSymCub{Float64}(numedge=1, midedges=true, facecentroid=true,
                                 numfaceS21=1, numS31=2)
-    bndryindices = SymCubatures.getbndryindices(tetcub)
+    bndryindices = SymCubatures.getfacenodeindices(tetcub)
     @fact bndryindices --> [1 2 3 4; 3 3 1 1; 2 4 4 2;
                             9 6 9 8; 6 7 8 5; 5 10 7 10;
                             19 13 20 18; 20 14 19 17;
@@ -315,9 +340,9 @@ facts("Testing SymCubatures Module...") do
         @fact SymCubatures.calcweights(tricub) -->
         roughly([w[1]*ones(($T), (3))
                  w[2]*ones(($T), (3))
-                 w[3]*ones(($T), (6))
+                 w[3]*ones(($T), (3))
                  w[4]*ones(($T), (3))
-                 w[5]*ones(($T), (3))
+                 w[5]*ones(($T), (6))
                  w[6]*ones(($T), (6))], atol=1e-15)
       end
     end

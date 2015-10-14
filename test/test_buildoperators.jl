@@ -18,7 +18,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       end
       A = P*E
       numbndry = SymCubatures.getnumboundarynodes(cub)
-      @fact A[1:numbndry,1:numbndry] --> roughly(eye(numbndry), atol=1e-15)
+      bndryindices = SymCubatures.getbndrynodeindices(cub)
+      @fact A[bndryindices,1:numbndry] --> roughly(eye(numbndry), atol=1e-15)
     end
   end
 
@@ -51,6 +52,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     e = [1;3;4;5]
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
+      #@fact_throws SummationByParts.nodalexpansion(cub, vtx, d, e[d])
       C = SummationByParts.nodalexpansion(cub, vtx, d, e[d])
       x, y = SymCubatures.calcnodes(cub, vtx)
       N = convert(Int, (e[d]+1)*(e[d]+2)/2 )
@@ -234,7 +236,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       @fact size(nullspace(A),2) --> sizenull[d]
     end
   end
-  
+
   context("Testing SummationByParts.accuracyconstraints (TetSymCub method)") do
     # check that the null-space of the constraint Jacobian is the correct size
     # this is not an adequate unit test.
@@ -271,7 +273,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       @fact f --> roughly(error[d], atol=1e-15)
     end
   end
-  
+
   context("Testing SummationByParts.buildoperators (TriSymCub method)") do
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)

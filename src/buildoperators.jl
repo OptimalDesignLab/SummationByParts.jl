@@ -25,8 +25,10 @@ function bndrynodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   xaug = zeros(T, N)
   yaug = zeros(T, N)
   x, y = SymCubatures.calcnodes(cub, vtx)
-  xaug[1:numbndry] = x[1:numbndry]
-  yaug[1:numbndry] = y[1:numbndry]
+  # get the unique boundary node indices
+  bndryindices = SymCubatures.getbndrynodeindices(cub)
+  xaug[1:numbndry] = x[bndryindices]
+  yaug[1:numbndry] = y[bndryindices]
   # set the augmented interior nodes that make a unisolvent set for polys; use
   # uniform points in the interior for now
   ptr = numbndry+1
@@ -114,6 +116,7 @@ Tayler.
 
 """->
 function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
+  #error("This method was broken by nodal reordering; it is currently unused")
   numbndry = SymCubatures.getnumboundarynodes(cub)
   numbub = cub.numnodes - numbndry
   N = convert(Int64, (d+1)*(d+2)/2)
@@ -125,8 +128,10 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   xaug = zeros(T, N+numbub)
   yaug = zeros(T, N+numbub)
   x, y = SymCubatures.calcnodes(cub, vtx)
-  xaug[1:numbndry] = x[1:numbndry]
-  yaug[1:numbndry] = y[1:numbndry]
+  # get the unique boundary node indices
+  bndryindices = SymCubatures.getbndrynodeindices(cub)
+  xaug[1:numbndry] = x[bndryindices]
+  yaug[1:numbndry] = y[bndryindices]
   ptr = numbndry+1
   # set uniform nodes on interior to make Vandermonde unisolvent
   for j = 1:(d-2)
@@ -139,8 +144,9 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
     end
   end
   # these are the actual interior nodes used for the cubature
-  xaug[N+1:end] = x[numbndry+1:end]
-  yaug[N+1:end] = y[numbndry+1:end]
+  indices = SymCubatures.getinteriornodeindices(cub)
+  xaug[N+1:end] = x[indices]
+  yaug[N+1:end] = y[indices]
 
   Vbndry = zeros(T, (N, N))
   Pbub = zeros(T, (numbub, N))
@@ -164,8 +170,8 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   Naug = convert(Int, (e+1)*(e+2)/2)
   xaug = zeros(T, (Naug) )
   yaug = zeros(T, (Naug) )
-  xaug[1:numbub] = x[numbndry+1:end]
-  yaug[1:numbub] = y[numbndry+1:end]
+  xaug[1:numbub] = x[indices] 
+  yaug[1:numbub] = y[indices] 
   ptr = numbub+1
   for j = 0:e-1
     xi = 2.*j/e-1
@@ -195,11 +201,11 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   end
   invVbub = inv(Vbub)
   C = zeros(T, (Naug, cub.numnodes))
-  C[1:N,1:N] = invVbndry
-  C[:,numbndry+1:end] += invVbub[:,1:numbub]
-  # corrections 
-  for i = 1:N
-    C[:,i] -= invVbub[:,1:numbub]*Perr[:,i]
+  C[1:N,bndryindices] = invVbndry[:,1:numbndry]
+  C[:,indices] += invVbub[:,1:numbub]
+  # corrections
+  for i = 1:numbndry
+    C[:,bndryindices[i]] -= invVbub[:,1:numbub]*Perr[:,i]
   end
   return C
 end
@@ -249,9 +255,10 @@ function boundaryoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   Ex = zeros(T, (cub.numnodes,cub.numnodes) )
   Ey = zeros(Ex)
   Q = P.'*diagm(w)*dPdx
-  Ex[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
+  indices = SymCubatures.getbndrynodeindices(cub)  
+  Ex[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   Q = P.'*diagm(w)*dPdy
-  Ey[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
+  Ey[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   return Ex, Ey
 end
 
@@ -332,7 +339,7 @@ function boundaryoperators2{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
     P = zeros(T, (cub.numnodes,N) )
     Pb = zeros(T, (numbndry,N) )
     x, y = SymCubatures.calcnodes(cub, vtx)
-    #bndryindices = SymCubatures.getbndryindices(cub)
+    #bndryindices = SymCubatures.getfacenodeindices(cub)
     #x = xvol[bndryindices[:,3]]
     #y = yvol[bndryindices[:,3]]
     ptr = 1
@@ -356,7 +363,7 @@ Returns the (dense) mass matrix for a set of nodes on a reference boundary.
 This mass matrix can be used for boundary integration or to impose boundary
 conditions weakly.  The array `bndryindices` is also returned, which is a list
 of element-node indices for each boundary (see also
-SymCubatures.getbndryindices).
+SymCubatures.getfacenodeindices).
 
 **Inputs**
 
@@ -371,7 +378,7 @@ SymCubatures.getbndryindices).
 
 """->
 function boundarymassmatrix{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
-  bndryindices = SymCubatures.getbndryindices(cub)
+  bndryindices = SymCubatures.getfacenodeindices(cub)
   numbndrynodes = size(bndryindices,1)
   x, y = SymCubatures.calcnodes(cub, vtx)
   xbndry = x[bndryindices[:,1]]
@@ -385,7 +392,7 @@ function boundarymassmatrix{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
 end
 
 function boundarymassmatrix{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
-  bndryindices = SymCubatures.getbndryindices(cub)
+  bndryindices = SymCubatures.getfacenodeindices(cub)
   numbndrynodes = size(bndryindices,1)
   x, y, z = SymCubatures.calcnodes(cub, vtx)
   xbndry = x[bndryindices[:,1]]
@@ -696,19 +703,33 @@ returns a reordering that is more suited for local-to-global mapping.
 """->
 function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
   perm = zeros(Int, (cub.numnodes))
-  perm[1:3] = [1;2;3] # vertices are unchanged
-  ptr = 3 # index pointer for TriSymCub nodes
-  permptr = 3 # index pointer for reordered nodes
+  ptr = 0 # index pointer for TriSymCub nodes
+  permptr = 0 # index pointer for reordered nodes
   paramptr = 0 # index pointer for free-node parameters
-
-  # permute edge nodes; there are d-1 nodes on an edge, if vertices are excluded
+  permptrint = SymCubatures.getnumboundarynodes(cub)
+  
+  # first, deal with 3-symmetries
+  if cub.vertices
+    perm[permptr+1:permptr+3] = [1;2;3] # vertices are unchanged
+    ptr += 3
+    permptr += 3
+  end
   if cub.midedges
     # if midedges present there must be an odd number of nodes along the edge
-    perm[permptr + div(d-1,2) + 1] = 4
-    perm[permptr + (d-1) + div(d-1,2) + 1] = 5
-    perm[permptr + 2*(d-1) + div(d-1,2) + 1] = 6
+    perm[permptr + div(d-1,2) + 1] = ptr+1
+    perm[permptr + (d-1) + div(d-1,2) + 1] = ptr+2
+    perm[permptr + 2*(d-1) + div(d-1,2) + 1] = ptr+3
     ptr += 3
   end
+  for i = 1:cub.numS21
+    # set S21 orbit nodes
+    perm[permptrint+1:permptrint+3] = [ptr+1;ptr+2;ptr+3]
+    permptrint += 3
+    ptr += 3
+    paramptr += 1
+  end
+  # next, deal with 6-symmetries
+
   # edge nodes in sequence along an edge, which requires that we order the
   # respective edge parameters, accounting for symmetry about alpha = 1/2
   edgeparam = cub.params[paramptr+1:paramptr+cub.numedge]
@@ -727,8 +748,20 @@ function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
   end
   ptr += 6*cub.numedge
   permptr += 3*(d-1)
-  # Now the internal nodes; these have the same ordering as TriSymCub
-  perm[permptr+1:end] = Array(ptr+1:cub.numnodes)
+  paramptr += cub.numedge
+ 
+  for i = 1:cub.numS111
+    perm[permptrint+1:permptrint+6] = [ptr+1:ptr+6;]
+    ptr += 6
+    permptrint + 6
+    paramptr += 2
+  end
+  if cub.centroid
+    perm[permptrint+1] = ptr+1
+    permptrint += 1
+    ptr += 1
+  end
+  @assert(ptr == permptrint == cub.numnodes)
 
   # Next, find the permutation for the face nodes
   numbndrynodes = SymCubatures.getnumfacenodes(cub)

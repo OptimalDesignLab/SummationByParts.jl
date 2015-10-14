@@ -257,9 +257,9 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
       # P3; 6th order cubature
       cub = SymCubatures.TriSymCub{T}(vertices=false, centroid=true,
                                       numS21=1, numS111=1)
-      SymCubatures.setweights!(cub, T[0.39801697799105223;
-                                      0.11550472674301035;
-                                      0.20924480696331949])
+      SymCubatures.setweights!(cub, T[0.11550472674301035;
+                                      0.20924480696331949;
+                                      0.39801697799105223])
       SymCubatures.setparams!(cub, T[0.13862330627662678;
                                      0.14215944055500324;
                                      0.6226442585632832])
@@ -288,21 +288,21 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
     elseif q == 3
       # P2 + 1 bubble node; 4th order cubature
       cub = SymCubatures.TriSymCub{T}(midedges=true, centroid=true)
-      SymCubatures.setweights!(cub, T[1/10, 4/15, 9/10])
+      SymCubatures.setweights!(cub, T[9/10, 1/10, 4/15])
     elseif q == 5
       # P3 + 3 bubble nodes; 6th order cubature
       cub = SymCubatures.TriSymCub{T}(numedge=1, numS21=1)
-      SymCubatures.setweights!(cub, T[0.02974582604964118,0.09768336246810204,
-                                      0.4415541156808217])
-      SymCubatures.setparams!(cub, T[0.29346955590904017,0.41469035132718185])
+      SymCubatures.setweights!(cub, T[0.02974582604964118,0.4415541156808217,
+                                      0.09768336246810204])
+      SymCubatures.setparams!(cub, T[0.41469035132718185,0.29346955590904017])
     elseif q == 7
       # P4 + 6 bubble nodes; 8th order cubature
       cub = SymCubatures.TriSymCub{T}(midedges=true, numedge=1, numS21=2)
       SymCubatures.setweights!(cub, T[0.012698412698412695,0.05079365079365077,
-                                      0.04285714285714284,0.2023354595827503,
-                                      0.3151248578775673])
-      SymCubatures.setparams!(cub, T[0.2113248654051872,0.2615831876594899,
-                                     0.8495279234516212])
+                                      0.2023354595827503,0.3151248578775673,
+                                      0.04285714285714284])
+      SymCubatures.setparams!(cub, T[0.2615831876594899,0.8495279234516212,
+                                     0.2113248654051872])
     elseif q == 9
       # P5 + 10 bubble nodes; 10th order cubature
       cub = SymCubatures.TriSymCub{T}(numedge=2, centroid=true, numS21=1,
