@@ -125,6 +125,18 @@ facts("Testing SymCubatures Module...") do
     @fact bndryindices --> [1; 2; 3; 4; 5; 6; 19; 20; 21; 22; 23; 24]
   end
 
+  context("Testing getbndrynodeindices (TetSymCub method)") do
+    tetcub = TetSymCub{Float64}(numedge=2, facecentroid=true, numS31=1, 
+                                midedges=true, numS22=1, numfaceS21 = 1)
+    bndryindices = SymCubatures.getbndrynodeindices(tetcub)
+    @fact bndryindices --> [1; 2; 3; 4; 
+                            5; 6; 7; 8;
+                            13; 14; 15; 16; 17; 18;
+                            25; 26; 27; 28; 29; 30; 31; 32; 33; 34; 35; 36;
+                            37; 38; 39; 40; 41; 42; 43; 44; 45; 46; 47; 48;
+                            49; 50; 51; 52; 53; 54; 55; 56; 57; 58; 59; 60]
+  end
+
   context("Testing getinteriornodeindices (LineSymCub method)") do
     quad = LineSymCub{Float64}(numedge=1, centroid=true)
     indices = SymCubatures.getinteriornodeindices(quad)
@@ -136,6 +148,14 @@ facts("Testing SymCubatures Module...") do
                                 centroid=true)
     indices = SymCubatures.getinteriornodeindices(tricub)
     @fact indices --> [7:18; 25]
+  end
+
+  context("Testing getinteriornodeindices (TetSymCub method)") do
+    tetcub = TetSymCub{Float64}(numedge=2, facecentroid=true, numS31=1, 
+                                midedges=true, numS22=1, numfaceS21=1,
+                                centroid=true)
+    indices = SymCubatures.getinteriornodeindices(tetcub)
+    @fact indices --> [9:12; 19:24; 61]
   end
 
   context("Testing getfacenodeindices (LineSymCub method)") do
@@ -155,16 +175,16 @@ facts("Testing SymCubatures Module...") do
   end
 
   context("Testing getfacenodeindices (TetSymCub method)") do
-    tetcub = TetSymCub{Float64}(numedge=1, midedges=true, facecentroid=true,
-                                numfaceS21=1, numS31=2)
+    tetcub = TetSymCub{Float64}(numedge=1, facecentroid=true, numS31=1, 
+                                midedges=true, numS22=1, numfaceS21=1,
+                                centroid=true)
     bndryindices = SymCubatures.getfacenodeindices(tetcub)
-    @fact bndryindices --> [1 2 3 4; 3 3 1 1; 2 4 4 2;
-                            9 6 9 8; 6 7 8 5; 5 10 7 10;
-                            19 13 20 18; 20 14 19 17;
-                            14 15 17 11; 13 16 18 12;
-                            12 22 16 21; 11 21 15 22;
-                            23 24 25 26; 27 30 33 36;
-                            28 31 34 37; 29 32 35 38]
+    @fact bndryindices --> [1 2 3 4; 3 3 1 1; 2 4 4 2; # vertices
+                            5 6 7 8; # face centroids
+                            17 14 17 16; 14 15 16 13; 13 18 15 18; # midedges
+                            33 27 34 32; 34 28 33 31; 28 29 31 25;
+                            27 30 32 26; 26 36 30 35; 25 35 29 36; # edge nodes
+                            37 40 43 46; 38 41 44 47; 39 42 45 48] # face S21
   end
 
   for T = (Float32, Float64, Complex64, Complex128)
@@ -362,12 +382,12 @@ facts("Testing SymCubatures Module...") do
         SymCubatures.setweights!(tetcub, w)
         @fact SymCubatures.calcweights(tetcub) -->
         roughly([w[1]*ones(($T), (4))
-                 w[2]*ones(($T), (6))
-                 w[3]*ones(($T), (12))
-                 w[4]*ones(($T), (12))
-                 w[5]*ones(($T), (4))
-                 w[6]*ones(($T), (4))
-                 w[7]*ones(($T), (6))], atol=1e-15)
+                 w[2]*ones(($T), (4))
+                 w[3]*ones(($T), (4))
+                 w[4]*ones(($T), (6))
+                 w[5]*ones(($T), (6))
+                 w[6]*ones(($T), (12))
+                 w[7]*ones(($T), (12))], atol=1e-15)
       end
     end
   end
@@ -398,13 +418,13 @@ facts("Testing SymCubatures Module...") do
   context("Testing calcjacobianofnodes (TetSymCub method)") do
     # loop over parameters and check Jacobian using complex step
     vtx = Float64[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
-    tetcub = TetSymCub{Float64}(midedges=true, numedge=2, numfaceS21=1, numS31=1,
-                                numS22=1)
-    SymCubatures.setparams!(tetcub, [1/3, 2/3, 1/10, 1/4, 1/5])
+    tetcub = TetSymCub{Float64}(midedges=true, numS31=1, numS22=1, numedge=2,
+                                numfaceS21=1)
+    SymCubatures.setparams!(tetcub, [1/4, 1/5, 1/3, 2/3, 1/10])
     Jac = SymCubatures.calcjacobianofnodes(tetcub, vtx)
     Jac_cs = zeros(Jac)
-    tetcub_cmplx = TetSymCub{Complex128}(midedges=true, numedge=2, numfaceS21=1,
-                                         numS31=1, numS22=1)
+    tetcub_cmplx = TetSymCub{Complex128}(midedges=true, numS31=1, numS22=1,
+                                         numedge=2, numfaceS21=1)
     params_cmplx = tetcub.params + 0im
     eps_step = 1e-60
     for i = 1:tetcub.numparams

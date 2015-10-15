@@ -368,21 +368,20 @@ function tetcubature(q::Int, T=Float64; internal::Bool=false,
       SymCubatures.setweights!(cub, T[1/45 4/45 32/45])
     elseif q == 5
       # P3 + 4 bubble nodes; 6th order cubature
-      cub = SymCubatures.TetSymCub{T}(facecentroid=true,
-                                      numedge=1, numS31=1)
-      SymCubatures.setweights!(cub, T[0.004421633248304776 0.0176754534336105 
-                                      0.06935370366814568 0.20653163611605146])
-      SymCubatures.setparams!(cub, T[0.30480589839889616 0.45720884759834435])
+      cub = SymCubatures.TetSymCub{T}(facecentroid=true, numedge=1, numS31=1)
+      SymCubatures.setweights!(cub, T[0.004421633248304776 0.20653163611605146
+                                      0.06935370366814568 0.0176754534336105])
+      SymCubatures.setparams!(cub, T[0.45720884759834435 0.30480589839889616])
     elseif q == 7
       # P3 + 11 bubble nodes; 8th order cubature
       cub = SymCubatures.TetSymCub{T}(midedges=true, centroid=true, numedge=1,
                                       numfaceS21=1, numS31=1, numS22=1)
-      SymCubatures.setweights!(cub, T[0.0015106273303336273,0.004038881996228382,
-                                      0.005696088152131421,0.02424296133613638,
-                                      0.08113091859465722,0.060490542374353584,
-                                      0.10344930834722398])
-      SymCubatures.setparams!(cub, T[0.25737274681480826,0.45008848310824695,
-                                     0.28418700275470193,0.21742832019555544])
+      SymCubatures.setweights!(cub, T[0.0015106273303336273,0.060490542374353584,
+                                      0.004038881996228382, 0.10344930834722398,
+                                      0.005696088152131421, 0.02424296133613638,
+                                      0.08113091859465722])
+      SymCubatures.setparams!(cub, T[0.28418700275470193,0.21742832019555544,
+                                     0.25737274681480826,0.45008848310824695])
     else
       error("polynomial degree must be 1, 3, 5, or 7 (presently)\n")
     end
