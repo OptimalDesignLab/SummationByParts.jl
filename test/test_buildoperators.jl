@@ -43,7 +43,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       end
       A = P*E
       numbndry = SymCubatures.getnumboundarynodes(cub)
-      @fact A[1:numbndry,1:numbndry] --> roughly(eye(numbndry), atol=1e-14)
+      bndryindices = SymCubatures.getbndrynodeindices(cub)
+      @fact A[bndryindices,1:numbndry] --> roughly(eye(numbndry), atol=1e-14)
     end
   end
 

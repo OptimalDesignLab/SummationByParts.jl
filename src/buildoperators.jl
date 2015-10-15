@@ -60,9 +60,11 @@ function bndrynodalexpansion{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   yaug = zeros(T, N)
   zaug = zeros(T, N)
   x, y, z = SymCubatures.calcnodes(cub, vtx)
-  xaug[1:numbndry] = x[1:numbndry]
-  yaug[1:numbndry] = y[1:numbndry]
-  zaug[1:numbndry] = z[1:numbndry]
+  # get the unique boundary node indices
+  bndryindices = SymCubatures.getbndrynodeindices(cub)
+  xaug[1:numbndry] = x[bndryindices]
+  yaug[1:numbndry] = y[bndryindices]
+  zaug[1:numbndry] = z[bndryindices]
   # set the augmented interior nodes that make a unisolvent set for polys; use
   # uniform points in the interior for now
   ptr = numbndry+1
@@ -252,10 +254,10 @@ function boundaryoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   dPdy *= E
   # compute and return the boundary operators
   w = SymCubatures.calcweights(cub)
+  indices = SymCubatures.getbndrynodeindices(cub)  
   Ex = zeros(T, (cub.numnodes,cub.numnodes) )
   Ey = zeros(Ex)
   Q = P.'*diagm(w)*dPdx
-  indices = SymCubatures.getbndrynodeindices(cub)  
   Ex[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   Q = P.'*diagm(w)*dPdy
   Ey[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
@@ -290,15 +292,16 @@ function boundaryoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   dPdz *= E
   # compute and return the boundary operators
   w = SymCubatures.calcweights(cub)
+  indices = SymCubatures.getbndrynodeindices(cub)  
   Ex = zeros(T, (cub.numnodes,cub.numnodes) )
   Ey = zeros(Ex)
   Ez = zeros(Ex)
   Q = P.'*diagm(w)*dPdx
-  Ex[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
+  Ex[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   Q = P.'*diagm(w)*dPdy
-  Ey[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
+  Ey[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   Q = P.'*diagm(w)*dPdz
-  Ez[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
+  Ez[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   return Ex, Ey, Ez
 end  
 
@@ -785,12 +788,40 @@ end
 function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
   @assert(d >= 1 && d <= 4, "implemented for d in [1,4] only")
   perm = zeros(Int, (cub.numnodes))
-  perm[1:4] = [1;2;3;4] # vertices are unchanged
-  ptr = 4 # index pointer for TetSymCub nodes
-  permptr = 4 # index pointer for reordered nodes
+  ptr = 0 # index pointer for TetSymCub nodes
+  permptr = 0 # index pointer for reordered nodes
   paramptr = 0 # index pointer for free-node parameters
+  permptrint = SymCubatures.getnumboundarynodes(cub)
+  numface = div((d-1)*(d-2),2) # this would need to change for d > 4
 
-  # permute edge nodes; there are d-1 nodes on an edge, if vertices are excluded
+  # first, deal with 4-symmetries
+  if cub.vertices
+    perm[permptr+1:permptr+4] = [ptr+1:ptr+4;] # vertices are unchanged
+    ptr += 4
+    permptr += 4
+  end
+  fc = 0
+  if cub.facecentroid
+    # first, shift permptr to account for the edge nodes
+    permptr += 12*cub.numedge
+    cub.midedges ? permptr += 6 : nothing
+    # assume face centroids are first in the face ordering
+    for face = 1:4
+      perm[permptr + (face-1)*numface + 1] = ptr + face
+    end
+    ptr += 4
+    permptr -= 12*cub.numedge
+    cub.midedges ? permptr -= 6 : nothing
+    fc = 1
+  end
+  for i = 1:cub.numS31
+    # set S31 orbit nodes
+    perm[permptrint+1:permptrint+4] = [ptr+1:ptr+4;]
+    permptrint += 4
+    ptr += 4
+    paramptr += 1
+  end
+  # next, deal with 6-symmetries
   if cub.midedges
     # if midedges present there must be an odd number of nodes along the edge
     for edge = 1:6
@@ -798,8 +829,16 @@ function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
     end
     ptr += 6
   end
-
-  # edge nodes in sequence along an edge, which requires that we order the
+  for i = 1:cub.numS22
+    # set S22 oribt nodes
+    perm[permptrint+1:permptrint+6] = [ptr+1:ptr+6;]
+    permptrint += 6
+    ptr += 6
+    paramptr += 1
+  end
+  # next, deal with 12-symmetries
+  # permute edge nodes; there are d-1 nodes on an edge, if vertices are excluded.
+  # Edge nodes in sequence along an edge, which requires that we order the
   # respective edge parameters, accounting for symmetry about alpha = 1/2
   edgeparam = cub.params[paramptr+1:paramptr+cub.numedge]
   #for i = 1:cub.numedge
@@ -815,20 +854,11 @@ function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
   end
   ptr += 12*cub.numedge
   permptr += 6*(d-1)
-  
-  # Face nodes; the following would need to change for d > 4
-  numface = div((d-1)*(d-2),2)
-  fc = 0
-  if cub.facecentroid
-    # assume these are first in the face ordering
-    for face = 1:4
-      perm[permptr + (face-1)*numface + 1] = ptr + face
-    end
-    ptr += 4
-    fc = 1
-  end
-  
+  paramptr += cub.numedge
+  # edge nodes are now completed
+
   for i = 1:cub.numfaceS21
+    # set face-based S21 orbit nodes
     for face = 1:4
       for j = 1:3
         # the + fc after permptr is for the face centroid
@@ -836,11 +866,19 @@ function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
       end
       ptr += 3
     end
+    paramptr += 1
   end
   permptr += 4*numface
-  
-  # Now the internal nodes; these have the same ordering as TetSymCub
-  perm[permptr+1:end] = Array(ptr+1:cub.numnodes)
+
+  # next, deal with 24-symmetries
+  # ...
+
+  # finally, deal with 1-symmetry (centroid)
+  if cub.centroid
+    perm[permptrint+1] = ptr+1
+    permptrint += 1
+    ptr += 1
+  end
 
   # Next, find the permutation for the face nodes
   numbndrynodes = SymCubatures.getnumfacenodes(cub)

@@ -23,7 +23,7 @@ finite-difference operators.
 
 """->
 abstract SBPOperator{T<:Number}
-#abstract SBPOperator{T<:FloatingPoint}
+#abstract SBPOperator{T<:AbstractFloat}
 
 @doc """
 ### SBP.TriSBP
