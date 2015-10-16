@@ -5,7 +5,7 @@ include("symcubatures.jl")
 include("cubature.jl")
 
 using ArrayViews
-using PDESolverCommon
+using ODLCommonTools #PDESolverCommon
 using .OrthoPoly
 using .SymCubatures
 using .Cubature
