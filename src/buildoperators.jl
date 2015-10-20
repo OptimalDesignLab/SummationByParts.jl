@@ -24,11 +24,11 @@ function bndrynodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   N = convert(Int64, (d+1)*(d+2)/2)
   xaug = zeros(T, N)
   yaug = zeros(T, N)
-  x, y = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   # get the unique boundary node indices
   bndryindices = SymCubatures.getbndrynodeindices(cub)
-  xaug[1:numbndry] = x[bndryindices]
-  yaug[1:numbndry] = y[bndryindices]
+  xaug[1:numbndry] = x[1,bndryindices]
+  yaug[1:numbndry] = x[2,bndryindices]
   # set the augmented interior nodes that make a unisolvent set for polys; use
   # uniform points in the interior for now
   ptr = numbndry+1
@@ -59,12 +59,12 @@ function bndrynodalexpansion{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   xaug = zeros(T, N)
   yaug = zeros(T, N)
   zaug = zeros(T, N)
-  x, y, z = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   # get the unique boundary node indices
   bndryindices = SymCubatures.getbndrynodeindices(cub)
-  xaug[1:numbndry] = x[bndryindices]
-  yaug[1:numbndry] = y[bndryindices]
-  zaug[1:numbndry] = z[bndryindices]
+  xaug[1:numbndry] = x[1,bndryindices]
+  yaug[1:numbndry] = x[2,bndryindices]
+  zaug[1:numbndry] = x[3,bndryindices]
   # set the augmented interior nodes that make a unisolvent set for polys; use
   # uniform points in the interior for now
   ptr = numbndry+1
@@ -129,11 +129,11 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   # actual interior nodes.
   xaug = zeros(T, N+numbub)
   yaug = zeros(T, N+numbub)
-  x, y = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   # get the unique boundary node indices
   bndryindices = SymCubatures.getbndrynodeindices(cub)
-  xaug[1:numbndry] = x[bndryindices]
-  yaug[1:numbndry] = y[bndryindices]
+  xaug[1:numbndry] = x[1,bndryindices]
+  yaug[1:numbndry] = x[2,bndryindices]
   ptr = numbndry+1
   # set uniform nodes on interior to make Vandermonde unisolvent
   for j = 1:(d-2)
@@ -147,8 +147,8 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   end
   # these are the actual interior nodes used for the cubature
   indices = SymCubatures.getinteriornodeindices(cub)
-  xaug[N+1:end] = x[indices]
-  yaug[N+1:end] = y[indices]
+  xaug[N+1:end] = x[1,indices]
+  yaug[N+1:end] = x[2,indices]
 
   Vbndry = zeros(T, (N, N))
   Pbub = zeros(T, (numbub, N))
@@ -172,8 +172,8 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   Naug = convert(Int, (e+1)*(e+2)/2)
   xaug = zeros(T, (Naug) )
   yaug = zeros(T, (Naug) )
-  xaug[1:numbub] = x[indices] 
-  yaug[1:numbub] = y[indices] 
+  xaug[1:numbub] = x[1,indices] 
+  yaug[1:numbub] = x[2,indices] 
   ptr = numbub+1
   for j = 0:e-1
     xi = 2.*j/e-1
@@ -238,13 +238,14 @@ function boundaryoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   P = zeros(T, (cub.numnodes,N) )
   dPdx = zeros(P)
   dPdy = zeros(P)
-  x, y = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   ptr = 1
   for r = 0:d
     for j = 0:r
       i = r-j
-      P[:,ptr] = OrthoPoly.proriolpoly(x, y, i, j)
-      dPdx[:,ptr], dPdy[:,ptr] = OrthoPoly.diffproriolpoly(x, y, i, j)
+      P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      dPdx[:,ptr], dPdy[:,ptr] = 
+      OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       ptr += 1
     end
   end
@@ -272,15 +273,17 @@ function boundaryoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   dPdx = zeros(P)
   dPdy = zeros(P)
   dPdz = zeros(P)
-  x, y, z = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   ptr = 1
   for r = 0:d
     for k = 0:r
       for j = 0:r-k
         i = r-j-k
-        P[:,ptr] = OrthoPoly.proriolpoly(x, y, z, i, j, k)
+        P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), vec(x[3,:]),
+                                         i, j, k)
         dPdx[:,ptr], dPdy[:,ptr], dPdz[:,ptr] =
-          OrthoPoly.diffproriolpoly(x, y, z, i, j, k)
+          OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), vec(x[3,:]),
+                                    i, j, k)
         ptr += 1
       end
     end
@@ -383,8 +386,8 @@ SymCubatures.getfacenodeindices).
 function boundarymassmatrix{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   bndryindices = SymCubatures.getfacenodeindices(cub)
   numbndrynodes = size(bndryindices,1)
-  x, y = SymCubatures.calcnodes(cub, vtx)
-  xbndry = x[bndryindices[:,1]]
+  x = SymCubatures.calcnodes(cub, vtx)
+  xbndry = x[1,bndryindices[:,1]].'
   P = zeros(T, (numbndrynodes,numbndrynodes))
   for j = 0:d
     P[:,j+1] = OrthoPoly.jacobipoly(xbndry, 0.0, 0.0, j)
@@ -397,9 +400,9 @@ end
 function boundarymassmatrix{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   bndryindices = SymCubatures.getfacenodeindices(cub)
   numbndrynodes = size(bndryindices,1)
-  x, y, z = SymCubatures.calcnodes(cub, vtx)
-  xbndry = x[bndryindices[:,1]]
-  ybndry = y[bndryindices[:,1]]
+  x = SymCubatures.calcnodes(cub, vtx)
+  xbndry = x[1,bndryindices[:,1]].'
+  ybndry = x[2,bndryindices[:,1]].'
   P = zeros(T, (numbndrynodes,numbndrynodes))
   ptr = 1
   for r = 0:d
@@ -440,7 +443,7 @@ Q_32 = -Q_23 is the number 3 variable.
 
 """->
 function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
-  x, y = SymCubatures.calcnodes(cub, vtx) 
+  x = SymCubatures.calcnodes(cub, vtx) 
   Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
   w = SymCubatures.calcweights(cub)
   Ex *= 0.5; Ey *= 0.5
@@ -456,8 +459,8 @@ function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   for r = 0:d
     for j = 0:r
       i = r-j
-      P = OrthoPoly.proriolpoly(x, y, i, j)
-      dPdx, dPdy = OrthoPoly.diffproriolpoly(x, y, i, j)
+      P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      dPdx, dPdy = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       # loop over the lower part of the skew-symmetric matrices
       for row = 2:cub.numnodes
         offset = convert(Int, (row-1)*(row-2)/2)
@@ -475,7 +478,7 @@ function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
 end
 
 function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
-  x, y, z = SymCubatures.calcnodes(cub, vtx) 
+  x = SymCubatures.calcnodes(cub, vtx) 
   Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
   w = SymCubatures.calcweights(cub)
   Ex *= 0.5; Ey *= 0.5; Ez *= 0.5
@@ -493,8 +496,9 @@ function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
     for k = 0:r
       for j = 0:r-k
         i = r-j-k
-        P = OrthoPoly.proriolpoly(x, y, z, i, j, k)
-        dPdx, dPdy, dPdz = OrthoPoly.diffproriolpoly(x, y, z, i, j, k)
+        P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), vec(x[3,:]), i, j, k)
+        dPdx, dPdy, dPdz = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]),
+                                                     vec(x[3,:]), i, j, k)
         # loop over the lower part of the skew-symmetric matrices
         for row = 2:cub.numnodes
           offset = convert(Int, (row-1)*(row-2)/2)
@@ -659,13 +663,14 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   P = zeros(T, (cub.numnodes, N) )
   dPdx = zeros(P)
   dPdy = zeros(P)
-  x, y = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   ptr = 1
   for r = 0:e
     for j = 0:r
       i = r-j
-      P[:,ptr] = OrthoPoly.proriolpoly(x, y, i, j)
-      dPdx[:,ptr], dPdy[:,ptr] = OrthoPoly.diffproriolpoly(x, y, i, j)
+      P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      dPdx[:,ptr], dPdy[:,ptr] =
+        OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       ptr += 1
     end
   end

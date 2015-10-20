@@ -766,13 +766,13 @@ function getfacebasedpermutation{T}(cub::TetSymCub{T}; faceonly::Bool=false)
       ptr += 4
     end
     if cub.facecentroid
-      perm[ptr+1;ptr+4,2] = [ptr+2; ptr+3; ptr+1; ptr+4]
+      perm[ptr+1:ptr+4,2] = [ptr+2; ptr+3; ptr+1; ptr+4]
       perm[ptr+1:ptr+4,3] = [ptr+3; ptr+1; ptr+2; ptr+4]
       perm[ptr+1:ptr+4,4] = [ptr+4; ptr+2; ptr+1; ptr+3]
       ptr += 4
     end
     for i = 1:cub.numS31
-      perm[ptr+1;ptr+4,2] = [ptr+2; ptr+3; ptr+1; ptr+4]
+      perm[ptr+1:ptr+4,2] = [ptr+2; ptr+3; ptr+1; ptr+4]
       perm[ptr+1:ptr+4,3] = [ptr+3; ptr+1; ptr+2; ptr+4]
       perm[ptr+1:ptr+4,4] = [ptr+4; ptr+2; ptr+1; ptr+3]
       ptr += 4
@@ -828,7 +828,10 @@ end
 @doc """
 ### SymCubatures.calcnodes
 
-Use the orbital parameter values to compute a cubature's nodal coordinates.
+Use the orbital parameter values to compute a cubature's nodal coordinates.  The
+second dimension of the `vtx` array of vertices does not need to match the
+dimension as the cubature; for example, a line quadrature can be over a line in
+1D, 2D, 3D or ND, and a triangle cubature can be in 2D, 3D, or ND, etc.
 
 **Inputs**
 
@@ -837,19 +840,20 @@ Use the orbital parameter values to compute a cubature's nodal coordinates.
 
 **Outputs**
 
-* `x`,`y` (`z`): cubature's nodal coordinates
+* `x`: cubature's nodal coordinates (potentially in a subspace)
 
 """->
 function calcnodes{T}(cub::LineSymCub{T}, vtx::Array{T,2})
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
-  x = zeros(T, (cub.numnodes))
+  @assert(size(vtx,1) == 2)
+  x = zeros(T, (size(vtx,2),cub.numnodes))
   ptr = 0
   paramptr = 0
   # set all nodes with 2-symmetries
   # set vertices
   if cub.vertices
-    x[1:2] = vtx[:,1]
+    x[:,1:2] = vtx[:,:].'
     ptr = 2
   end
   # set edge nodes
@@ -857,14 +861,14 @@ function calcnodes{T}(cub::LineSymCub{T}, vtx::Array{T,2})
     alpha = cub.params[paramptr+1]
     A = T[alpha (1-alpha);
           (1-alpha) alpha]
-    x[ptr+1:ptr+2] = A*vtx[:,1]
+    x[:,ptr+1:ptr+2] = (A*vtx[:,:]).'
     ptr += 2
     paramptr += 1
   end
   # set node with 1-symmetry (i.e. centroid)
   if cub.centroid
     A = T[1/2 1/2]
-    x[ptr+1:ptr+1] = A*vtx[:,1]
+    x[:,ptr+1] = A*vtx[:,:]
     ptr += 1
   end
   return x
@@ -873,16 +877,14 @@ end
 function calcnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
-  @assert( size(vtx,1) == 3 && size(vtx,2) == 2)
-  x = zeros(T, (cub.numnodes))
-  y = zeros(T, (cub.numnodes))
+  @assert(size(vtx,1) == 3 && size(vtx,2) >= 2)
+  x = zeros(T, (size(vtx,2),cub.numnodes))
   ptr = 0
   paramptr = 0
   # set all nodes with 3-symmetries
   # set vertices
   if cub.vertices
-    x[1:3] = vtx[:,1]
-    y[1:3] = vtx[:,2]
+    x[:,1:3] = vtx.'
     ptr = 3
   end
   # set mid-edge nodes
@@ -890,8 +892,7 @@ function calcnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
     A = T[0.5 0.5 0;
           0 0.5 0.5;
           0.5 0 0.5]
-    x[ptr+1:ptr+3] = A*vtx[:,1]
-    y[ptr+1:ptr+3] = A*vtx[:,2]
+    x[:,ptr+1:ptr+3] = (A*vtx).'
     ptr += 3
   end
   # set S21 orbit nodes
@@ -900,8 +901,7 @@ function calcnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
     A = T[alpha alpha (1-2*alpha);
           (1-2*alpha) alpha alpha;
           alpha (1-2*alpha) alpha]
-    x[ptr+1:ptr+3] = A*vtx[:,1]
-    y[ptr+1:ptr+3] = A*vtx[:,2]
+    x[:,ptr+1:ptr+3] = (A*vtx).'
     ptr += 3
     paramptr += 1
   end
@@ -915,8 +915,7 @@ function calcnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
           0 (1-alpha) alpha;
           (1-alpha) 0 alpha;
           alpha 0 (1-alpha)]
-    x[ptr+1:ptr+6] = A*vtx[:,1]
-    y[ptr+1:ptr+6] = A*vtx[:,2]
+    x[:,ptr+1:ptr+6] = (A*vtx).'
     ptr += 6
     paramptr += 1
   end
@@ -930,36 +929,30 @@ function calcnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
           (1-alpha-beta) beta alpha;
           beta (1-alpha-beta) alpha;
           alpha (1-alpha-beta) beta]
-    x[ptr+1:ptr+6] = A*vtx[:,1]
-    y[ptr+1:ptr+6] = A*vtx[:,2]
+    x[:,ptr+1:ptr+6] = (A*vtx).'
     ptr += 6
     paramptr += 2
   end
   # set node with 1-symmetry (i.e. centroid)
   if cub.centroid
     A = T[1/3 1/3 1/3]
-    x[ptr+1:ptr+1] = A*vtx[:,1]
-    y[ptr+1:ptr+1] = A*vtx[:,2]
+    x[:,ptr+1] = (A*vtx).'
     ptr += 1
   end
-  return x, y
+  return x
 end
 
 function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
-  @assert( size(vtx,1) == 4 && size(vtx,2) == 3)
-  x = zeros(T, (cub.numnodes))
-  y = zeros(T, (cub.numnodes))
-  z = zeros(T, (cub.numnodes))
+  @assert(size(vtx,1) == 4 && size(vtx,2) >= 3)
+  x = zeros(T, (size(vtx,2),cub.numnodes))
   ptr = 0
   paramptr = 0
   # set all nodes with 4-symmetries
   # set vertices
   if cub.vertices
-    x[ptr+1:ptr+4] = vtx[:,1]
-    y[ptr+1:ptr+4] = vtx[:,2]
-    z[ptr+1:ptr+4] = vtx[:,3]
+    x[:,ptr+1:ptr+4] = vtx.'
     ptr = 4
   end
   # set face centroids
@@ -969,9 +962,7 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
           0 alpha alpha alpha;
           alpha 0 alpha alpha;
           alpha alpha 0 alpha]
-    x[ptr+1:ptr+4] = A*vtx[:,1]
-    y[ptr+1:ptr+4] = A*vtx[:,2]
-    z[ptr+1:ptr+4] = A*vtx[:,3]
+    x[:,ptr+1:ptr+4] = (A*vtx).'
     ptr += 4
   end
   # set S31 orbit nodes
@@ -981,9 +972,7 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
           (1-3*alpha) alpha alpha alpha;
           alpha (1-3*alpha) alpha alpha;
           alpha alpha (1-3*alpha) alpha]
-    x[ptr+1:ptr+4] = A*vtx[:,1]
-    y[ptr+1:ptr+4] = A*vtx[:,2]
-    z[ptr+1:ptr+4] = A*vtx[:,3]
+    x[:,ptr+1:ptr+4] = (A*vtx).'
     ptr += 4
     paramptr += 1
   end
@@ -996,9 +985,7 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
           0.5 0 0 0.5;
           0.5 0 0.5 0;
           0 0.5 0 0.5]
-    x[ptr+1:ptr+6] = A*vtx[:,1]
-    y[ptr+1:ptr+6] = A*vtx[:,2]
-    z[ptr+1:ptr+6] = A*vtx[:,3]
+    x[:,ptr+1:ptr+6] = (A*vtx).'
     ptr += 6
   end
   # set S22 oribt nodes
@@ -1010,9 +997,7 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
           (0.5-alpha) alpha alpha (0.5-alpha);
           (0.5-alpha) alpha (0.5-alpha) alpha;
           (0.5-alpha) (0.5-alpha) alpha alpha]
-    x[ptr+1:ptr+6] = A*vtx[:,1]
-    y[ptr+1:ptr+6] = A*vtx[:,2]
-    z[ptr+1:ptr+6] = A*vtx[:,3]
+    x[:,ptr+1:ptr+6] = (A*vtx).'
     ptr += 6
     paramptr += 1
   end
@@ -1032,9 +1017,7 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
           (1-alpha) 0 alpha 0;
           0 alpha 0 (1-alpha);
           0 (1-alpha) 0 alpha]
-    x[ptr+1:ptr+12] = A*vtx[:,1]
-    y[ptr+1:ptr+12] = A*vtx[:,2]
-    z[ptr+1:ptr+12] = A*vtx[:,3]
+    x[:,ptr+1:ptr+12] = (A*vtx).'
     ptr += 12
     paramptr += 1
   end
@@ -1048,9 +1031,7 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
                3 3 1 1;
                2 4 4 2]
     for face = 1:4
-      x[ptr+1:ptr+3] = A*vtx[facevtx[:,face],1]
-      y[ptr+1:ptr+3] = A*vtx[facevtx[:,face],2]
-      z[ptr+1:ptr+3] = A*vtx[facevtx[:,face],3]
+      x[:,ptr+1:ptr+3] = (A*vtx[facevtx[:,face],:]).'
       ptr += 3
     end
     paramptr += 1
@@ -1061,13 +1042,11 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   # set node with 1 symmetry (i.e. the centroid)
   if cub.centroid
     A = T[0.25 0.25 0.25 0.25]
-    x[ptr+1:ptr+1] = A*vtx[:,1]
-    y[ptr+1:ptr+1] = A*vtx[:,2]
-    z[ptr+1:ptr+1] = A*vtx[:,3]
+    x[:,ptr+1] = (A*vtx).'
     ptr += 1
   end
 
-  return x, y, z
+  return x
 end
 
 @doc """

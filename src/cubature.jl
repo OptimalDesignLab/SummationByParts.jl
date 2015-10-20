@@ -28,7 +28,7 @@ residual, with respect to the quadrature nodes and weights, is also returned.
 function cubatureresidual{T}(cub::TriSymCub{T}, q::Int)
   # compute the nodes and weights defined by cub
   vtx = T[-1 -1; 1 -1; -1 1]
-  x, y = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   w = SymCubatures.calcweights(cub)
   num_eq = convert(Int, (q+1)*(q+2)/2)
   # loop over orthogonal polynomials of degree r <= q and form conditions
@@ -39,9 +39,9 @@ function cubatureresidual{T}(cub::TriSymCub{T}, q::Int)
   for r = 0:q
     for j = 0:r
       i = r-j
-      P = OrthoPoly.proriolpoly(x, y, i, j)
+      P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       F[ptr] += (w.'*P)[1]
-      dPdx, dPdy = OrthoPoly.diffproriolpoly(x, y, i, j)
+      dPdx, dPdy = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       dF[ptr,:] = [w.*dPdx w.*dPdy P]
       ptr += 1
       #print("(i,j,k) = (",i,",",j,",",k,"): i+j+k = ",i+j+k,"\n")
@@ -53,7 +53,7 @@ end
 function cubatureresidual{T}(cub::TetSymCub{T}, q::Int)
   # compute the nodes and weights defined by cub
   vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
-  x, y, z = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   w = SymCubatures.calcweights(cub)
   num_eq = convert(Int, (q+1)*(q+2)*(q+3)/6)
   # loop over orthogonal polynomials of degree r <= q and form conditions
@@ -65,9 +65,10 @@ function cubatureresidual{T}(cub::TetSymCub{T}, q::Int)
     for k = 0:r
       for j = 0:r-k
         i = r-j-k
-        P = OrthoPoly.proriolpoly(x, y, z, i, j, k)
+        P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), vec(x[3,:]), i, j, k)
         F[ptr] += (w.'*P)[1]
-        dPdx, dPdy, dPdz = OrthoPoly.diffproriolpoly(x, y, z, i, j, k)
+        dPdx, dPdy, dPdz = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]),
+                                                     vec(x[3,:]), i, j, k)
         dF[ptr,:] = [w.*dPdx w.*dPdy w.*dPdz P]
         ptr += 1
         #print("(i,j,k) = (",i,",",j,",",k,"): i+j+k = ",i+j+k,"\n")

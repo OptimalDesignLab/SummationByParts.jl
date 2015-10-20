@@ -4,7 +4,7 @@ facts("Testing Cubature Module...") do
     # Check that a P1 vertices-only rule produces zero residual
     vtx = Float64[-1 -1; 1 -1; -1 1]
     cub = SymCubatures.TriSymCub{Float64}()
-    x,y = SymCubatures.calcnodes(cub, vtx)
+    #x,y = SymCubatures.calcnodes(cub, vtx)
     SymCubatures.setweights!(cub, [2/3])
     F, dF = Cubature.cubatureresidual(cub, 1)
     @fact F --> roughly(zeros(3), atol=1e-15)
@@ -14,7 +14,7 @@ facts("Testing Cubature Module...") do
     # Check that a P1 vertices-only rule produces zero residual
     vtx = Float64[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
     cub = SymCubatures.TetSymCub{Float64}()
-    x,y,z = SymCubatures.calcnodes(cub, vtx)
+    #x,y,z = SymCubatures.calcnodes(cub, vtx)
     SymCubatures.setweights!(cub, [1/3])
     F, dF = Cubature.cubatureresidual(cub, 1)
     @fact F --> roughly(zeros(4), atol=1e-15)
@@ -118,7 +118,7 @@ facts("Testing Cubature Module...") do
       quad, vtx = quadrature(q, Float64)
       x = SymCubatures.calcnodes(quad, vtx)
       w = SymCubatures.calcweights(quad)
-      f = 0.5*dot(w, (0.5.*x + 0.5).^q)
+      f = 0.5*dot(w, (0.5.*vec(x) + 0.5).^q)
       @fact f --> roughly(1/(q+1), atol=1e-15)      
     end
   end 
@@ -129,7 +129,7 @@ facts("Testing Cubature Module...") do
       quad, vtx = quadrature(q, Float64, internal=true)
       x = SymCubatures.calcnodes(quad, vtx)
       w = SymCubatures.calcweights(quad)
-      f = 0.5*dot(w, (0.5.*x + 0.5).^q)
+      f = 0.5*dot(w, (0.5.*vec(x) + 0.5).^q)
       @fact f --> roughly(1/(q+1), atol=1e-15)
     end
   end

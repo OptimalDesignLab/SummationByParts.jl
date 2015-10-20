@@ -221,7 +221,7 @@ facts("Testing SymCubatures Module...") do
       context("Testing calcnodes (LineSymCub method) for DataType "string($T)) do
         vtx = reshape(($T)[-1; 1], (2,1))
         quad = LineSymCub{($T)}()
-        @fact SymCubatures.calcnodes(quad, vtx) --> vtx[:,1]
+        @fact SymCubatures.calcnodes(quad, vtx) --> vtx[:,1].'
 
         quad = LineSymCub{($T)}(numedge=1)
         alpha = ($T)(1/pi)
@@ -229,14 +229,14 @@ facts("Testing SymCubatures Module...") do
                  (1-alpha) alpha]
         SymCubatures.setparams!(quad, [alpha])
         x = SymCubatures.calcnodes(quad, vtx)
-        @fact x.' --> [vtx[:,1].' (A*vtx[:,1]).']
+        @fact x --> [vtx[:,1].' (A*vtx[:,1]).']
 
         # uniformly spaced 7 nodes between (-1,1) (no vertices)
         quad = LineSymCub{($T)}(numedge=3, centroid=true, vertices=false)
         SymCubatures.setparams!(quad, ($T)[5/8 6/8 7/8])
         x = SymCubatures.calcnodes(quad, vtx)
-        @fact sort(real(x)).' --> roughly(linspace(-0.75,0.75,7).',
-                                          atol=eps(real(one($T))) )
+        @fact sort(real(vec(x))).' --> roughly(linspace(-0.75,0.75,7).',
+                                               atol=eps(real(one($T))) )
       end
     end
   end           
@@ -246,7 +246,7 @@ facts("Testing SymCubatures Module...") do
       context("Testing calcnodes (TriSymCub method) for DataType "string($T)) do
         vtx = ($T)[-1 -1; 1 -1; -1 1]
         tricub = TriSymCub{($T)}()
-        @fact SymCubatures.calcnodes(tricub, vtx) --> (vtx[:,1], vtx[:,2])
+        @fact SymCubatures.calcnodes(tricub, vtx) --> vtx[:,:].'
 
         tricub = TriSymCub{($T)}(numedge=1)
         alpha = ($T)(1/pi)
@@ -257,16 +257,16 @@ facts("Testing SymCubatures Module...") do
                  (1-alpha) 0 alpha;
                  alpha 0 (1-alpha)]
         SymCubatures.setparams!(tricub, [alpha])
-        x, y = SymCubatures.calcnodes(tricub, vtx)
-        @fact x.' --> [vtx[:,1].' (A*vtx[:,1]).']
-        @fact y.' --> [vtx[:,2].' (A*vtx[:,2]).']
+        x = SymCubatures.calcnodes(tricub, vtx)
+        @fact x[1,:] --> [vtx[:,1].' (A*vtx[:,1]).']
+        @fact x[2,:] --> [vtx[:,2].' (A*vtx[:,2]).']
 
         tricub = TriSymCub{($T)}(numS21=1)
         SymCubatures.setparams!(tricub, ($T)[2/3])
-        x, y = SymCubatures.calcnodes(tricub, vtx)
-        @fact x.' --> roughly([vtx[:,1].' fill(sum(vtx[:,1])/3, (1,3) )],
+        x = SymCubatures.calcnodes(tricub, vtx)
+        @fact x[1,:] --> roughly([vtx[:,1].' fill(sum(vtx[:,1])/3, (1,3) )],
                              atol=eps(real(one($T))) )
-        @fact y.' --> roughly([vtx[:,2].' fill(sum(vtx[:,2])/3, (1,3) )],
+        @fact x[2,:] --> roughly([vtx[:,2].' fill(sum(vtx[:,2])/3, (1,3) )],
                              atol=eps(real(one($T))) )
 
         tricub = TriSymCub{($T)}(numS111=1)
@@ -281,9 +281,9 @@ facts("Testing SymCubatures Module...") do
                  (1-alpha-beta) beta alpha;
                  beta (1-alpha-beta) alpha;
                  alpha (1-alpha-beta) beta]
-        x, y = SymCubatures.calcnodes(tricub, vtx)
-        @fact x.' --> [vtx[:,1].' (A*vtx[:,1]).']
-        @fact y.' --> [vtx[:,2].' (A*vtx[:,2]).']
+        x = SymCubatures.calcnodes(tricub, vtx)
+        @fact x[1,:] --> [vtx[:,1].' (A*vtx[:,1]).']
+        @fact x[2,:] --> [vtx[:,2].' (A*vtx[:,2]).']
       end
     end
   end
@@ -293,7 +293,7 @@ facts("Testing SymCubatures Module...") do
       context("Testing calcnodes (TetSymCub method) for DataType "string($T)) do
         vtx = ($T)[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
         tetcub = TetSymCub{($T)}()
-        @fact SymCubatures.calcnodes(tetcub, vtx) --> (vtx[:,1], vtx[:,2], vtx[:,3])
+        @fact SymCubatures.calcnodes(tetcub, vtx) --> vtx.'
 
         tetcub = TetSymCub{($T)}(numedge=1)
         alpha = ($T)(0.25)
@@ -310,10 +310,10 @@ facts("Testing SymCubatures Module...") do
                  0 alpha 0 (1-alpha)
                  0 (1-alpha) 0 alpha]
         SymCubatures.setparams!(tetcub, [alpha])
-        x, y, z = SymCubatures.calcnodes(tetcub, vtx)
-        @fact x.' --> [vtx[:,1].' (A*vtx[:,1]).']
-        @fact y.' --> [vtx[:,2].' (A*vtx[:,2]).']
-        @fact z.' --> [vtx[:,3].' (A*vtx[:,3]).']
+        x = SymCubatures.calcnodes(tetcub, vtx)
+        @fact x[1,:] --> [vtx[:,1].' (A*vtx[:,1]).']
+        @fact x[2,:] --> [vtx[:,2].' (A*vtx[:,2]).']
+        @fact x[3,:] --> [vtx[:,3].' (A*vtx[:,3]).']
 
         tetcub = TetSymCub{($T)}(numfaceS21=1)
         alpha = ($T)(0.1)
@@ -325,17 +325,17 @@ facts("Testing SymCubatures Module...") do
         facevtx = [1 2 3 4;
                    3 3 1 1;
                    2 4 4 2]
-        x, y, z = SymCubatures.calcnodes(tetcub, vtx)
-        @fact x.' --> [vtx[:,1].' (A*vtx[facevtx[:,1],1]).' (A*vtx[facevtx[:,2],1]).' (A*vtx[facevtx[:,3],1]).' (A*vtx[facevtx[:,4],1]).']
-        @fact y.' --> [vtx[:,2].' (A*vtx[facevtx[:,1],2]).' (A*vtx[facevtx[:,2],2]).' (A*vtx[facevtx[:,3],2]).' (A*vtx[facevtx[:,4],2]).']
-        @fact z.' --> [vtx[:,3].' (A*vtx[facevtx[:,1],3]).' (A*vtx[facevtx[:,2],3]).' (A*vtx[facevtx[:,3],3]).' (A*vtx[facevtx[:,4],3]).']
+        x = SymCubatures.calcnodes(tetcub, vtx)
+        @fact x[1,:] --> [vtx[:,1].' (A*vtx[facevtx[:,1],1]).' (A*vtx[facevtx[:,2],1]).' (A*vtx[facevtx[:,3],1]).' (A*vtx[facevtx[:,4],1]).']
+        @fact x[2,:] --> [vtx[:,2].' (A*vtx[facevtx[:,1],2]).' (A*vtx[facevtx[:,2],2]).' (A*vtx[facevtx[:,3],2]).' (A*vtx[facevtx[:,4],2]).']
+        @fact x[3,:] --> [vtx[:,3].' (A*vtx[facevtx[:,1],3]).' (A*vtx[facevtx[:,2],3]).' (A*vtx[facevtx[:,3],3]).' (A*vtx[facevtx[:,4],3]).']
 
         tetcub = TetSymCub{($T)}(numS31=1)
         SymCubatures.setparams!(tetcub, ($T)[3/4])
-        x, y, z = SymCubatures.calcnodes(tetcub, vtx)
-        @fact x.' --> [vtx[:,1].' fill(sum(vtx[:,1])/4, (1,4) )]
-        @fact y.' --> [vtx[:,2].' fill(sum(vtx[:,2])/4, (1,4) )]
-        @fact z.' --> [vtx[:,3].' fill(sum(vtx[:,3])/4, (1,4) )]
+        x = SymCubatures.calcnodes(tetcub, vtx)
+        @fact x[1,:] --> [vtx[:,1].' fill(sum(vtx[:,1])/4, (1,4) )]
+        @fact x[2,:] --> [vtx[:,2].' fill(sum(vtx[:,2])/4, (1,4) )]
+        @fact x[3,:] --> [vtx[:,3].' fill(sum(vtx[:,3])/4, (1,4) )]
 
         tetcub = TetSymCub{($T)}(numS22=1)
         alpha = ($T)(6/7)
@@ -347,11 +347,10 @@ facts("Testing SymCubatures Module...") do
                  (0.5-alpha) alpha alpha (0.5-alpha);
                  (0.5-alpha) alpha (0.5-alpha) alpha;
                  (0.5-alpha) (0.5-alpha) alpha alpha]
-        x, y, z = SymCubatures.calcnodes(tetcub, vtx)
-        @fact x.' --> [vtx[:,1].' (A*vtx[:,1]).']
-        @fact y.' --> [vtx[:,2].' (A*vtx[:,2]).']
-        @fact z.' --> [vtx[:,3].' (A*vtx[:,3]).']
-        
+        x = SymCubatures.calcnodes(tetcub, vtx)
+        @fact x[1,:] --> [vtx[:,1].' (A*vtx[:,1]).']
+        @fact x[2,:] --> [vtx[:,2].' (A*vtx[:,2]).']
+        @fact x[3,:] --> [vtx[:,3].' (A*vtx[:,3]).']        
       end
     end
   end
@@ -435,10 +434,10 @@ facts("Testing SymCubatures Module...") do
     for i = 1:tricub.numparams
       params_cmplx[i] += eps_step*im
       SymCubatures.setparams!(tricub_cmplx, params_cmplx)
-      xc, yc = SymCubatures.calcnodes(tricub_cmplx,
-                                      convert(Array{Complex128}, vtx))
-      Jac_cs[1:tricub.numnodes,i] = imag(xc)/eps_step
-      Jac_cs[tricub.numnodes+1:2*tricub.numnodes,i] = imag(yc)/eps_step
+      xc = SymCubatures.calcnodes(tricub_cmplx,
+                                  convert(Array{Complex128}, vtx))
+      Jac_cs[1:tricub.numnodes,i] = imag(xc[1,:])/eps_step
+      Jac_cs[tricub.numnodes+1:2*tricub.numnodes,i] = imag(xc[2,:])/eps_step
       params_cmplx[i] -= eps_step*im
     end
     @fact Jac --> roughly(Jac_cs, atol=1e-15)
@@ -459,11 +458,11 @@ facts("Testing SymCubatures Module...") do
     for i = 1:tetcub.numparams
       params_cmplx[i] += eps_step*im
       SymCubatures.setparams!(tetcub_cmplx, params_cmplx)
-      xc, yc, zc = SymCubatures.calcnodes(tetcub_cmplx,
-                                          convert(Array{Complex128}, vtx))
-      Jac_cs[1:tetcub.numnodes,i] = imag(xc)/eps_step
-      Jac_cs[tetcub.numnodes+1:2*tetcub.numnodes,i] = imag(yc)/eps_step
-      Jac_cs[2*tetcub.numnodes+1:3*tetcub.numnodes,i] = imag(zc)/eps_step
+      xc = SymCubatures.calcnodes(tetcub_cmplx,
+                                  convert(Array{Complex128}, vtx))
+      Jac_cs[1:tetcub.numnodes,i] = imag(xc[1,:])/eps_step
+      Jac_cs[tetcub.numnodes+1:2*tetcub.numnodes,i] = imag(xc[2,:])/eps_step
+      Jac_cs[2*tetcub.numnodes+1:3*tetcub.numnodes,i] = imag(xc[3,:])/eps_step
       params_cmplx[i] -= eps_step*im
     end
     @fact Jac --> roughly(Jac_cs, atol=1e-15)

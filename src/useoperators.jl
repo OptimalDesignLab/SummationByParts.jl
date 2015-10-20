@@ -53,14 +53,14 @@ This function assumes the element mapping is linear, i.e. edges are lines.
 function calcnodes{T}(sbp::TriSBP{T}, vtx::Array{T})
   perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
   x = zeros(T, (2, sbp.numnodes))
-  x[1,:], x[2,:] = SymCubatures.calcnodes(sbp.cub, vtx)
+  x = SymCubatures.calcnodes(sbp.cub, vtx)
   return x[:,perm]
 end
 
 function calcnodes{T}(sbp::TetSBP{T}, vtx::Array{T})
   perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
   x = zeros(T, (3, sbp.numnodes))
-  x[1,:], x[2,:], x[3,:] = SymCubatures.calcnodes(sbp.cub, vtx)
+  x = SymCubatures.calcnodes(sbp.cub, vtx)
   return x[:,perm]
 end
 
