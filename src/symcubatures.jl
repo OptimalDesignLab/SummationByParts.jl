@@ -654,6 +654,140 @@ function getfacenodeindices{T}(cub::TetSymCub{T})
 end
 
 @doc """
+### SymCubatures.getfacebasedpermutation
+
+Returns a permutation of the volume nodes (or a subset of them) for each face,
+such that the same face operator can be applied to all faces.  This is useful
+for volume-to-face interpolation or differentiation.
+
+**Inputs**
+
+* `cub`: a symmetric cubature rule for which a face-based permutation is sought
+* `faceonly`: if true, only face nodes are used in the permutation.
+
+**Outputs**
+
+* `perm`: permutation of the volume nodes for each face
+
+"""->
+function getfacebasedpermutation{T}(cub::LineSymCub{T}; faceonly::Bool=false)
+  if faceonly
+    @assert(cub.vertices) # vertices must be active
+    perm = zeros(Int, (getnumfacenodes(cub), 2))
+    perm = getfacenodeindices(cub)
+  else
+    perm = zeros(Int, (cub.numnodes, 2))
+    perm[:,1] = [1:cub.numnodes;]
+    ptr = 0
+    # set permutation for nodes with 2-symmetries
+    # set vertices
+    if cub.vertices
+      perm[ptr+1:ptr+2,2] = [2; 1]
+      ptr += 2
+    end
+    # set edge nodes
+    for i = 1:cub.numedge
+      perm[ptr+1:ptr+2,2] = [ptr+2; ptr+1]
+      ptr += 2
+    end
+    # set permutation for node with 1-symmetry
+    if cub.centroid
+      perm[ptr+1,2] = ptr+1
+      ptr =+ 1
+    end
+  end
+  return perm
+end
+
+function getfacebasedpermutation{T}(cub::TriSymCub{T}; faceonly::Bool=false)
+  if faceonly
+    perm = zeros(Int, (getnumfacenodes(cub), 3))
+    perm = getfacenodeindices(cub)
+  else
+    perm = zeros(Int, (cub.numnodes, 3))
+    perm[:,1] = [1:cub.numnodes;] # no permutation on face 1
+    ptr = 0
+    # set permutation for nodes with 3-symmetries
+    # set vertices
+    if cub.vertices
+      perm[ptr+1:ptr+3,2] = [ptr+2; ptr+3; ptr+1]
+      perm[ptr+1:ptr+3,3] = [ptr+3; ptr+1; ptr+2]
+      ptr += 3
+    end
+    # mid-edge nodes
+    if cub.midedges
+      perm[ptr+1:ptr+3,2] = [ptr+2; ptr+3; ptr+1]
+      perm[ptr+1:ptr+3,3] = [ptr+3; ptr+1; ptr+2]
+      ptr += 3
+    end
+    # set S21 orbit nodes
+    for i = 1:cub.numS21
+      perm[ptr+1:ptr+3,2] = [ptr+2; ptr+3; ptr+1]
+      perm[ptr+1:ptr+3,3] = [ptr+3; ptr+1; ptr+2]
+      ptr += 3
+    end
+    # set permutation for nodes with 6-symmetries
+    # set edge nodes
+    for i = 1:cub.numedge
+      perm[ptr+1:ptr+6,2] = [ptr+3; ptr+4; ptr+5; ptr+6; ptr+1; ptr+2]
+      perm[ptr+1:ptr+6,3] = [ptr+5; ptr+6; ptr+1; ptr+2; ptr+3; ptr+4]
+      ptr += 6
+    end
+    # set S111 orbit nodes
+    for i = 1:cub.numS111
+      perm[ptr+1:ptr+6,2] = [ptr+3; ptr+4; ptr+5; ptr+6; ptr+1; ptr+2]
+      perm[ptr+1:ptr+6,3] = [ptr+5; ptr+6; ptr+1; ptr+2; ptr+3; ptr+4]
+      ptr += 6
+    end
+    # set permutation for node with 1-symmetry
+    if cub.centroid
+      perm[ptr+1,2] = ptr+1
+      perm[ptr+1,3] = ptr+1
+      ptr += 1
+    end
+  end
+  return perm
+end
+
+function getfacebasedpermutation{T}(cub::TetSymCub{T}; faceonly::Bool=false)
+  if faceonly
+    perm = zeros(Int, (getnumfacenodes(cub), 3))
+    perm = getfacenodeindices(cub)
+  else
+    perm = zeros(Int, (cub.numnodes, 4))
+    perm[:,1] = [1:cub.numnodes;] # no permutation on face 1
+    ptr = 0
+    # set permutation for nodes with 4-symmetries
+    # set vertices
+    if cub.vertices
+      perm[ptr+1:ptr+4,2] = [ptr+2; ptr+3; ptr+1; ptr+4]
+      perm[ptr+1:ptr+4,3] = [ptr+3; ptr+1; ptr+2; ptr+4]
+      perm[ptr+1:ptr+4,4] = [ptr+4; ptr+2; ptr+1; ptr+3]
+      ptr += 4
+    end
+    if cub.facecentroid
+      perm[ptr+1;ptr+4,2] = [ptr+2; ptr+3; ptr+1; ptr+4]
+      perm[ptr+1:ptr+4,3] = [ptr+3; ptr+1; ptr+2; ptr+4]
+      perm[ptr+1:ptr+4,4] = [ptr+4; ptr+2; ptr+1; ptr+3]
+      ptr += 4
+    end
+    for i = 1:cub.numS31
+      perm[ptr+1;ptr+4,2] = [ptr+2; ptr+3; ptr+1; ptr+4]
+      perm[ptr+1:ptr+4,3] = [ptr+3; ptr+1; ptr+2; ptr+4]
+      perm[ptr+1:ptr+4,4] = [ptr+4; ptr+2; ptr+1; ptr+3]
+      ptr += 4
+    end
+    # set permutation for nodes with 6-symmetries
+    # set mid-edge nodes
+    if cub.midedges
+      # ...
+    end
+    # To be continued...
+  end
+  return perm
+end
+
+@doc """
 ### SymCubatures.setparams!
 
 Sets the nodal parameters for any parameterized symmetry orbits in the cubature.

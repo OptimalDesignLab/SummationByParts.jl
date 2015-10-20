@@ -18,7 +18,7 @@ facts("Testing SymCubatures Module...") do
       end
     end
   end
-
+  
   for T = (Float32, Float64, Complex64, Complex128)
     @eval begin
       context("Testing TriSymCub Inner Constructor for DataType "string($T)) do
@@ -41,7 +41,7 @@ facts("Testing SymCubatures Module...") do
       end
     end
   end
-
+  
   for T = (Float32, Float64, Complex64, Complex128)
     @eval begin
       context("Testing TetSymCub Inner Constructor for DataType "string($T)) do
@@ -68,7 +68,7 @@ facts("Testing SymCubatures Module...") do
       end
     end
   end
-
+  
   context("Testing getnumboundarynodes (LineSymCub method)") do
     quad = LineSymCub{Float64}() # vertex only rule
     @fact SymCubatures.getnumboundarynodes(quad) --> 2
@@ -185,6 +185,35 @@ facts("Testing SymCubatures Module...") do
                             33 27 34 32; 34 28 33 31; 28 29 31 25;
                             27 30 32 26; 26 36 30 35; 25 35 29 36; # edge nodes
                             37 40 43 46; 38 41 44 47; 39 42 45 48] # face S21
+  end
+
+  context("Test getfacebasedpermutation (LineSymCub method)") do
+    quad = LineSymCub{Float64}(numedge=1, centroid=true)
+    perm = SymCubatures.getfacebasedpermutation(quad)
+    @fact perm[:,1] --> [1:5;]
+    @fact perm[:,2] --> [2; 1; 4; 3; 5]
+    perm = SymCubatures.getfacebasedpermutation(quad, faceonly=true)
+    @fact perm[:,1] --> [1;]
+    @fact perm[:,2] --> [2;]
+  end
+
+  context("Test getfacebasedpermutation (TriSymCub method)") do
+    tricub = TriSymCub{Float64}(numedge=1, midedges=true, numS21 = 1, numS111=1,
+                                centroid=true)
+    perm = SymCubatures.getfacebasedpermutation(tricub)
+    @fact perm[:,1] --> [1:22;]
+    @fact perm[:,2] --> [2; 3; 1; 5; 6; 4; 8; 9; 7;
+                         12; 13; 14; 15; 10; 11; 
+                         18; 19; 20; 21; 16; 17; 
+                         22]
+    @fact perm[:,3] --> [3; 1; 2; 6; 4; 5; 9; 7; 8;
+                         14; 15; 10; 11; 12; 13; 
+                         20; 21; 16; 17; 18; 19;
+                         22]
+    perm = SymCubatures.getfacebasedpermutation(tricub, faceonly=true)
+    @fact perm[:,1] --> [1; 2; 4; 10; 11]
+    @fact perm[:,2] --> [2; 3; 5; 12; 13]
+    @fact perm[:,3] --> [3; 1; 6; 14; 15]
   end
 
   for T = (Float32, Float64, Complex64, Complex128)

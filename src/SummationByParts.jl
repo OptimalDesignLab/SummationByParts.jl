@@ -10,20 +10,20 @@ using .OrthoPoly
 using .SymCubatures
 using .Cubature
 
-export SBPOperator, TriSBP, TetSBP, Boundary, Interface, calcnodes, calcminnodedistance,
+export AbstractSBP, TriSBP, TetSBP, Boundary, Interface, calcnodes, calcminnodedistance,
   weakdifferentiate!, differentiate!, directionaldifferentiate!, 
   volumeintegrate!, mappingjacobian!, boundaryintegrate!,
   interiorfaceintegrate!
 
 @doc """
-### SBP.SBPOperator
+### SBP.AbstractSBP
 
-`SBPOperator` is a parametric abstract type that defines summation-by-parts
+`AbstractSBP` is a parametric abstract type that defines summation-by-parts
 finite-difference operators.
 
 """->
-abstract SBPOperator{T<:Number}
-#abstract SBPOperator{T<:AbstractFloat}
+abstract AbstractSBP{T<:Number}
+#abstract AbstractSBP{T<:AbstractFloat}
 
 @doc """
 ### SBP.TriSBP
@@ -44,7 +44,7 @@ Defines diagonal-norm SBP first-derivative operators on a right-triangle.
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """->
-immutable TriSBP{T} <: SBPOperator{T}
+immutable TriSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
   numbndry::Int
@@ -112,7 +112,7 @@ Defines diagonal-norm SBP first-derivative operators on a right-tetrahedron.
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """->
-immutable TetSBP{T} <: SBPOperator{T}
+immutable TetSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
   numbndry::Int
@@ -157,6 +157,39 @@ immutable TetSBP{T} <: SBPOperator{T}
         w, wface, Q)
   end
 end
+
+@doc """
+### SBP.AbstractFace
+
+`AbstractFace` is a parametric abstract type that defines face-based data and
+operations (e.g. volume-to-face reconstruction, face integration, etc) for
+summation-by-parts finite-difference operators.
+
+"""->
+abstract AbstractFace{T<:Number}
+
+@doc """
+### SBP.TriFace
+
+Defines a face between two TriSBP operators of the same order.
+
+**Fields**
+
+* `degree` : maximum polynomial degree for which face integration is exact
+* `cub` : a symmetric cubature type for triangle faces (i.e. edges)
+* `wface` : mass matrix (quadrature) for the face
+* `R[:,:]` : volume-to-face-nodes reconstruction operator
+* `perm[:,:]` : permutation for volume nodes so `R` can be used on all sides
+
+"""->
+immutable TriFace{T} <: AbstractFace{T}
+  degree::Int
+  cub::TetSymCub{T}
+  wface::Array{T}
+  R::Array{T,2}
+  perm::Array{Int,2}
+end
+
 
 include("buildoperators.jl") #<--- functions related to building SBP operators
 include("useoperators.jl") #<--- functions for applying SBP operators

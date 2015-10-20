@@ -79,7 +79,7 @@ Returns the minimum distance between distinct nodes on an element with straight 
 * `mindist`: the minimum distance between distinct nodes
 
 """->
-function calcminnodedistance{T}(sbp::SBPOperator{T}, vtx::Array{T})
+function calcminnodedistance{T}(sbp::AbstractSBP{T}, vtx::Array{T})
   x = calcnodes(sbp, vtx)
   mindist = convert(T, Inf)
   for i = 1:size(x,2)
@@ -120,7 +120,7 @@ operator sbp.
 * `res`: where the result of applying Q[:,:,di] to u is stored
 
 """->
-function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int, 
+function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int, 
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2};
                                             trans::Bool=false)
@@ -150,7 +150,7 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
   end
 end
 
-function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
+function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                             flux::AbstractArray{Tflx,3},
                                             res::AbstractArray{Tres,3};
                                             trans::Bool=false)
@@ -187,7 +187,7 @@ end
 # macro update(x,op,y)
 #   return :($x=$op($x,$y))
 # end
-# function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int, 
+# function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int, 
 #                                             flux::AbstractArray{Tflx,2},
 #                                             res::AbstractArray{Tres,2},
 #                                             op::Function; trans::Bool=false)
@@ -250,7 +250,7 @@ operator sbp.
 * `res`: where the result of applying inv(H)*Q[:,:,di] to u is stored
 
 """->
-function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
+function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux::AbstractArray{Tflx,2},
                                         res::AbstractArray{Tres,2})
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
@@ -269,7 +269,7 @@ function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
   end
 end
 
-function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
+function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux::AbstractArray{Tflx,3},
                                         res::AbstractArray{Tres,3})
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
@@ -314,7 +314,7 @@ single element**, not a collection of elements.
 * `Ddir`: derivative of `u` in direction `dir`
 
 """->
-function directionaldifferentiate!{Tsbp,Tmsh,Tsol}(sbp::SBPOperator{Tsbp},
+function directionaldifferentiate!{Tsbp,Tmsh,Tsol}(sbp::AbstractSBP{Tsbp},
                                                    dir::Array{Tmsh,1},
                                                    u::AbstractArray{Tsol,1},
                                                    i::Int)
@@ -332,7 +332,7 @@ function directionaldifferentiate!{Tsbp,Tmsh,Tsol}(sbp::SBPOperator{Tsbp},
   return Ddir
 end
 
-function directionaldifferentiate!{Tsbp,Tmsh,Tsol,Tres}(sbp::SBPOperator{Tsbp},
+function directionaldifferentiate!{Tsbp,Tmsh,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                                         dir::Array{Tmsh,1}, 
                                                         u::AbstractArray{Tsol,2},
                                                         i::Int,
@@ -381,7 +381,7 @@ operator sbp.
 * `res`: where the result of applying H to u is stored
 
 """->
-function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::SBPOperator{Tsbp},
+function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                           u::AbstractArray{Tsol,2},
                                           res::AbstractArray{Tres,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
@@ -396,7 +396,7 @@ function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::SBPOperator{Tsbp},
   end
 end
 
-function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::SBPOperator{Tsbp},
+function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                           u::AbstractArray{Tsol,3},
                                           res::AbstractArray{Tres,3})
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
@@ -445,7 +445,7 @@ index.
   consistent.
 
 """->
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
+function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
                                             bndryfaces::Array{Boundary},
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2})
@@ -464,7 +464,7 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
   end
 end
 
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
+function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
                                             bndryfaces::Array{Boundary},
                                             flux::AbstractArray{Tflx,3},
                                             res::AbstractArray{Tres,3})
@@ -519,7 +519,7 @@ index.
   consistent.
 
 """->
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
+function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
                                                 ifaces::Array{Interface},
                                                 flux::AbstractArray{Tflx,2},
                                                 res::AbstractArray{Tres,2})
@@ -542,7 +542,7 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
   end
 end
 
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
+function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
                                                 ifaces::Array{Interface},
                                                 flux::AbstractArray{Tflx,3},
                                                 res::AbstractArray{Tres,3})
