@@ -10,8 +10,8 @@ using .OrthoPoly
 using .SymCubatures
 using .Cubature
 
-export AbstractSBP, TriSBP, TetSBP, Boundary, Interface, calcnodes, calcminnodedistance,
-  weakdifferentiate!, differentiate!, directionaldifferentiate!, 
+export AbstractSBP, TriSBP, TetSBP, TriFace, Boundary, Interface, calcnodes,
+  calcminnodedistance, weakdifferentiate!, differentiate!, directionaldifferentiate!, 
   volumeintegrate!, mappingjacobian!, boundaryintegrate!,
   interiorfaceintegrate!
 
@@ -175,22 +175,33 @@ Defines a face between two TriSBP operators of the same order.
 
 **Fields**
 
-* `degree` : maximum polynomial degree for which face integration is exact
+* `degree` : face integration is exact for polys of degree 2*degree
 * `cub` : a symmetric cubature type for triangle faces (i.e. edges)
 * `wface` : mass matrix (quadrature) for the face
-* `R[:,:]` : volume-to-face-nodes reconstruction operator
+* `interp[:,:]` : volume-to-face-nodes reconstruction operator
 * `perm[:,:]` : permutation for volume nodes so `R` can be used on all sides
 
 """->
 immutable TriFace{T} <: AbstractFace{T}
   degree::Int
-  cub::TetSymCub{T}
-  wface::Array{T}
-  R::Array{T,2}
+  cub::LineSymCub{T}
+  wface::Array{T,1}
+  normal::Array{T,2}
+  interp::Array{T,2}
   perm::Array{Int,2}
+  function TriFace(;degree::Int=1, faceonly=true)
+    @assert( degree >= 1 && degree <= 4 )
+    volcub, vtx = tricubature(2*degree-1, Float64, internal=!faceonly)
+    facecub, facevtx = quadrature(2*degree, Float64, internal=true)
+    normal = T[0 -1; 1 1; -1 0].'
+    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+                                                       degree, faceonly=faceonly)
+    wface = SymCubatures.calcweights(facecub)
+    new(degree, facecub, wface, normal, R, perm)
+  end
 end
 
-
+include("buildfaceoperators.jl") #<--- functions related to building face operators
 include("buildoperators.jl") #<--- functions related to building SBP operators
 include("useoperators.jl") #<--- functions for applying SBP operators
 

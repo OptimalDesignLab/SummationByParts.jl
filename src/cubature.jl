@@ -242,19 +242,19 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
                      tol=10*eps(typeof(real(one(T)))))
   if internal
     # all nodes are internal
-    if q == 2
+    if q <= 2
       # P1; 3rd order cubature
       cub = SymCubatures.TriSymCub{T}(vertices=false, numS21=1)      
       SymCubatures.setweights!(cub, T[2/3])
       SymCubatures.setparams!(cub, T[1/3])
-    elseif q == 4
+    elseif q <= 4
       # P2; 5th order cubature
       cub = SymCubatures.TriSymCub{T}(vertices=false, numS21=2)
       SymCubatures.setweights!(cub, T[0.44676317935602283;
                                       0.2199034873106437])
       SymCubatures.setparams!(cub, T[0.8918969818319298;
                                      0.18315242701954149])
-    elseif q == 5
+    elseif q <= 5
       # P3; 6th order cubature
       cub = SymCubatures.TriSymCub{T}(vertices=false, centroid=true,
                                       numS21=1, numS111=1)
@@ -264,7 +264,7 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
       SymCubatures.setparams!(cub, T[0.13862330627662678;
                                      0.14215944055500324;
                                      0.6226442585632832])
-    elseif q == 7
+    elseif q <= 7
       # P4; 8th order cubature
       cub = SymCubatures.TriSymCub{T}(vertices=false, numS21=3, numS111=1)
       SymCubatures.setweights!(cub, T[0.10482661091570668;
@@ -277,26 +277,26 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
                                      0.08815074437486997;
                                      0.624003943088726])
     else
-      error("polynomial degree must be 2, 4, 5, or 7 (presently)\n")
+      error("polynomial degree must be <= 7 (presently)\n")
     end
   else
     # at least (q+1)/2+1 nodes along each edge
     @assert( q >= 1 && q <= 7 && mod(q,2) == 1 )
-    if q == 1
+    if q <= 1
       # P1 (vertices only); 2nd order cubature
       cub = SymCubatures.TriSymCub{T}() 
       SymCubatures.setweights!(cub, T[2/3])
-    elseif q == 3
+    elseif q <= 3
       # P2 + 1 bubble node; 4th order cubature
       cub = SymCubatures.TriSymCub{T}(midedges=true, centroid=true)
       SymCubatures.setweights!(cub, T[9/10, 1/10, 4/15])
-    elseif q == 5
+    elseif q <= 5
       # P3 + 3 bubble nodes; 6th order cubature
       cub = SymCubatures.TriSymCub{T}(numedge=1, numS21=1)
       SymCubatures.setweights!(cub, T[0.02974582604964118,0.4415541156808217,
                                       0.09768336246810204])
       SymCubatures.setparams!(cub, T[0.41469035132718185,0.29346955590904017])
-    elseif q == 7
+    elseif q <= 7
       # P4 + 6 bubble nodes; 8th order cubature
       cub = SymCubatures.TriSymCub{T}(midedges=true, numedge=1, numS21=2)
       SymCubatures.setweights!(cub, T[0.012698412698412695,0.05079365079365077,
@@ -304,14 +304,14 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
                                       0.04285714285714284])
       SymCubatures.setparams!(cub, T[0.2615831876594899,0.8495279234516212,
                                      0.2113248654051872])
-    elseif q == 9
+    elseif q <= 9
       # P5 + 10 bubble nodes; 10th order cubature
       cub = SymCubatures.TriSymCub{T}(numedge=2, centroid=true, numS21=1,
                                       numS111=1)
       SymCubatures.setweights!(cub, T[0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
       SymCubatures.setparams!(cub, T[0.1 0.25 0.1 0.2 0.6])
     else
-      error("polynomial degree must be 1, 3, 5, or 7 (presently)\n")
+      error("polynomial degree must be <= 7 (presently)\n")
     end
   end
   vtx = T[-1 -1; 1 -1; -1 1]
