@@ -194,6 +194,21 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.boundaryoperator! (TriFace method)") do
+    # check by comparing with Ex, Ey produced by boundaryoperators
+    for d = 1:4
+      cub, vtx = tricubature(2*d-1, Float64)
+      w = SymCubatures.calcweights(cub)
+      Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
+      face = TriFace{Float64}(degree=d, faceonly=true)
+      E = zeros(cub.numnodes,cub.numnodes)
+      SummationByParts.boundaryoperator!(face, 1, E)
+      @fact E --> roughly(Ex, atol=1e-15)
+      SummationByParts.boundaryoperator!(face, 2, E)
+      @fact E --> roughly(Ey, atol=1e-15)
+    end
+  end
+
   context("Testing SummationByParts.boundarymassmatrix (TriSymCub method)") do
     # check that mass matrix can be assembled into Ex and Ey
     for d = 1:4
@@ -238,7 +253,12 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     sizenull = [0, 0, 1, 3]
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
-      A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
+      face = TriFace{Float64}(degree=d, faceonly=true)
+      Q = zeros(cub.numnodes,cub.numnodes,2)
+      SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
+      SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+      scale!(Q, 0.5)
+      A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
       @fact size(nullspace(A),2) --> sizenull[d]
     end
   end
@@ -259,33 +279,58 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     error = [0, 0, 0.5*2.324812265031167] # error based on particular Q
     for d = 1:3
       cub, vtx = tricubature(2*d-1, Float64)
+      face = TriFace{Float64}(degree=d, faceonly=true)
+      Q = zeros(cub.numnodes,cub.numnodes,2)
+      SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
+      SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+      scale!(Q, 0.5)
       w = SymCubatures.calcweights(cub)
-      Qx, Qy = SummationByParts.boundaryoperators(cub, vtx, d)    
-      A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
+      A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
       # build Q that satisfies the accuracy constraints
       x = A\bx; y = A\by
-      Qx *= 0.5; Qy *= 0.5
       for row = 2:cub.numnodes
         offset = convert(Int, (row-1)*(row-2)/2)
         for col = 1:row-1
-          Qx[row,col] += x[offset+col]
-          Qx[col,row] -= x[offset+col]
-          Qy[row,col] += y[offset+col]
-          Qy[col,row] -= y[offset+col]
+          Q[row,col,1] += x[offset+col]
+          Q[col,row,1] -= x[offset+col]
+          Q[row,col,2] += y[offset+col]
+          Q[col,row,2] -= y[offset+col]
         end
       end
       Z = nullspace(A)
-      f, dfdx = SummationByParts.commuteerror(w, Qx, Qy, Z, reducedsol[d])
+      f, dfdx = SummationByParts.commuteerror(w, slice(Q,:,:,1), slice(Q,:,:,2),
+                                              Z, reducedsol[d])
       @fact f --> roughly(error[d], atol=1e-15)
     end
   end
 
-  context("Testing SummationByParts.buildoperators (TriSymCub method)") do
+  context("Testing SummationByParts.buildoperators (TriSymCub method, internal=false)") do
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
-      w, Qx, Qy = SummationByParts.buildoperators(cub, vtx, d)
-      Dx = diagm(1./w)*Qx
-      Dy = diagm(1./w)*Qy
+      w, Q = SummationByParts.buildoperators(cub, vtx, d)
+      Dx = diagm(1./w)*Q[:,:,1]
+      Dy = diagm(1./w)*Q[:,:,2]
+      xy = SymCubatures.calcnodes(cub, vtx)  
+      x = xy[1,:].'; y = xy[2,:].'
+      for r = 0:d
+        for j = 0:r
+          i = r-j
+          u = (x.^i).*(y.^j)
+          dudx = (i.*x.^max(0,i-1)).*(y.^j)
+          dudy = (x.^i).*(j.*y.^max(0,j-1))
+          @fact Dx*u --> roughly(dudx, atol=1e-13)
+          @fact Dy*u --> roughly(dudy, atol=1e-13)
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildoperators (TriSymCub method, internal=true)") do
+    for d = 1:4
+      cub, vtx = tricubature(2*d-1, Float64, internal=true)
+      w, Q = SummationByParts.buildoperators(cub, vtx, d, internal=true)
+      Dx = diagm(1./w)*Q[:,:,1]
+      Dy = diagm(1./w)*Q[:,:,2]
       xy = SymCubatures.calcnodes(cub, vtx)  
       x = xy[1,:].'; y = xy[2,:].'
       for r = 0:d
@@ -331,9 +376,9 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     e = [1;3;4;5]
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
-      w, Qx, Qy = SummationByParts.buildoperators(cub, vtx, d, e[d])
-      Dx = diagm(1./w)*Qx
-      Dy = diagm(1./w)*Qy
+      w, Q = SummationByParts.buildoperators(cub, vtx, d, e[d])
+      Dx = diagm(1./w)*Q[:,:,1]
+      Dy = diagm(1./w)*Q[:,:,2]
       xy = SymCubatures.calcnodes(cub, vtx)
       x = xy[1,:].'; y = xy[2,:].'
       for r = 0:d

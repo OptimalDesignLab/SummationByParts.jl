@@ -216,6 +216,15 @@ facts("Testing SymCubatures Module...") do
     @fact perm[:,3] --> [3; 1; 6; 14; 15]
   end
 
+  context("Test getneighbourpermutation (LineSymCub method)") do
+    quad = LineSymCub{Float64}(numedge=1, centroid=true)
+    perm = SymCubatures.getneighbourpermutation(quad)
+    @fact perm[:,1] --> [2; 1; 4; 3; 5]
+    quad = LineSymCub{Float64}(vertices=false, numedge=1, centroid=true)
+    perm = SymCubatures.getneighbourpermutation(quad)
+    @fact perm[:,1] --> [2; 1; 3]
+  end
+
   for T = (Float32, Float64, Complex64, Complex128)
     @eval begin
       context("Testing calcnodes (LineSymCub method) for DataType "string($T)) do

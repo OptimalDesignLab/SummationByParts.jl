@@ -215,10 +215,9 @@ end
 @doc """
 ### SummationByParts.boundaryoperators
 
-Finds and returns the element mass matrix, `w`, as well as the symmetric part of
-the SBP operators, `Ex`, `Ey` (`Ez`).  The latter operators coorespond to
-boundary integrals in the divergence theorem, and are related to the mass
-matrices of the boundary faces.
+Finds the symmetric part of the SBP operators, `Ex`, `Ey` (`Ez`).  These
+operators coorespond to boundary integrals in the divergence theorem, and are
+related to the mass matrices of the boundary faces.
 
 **Inputs**
 
@@ -309,57 +308,33 @@ function boundaryoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
 end  
 
 @doc """
-### SummationByParts.boundaryoperators2
+The following will eventually supercede current version and is based on the face operators
 
-The following will eventually supercede current version
-- requires vtx to be equalateral tri/tet
+Finds the symmetric part of the SBP operators, e.g. `Ex`.  These operators
+coorespond to boundary integrals in the divergence theorem, and are related to
+the mass matrices of the boundary faces.
+
+**Inputs**
+
+* `face`: SBP face operator for a particular element
+* `di`: desired coordinate direction of operator
+
+**InOuts**
+
+* `E`: symmetric part of the SBP first derivative operator in direction di
+
 """->
-function boundaryoperators2{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
-                               internal::Bool=false)
-  # get boundary cubature
-  bndrycub, bndryvtx = quadrature(2*d, Float64, internal=true)
-  numbndry = bndrycub.numedge # number of symmetric nodes
-  bndrycub.centroid ? numbndry += 1 : nothing
-  # need some way to compute the unique cubature nodes (new method?)
-  xi = SymCubatures.calcnodes(bndrycub, bndryvtx)
-  xb = -0.5 + xi[1:2:end]./2; yb = -1 + (xi[1:2:end] + 1).*(0.5*sqrt(3))
-  
-  if internal
-    # evaluate the basis at the volume and cubature nodes
-    N = convert(Int, (d+1)*(d+2)/2 )
-    P = zeros(T, (cub.numnodes,N) )  
-    Pb = zeros(T, (numbndry,N) ) 
-    x, y = SymCubatures.calcnodes(cub, vtx)
-    ptr = 1
-    for r = 0:d
-      for j = 0:r
-        i = r-j
-        P[:,ptr] = OrthoPoly.proriolpoly(x, y, i, j)
-        Pb[:,ptr] = OrthoPoly.proriolpoly(xb, yb, i, j)
-        ptr += 1
-      end
-    end
-  else
-    # evaluate the basis at the boundary nodes and cubature nodes
-    N = convert(Int, (d+1)*(d+2)/2 ) #d+1
-    P = zeros(T, (cub.numnodes,N) )
-    Pb = zeros(T, (numbndry,N) )
-    x, y = SymCubatures.calcnodes(cub, vtx)
-    #bndryindices = SymCubatures.getfacenodeindices(cub)
-    #x = xvol[bndryindices[:,3]]
-    #y = yvol[bndryindices[:,3]]
-    ptr = 1
-    for r = 0:d
-      for j = 0:r
-        i = r-j
-        P[:,ptr] = OrthoPoly.proriolpoly(x, y, i, j)
-        Pb[:,ptr] = OrthoPoly.proriolpoly(xb, yb, i, j)
-        ptr += 1
-      end
-    end
+function boundaryoperator!{T}(face::AbstractFace{T}, di::Int,
+                              E::AbstractArray{T,2})
+  @assert( size(face.interp,1) <= size(E,1) == size(E,2) )
+  @assert( di >= 1 && di <= 3)
+  fill!(E, zero(T))
+  # loop over faces of the element
+  for findex = 1:size(face.perm,2) 
+    E[face.perm[:,findex],face.perm[:,findex]] += 
+      face.interp*diagm(face.wface.*face.normal[di,findex])*face.interp.'
   end
-  R = Pb/P
-  return R, bndrycub.weights
+  return E
 end
 
 @doc """
@@ -435,6 +410,7 @@ Q_32 = -Q_23 is the number 3 variable.
 * `cub`: symmetric cubature rule
 * `vtx`: vertices of the right simplex
 * `d`: maximum total degree for the Proriol polynomials
+* `E`: the symmetric part of the SBP stiffness matrices
 
 **Outputs**
 
@@ -442,11 +418,12 @@ Q_32 = -Q_23 is the number 3 variable.
 * `bx`,`by` (`bz`): the right-hand-sides of the accuracy constraints
 
 """->
-function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int,
+                                E::Array{T,3})
   x = SymCubatures.calcnodes(cub, vtx) 
-  Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
+#  Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
   w = SymCubatures.calcweights(cub)
-  Ex *= 0.5; Ey *= 0.5
+#  Ex *= 0.5; Ey *= 0.5
   # the number of unknowns for in the skew-symmetric matrices
   numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
   # the number of accuracy equations
@@ -469,8 +446,8 @@ function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
           A[ptr+col, offset+col] -= P[row]
         end
       end
-      bx[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdx - Ex*P
-      by[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdy - Ey*P
+      bx[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdx - E[:,:,1]*P
+      by[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdy - E[:,:,2]*P
       ptr += cub.numnodes
     end
   end
@@ -537,7 +514,8 @@ Dz*Dx)||^2 + ||H*(Dy*Dz - Dz*Dx||^2.
 * `f`: commute-error objective value
 
 """->
-function commuteerror{T,T2}(w::Array{T}, Qxpart::Array{T,2}, Qypart::Array{T,2},
+function commuteerror{T,T2}(w::Array{T}, Qxpart::AbstractArray{T,2},
+                            Qypart::AbstractArray{T,2},
                             Z::Array{T,2}, reducedsol::Array{T2})
   # build Qx and Qy
   Qx = convert(Array{T2,2}, Qxpart)
@@ -601,28 +579,31 @@ matrix and the stiffness matrices.
 **Outputs**
 
 * `w`: the diagonal norm stored as a 1D array
-* `Qx`,`Qy` (`Qz`): the stiffness matrices
+* `Q`: the stiffness matrices
 
 """->
-function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
+                           internal::Bool=false)
   w = SymCubatures.calcweights(cub)
-  Qx, Qy = SummationByParts.boundaryoperators(cub, vtx, d)
-  A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
+  face = TriFace{T}(degree=d, faceonly=!internal)
+  Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
+  SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+  scale!(Q, 0.5)
+  A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   # use the minimum norm least-squares solution
   Afact = qrfact(A)
   x = Afact\bx; y = Afact\by
-  scale!(Qx, 0.5)
-  scale!(Qy, 0.5)
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
     for col = 1:row-1
-      Qx[row,col] += x[offset+col]
-      Qx[col,row] -= x[offset+col]
-      Qy[row,col] += y[offset+col]
-      Qy[col,row] -= y[offset+col]
+      Q[row,col,1] += x[offset+col]
+      Q[col,row,1] -= x[offset+col]
+      Q[row,col,2] += y[offset+col]
+      Q[col,row,2] -= y[offset+col]
     end
   end
-  return w, Qx, Qy
+  return w, Q
 end
 
 function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
@@ -680,11 +661,10 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   dPdy *= C
   # compute and return the operators
   w = SymCubatures.calcweights(cub)
-  Qx = zeros(T, (cub.numnodes,cub.numnodes) )
-  Qy = zeros(Qx)
-  Qx = P.'*diagm(w)*dPdx
-  Qy = P.'*diagm(w)*dPdy
-  return w, Qx, Qy  
+  Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
+  Q[:,:,1] = P.'*diagm(w)*dPdx
+  Q[:,:,2] = P.'*diagm(w)*dPdy
+  return w, Q  
 end
 
 @doc """

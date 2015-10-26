@@ -66,8 +66,8 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
               bndryintegral = 0.0
               for f = 1:3
                 bndryintegral += sum(face.normal[:,f])* 
-                dot(face.interp*v[face.perm[:,f]], 
-                    diagm(face.wface)*face.interp*u[face.perm[:,f]])
+                dot(face.interp.'*v[face.perm[:,f]], 
+                    diagm(face.wface)*face.interp.'*u[face.perm[:,f]])
               end
               @fact bndryintegral -->
               roughly(((-1)^(j+l+1))*(1^(i+k+1) - (-1)^(i+k+1))/(i+k+1) +
@@ -99,8 +99,8 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
               bndryintegral = 0.0
               for f = 1:3
                 bndryintegral += sum(face.normal[:,f])* 
-                dot(face.interp*v[face.perm[:,f]], 
-                    diagm(face.wface)*face.interp*u[face.perm[:,f]])
+                dot(face.interp.'*v[face.perm[:,f]], 
+                    diagm(face.wface)*face.interp.'*u[face.perm[:,f]])
               end
               @fact bndryintegral -->
               roughly(((-1)^(j+l+1))*(1^(i+k+1) - (-1)^(i+k+1))/(i+k+1) +

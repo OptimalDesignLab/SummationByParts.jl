@@ -634,7 +634,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
         end
       end
       ifaces = Array(Interface, 1)
-      ifaces[1] = Interface(1,2,2,3,[])
+      ifaces[1] = Interface(1,2,2,3,1)
       bndryfaces = Array(Boundary, 4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)

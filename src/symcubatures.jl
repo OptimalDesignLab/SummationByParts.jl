@@ -340,8 +340,8 @@ end
 @doc """
 ### SymCubatures.getbndrynodeindices
 
-Returns the indices of the nodes that on the boundary, in their natural order.
-See getfacenodeindices for a method returns node indices for each face.
+Returns the indices of the nodes that lie on the boundary, in their natural
+order.  See getfacenodeindices for a method returns node indices for each face.
 
 **Inputs**
 
@@ -785,6 +785,52 @@ function getfacebasedpermutation{T}(cub::TetSymCub{T}; faceonly::Bool=false)
     # To be continued...
   end
   return perm
+end
+
+@doc """
+### SymCubatures.getneighbourpermutation
+
+At element interfaces, the cubature nodes of the common face will not match when
+natural ordering is provided.  This routine produces the permutation that makes
+the 'right' element's nodes match the 'left' element's nodes.  The permutation
+depends on the face dimension:
+
+* For triangle faces, i.e. line segments, there is only one possible orientation.
+* For tetrahedral faces, i.e. triangles, there are three orientations.
+
+**Inputs**
+
+* `cub`: a symmetric cubature rule for which the permutation is sought
+
+**Outputs**
+
+* `perm`: permutation of the volume nodes for each possible orientation
+
+"""->
+function getneighbourpermutation{T}(cub::LineSymCub{T})
+  perm = zeros(Int, (cub.numnodes, 1))
+  ptr = 0
+  # set permutation for nodes with 2-symmetries
+  # set vertices
+  if cub.vertices
+    perm[ptr+1:ptr+2,1] = [2; 1]
+    ptr += 2
+  end
+  # set edge nodes
+  for i = 1:cub.numedge
+    perm[ptr+1:ptr+2,1] = [ptr+2; ptr+1]
+    ptr += 2
+  end
+  # set permutation for node with 1-symmetry
+  if cub.centroid
+    perm[ptr+1,1] = ptr+1
+    ptr =+ 1
+  end
+  return perm
+end
+
+function getneighbourpermutation{T}(cub::TriSymCub{T})
+  error("getneighbourpermutation is not implemented (yet) for triangles")
 end
 
 @doc """

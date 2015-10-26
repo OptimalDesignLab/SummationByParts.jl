@@ -1,3 +1,4 @@
+include("../../ODLCommonTools/src/ODLCommonTools.jl")
 include("../src/SummationByParts.jl")
 using SummationByParts
 using SummationByParts.OrthoPoly
