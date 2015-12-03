@@ -3,7 +3,7 @@ os:
   - linux
   - osx
 julia:
-  - nightly # - release
+  - release
 notifications:
   email: true
 before_install:
