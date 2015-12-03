@@ -362,7 +362,7 @@ function boundarymassmatrix{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   bndryindices = SymCubatures.getfacenodeindices(cub)
   numbndrynodes = size(bndryindices,1)
   x = SymCubatures.calcnodes(cub, vtx)
-  xbndry = x[1,bndryindices[:,1]].'
+  xbndry = vec(x[1,bndryindices[:,1]])
   P = zeros(T, (numbndrynodes,numbndrynodes))
   for j = 0:d
     P[:,j+1] = OrthoPoly.jacobipoly(xbndry, 0.0, 0.0, j)
@@ -376,8 +376,8 @@ function boundarymassmatrix{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   bndryindices = SymCubatures.getfacenodeindices(cub)
   numbndrynodes = size(bndryindices,1)
   x = SymCubatures.calcnodes(cub, vtx)
-  xbndry = x[1,bndryindices[:,1]].'
-  ybndry = x[2,bndryindices[:,1]].'
+  xbndry = vec(x[1,bndryindices[:,1]])
+  ybndry = vec(x[2,bndryindices[:,1]])
   P = zeros(T, (numbndrynodes,numbndrynodes))
   ptr = 1
   for r = 0:d

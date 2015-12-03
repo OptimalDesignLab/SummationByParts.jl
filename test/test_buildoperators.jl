@@ -6,7 +6,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tricubature(2*d-1, Float64)
       E = SummationByParts.bndrynodalexpansion(cub, vtx, d)
       xy = SymCubatures.calcnodes(cub, vtx)
-      x = xy[1,:].'; y = xy[2,:].'
+      x = vec(xy[1,:]); y = vec(xy[2,:])
       N = convert(Int, (d+1)*(d+2)/2 )
       P = zeros(cub.numnodes, N)
       ptr = 1
@@ -30,7 +30,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tetcubature(2*d-1, Float64)
       E = SummationByParts.bndrynodalexpansion(cub, vtx, d)
       xyz = SymCubatures.calcnodes(cub, vtx)
-      x = xyz[1,:].'; y = xyz[2,:].'; z = xyz[3,:].'
+      x = vec(xyz[1,:]); y = vec(xyz[2,:]); z = vec(xyz[3,:])
       N = convert(Int, (d+1)*(d+2)*(d+3)/6 )
       P = zeros(cub.numnodes, N)
       ptr = 1
@@ -39,7 +39,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
           for j = 0:r-k
             i = r-j-k
             P[:,ptr] = OrthoPoly.proriolpoly(x, y, z, i, j, k)
-          ptr += 1
+            ptr += 1
           end
         end
       end
@@ -58,7 +58,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       #@fact_throws SummationByParts.nodalexpansion(cub, vtx, d, e[d])
       C = SummationByParts.nodalexpansion(cub, vtx, d, e[d])
       xy = SymCubatures.calcnodes(cub, vtx)
-      x = xy[1,:].'; y = xy[2,:].'
+      x = vec(xy[1,:]); y = vec(xy[2,:])
       N = convert(Int, (e[d]+1)*(e[d]+2)/2 )
       P = zeros(cub.numnodes, N)
       ptr = 1
@@ -81,7 +81,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
       H = diagm(w)
       xy = SymCubatures.calcnodes(cub, vtx)     
-      x = xy[1,:].'; y = xy[2,:].'
+      x = vec(xy[1,:]); y = vec(xy[2,:])
       for r = 0:2*d-1
         for j = 0:r
           i = r-j
@@ -122,7 +122,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
       H = diagm(w)
       xyz = SymCubatures.calcnodes(cub, vtx)      
-      x = xyz[1,:].'; y = xyz[2,:].'; z = xyz[3,:].'
+      x = vec(xyz[1,:]); y = vec(xyz[2,:]); z = vec(xyz[3,:])
       for r = 0:2*d-1
         for k = 0:r
           for j = 0:r-k
@@ -311,7 +311,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
       xy = SymCubatures.calcnodes(cub, vtx)  
-      x = xy[1,:].'; y = xy[2,:].'
+      x = vec(xy[1,:]); y = vec(xy[2,:])
       for r = 0:d
         for j = 0:r
           i = r-j
@@ -332,7 +332,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
       xy = SymCubatures.calcnodes(cub, vtx)  
-      x = xy[1,:].'; y = xy[2,:].'
+      x = vec(xy[1,:]); y = vec(xy[2,:])
       for r = 0:d
         for j = 0:r
           i = r-j
@@ -354,7 +354,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       Dy = diagm(1./w)*Qy
       Dz = diagm(1./w)*Qz
       xyz = SymCubatures.calcnodes(cub, vtx)      
-      x = xyz[1,:].'; y = xyz[2,:].'; z = xyz[3,:].'
+      x = vec(xyz[1,:]); y = vec(xyz[2,:]); z = vec(xyz[3,:])
       for r = 0:d
         for k = 0:r
           for j = 0:r-k
@@ -380,7 +380,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
       xy = SymCubatures.calcnodes(cub, vtx)
-      x = xy[1,:].'; y = xy[2,:].'
+      x = vec(xy[1,:]); y = vec(xy[2,:])
       for r = 0:d
         for j = 0:r
           i = r-j
@@ -400,8 +400,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tricubature(2*d-1, Float64)
       perm, faceperm = SummationByParts.getnodepermutation(cub, d)
       xy = SymCubatures.calcnodes(cub, vtx)
-      x = xy[1,perm].'
-      y = xy[2,perm].'
+      x = vec(xy[1,perm])
+      y = vec(xy[2,perm])
       # check vertices
       @fact x[1:3] --> roughly(vtx[:,1], atol=1e-15)
       @fact y[1:3] --> roughly(vtx[:,2], atol=1e-15)
@@ -427,9 +427,9 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tetcubature(2*d-1, Float64)
       perm, faceperm = SummationByParts.getnodepermutation(cub, d)
       xyz = SymCubatures.calcnodes(cub, vtx)
-      x = xyz[1,perm]
-      y = xyz[2,perm]
-      z = xyz[3,perm]
+      x = vec(xyz[1,perm])
+      y = vec(xyz[2,perm])
+      z = vec(xyz[3,perm])
       # check vertices
       @fact x[1:4] --> roughly(vtx[:,1], atol=1e-15)
       @fact y[1:4] --> roughly(vtx[:,2], atol=1e-15)

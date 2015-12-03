@@ -118,10 +118,10 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(x)
       differentiate!(sbp, di, x, res)
-      @fact res[1,:,1] --> roughly(0.5.*ones(1,sbp.numnodes), atol=1e-13)
-      @fact res[2,:,1] --> roughly(zeros(1,sbp.numnodes), atol=1e-13)
-      @fact res[1,:,2] --> roughly(zeros(1,sbp.numnodes), atol=1e-13)
-      @fact res[2,:,2] --> roughly(0.5.*ones(1,sbp.numnodes), atol=1e-13)
+      @fact vec(res[1,:,1]) --> roughly(0.5.*ones(sbp.numnodes), atol=1e-13)
+      @fact vec(res[2,:,1]) --> roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact vec(res[1,:,2]) --> roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact vec(res[2,:,2]) --> roughly(0.5.*ones(sbp.numnodes), atol=1e-13)
     end
   end
 
@@ -136,9 +136,9 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(x)
       differentiate!(sbp, di, x, res)
-      @fact res[1,:,1] --> roughly(0.5.*ones(1,sbp.numnodes), atol=1e-13)
-      @fact res[2,:,1] --> roughly(zeros(1,sbp.numnodes), atol=1e-13)
-      @fact res[3,:,1] --> roughly(zeros(1,sbp.numnodes), atol=1e-13)
+      @fact vec(res[1,:,1]) --> roughly(0.5.*ones(sbp.numnodes), atol=1e-13)
+      @fact vec(res[2,:,1]) --> roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact vec(res[3,:,1]) --> roughly(zeros(sbp.numnodes), atol=1e-13)
     end
   end
 
@@ -150,7 +150,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       vtx = [-1. -1.; -1. 1.; 1. -1.]
       x[:,:] = calcnodes(sbp, vtx)
       u = ones(Float64, (sbp.numnodes))
-      u = squeeze(x[1,:] + x[2,:],1)
+      u = vec(x[1,:] + x[2,:])
       dir = [1.;1.]
       for i = 1:sbp.numnodes
         Ddir = directionaldifferentiate!(sbp, dir, u, i)
@@ -167,7 +167,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       x = zeros(Float64, (3,sbp.numnodes))
       x[:,:] = calcnodes(sbp, vtx)
       u = ones(Float64, (sbp.numnodes))
-      u = squeeze(x[1,:] + x[2,:] + x[3,:],1)
+      u = vec(x[1,:] + x[2,:] + x[3,:])
       dir = [1.;1.;1.]
       for i = 1:sbp.numnodes
         Ddir = directionaldifferentiate!(sbp, dir, u, i)
@@ -184,7 +184,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       vtx = [-1. -1.; -1. 1.; 1. -1.]
       x[:,:] = calcnodes(sbp, vtx)
       u = ones(Float64, (2, sbp.numnodes))
-      u[1,:] = squeeze(x[1,:] + x[2,:],1)
+      u[1,:] = vec(x[1,:] + x[2,:])
       u[2,:] = -u[1,:]
       dir = [1.;1.]
       Ddir = zeros(Float64, size(u,1))
@@ -205,7 +205,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       x = zeros(Float64, (3,sbp.numnodes))
       x[:,:] = calcnodes(sbp, vtx)
       u = ones(Float64, (2, sbp.numnodes))
-      u[1,:] = squeeze(x[1,:] + x[2,:] + x[3,:],1)
+      u[1,:] = vec(x[1,:] + x[2,:] + x[3,:])
       u[2,:] = -u[1,:]
       dir = [1.;1.;1.]
       Ddir = zeros(Float64, size(u,1))
@@ -284,17 +284,17 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       jac = zeros(Float64, (sbp.numnodes,2))
       mappingjacobian!(sbp, x, dξdx, jac)
       # verify on element 1
-      @fact dξdx[1,1,:,1] --> roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[1,2,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[2,2,:,1] --> roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[2,1,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
-      @fact jac[:,1] --> roughly(4.0*ones(sbp.numnodes), atol=1e-13)
+      @fact vec(dξdx[1,1,:,1]) --> roughly(0.5*ones(sbp.numnodes), atol=1e-13)
+      @fact vec(dξdx[1,2,:,1]) --> roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact vec(dξdx[2,2,:,1]) --> roughly(0.5*ones(sbp.numnodes), atol=1e-13)
+      @fact vec(dξdx[2,1,:,1]) --> roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact vec(jac[:,1]) --> roughly(4.0*ones(sbp.numnodes), atol=1e-13)
       # verify on element 2
-      @fact dξdx[1,1,:,2] --> roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[1,2,:,2] --> roughly(0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[2,2,:,2] --> roughly(zeros(1,1,sbp.numnodes), atol=1e-13)
-      @fact dξdx[2,1,:,2] --> roughly(-0.5*ones(1,1,sbp.numnodes), atol=1e-13)
-      @fact jac[:,2] --> roughly(4.0*ones(sbp.numnodes), atol=1e-13)
+      @fact vec(dξdx[1,1,:,2]) --> roughly(0.5*ones(sbp.numnodes), atol=1e-13)
+      @fact vec(dξdx[1,2,:,2]) --> roughly(0.5*ones(sbp.numnodes), atol=1e-13)
+      @fact vec(dξdx[2,2,:,2]) --> roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact vec(dξdx[2,1,:,2]) --> roughly(-0.5*ones(sbp.numnodes), atol=1e-13)
+      @fact vec(jac[:,2]) --> roughly(4.0*ones(sbp.numnodes), atol=1e-13)
     end
   end
   
@@ -310,19 +310,19 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       jac = zeros(Float64, (sbp.numnodes,1))
       mappingjacobian!(sbp, x, dξdx, jac)
       # dxi/dx = (1,0,0)
-      @fact dξdx[1,1,:,1] --> roughly(ones(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[1,2,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[1,3,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
+      @fact vec(dξdx[1,1,:,1]) --> roughly(ones(sbp.numnodes), atol=5e-12)
+      @fact vec(dξdx[1,2,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
+      @fact vec(dξdx[1,3,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
       # deta/dx = (0,1,0)
-      @fact dξdx[2,1,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[2,2,:,1] --> roughly(ones(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[2,3,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
+      @fact vec(dξdx[2,1,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
+      @fact vec(dξdx[2,2,:,1]) --> roughly(ones(sbp.numnodes), atol=5e-12)
+      @fact vec(dξdx[2,3,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
       # dzeta/dx = (0,1,0)
-      @fact dξdx[3,1,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[3,2,:,1] --> roughly(zeros(1,1,sbp.numnodes), atol=5e-12)
-      @fact dξdx[3,3,:,1] --> roughly(ones(1,1,sbp.numnodes), atol=5e-12)
+      @fact vec(dξdx[3,1,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
+      @fact vec(dξdx[3,2,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
+      @fact vec(dξdx[3,3,:,1]) --> roughly(ones(sbp.numnodes), atol=5e-12)
       # jac = 1
-      @fact jac[:,1] --> roughly(ones(sbp.numnodes), atol=5e-12)
+      @fact vec(jac[:,1]) --> roughly(ones(sbp.numnodes), atol=5e-12)
     end
   end
   
@@ -381,7 +381,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       for d = 0:p
         for j = 0:d
           i = d-j
-          u = squeeze((x[1,:,:].^i).*(x[2,:,:].^j), 1)
+          u = (x[1,:,:].^i).*(x[2,:,:].^j)
           res = zeros(u)
           flux = zeros(sbp.numfacenodes, size(bndryfaces,1))
           for k = 1:size(bndryfaces,1)
@@ -447,7 +447,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
         for k = 0:d
           for j = 0:d-k
             i = d-j-k
-            u = squeeze((x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k), 1)
+            u = (x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
             res = zeros(u)
             flux = zeros(sbp.numfacenodes, size(bndryfaces,1))
             for bindex = 1:size(bndryfaces,1)
@@ -499,11 +499,11 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       bndryfaces[3] = Boundary(2,1)
       bndryfaces[4] = Boundary(2,2)
 
-      u = zeros(Float64, (1,sbp.numnodes,4))
+      u = zeros(Float64, (1,sbp.numnodes,2))
       for d = 0:p
         for j = 0:d
           i = d-j
-          u = (x[1,:,:].^i).*(x[2,:,:].^j)
+          u[1,:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)
           res = zeros(u)
           flux = zeros(1, sbp.numfacenodes, size(bndryfaces,1))
           for k = 1:size(bndryfaces,1)
@@ -574,7 +574,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
         for k = 0:d
           for j = 0:d-k
             i = d-j-k
-            u = (x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
+            u[1,:,:] = (x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
             res = zeros(u)
             flux = zeros(1,sbp.numfacenodes, size(bndryfaces,1))
             for bindex = 1:size(bndryfaces,1)
@@ -641,7 +641,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       bndryfaces[3] = Boundary(2,1)
       bndryfaces[4] = Boundary(2,2)
       u = zeros(Float64, (sbp.numnodes,2))
-      u = squeeze(x[1,:,:] + x[2,:,:], 1)
+      u = x[1,:,:] + x[2,:,:]
       res = zeros(u)
       Fξ = zeros(u)
       Fη = zeros(u)
