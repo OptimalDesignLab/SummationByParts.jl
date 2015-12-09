@@ -357,9 +357,9 @@ facts("Testing SymCubatures Module...") do
                  (0.5-alpha) alpha (0.5-alpha) alpha;
                  (0.5-alpha) (0.5-alpha) alpha alpha]
         x = SymCubatures.calcnodes(tetcub, vtx)
-        @fact vec(x[1,:]) --> [vtx[:,1]; A*vtx[:,1]]
-        @fact vec(x[2,:]) --> [vtx[:,2]; A*vtx[:,2]]
-        @fact vec(x[3,:]) --> [vtx[:,3]; A*vtx[:,3]]       
+        @fact vec(x[1,:]) --> roughly([vtx[:,1]; A*vtx[:,1]]) 
+        @fact vec(x[2,:]) --> roughly([vtx[:,2]; A*vtx[:,2]])
+        @fact vec(x[3,:]) --> roughly([vtx[:,3]; A*vtx[:,3]])
       end
     end
   end
