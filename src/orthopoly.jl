@@ -64,7 +64,7 @@ Warburton's nodal DG book.
 * `P`: the polynomial evaluated at x
 
 """->
-function jacobipoly{T}(x::Array{T}, alpha::FloatingPoint, beta::FloatingPoint,
+function jacobipoly{T}(x::Array{T}, alpha::AbstractFloat, beta::AbstractFloat,
                        N::Int)
   @assert( alpha + beta != -1 )
   @assert( alpha > -1 && beta > -1)
@@ -113,8 +113,8 @@ Evaluate the first derivative of a Jacobi Polynomial at some points.
 * dP - derivative of polynomial evaluated at x
 
 """->
-function diffjacobipoly{T}(x::Array{T}, alpha::FloatingPoint, 
-                           beta::FloatingPoint, N::Int)
+function diffjacobipoly{T}(x::Array{T}, alpha::AbstractFloat, 
+                           beta::AbstractFloat, N::Int)
   @assert( alpha + beta != -1 )
   @assert( alpha > -1 && beta > -1)
   DP_0 = zeros(x)
@@ -173,7 +173,7 @@ function proriolpoly{T}(x::Array{T}, y::Array{T}, i::Int, j::Int)
     y[k] != 1.0 ? xi[k] = 2.0*(1 + x[k])./(1 - y[k]) -1 : xi[k] = -1
   end
   P = sqrt(2).*jacobipoly(xi, 0.0, 0.0, i
-                          ).*jacobipoly(y, convert(FloatingPoint, 2*i+1), 0.0, j
+                          ).*jacobipoly(y, convert(AbstractFloat, 2*i+1), 0.0, j
                                         ).*((1-y).^(i))
   return P
 end
@@ -204,8 +204,8 @@ function proriolpoly{T}(x::Array{T}, y::Array{T}, z::Array{T}, i::Int, j::Int,
     z[m] != 1.0 ? eta[m] = 2.0*(1+y[m])./(1-z[m]) - 1 : eta[m] = -1
   end
   P = sqrt(8).*jacobipoly(xi, 0.0, 0.0, i).*
-  jacobipoly(eta, convert(FloatingPoint, 2*i+1), 0.0, j).*((1-eta).^(i)).*
-  jacobipoly(z, convert(FloatingPoint, 2*i+2*j+2), 0.0, k).*((1-z).^(i+j))
+  jacobipoly(eta, convert(AbstractFloat, 2*i+1), 0.0, j).*((1-eta).^(i)).*
+  jacobipoly(z, convert(AbstractFloat, 2*i+2*j+2), 0.0, k).*((1-z).^(i+j))
   return P
 end
 
@@ -238,9 +238,9 @@ function diffproriolpoly{T}(x::Array{T}, y::Array{T}, i::Int, j::Int)
   end
   # compute some terms for reuse
   Jxi = jacobipoly(xi, 0.0, 0.0, i)
-  Jy = jacobipoly(y, convert(FloatingPoint, 2*i+1), 0.0, j)
+  Jy = jacobipoly(y, convert(AbstractFloat, 2*i+1), 0.0, j)
   dJxidxi = diffjacobipoly(xi, 0.0, 0.0, i)
-  dJydy = diffjacobipoly(y, convert(FloatingPoint, 2*i+1), 0.0, j)
+  dJydy = diffjacobipoly(y, convert(AbstractFloat, 2*i+1), 0.0, j)
 
   if (i > 0)
     # dPdx is only nonzero if i > 0;
