@@ -267,16 +267,16 @@ facts("Testing SymCubatures Module...") do
                  alpha 0 (1-alpha)]
         SymCubatures.setparams!(tricub, [alpha])
         x = SymCubatures.calcnodes(tricub, vtx)
-        @fact x[1,:] --> vec([vtx[:,1]; (A*vtx[:,1])])
-        @fact x[2,:] --> vec([vtx[:,2]; (A*vtx[:,2])])
+        @fact vec(x[1,:]) --> [vtx[:,1]; (A*vtx[:,1])]
+        @fact vec(x[2,:]) --> [vtx[:,2]; (A*vtx[:,2])]
 
         tricub = TriSymCub{($T)}(numS21=1)
         SymCubatures.setparams!(tricub, ($T)[2/3])
         x = SymCubatures.calcnodes(tricub, vtx)
-        @fact x[1,:] --> roughly(vec([vtx[:,1]; fill(sum(vtx[:,1])/3, (3) )]),
-                             atol=eps(real(one($T))) )
-        @fact x[2,:] --> roughly(vec([vtx[:,2]; fill(sum(vtx[:,2])/3, (3) )]),
-                             atol=eps(real(one($T))) )
+        @fact vec(x[1,:]) --> roughly([vtx[:,1]; fill(sum(vtx[:,1])/3, (3) )],
+                                      atol=eps(real(one($T))) )
+        @fact vec(x[2,:]) --> roughly([vtx[:,2]; fill(sum(vtx[:,2])/3, (3) )],
+                                      atol=eps(real(one($T))) )
 
         tricub = TriSymCub{($T)}(numS111=1)
         alpha = ($T)(1/4)
@@ -291,8 +291,8 @@ facts("Testing SymCubatures Module...") do
                  beta (1-alpha-beta) alpha;
                  alpha (1-alpha-beta) beta]
         x = SymCubatures.calcnodes(tricub, vtx)
-        @fact x[1,:] --> vec([vtx[:,1]; (A*vtx[:,1])])
-        @fact x[2,:] --> vec([vtx[:,2]; (A*vtx[:,2])])
+        @fact vec(x[1,:]) --> [vtx[:,1]; (A*vtx[:,1])]
+        @fact vec(x[2,:]) --> [vtx[:,2]; (A*vtx[:,2])]
       end
     end
   end
@@ -320,9 +320,9 @@ facts("Testing SymCubatures Module...") do
                  0 (1-alpha) 0 alpha]
         SymCubatures.setparams!(tetcub, [alpha])
         x = SymCubatures.calcnodes(tetcub, vtx)
-        @fact x[1,:] --> vec([vtx[:,1]; (A*vtx[:,1])])
-        @fact x[2,:] --> vec([vtx[:,2]; (A*vtx[:,2])])
-        @fact x[3,:] --> vec([vtx[:,3]; (A*vtx[:,3])])
+        @fact vec(x[1,:]) --> [vtx[:,1]; (A*vtx[:,1])]
+        @fact vec(x[2,:]) --> [vtx[:,2]; (A*vtx[:,2])]
+        @fact vec(x[3,:]) --> [vtx[:,3]; (A*vtx[:,3])]
 
         tetcub = TetSymCub{($T)}(numfaceS21=1)
         alpha = ($T)(0.1)
@@ -335,16 +335,16 @@ facts("Testing SymCubatures Module...") do
                    3 3 1 1;
                    2 4 4 2]
         x = SymCubatures.calcnodes(tetcub, vtx)
-        @fact x[1,:] --> vec([vtx[:,1]; A*vtx[facevtx[:,1],1]; A*vtx[facevtx[:,2],1]; A*vtx[facevtx[:,3],1]; A*vtx[facevtx[:,4],1]])
-        @fact x[2,:] --> vec([vtx[:,2]; A*vtx[facevtx[:,1],2]; A*vtx[facevtx[:,2],2]; A*vtx[facevtx[:,3],2]; A*vtx[facevtx[:,4],2]])
-        @fact x[3,:] --> vec([vtx[:,3]; A*vtx[facevtx[:,1],3]; A*vtx[facevtx[:,2],3]; A*vtx[facevtx[:,3],3]; A*vtx[facevtx[:,4],3]])
+        @fact vec(x[1,:]) --> [vtx[:,1]; A*vtx[facevtx[:,1],1]; A*vtx[facevtx[:,2],1]; A*vtx[facevtx[:,3],1]; A*vtx[facevtx[:,4],1]]
+        @fact vec(x[2,:]) --> [vtx[:,2]; A*vtx[facevtx[:,1],2]; A*vtx[facevtx[:,2],2]; A*vtx[facevtx[:,3],2]; A*vtx[facevtx[:,4],2]]
+        @fact vec(x[3,:]) --> [vtx[:,3]; A*vtx[facevtx[:,1],3]; A*vtx[facevtx[:,2],3]; A*vtx[facevtx[:,3],3]; A*vtx[facevtx[:,4],3]]
 
         tetcub = TetSymCub{($T)}(numS31=1)
         SymCubatures.setparams!(tetcub, ($T)[3/4])
         x = SymCubatures.calcnodes(tetcub, vtx)
-        @fact x[1,:] --> vec([vtx[:,1]; fill(sum(vtx[:,1])/4, (4) )])
-        @fact x[2,:] --> vec([vtx[:,2]; fill(sum(vtx[:,2])/4, (4) )])
-        @fact x[3,:] --> vec([vtx[:,3]; fill(sum(vtx[:,3])/4, (4) )])
+        @fact vec(x[1,:]) --> [vtx[:,1]; fill(sum(vtx[:,1])/4, (4) )]
+        @fact vec(x[2,:]) --> [vtx[:,2]; fill(sum(vtx[:,2])/4, (4) )]
+        @fact vec(x[3,:]) --> [vtx[:,3]; fill(sum(vtx[:,3])/4, (4) )]
 
         tetcub = TetSymCub{($T)}(numS22=1)
         alpha = ($T)(6/7)
@@ -357,9 +357,9 @@ facts("Testing SymCubatures Module...") do
                  (0.5-alpha) alpha (0.5-alpha) alpha;
                  (0.5-alpha) (0.5-alpha) alpha alpha]
         x = SymCubatures.calcnodes(tetcub, vtx)
-        @fact x[1,:] --> vec([vtx[:,1]; A*vtx[:,1]])
-        @fact x[2,:] --> vec([vtx[:,2]; A*vtx[:,2]])
-        @fact x[3,:] --> vec([vtx[:,3]; A*vtx[:,3]])       
+        @fact vec(x[1,:]) --> [vtx[:,1]; A*vtx[:,1]]
+        @fact vec(x[2,:]) --> [vtx[:,2]; A*vtx[:,2]]
+        @fact vec(x[3,:]) --> [vtx[:,3]; A*vtx[:,3]]       
       end
     end
   end

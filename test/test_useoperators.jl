@@ -377,11 +377,11 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       bndryfaces[3] = Boundary(2,1)
       bndryfaces[4] = Boundary(2,2)
 
-      u = zeros(Float64, (sbp.numnodes,4))
+      u = zeros(Float64, (sbp.numnodes,2))
       for d = 0:p
         for j = 0:d
           i = d-j
-          u = (x[1,:,:].^i).*(x[2,:,:].^j)
+          u[:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)
           res = zeros(u)
           flux = zeros(sbp.numfacenodes, size(bndryfaces,1))
           for k = 1:size(bndryfaces,1)
@@ -447,7 +447,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
         for k = 0:d
           for j = 0:d-k
             i = d-j-k
-            u = (x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
+            u[:,:] = (x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
             res = zeros(u)
             flux = zeros(sbp.numfacenodes, size(bndryfaces,1))
             for bindex = 1:size(bndryfaces,1)
@@ -641,7 +641,7 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       bndryfaces[3] = Boundary(2,1)
       bndryfaces[4] = Boundary(2,2)
       u = zeros(Float64, (sbp.numnodes,2))
-      u = x[1,:,:] + x[2,:,:]
+      u[:,:] = x[1,:,:] + x[2,:,:]
       res = zeros(u)
       Fξ = zeros(u)
       Fη = zeros(u)
