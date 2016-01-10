@@ -81,27 +81,61 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.differentiate! (TriSBP, scalar field method)") do
-    # build a two element grid, and verify that Dxi * 1 = 0
-    for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
-      u = ones(Float64, (sbp.numnodes,2))
-      di = 1
-      res = zeros(u)
-      differentiate!(sbp, di, u, res)
-      @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=1e-13)
-      @fact res[:,2] --> roughly(zeros(sbp.numnodes), atol=1e-13)
+    # verify the accuracy of the differentiation operators
+    for d = 1:4
+      sbp = TriSBP{Float64}(degree=d)
+      cub, vtx = tricubature(2*d-1, Float64)
+      xy = calcnodes(sbp, vtx)
+      x = zeros(Float64, (sbp.numnodes,1))
+      y = zeros(x)
+      x[:,1] = vec(xy[1,:]); y[:,1] = vec(xy[2,:])
+      for r = 0:d
+        for j = 0:r
+          i = r-j
+          u = (x.^i).*(y.^j)
+          dudx = (i.*x.^max(0,i-1)).*(y.^j)          
+          dudy = (x.^i).*(j.*y.^max(0,j-1))
+          res = zeros(u)
+          differentiate!(sbp, 1, u, res)
+          @fact res --> roughly(dudx, atol=1e-13)
+          res = zeros(u)
+          differentiate!(sbp, 2, u, res)
+          @fact res --> roughly(dudy, atol=1e-13)
+        end
+      end
     end
   end 
 
   context("Testing SummationByParts.differentiate! (TetSBP, scalar field method)") do
-    # build a single element grid, and verify that Dxi * 1 = 0
-    for p = 1:4
-      sbp = TetSBP{Float64}(degree=p)
-      u = ones(Float64, (sbp.numnodes,1))
-      di = 1
-      res = zeros(u)
-      differentiate!(sbp, di, u, res)
-      @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=5e-13)
+    # verify the accuracy of the differentiation operators
+    for d = 1:4
+      sbp = TetSBP{Float64}(degree=d)
+      cub, vtx = tetcubature(2*d-1, Float64)
+      xyz = calcnodes(sbp, vtx)
+      x = zeros(Float64, (sbp.numnodes,1))
+      y = zeros(x)
+      z = zeros(x)
+      x[:,1] = vec(xyz[1,:]); y[:,1] = vec(xyz[2,:]); z[:,1] = vec(xyz[3,:])
+      for r = 0:d
+        for k = 0:r
+          for j = 0:r-k
+            i = r-j-k
+            u = (x.^i).*(y.^j).*(z.^k)
+            dudx = (i.*x.^max(0,i-1)).*(y.^j).*(z.^k)
+            dudy = (x.^i).*(j.*y.^max(0,j-1)).*(z.^k)
+            dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
+            res = zeros(u)
+            differentiate!(sbp, 1, u, res)
+            @fact res --> roughly(dudx, atol=5e-13)
+            res = zeros(u)
+            differentiate!(sbp, 2, u, res)
+            @fact res --> roughly(dudy, atol=5e-13)
+            res = zeros(u)
+            differentiate!(sbp, 3, u, res)
+            @fact res --> roughly(dudz, atol=5e-13)
+          end
+        end
+      end
     end
   end 
 

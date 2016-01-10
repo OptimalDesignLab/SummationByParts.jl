@@ -664,6 +664,15 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
   Q[:,:,1] = P.'*diagm(w)*dPdx
   Q[:,:,2] = P.'*diagm(w)*dPdy
+
+  # # The following forms the skew-symmetric form of the SEM operators
+  # face = TriFace{T}(degree=d, faceonly=true)
+  # SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
+  # SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+  # Q[:,:,1] += P.'*diagm(w)*dPdx - dPdx.'*diagm(w)*P
+  # Q[:,:,2] += P.'*diagm(w)*dPdy - dPdy.'*diagm(w)*P
+  # scale!(Q, 0.5)
+
   return w, Q  
 end
 
