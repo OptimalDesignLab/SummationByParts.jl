@@ -420,7 +420,7 @@ Q_32 = -Q_23 is the number 3 variable.
 """->
 function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int,
                                 E::Array{T,3})
-  x = SymCubatures.calcnodes(cub, vtx) 
+  x = SymCubatures.calcnodes(cub, vtx)
 #  Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
   w = SymCubatures.calcweights(cub)
 #  Ex *= 0.5; Ey *= 0.5
@@ -592,8 +592,11 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
   scale!(Q, 0.5)
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   # use the minimum norm least-squares solution
-  Afact = qrfact(A)
-  x = Afact\bx; y = Afact\by
+  #Afact = qrfact(A)
+  #x = Afact\bx; y = Afact\by
+  #x = A\bx; y = A\by
+  Ainv = pinv(A)
+  x = Ainv*bx; y = Ainv*by
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
     for col = 1:row-1
@@ -613,6 +616,8 @@ function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   # use the minimum norm least-squares solution
   Afact = qrfact(A)
   x = Afact\bx; y = Afact\by; z = Afact\bz
+  #Ainv = pinv(A)
+  #x = Ainv*bx; y = Ainv*by; z = Ainv*bz
   scale!(Qx, 0.5)
   scale!(Qy, 0.5)
   scale!(Qz, 0.5)

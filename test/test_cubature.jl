@@ -220,4 +220,22 @@ facts("Testing Cubature Module...") do
                                   0.18771315212883505], atol=1e-14)
   end
   
+  context("Testing Cubature.equivalenceconstant (tricubature method)") do
+    λ = [4.0; 6.165789254884331; 7.136363791526314; 8.644675072049024]
+    for p = 1:4
+      cub, vtx = tricubature(2*p-1, Float64, internal=false)
+      @fact Cubature.equivalenceconstant(cub, vtx, 2*p-1) -->
+      roughly(λ[p], atol=1e-13)
+    end
+  end
+
+  context("Testing Cubature.equivalenceconstant (tetcubature method)") do
+    λ = [5.0; 10.5; 11.77599246416848; 16.61463996715285]
+    for p = 1:4
+      cub, vtx = tetcubature(2*p-1, Float64, internal=false)
+      @fact Cubature.equivalenceconstant(cub, vtx, 2*p-1) -->
+      roughly(λ[p], atol=1e-13)
+    end
+  end
+
 end

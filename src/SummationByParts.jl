@@ -214,5 +214,6 @@ end
 include("buildfaceoperators.jl") #<--- functions related to building face operators
 include("buildoperators.jl") #<--- functions related to building SBP operators
 include("useoperators.jl") #<--- functions for applying SBP operators
+include("usefaceoperators.jl") #<--- functions for face operations
 
 end # module

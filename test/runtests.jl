@@ -13,5 +13,6 @@ include("test_cubature.jl")
 include("test_buildfaceoperators.jl")
 include("test_buildoperators.jl")
 include("test_useoperators.jl")
+include("test_usefaceoperators.jl")
 
 FactCheck.exitstatus()

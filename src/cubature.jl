@@ -392,4 +392,59 @@ function tetcubature(q::Int, T=Float64; internal::Bool=false,
   return cub, vtx
 end
 
+@doc """
+### Cubature.equivalenceconstant{T}
+
+Computes the equivalence constant for a given cubature; that is, it finds the
+maximum eigenvalue for the matrix pk^T H pm, where H = diag(weights) and pk
+denotes the orthogonal polynomial evaluated at the cubature points.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+* `vtx`: vertices of the right simplex
+* `q`: maximum degree of polynomial for which the cubature is to be tested
+
+**Outputs**
+
+* `λmax`: maximum eigenvalue, which is the equivalence constant
+
+"""->
+function equivalenceconstant{T}(cub::TriSymCub{T}, vtx::Array{T,2}, q::Int)
+  N = convert(Int, (q+1)*(q+2)/2) 
+  P = zeros(T, (cub.numnodes,N) )
+  x = SymCubatures.calcnodes(cub, vtx)
+  ptr = 1
+  for r = 0:q
+    for j = 0:r
+      i = r-j
+      P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      ptr += 1
+    end
+  end
+  H = diagm(SymCubatures.calcweights(cub))
+  A = P.'*H*P
+  return eigmax(0.5.*(A + A.'))
+end  
+
+function equivalenceconstant{T}(cub::TetSymCub{T}, vtx::Array{T,2}, q::Int)
+  N = convert(Int, (q+1)*(q+2)*(q+3)/6 )
+  P = zeros(T, (cub.numnodes,N) )
+  x = SymCubatures.calcnodes(cub, vtx)
+  ptr = 1
+  for r = 0:q
+    for k = 0:r
+      for j = 0:r-k
+        i = r-j-k
+        P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), vec(x[3,:]),
+                                         i, j, k)
+        ptr += 1
+      end
+    end
+  end
+  H = diagm(SymCubatures.calcweights(cub))
+  A = P.'*H*P
+  return eigmax(0.5.*(A + A.'))
+end
+
 end

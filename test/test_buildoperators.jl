@@ -310,7 +310,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       w, Q = SummationByParts.buildoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
-      xy = SymCubatures.calcnodes(cub, vtx)  
+      xy = SymCubatures.calcnodes(cub, vtx)
       x = vec(xy[1,:]); y = vec(xy[2,:])
       for r = 0:d
         for j = 0:r
@@ -318,8 +318,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
           u = (x.^i).*(y.^j)
           dudx = (i.*x.^max(0,i-1)).*(y.^j)
           dudy = (x.^i).*(j.*y.^max(0,j-1))
-          @fact Dx*u --> roughly(dudx, atol=1e-13)
-          @fact Dy*u --> roughly(dudy, atol=1e-13)
+          @fact Dx*u --> roughly(dudx; atol=5e-13)
+          @fact Dy*u --> roughly(dudy; atol=5e-13)
         end
       end
     end
@@ -339,8 +339,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
           u = (x.^i).*(y.^j)
           dudx = (i.*x.^max(0,i-1)).*(y.^j)
           dudy = (x.^i).*(j.*y.^max(0,j-1))
-          @fact Dx*u --> roughly(dudx, atol=1e-13)
-          @fact Dy*u --> roughly(dudy, atol=1e-13)
+          @fact Dx*u --> roughly(dudx, atol=5e-13)
+          @fact Dy*u --> roughly(dudy, atol=5e-13)
         end
       end
     end
