@@ -13,7 +13,7 @@ using .Cubature
 export AbstractSBP, TriSBP, TetSBP, TriFace, Boundary, Interface, calcnodes,
   calcminnodedistance, weakdifferentiate!, differentiate!, directionaldifferentiate!, 
   volumeintegrate!, mappingjacobian!, boundaryintegrate!,
-  interiorfaceintegrate!, interiorfaceinterpolate!
+  interiorfaceintegrate!, interiorfaceinterpolate!, edgestabilize!
 
 @doc """
 ### SBP.AbstractSBP
@@ -179,10 +179,13 @@ Defines a face between two TriSBP operators of the same order.
 * `degree` : face integration is exact for polys of degree 2*degree
 * `numnodes` : number of cubature nodes
 * `stencilsize` : number of nodes in the reconstruction stencil
+* `dstencilsize` : number of nodes in the derivative operator stencils
 * `cub` : a symmetric cubature type for triangle faces (i.e. edges)
 * `wface` : mass matrix (quadrature) for the face
 * `interp[:,:]` : volume-to-face-nodes reconstruction operator
-* `perm[:,:]` : permutation for volume nodes so `R` can be used on all sides
+* `perm[:,:]` : permutation for volume nodes so `interp` can be used on all sides
+* `deriv[:,:]` : derivative operators for face-based coordinate system
+* `dperm[:,:]` : permutation for volume nodes so `deriv` can be used on all sides
 * `nbrperm[:,:]` : permutation for face nodes on neighbour element
 
 """->
@@ -190,11 +193,14 @@ immutable TriFace{T} <: AbstractFace{T}
   degree::Int
   numnodes::Int
   stencilsize::Int
+  dstencilsize::Int
   cub::LineSymCub{T}
   wface::Array{T,1}
   normal::Array{T,2}
   interp::Array{T,2}
   perm::Array{Int,2}
+  deriv::Array{T,3}
+  dperm::Array{Int,2}
   nbrperm::Array{Int,2}
   function TriFace(;degree::Int=1, faceonly=true)
     @assert( degree >= 1 && degree <= 4 )
@@ -203,11 +209,14 @@ immutable TriFace{T} <: AbstractFace{T}
     normal = T[0 -1; 1 1; -1 0].'
     R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
                                                        degree, faceonly=faceonly)
+    D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
+                                                     degree)
     nbrperm = SymCubatures.getneighbourpermutation(facecub)
     wface = SymCubatures.calcweights(facecub)
     stencilsize = size(R,2)
-    new(degree, facecub.numnodes, stencilsize, facecub, wface, normal, R.', perm,
-        nbrperm)
+    dstencilsize = size(D,1)
+    new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, wface,
+        normal, R.', perm, D, Dperm, nbrperm)
   end
 end
 

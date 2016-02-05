@@ -420,3 +420,138 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
     end
   end
 end
+
+@doc """
+### SummationByParts.mappingjacobian!
+
+Evaluates the Jacobian of the mapping from face-reference coordinates to
+physical coordinates, as well as the determinant of the Jacobian.
+
+**Inputs**
+
+* `sbpface`: an SBP face operator type
+* `ifaces`: list of element interfaces stored as an array of `Interface`s
+* `x`: the physical coordinates in [coord, node, elem] format
+
+**In/Outs**
+
+* `dξdx`: the Jacobian in [ξ coord, x coord, face node, L/R, face] format
+* `jac`: the determinant in [face node, L/R, face] format
+
+"""->
+function mappingjacobian!{Tsbp,Tmsh}(sbpface::AbstractFace{Tsbp},
+                                     ifaces::Array{Interface},
+                                     x::AbstractArray{Tmsh,3},
+                                     dξdx::AbstractArray{Tmsh,5},
+                                     jac::AbstractArray{Tmsh,3})
+  @assert( size(ifaces,1) == size(dξdx,5) == size(jac,3) )
+  @assert( size(dξdx,4) == size(jac,2) == 2 )
+  @assert( size(dξdx,3) == size(jac,1) == sbpface.numnodes )
+  @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
+  @inbounds begin
+    for (findex, face) in enumerate(ifaces)
+      for i = 1:sbpface.numnodes
+        iR = sbpface.nbrperm[i,face.orient]
+        # compute the derivatives dxdξ
+        dxdξL = zeros(Tmsh, (2,2))
+        dxdξR = zeros(Tmsh, (2,2))
+        for di = 1:2
+          for di2 = 1:2
+            for j = 1:sbpface.dstencilsize
+              dxdξL[di,di2] +=
+                sbpface.deriv[j,i,di2]*x[di,sbpface.dperm[j,face.faceL],
+                                         face.elementL]
+              dxdξR[di,di2] +=
+                sbpface.deriv[j,iR,di2]*x[di,sbpface.dperm[j,face.faceR],
+                                          face.elementR]
+            end
+          end
+        end
+        # compute the Jacobian determinants
+        jac[i,1,findex] = one(Tmsh)/(dxdξL[1,1]*dxdξL[2,2] - 
+                                     dxdξL[1,2]*dxdξL[2,1])
+        jac[iR,2,findex] = one(Tmsh)/(dxdξR[1,1]*dxdξR[2,2] - 
+                                      dxdξR[1,2]*dxdξR[2,1])
+
+        # compute the derivatives dξdx
+        dξdx[1,1,i,1,findex] = dxdξL[2,2]*jac[i,1,findex]
+        dξdx[1,2,i,1,findex] = -dxdξL[1,2]*jac[i,1,findex]
+        dξdx[2,2,i,1,findex] = dxdξL[1,1]*jac[i,1,findex]
+        dξdx[2,1,i,1,findex] = -dxdξL[2,1]*jac[i,1,findex]
+
+        dξdx[1,1,iR,2,findex] = dxdξR[2,2]*jac[iR,2,findex]
+        dξdx[1,2,iR,2,findex] = -dxdξR[1,2]*jac[iR,2,findex]
+        dξdx[2,2,iR,2,findex] = dxdξR[1,1]*jac[iR,2,findex]
+        dξdx[2,1,iR,2,findex] = -dxdξR[2,1]*jac[iR,2,findex]
+      end
+    end
+  end
+end
+
+@doc """
+### SummationByParts.edgestabilize!
+
+Applies edge stabilization to a given field, differentiating in the direction
+specified by `dirvec`, and scaling by the `tau` field.
+
+**Inputs**
+
+* `sbpface`: an SBP face operator type
+* `ifaces`: list of element interfaces stored as an array of `Interface`s
+* `dirvec`: direction to differentiate in [xi coord, face node, L/R, face] format
+* `tau`: scaling term in [face node, face] format
+* `u`: field being stablized in [vol node, element] format
+
+**In/Outs**
+
+* `res`: where the result is stored in [vol node, element] format
+
+"""->
+function edgestabilize!{Tsbp,Tmsh,Tsol}(sbpface::AbstractFace{Tsbp},
+                                        ifaces::Array{Interface},
+                                        dirvec::Array{Tmsh,4},
+                                        tau::Array{Tsol,2},
+                                        u::Array{Tsol,2},
+                                        res::Array{Tsol,2})
+  @assert( size(u) == size(res) )
+  @assert( size(ifaces,1) == size(dirvec,4) == size(tau,2) )
+  @assert( size(dirvec,2) == size(tau,1) == sbpface.numnodes )
+  @assert( size(dirvec,3) == 2 )
+  dudξ = zeros(Tsol, (2))
+  const left = 1
+  const right = 1
+  @inbounds begin
+    for (findex, face) in enumerate(ifaces)  
+      for i = 1:sbpface.numnodes
+        iR = sbpface.nbrperm[i,face.orient]
+        Du = zero(Tsol)
+        for di = 1:2
+          fill!(dudξ, zero(Tsol))
+          # compute the derivatives in the ξ[di] direction
+          for j = 1:sbpface.dstencilsize
+            dudξ[left] += sbpface.deriv[j,i,di]*u[sbpface.dperm[j,face.faceL],
+                                                  face.elementL]
+            dudξ[right] += sbpface.deriv[j,iR,di]*u[sbpface.dperm[j,face.faceR],
+                                                    face.elementR]
+          end
+          # contract with direction vector
+          Du += dudξ[left]*dirvec[di,i,left,findex] + 
+          dudξ[right]*dirvec[di,iR,right,findex]
+        end
+        # scale by tau and face cubature
+        Du *= sbpface.wface[i]*tau[i,findex]
+        # now apply transposed jump derivative
+        for di = 1:2
+          dudξ[left] = Du*dirvec[di,i,left,findex]
+          dudξ[right] = Du*dirvec[di,iR,right,findex]
+          for j = 1:sbpface.dstencilsize
+            res[sbpface.dperm[j,face.faceL],face.elementL] +=
+              sbpface.deriv[j,i,di]*dudξ[left]
+            res[sbpface.dperm[j,face.faceR],face.elementR] += 
+              sbpface.deriv[j,iR,di]*dudξ[right]
+          end
+        end
+      end
+    end
+  end
+end
