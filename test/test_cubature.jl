@@ -173,15 +173,15 @@ facts("Testing Cubature Module...") do
                                   0.6226442585632832], atol=1e-14)
 
     cub, vtx = tricubature(7, Float64, internal=true)
-    @fact cub.weights --> roughly([0.10482661091570668;
-                                   0.2253930198733382;
-                                   0.057547518977195254;
-                                   0.13944975845021326], atol=1e-14)
-    @fact cub.params --> roughly([0.1290634461434249;
-                                  0.4731163893279408;
-                                  0.8413468069012109;
-                                  0.08815074437486997;
-                                  0.624003943088726], atol=1e-14)
+    @fact cub.weights --> roughly([0.045386157905236965;
+                                   0.1458284149509071;
+                                   0.2543369199180239;
+                                   0.11055758694624956], atol=1e-14)
+    @fact cub.params --> roughly([0.08433122881886425;
+                                  0.9485893782350207;
+                                  0.4841719475189572;
+                                  0.4231241172761849;
+                                  0.0959626827429292], atol=1e-14)
   end
 
   context("Testing Cubature.tetcubature (internal=false)") do

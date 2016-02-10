@@ -276,6 +276,8 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
                                      0.4841719475189572;
                                      0.4231241172761849;
                                      0.0959626827429292])
+      # JEH The commented version below has much worse conditioning/CFL limit;
+      # leaving it here for reference, and to avoid
       # SymCubatures.setweights!(cub, T[0.10482661091570668;
       #                                 0.2253930198733382;
       #                                 0.057547518977195254;

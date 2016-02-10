@@ -510,7 +510,7 @@ specified by `dirvec`, and scaling by the `tau` field.
 function edgestabilize!{Tsbp,Tmsh,Tsol}(sbpface::AbstractFace{Tsbp},
                                         ifaces::Array{Interface},
                                         dirvec::Array{Tmsh,4},
-                                        tau::Array{Tsol,2},
+                                        tau::Array{Tmsh,2},
                                         u::Array{Tsol,2},
                                         res::Array{Tsol,2})
   @assert( size(u) == size(res) )
@@ -521,7 +521,7 @@ function edgestabilize!{Tsbp,Tmsh,Tsol}(sbpface::AbstractFace{Tsbp},
   const left = 1
   const right = 1
   @inbounds begin
-    for (findex, face) in enumerate(ifaces)  
+    for (findex, face) in enumerate(ifaces)
       for i = 1:sbpface.numnodes
         iR = sbpface.nbrperm[i,face.orient]
         Du = zero(Tsol)

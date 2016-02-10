@@ -41,7 +41,8 @@ function buildfacereconstruction{T}(facecub::LineSymCub{T}, cub::TriSymCub{T},
       ptr += 1
     end
   end
-  R = Pf/Pv
+  #R = Pf/Pv
+  R = (pinv(Pv.')*Pf.').'
   return R, perm
 end
 
