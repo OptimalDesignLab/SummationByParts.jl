@@ -12,7 +12,7 @@ using .Cubature
 
 export AbstractSBP, TriSBP, TetSBP, TriFace, Boundary, Interface, calcnodes,
   calcminnodedistance, weakdifferentiate!, differentiate!, directionaldifferentiate!, 
-  volumeintegrate!, mappingjacobian!, boundaryintegrate!,
+  volumeintegrate!, mappingjacobian!, boundaryinterpolate!, boundaryintegrate!,
   interiorfaceintegrate!, interiorfaceinterpolate!, edgestabilize!
 
 @doc """
@@ -57,9 +57,9 @@ immutable TriSBP{T} <: AbstractSBP{T}
   Q::Array{T,3}
 
   function TriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
-                  bubble::Int=-1, reorder=true, internal=false)
+                  bubble::Int=-1, reorder=true, internal=false, vertices=true)
     @assert( degree >= 1 && degree <= 4 )
-    cub, vtx = tricubature(2*degree-1, T, internal=internal)
+    cub, vtx = tricubature(2*degree-1, T, internal=internal, vertices=vertices)
     numnodes = cub.numnodes
     numbndry = SymCubatures.getnumboundarynodes(cub)
     numfacenodes = SymCubatures.getnumfacenodes(cub)
@@ -202,13 +202,14 @@ immutable TriFace{T} <: AbstractFace{T}
   deriv::Array{T,3}
   dperm::Array{Int,2}
   nbrperm::Array{Int,2}
-  function TriFace(;degree::Int=1, faceonly=true)
+  function TriFace(degree::Int, volcub::TriSymCub{T}, vtx::Array{T,2})
     @assert( degree >= 1 && degree <= 4 )
-    volcub, vtx = tricubature(2*degree-1, Float64, internal=!faceonly)
-    facecub, facevtx = quadrature(2*degree, Float64, internal=true)
+    
+    #volcub, vtx = tricubature(2*degree-1, Float64, internal=!faceonly)
+    facecub, facevtx = quadrature(2*degree, T, internal=true)
     normal = T[0 -1; 1 1; -1 0].'
     R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
-                                                       degree, faceonly=faceonly)
+                                                       degree)
     D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
                                                      degree)
     nbrperm = SymCubatures.getneighbourpermutation(facecub)

@@ -153,7 +153,7 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
       for i = 1:sbpface.numnodes
         for j = 1:sbpface.stencilsize
           res[sbpface.perm[j,bndry.face],bndry.element] +=
-            sbpface.interp[j,i]*sbpface.wface[i]*flux[j,bindex]
+            sbpface.interp[j,i]*sbpface.wface[i]*flux[i,bindex]
         end
       end
     end
@@ -173,7 +173,7 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
         for j = 1:sbpface.stencilsize
           for field = 1:size(res,1)
             res[field,sbpface.perm[j,bndry.face],bndry.element] +=
-              sbpface.interp[j,i]*sbpface.wface[i]*flux[field,j,bindex]
+              sbpface.interp[j,i]*sbpface.wface[i]*flux[field,i,bindex]
           end
         end
       end

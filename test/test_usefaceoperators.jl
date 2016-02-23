@@ -250,7 +250,7 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
     # interpolates all polynomials of degree p exactly
     for p = 1:4
       sbp = TriSBP{Float64}(degree=p, reorder=false)
-      sbpface = TriFace{Float64}(degree=p, faceonly=true)
+      sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,1))
       vtx = [0. 0.; 1. 0.; 0. 1.]
@@ -281,7 +281,7 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
     # interpolates all polynomials of degree p exactly
     for p = 1:4
       sbp = TriSBP{Float64}(degree=p, reorder=false)
-      sbpface = TriFace{Float64}(degree=p, faceonly=true)
+      sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,1))
       vtx = [0. 0.; 1. 0.; 0. 1.]
@@ -410,7 +410,7 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
     # determinant
     for p = 1:4
       sbp = TriSBP{Float64}(degree=p, reorder=false)
-      sbpface = TriFace{Float64}(degree=p, faceonly=true)
+      sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       vtx = [0. 0.; 1. 0.; 0. 1.]
       x = zeros(Float64, (2,sbp.numnodes,2))
       x[:,:,1] = SummationByParts.SymCubatures.calcnodes(sbp.cub, vtx)
@@ -441,7 +441,7 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
     # vanish when edgestabilize is applied
     for p = 1:4
       sbp = TriSBP{Float64}(degree=p, reorder=false)
-      sbpface = TriFace{Float64}(degree=p, faceonly=true)
+      sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       vtx = [0. 0.; 1. 0.; 0. 1.]
       x = zeros(Float64, (2,sbp.numnodes,2))
       x[:,:,1] = SummationByParts.SymCubatures.calcnodes(sbp.cub, vtx)

@@ -184,6 +184,19 @@ facts("Testing Cubature Module...") do
                                   0.0959626827429292], atol=1e-14)
   end
 
+  context("Testing Cubature.tricubature (internal=false, vertices=false)") do
+    # test using Float32, because this has not been done above
+    cub, vtx = tricubature(2, Float32, vertices=false)
+    w = SymCubatures.calcweights(cub)
+    @fact w --> roughly(Float32[2/3, 2/3, 2/3], atol=1e-7)
+    @fact SymCubatures.getnumboundarynodes(cub) --> 3
+    cub, vtx = tricubature(3, Float32, vertices=false)
+    w = SymCubatures.calcweights(cub)
+    @fact w --> roughly(Float32[11/60, 11/60, 11/60, 11/60, 11/60, 11/60, 9/10],
+                        atol=1e-7)
+    @fact SymCubatures.getnumboundarynodes(cub) --> 6
+  end
+
   context("Testing Cubature.tetcubature (internal=false)") do
     # test using Float32, because this has not been done above
     cub, vtx = tetcubature(1, Float32)

@@ -585,7 +585,7 @@ matrix and the stiffness matrices.
 function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
                            internal::Bool=false)
   w = SymCubatures.calcweights(cub)
-  face = TriFace{T}(degree=d, faceonly=!internal)
+  face = TriFace{T}(d, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
   SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))

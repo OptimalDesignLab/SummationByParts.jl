@@ -24,7 +24,12 @@ applied on all the faces.
 """->
 function buildfacereconstruction{T}(facecub::LineSymCub{T}, cub::TriSymCub{T},
                                     vtx::Array{T,2}, d::Int; faceonly::Bool=false)
-  perm = SymCubatures.getfacebasedpermutation(cub, faceonly=faceonly)
+  # first, decide whether or not to use volume nodes or just face nodes
+  if SymCubatures.getnumfacenodes(cub) >= (d+1)
+    perm = SymCubatures.getfacebasedpermutation(cub, faceonly=true)
+  else
+    perm = SymCubatures.getfacebasedpermutation(cub, faceonly=false)
+  end
   # evaluate the basis at the volume and face cubature points
   N = convert(Int, (d+1)*(d+2)/2 )
   Pv = zeros(T, (size(perm,1),N) )  

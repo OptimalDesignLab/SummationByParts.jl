@@ -1,0 +1,253 @@
+\documentclass[11pt]{article} % for final 
+\usepackage[top=0.8in, bottom=1.2in, left=1in, right=1in]{geometry}
+% The amssymb package provides various useful mathematical symbols
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{xspace}
+\usepackage{bm}
+\usepackage{threeparttable}
+\usepackage{subfigure}
+\usepackage{afterpage}
+\usepackage{soul}
+\usepackage{listings}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+  
+%%
+%% Julia definition (c) 2014 Jubobs
+%%
+\lstdefinelanguage{Julia}%
+  {morekeywords={abstract,begin,break,case,catch,const,continue,do,else,elseif,%
+      end,export,false,for,function,immutable,import,importall,if,in,%
+      macro,module,otherwise,quote,return,switch,true,try,type,typealias,%
+      using,while},%
+    sensitive=true,%
+    alsoother={\$},%
+    morecomment=[l]\#,%
+    morecomment=[n]{\#=}{=\#},%
+    morestring=[s]{``}{``},%
+    morestring=[m]{'}{'},%
+  }[keywords,comments,strings]%
+  
+  \lstset{%
+    language         = Julia,
+    basicstyle       = \ttfamily,
+    keywordstyle     = \small\bfseries\color{blue},
+    stringstyle      = \color{magenta},
+    commentstyle     = \color{ForestGreen},
+    showstringspaces = false,
+}
+
+
+
+\newcommand{\add}[1]{\textcolor{red}{#1}}
+\newcommand{\fnc}[1]{\ensuremath{\mathcal{#1}}}
+%\newcommand{\vfc}[1]{\ensuremath{\boldsymbol{\mathcal{#1}}}}
+\newcommand{\vfc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mat}[1]{\ensuremath{\mathsf{#1}}}
+\newcommand{\M}[0]{\mat{H}}
+\newcommand{\Dx}[0]{\mat{D}_{x}}
+\newcommand{\Dy}[0]{\mat{D}_{y}}
+\newcommand{\Dz}[0]{\mat{D}_{z}}
+
+\newcommand{\Q}[1]{\mat{Q}_{#1}}
+\newcommand{\Qx}[0]{\mat{Q}_{x}}
+\newcommand{\Qy}[0]{\mat{Q}_{y}}
+\newcommand{\Qz}[0]{\mat{Q}_{z}}
+\newcommand{\QAx}[0]{\mat{S}_{x}}
+\newcommand{\QAy}[0]{\mat{S}_{y}}
+\newcommand{\QAz}[0]{\mat{S}_{z}}
+\newcommand{\Ex}[0]{\mat{E}_{x}}
+\newcommand{\Ey}[0]{\mat{E}_{y}}
+\newcommand{\Ez}[0]{\mat{E}_{z}}
+\newcommand{\B}[0]{\mat{B}}
+\newcommand{\R}[0]{\mat{R}}
+
+\newcommand{\ignore}[1]{}
+\newcommand{\etal}[0]{{\em et~al.\@}\xspace}
+\newcommand{\eg}[0]{{e.g.\@}\xspace}
+\newcommand{\ie}[0]{{i.e.\@}\xspace}
+\newcommand{\viz}[0]{{viz.\@}\xspace}
+\newcommand{\resp}[0]{{resp.\@}\xspace}
+
+\title{Using SummationByParts.jl to Discretize the Euler Equations with a
+  discontinuous basis}
+
+\author{Jason~E. Hicken}
+
+\begin{document}
+
+\maketitle
+
+\section*{The ``Math''}
+
+Consider the weak form of the Euler equations on a single element with domain
+$\Omega$:
+\begin{equation*}
+  - \int_{\Omega}  \frac{\partial \vfc{V}^{T}}{\partial x_{i}} 
+  \vfc{F}_{i}(\vfc{U}) \; d\Omega
+  + \sum_{\nu} \int_{\Gamma_{\nu}} \vfc{V}^{T} \hat{\vfc{F}}(\vfc{U},\vfc{U}_{\nu},n)  \; d\Gamma
+  = 0,
+\end{equation*}
+where $\bigcup_{\nu} \Gamma_{\nu}$ denotes the boundary of $\Omega$.  The Euler
+flux in the Cartesian direction $i$ is given by $\vfc{F}_{i}$, while the
+function $\hat{\vfc{F}}(\vfc{U}, \vfc{U}_{\nu}, n)$ represents a numerical flux
+function.  The numerical flux depends on the discrete solution, $\vfc{U}$, the
+``boundary'' data on $\Gamma_{\nu}$, $\vfc{U}_{\nu}$, and the normal vector on
+$\Gamma_{\nu}$, $n$.  The boundary data may come from the boundary conditions or
+the adjacent element, depending on whether $\Gamma_{\nu}$ is a boundary of the
+global domain or an interface.
+
+After transforming to the standard reference domain, the SBP discretization of
+the Euler equations can be written as follows:
+\begin{equation*}
+  -\bm{v}^{T} \Q{i}^{T} \bm{f}_{i}(\bm{u}) + \sum_{\nu} \bm{v}^{T} \R_{\nu}^{T} \B_{\nu}
+  \hat{\bm{f}}(\R_{\nu} \bm{u}, \bm{u}_{\nu},n_{\nu}) = \bm{0},
+\end{equation*}
+where $\bm{u}$ is the discrete solution at the cubature nodes of the element
+$\Omega$ and $\bm{f}_{i}(\bm{u})$ is the Euler flux in the $\xi_{i}$
+computational-space direction.  In addition, the SBP operator $\Q{i} =
+\Q{\xi_{i}} \otimes \mat{I}$, where $\mat{I}$ is the $4\times 4$ identity in 2D
+and the $5\times 5$ identity in 3D.
+
+For the discretized boundary integrals, I have introduced 
+\begin{itemize}
+\item $\bm{u}_{\nu}$, which is the boundary-condition values at the cubature
+  nodes of $\Gamma_{\nu}$, or the solution on the adjacent element interpolated
+  to the cubature nodes of $\Gamma_{\nu}$;
+\item $\R_{\nu}$, which interpolates the solution $\bm{u}$ from the volume nodes
+  to the cubature nodes of $\Gamma_{\nu}$;
+\item $\B_{\nu}$, which denotes the cubature weights for the face $\Gamma_{\nu}$, and;
+\item $\hat{\bm{f}}$, which denotes the numerical flux function.
+\end{itemize}
+
+\newpage
+
+\section*{The ``Code''}
+
+I will now describe the steps and appropriate \texttt{SummationByParts.jl}
+methods necessary to compute the individual terms.
+
+\subsection*{$-\bm{v}^{T} \Q{i}^{T} \bm{f}_{i}(\bm{u})$}
+
+Assuming that the scaled Jacobian terms, $\frac{1}{J}\nabla_x \boldsymbol{\xi}$,
+are precomputed, evaluate the Euler fluxes $\bm{f}_{i}(\bm{u})$ and store in
+\texttt{flux[:,:,:,i]}.  Then call
+\begin{lstlisting}
+  for i = 1:dim
+    weakdifferentiate!(sbp, i, view(flux,:,:,:,i), res, trans=true)
+  end
+  scale!(res, -1.0)
+\end{lstlisting}
+where \texttt{sbp} is an appropriate SBP operators, and \texttt{res[:,:,:]} is
+the residual.
+
+\subsection*{$\R_{\nu} \bm{u}$ and $n_{\nu}$}
+
+I will assume that we are considering only interfaces.  I will discuss boundary
+faces later.  To evaluate $\R_{\nu} \bm{u}$, that is, to interpolate to the
+cubature nodes of the $\Gamma_{\nu}$, use
+\begin{lstlisting}
+  uface = zeros(Tsol, (nvar, sbpface.numnodes, 2, size(ifaces,1)))
+  interiorfaceinterpolate!(sbpface, ifaces, u, uface)
+\end{lstlisting}
+where \texttt{u} is the solution, \texttt{ifaces} is an array of
+\texttt{Interfaces}, and \texttt{uface} is the interpolated solution.  Note that
+the \texttt{2} in the definition of \texttt{uface} is for the states on either
+side of the interface.
+
+The object \texttt{sbpface} is an \texttt{SBP.AbstractFace} type that contains
+data to perform interpolation and integration on faces.  For the faces of
+triangles, this object can be created using a constructor:
+\begin{lstlisting}
+  sbpface = TriFace{Float64}(degree, volcub, refvertices)
+\end{lstlisting}
+where \texttt{degree} is the degree of the SBP operator, \texttt{volcub} is the
+cubature associated with an SBP operator, and \texttt{refvertices} are the
+locations of the reference vertices.  You only need one \texttt{sbpface} for
+each SBP operator type.
+
+\noindent\textbf{WARNING:} the constructor for TriFace is likely to change.
+
+We also need the scaled normal vector to compute the numerical flux.  This
+should probably be precomputed by interpolating $\partial x_{i}/\partial
+\xi_{j}$ to the face nodes, computing $\frac{1}{J} \nabla_{x} \boldsymbol{\xi}$,
+and then contracting with $n_\xi$.
+
+\subsection*{$\hat{\bm{f}}(\R_{\nu} \bm{u}, \bm{u}_{\nu},n_{\nu})$}
+
+The computation of the numerical flux requires that we loop over the face nodes
+in such a way that we visit the ``left'' and ``right'' nodes in a consistent
+manner, \ie we are at the same spatial location.  This can be done using
+something like the following loop:
+\begin{lstlisting}
+  fluxface = zeros((nvar, sbpface.numnodes, size(ifaces,1)))
+  @inbounds begin
+    for (findex, face) in enumerate(ifaces)
+      for i = 1:sbpface.numnodes
+        iR = sbpface.nbrperm[i,face.orient]
+        fluxface[i,findex] =
+          fluxfunc(uface[:,i,1,findex], uface[:,iR,2,findex],
+                   nrm[:,i,findex])
+      end
+    end
+  end
+\end{lstlisting}
+The array \texttt{sbpface.nbrperm} maps the face node corresponding to the ``left''
+element to the face node corresponding to the ``right'' element.
+
+\noindent\textbf{Remark:} It might make sense to pass \texttt{SummationByParts} a function and let it take care of this loop.
+
+\subsection*{$\bm{v}^{T} \R_{\nu}^{T} \B_{\nu} \hat{\bm{f}}$}
+
+The last step is to scale the fluxes by the cubature weights and then transfer
+the face fluxes back to the volume nodes using $\R_{\nu}^{T}$.  These two steps are performed together using
+\begin{lstlisting}
+  interiorfaceintegrate!(sbpface, ifaces, fluxface, res)
+\end{lstlisting}
+
+\subsection*{Boundary Faces}
+
+The process for boundary faces is similar, with some minor differences.
+
+First, the boundary face values are not double valued, so the interpolation
+looks like
+\begin{lstlisting}
+  uface = zeros(Tsol, (nvar, sbpface.numnodes, size(bfaces,1)))
+  boundaryfaceinterpolate!(sbpface, bfaces, u, uface)
+\end{lstlisting}
+
+Next, there is not need to worry about matching interface nodes, so the flux
+loop simplifies:
+\begin{lstlisting}
+  fluxface = zeros((nvar, sbpface.numnodes, size(bfaces,1)))
+  @inbounds begin
+    for (findex, face) in enumerate(bfaces)
+      for i = 1:sbpface.numnodes
+        fluxface[i,findex] =
+          bndryfunc(uface[:,i,findex], nrm[:,i,findex])
+      end
+    end
+  end
+\end{lstlisting}
+
+\noindent\textbf{Remark:} Depending on the boundary condition, we may need the
+spatial location of the cubature node to be included with the call to
+\texttt{bndryflux}, or some constant flow state, \eg the far-field conditions.
+
+The final step is mostly unchanged in syntax from the interface case:
+\begin{lstlisting}
+  boundaryintegrate!(sbpface, bfaces, fluxface, res)
+\end{lstlisting}
+
+
+\end{document}

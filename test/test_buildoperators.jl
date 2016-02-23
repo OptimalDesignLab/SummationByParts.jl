@@ -200,7 +200,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tricubature(2*d-1, Float64)
       w = SymCubatures.calcweights(cub)
       Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
-      face = TriFace{Float64}(degree=d, faceonly=true)
+      face = TriFace{Float64}(d, cub, vtx)
       E = zeros(cub.numnodes,cub.numnodes)
       SummationByParts.boundaryoperator!(face, 1, E)
       @fact E --> roughly(Ex, atol=1e-15)
@@ -253,7 +253,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     sizenull = [0, 0, 1, 3]
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
-      face = TriFace{Float64}(degree=d, faceonly=true)
+      face = TriFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,2)
       SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
       SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
@@ -279,7 +279,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     error = [0, 0, 0.5*2.324812265031167] # error based on particular Q
     for d = 1:3
       cub, vtx = tricubature(2*d-1, Float64)
-      face = TriFace{Float64}(degree=d, faceonly=true)
+      face = TriFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,2)
       SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
       SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))

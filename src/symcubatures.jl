@@ -594,7 +594,7 @@ function getfacenodeindices{T}(cub::TriSymCub{T})
     bndryindices[idxptr+1:idxptr+2,:] = [ptr+1 ptr+3 ptr+5;
                                          ptr+2 ptr+4 ptr+6]
     ptr += 6
-    idxptr += 1
+    idxptr += 2
   end
   return bndryindices
 end
