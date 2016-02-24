@@ -96,28 +96,33 @@ $\Omega$:
   - \int_{\Omega}  \frac{\partial \vfc{V}^{T}}{\partial x_{i}} 
   \vfc{F}_{i}(\vfc{U}) \; d\Omega
   + \sum_{\nu} \int_{\Gamma_{\nu}} \vfc{V}^{T} \hat{\vfc{F}}(\vfc{U},\vfc{U}_{\nu},n)  \; d\Gamma
-  = 0,
+  = 0,\qquad \forall\; \vfc{V} \in P_{d}^{\text{nvar}}(\Omega),
 \end{equation*}
-where $\bigcup_{\nu} \Gamma_{\nu}$ denotes the boundary of $\Omega$.  The Euler
-flux in the Cartesian direction $i$ is given by $\vfc{F}_{i}$, while the
-function $\hat{\vfc{F}}(\vfc{U}, \vfc{U}_{\nu}, n)$ represents a numerical flux
-function.  The numerical flux depends on the discrete solution, $\vfc{U}$, the
-``boundary'' data on $\Gamma_{\nu}$, $\vfc{U}_{\nu}$, and the normal vector on
-$\Gamma_{\nu}$, $n$.  The boundary data may come from the boundary conditions or
-the adjacent element, depending on whether $\Gamma_{\nu}$ is a boundary of the
-global domain or an interface.
+where $\bigcup_{\nu} \Gamma_{\nu}$ denotes the boundary of $\Omega$ and
+$P_{d}^{\text{nvar}}(\Omega)$ is the space of nvar-vector-valued polynomials of
+total degree $d$ on $\Omega$.
+
+The Euler flux in the Cartesian direction $i$ is given by $\vfc{F}_{i}$, while
+the function $\hat{\vfc{F}}(\vfc{U}, \vfc{U}_{\nu}, n)$ represents a numerical
+flux function.  The numerical flux depends on the discrete solution, $\vfc{U}$,
+the ``boundary'' data, $\vfc{U}_{\nu}$, and the normal vector, $n$.  The
+boundary data may come from the boundary conditions or the adjacent element,
+depending on whether $\Gamma_{\nu}$ is a boundary of the global domain or an
+interface.
 
 After transforming to the standard reference domain, the SBP discretization of
 the Euler equations can be written as follows:
 \begin{equation*}
   -\bm{v}^{T} \Q{i}^{T} \bm{f}_{i}(\bm{u}) + \sum_{\nu} \bm{v}^{T} \R_{\nu}^{T} \B_{\nu}
   \hat{\bm{f}}(\R_{\nu} \bm{u}, \bm{u}_{\nu},n_{\nu}) = \bm{0},
+  \qquad \forall\; \bm{v} \in \mathbb{R}^{(\text{nvar})n},
 \end{equation*}
 where $\bm{u}$ is the discrete solution at the cubature nodes of the element
 $\Omega$ and $\bm{f}_{i}(\bm{u})$ is the Euler flux in the $\xi_{i}$
 computational-space direction.  In addition, the SBP operator $\Q{i} =
-\Q{\xi_{i}} \otimes \mat{I}$, where $\mat{I}$ is the $4\times 4$ identity in 2D
-and the $5\times 5$ identity in 3D.
+\Q{\xi_{i}} \otimes \mat{I}$, where $\mat{I}$ is the $\text{nvar}\times
+\text{nvar}$ identity matrix ($4\times 4$ identity in 2D and the $5\times 5$
+identity in 3D).
 
 For the discretized boundary integrals, I have introduced 
 \begin{itemize}
@@ -148,26 +153,27 @@ are precomputed, evaluate the Euler fluxes $\bm{f}_{i}(\bm{u})$ and store in
   end
   scale!(res, -1.0)
 \end{lstlisting}
-where \texttt{sbp} is an appropriate SBP operators, and \texttt{res[:,:,:]} is
+where \texttt{sbp} is an appropriate SBP operator, and \texttt{res[:,:,:]} is
 the residual.
 
 \subsection*{$\R_{\nu} \bm{u}$ and $n_{\nu}$}
 
-I will assume that we are considering only interfaces.  I will discuss boundary
-faces later.  To evaluate $\R_{\nu} \bm{u}$, that is, to interpolate to the
-cubature nodes of the $\Gamma_{\nu}$, use
+Consider interfaces first; I discuss boundary faces below.  To evaluate
+$\R_{\nu} \bm{u}$, that is, to interpolate to the cubature nodes of the
+$\Gamma_{\nu}$, use
 \begin{lstlisting}
   uface = zeros(Tsol, (nvar, sbpface.numnodes, 2, size(ifaces,1)))
   interiorfaceinterpolate!(sbpface, ifaces, u, uface)
 \end{lstlisting}
-where \texttt{u} is the solution, \texttt{ifaces} is an array of
-\texttt{Interfaces}, and \texttt{uface} is the interpolated solution.  Note that
-the \texttt{2} in the definition of \texttt{uface} is for the states on either
-side of the interface.
+where \texttt{u} is the solution (it has a size \texttt{(nvar, sbp.numnodes,
+  numelem)}), \texttt{ifaces} is an array of \texttt{Interfaces}, and
+\texttt{uface} is the interpolated solution.  Note that the \texttt{2} in the
+initialization of \texttt{uface} is for the states on either side of the
+interface.
 
 The object \texttt{sbpface} is an \texttt{SBP.AbstractFace} type that contains
 data to perform interpolation and integration on faces.  For the faces of
-triangles, this object can be created using a constructor:
+triangles, this object can be created using the constructor
 \begin{lstlisting}
   sbpface = TriFace{Float64}(degree, volcub, refvertices)
 \end{lstlisting}
@@ -226,7 +232,7 @@ looks like
   boundaryfaceinterpolate!(sbpface, bfaces, u, uface)
 \end{lstlisting}
 
-Next, there is not need to worry about matching interface nodes, so the flux
+Next, there is no need to worry about matching interface nodes, so the flux
 loop simplifies:
 \begin{lstlisting}
   fluxface = zeros((nvar, sbpface.numnodes, size(bfaces,1)))

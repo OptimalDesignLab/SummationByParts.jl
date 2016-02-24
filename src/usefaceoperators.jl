@@ -23,9 +23,6 @@ the third dimension for the element index (boundary index).
 
 * `uface`: field data interpolated to the faces
 
-**WARNING**: the order of the boundaries in `bndryfaces` and `uface` must be
-  consistent.
-
 """->
 function boundaryinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
                                          bndryfaces::Array{Boundary},
@@ -151,9 +148,10 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   @inbounds begin
     for (bindex, bndry) in enumerate(bndryfaces)
       for i = 1:sbpface.numnodes
+        wflux = sbpface.wface[i]*flux[i,bindex]
         for j = 1:sbpface.stencilsize
           res[sbpface.perm[j,bndry.face],bndry.element] +=
-            sbpface.interp[j,i]*sbpface.wface[i]*flux[i,bindex]
+            sbpface.interp[j,i]*wflux
         end
       end
     end
@@ -167,13 +165,17 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   @assert( size(sbpface.interp,1) <= size(res,2) )
   @assert( size(sbpface.interp,2) == size(flux,2) )
   @assert( size(bndryfaces,1) == size(flux,3) )
+  wflux = zeros(Tflx, size(res,1))
   @inbounds begin
     for (bindex, bndry) in enumerate(bndryfaces)
       for i = 1:sbpface.numnodes
+        for field = 1:size(res,1)
+          wflux[field] = sbpface.wface[i]*flux[field,i,bindex]
+        end
         for j = 1:sbpface.stencilsize
           for field = 1:size(res,1)
             res[field,sbpface.perm[j,bndry.face],bndry.element] +=
-              sbpface.interp[j,i]*sbpface.wface[i]*flux[field,i,bindex]
+              sbpface.interp[j,i]*wflux[field]
           end
         end
       end
@@ -234,9 +236,6 @@ the node index, and the third dimension (fourth dimension) for the element index
 **In/Outs**
 
 * `uface`: field data interpolated to the faces
-
-**WARNING**: the order of the interfaces in `ifaces` and `uface` must be
-  consistent.
 
 """->
 function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
