@@ -595,6 +595,7 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
   #Afact = qrfact(A)
   #x = Afact\bx; y = Afact\by
   #x = A\bx; y = A\by
+  # use the minimum norm least-squares solution
   Ainv = pinv(A)
   x = Ainv*bx; y = Ainv*by
   for row = 2:cub.numnodes

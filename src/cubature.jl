@@ -269,6 +269,7 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
       #                                0.49857349034182097;
       #                                0.10629009968963399;
       #                                0.6207049020675687])
+      # cub_degree = 6
       # P3; 6th order cubature
       cub = SymCubatures.TriSymCub{T}(vertices=false, centroid=true,
                                       numS21=1, numS111=1)
@@ -293,6 +294,7 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
       #                                0.8037465193903021;
       #                                0.4612850345245523;
       #                                0.06105167151116454])
+      # cub_degree = 8
       # P4; 8th order cubature
       cub = SymCubatures.TriSymCub{T}(vertices=false, numS21=3, numS111=1)
       SymCubatures.setweights!(cub, T[0.045386157905236965;

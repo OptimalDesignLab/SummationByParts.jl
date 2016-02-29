@@ -39,6 +39,7 @@ Defines diagonal-norm SBP first-derivative operators on a right-triangle.
 * `facenodes` : indices of the nodes that lie on each face (no longer used)
 * `facenormal` : unit normal to the faces, in reference space (no longer used)
 * `cub` : a symmetric cubature type for triangles
+* `vtx` : vertices of the reference element in computational space
 * `w` : cubature weights, i.e. the diagonal SBP norm, stored as an array
 * `wface` : mass matrix (dense) for the faces (no longer used)
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
@@ -52,6 +53,7 @@ immutable TriSBP{T} <: AbstractSBP{T}
   facenodes::Array{Int,2}
   facenormal::Array{T,2}
   cub::TriSymCub{T}
+  vtx::Array{T,2}
   w::Array{T,1}
   wface::Array{T,2}
   Q::Array{T,3}
@@ -90,7 +92,7 @@ immutable TriSBP{T} <: AbstractSBP{T}
     end
 
     new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
-        w, wface, Q)
+        vtx, w, wface, Q)
   end
 end
 
@@ -108,6 +110,7 @@ Defines diagonal-norm SBP first-derivative operators on a right-tetrahedron.
 * `facenodes` : indices of the nodes that lie on each face
 * `facenormal` : unit normal to the faces, in reference space
 * `cub` : a symmetric cubature type for tetrahedra
+* `vtx` : vertices of the reference element in computational space
 * `w` : cubature weights, i.e. the diagonal SBP norm, stored as an array
 * `wface` : mass matrix (dense) for the faces
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
@@ -121,6 +124,7 @@ immutable TetSBP{T} <: AbstractSBP{T}
   facenodes::Array{Int,2}
   facenormal::Array{T,2}
   cub::TetSymCub{T}
+  vtx::Array{T,2}
   w::Array{T,1}
   wface::Array{T,2}
   Q::Array{T,3}
@@ -155,7 +159,7 @@ immutable TetSBP{T} <: AbstractSBP{T}
     end
 
     new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
-        w, wface, Q)
+        vtx, w, wface, Q)
   end
 end
 
@@ -225,5 +229,6 @@ include("buildfaceoperators.jl") #<--- functions related to building face operat
 include("buildoperators.jl") #<--- functions related to building SBP operators
 include("useoperators.jl") #<--- functions for applying SBP operators
 include("usefaceoperators.jl") #<--- functions for face operations
+include("utils.jl") # <--- miscillaneous functions
 
 end # module
