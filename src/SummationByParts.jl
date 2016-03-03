@@ -1,3 +1,4 @@
+__precompile__()
 module SummationByParts
 
 include("orthopoly.jl")
