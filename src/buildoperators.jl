@@ -24,9 +24,11 @@ function bndrynodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   N = convert(Int64, (d+1)*(d+2)/2)
   xaug = zeros(T, N)
   yaug = zeros(T, N)
-  x, y = SymCubatures.calcnodes(cub, vtx)
-  xaug[1:numbndry] = x[1:numbndry]
-  yaug[1:numbndry] = y[1:numbndry]
+  x = SymCubatures.calcnodes(cub, vtx)
+  # get the unique boundary node indices
+  bndryindices = SymCubatures.getbndrynodeindices(cub)
+  xaug[1:numbndry] = x[1,bndryindices]
+  yaug[1:numbndry] = x[2,bndryindices]
   # set the augmented interior nodes that make a unisolvent set for polys; use
   # uniform points in the interior for now
   ptr = numbndry+1
@@ -57,10 +59,12 @@ function bndrynodalexpansion{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   xaug = zeros(T, N)
   yaug = zeros(T, N)
   zaug = zeros(T, N)
-  x, y, z = SymCubatures.calcnodes(cub, vtx)
-  xaug[1:numbndry] = x[1:numbndry]
-  yaug[1:numbndry] = y[1:numbndry]
-  zaug[1:numbndry] = z[1:numbndry]
+  x = SymCubatures.calcnodes(cub, vtx)
+  # get the unique boundary node indices
+  bndryindices = SymCubatures.getbndrynodeindices(cub)
+  xaug[1:numbndry] = x[1,bndryindices]
+  yaug[1:numbndry] = x[2,bndryindices]
+  zaug[1:numbndry] = x[3,bndryindices]
   # set the augmented interior nodes that make a unisolvent set for polys; use
   # uniform points in the interior for now
   ptr = numbndry+1
@@ -114,6 +118,7 @@ Tayler.
 
 """->
 function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
+  #error("This method was broken by nodal reordering; it is currently unused")
   numbndry = SymCubatures.getnumboundarynodes(cub)
   numbub = cub.numnodes - numbndry
   N = convert(Int64, (d+1)*(d+2)/2)
@@ -124,9 +129,11 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   # actual interior nodes.
   xaug = zeros(T, N+numbub)
   yaug = zeros(T, N+numbub)
-  x, y = SymCubatures.calcnodes(cub, vtx)
-  xaug[1:numbndry] = x[1:numbndry]
-  yaug[1:numbndry] = y[1:numbndry]
+  x = SymCubatures.calcnodes(cub, vtx)
+  # get the unique boundary node indices
+  bndryindices = SymCubatures.getbndrynodeindices(cub)
+  xaug[1:numbndry] = x[1,bndryindices]
+  yaug[1:numbndry] = x[2,bndryindices]
   ptr = numbndry+1
   # set uniform nodes on interior to make Vandermonde unisolvent
   for j = 1:(d-2)
@@ -139,8 +146,9 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
     end
   end
   # these are the actual interior nodes used for the cubature
-  xaug[N+1:end] = x[numbndry+1:end]
-  yaug[N+1:end] = y[numbndry+1:end]
+  indices = SymCubatures.getinteriornodeindices(cub)
+  xaug[N+1:end] = x[1,indices]
+  yaug[N+1:end] = x[2,indices]
 
   Vbndry = zeros(T, (N, N))
   Pbub = zeros(T, (numbub, N))
@@ -164,8 +172,8 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   Naug = convert(Int, (e+1)*(e+2)/2)
   xaug = zeros(T, (Naug) )
   yaug = zeros(T, (Naug) )
-  xaug[1:numbub] = x[numbndry+1:end]
-  yaug[1:numbub] = y[numbndry+1:end]
+  xaug[1:numbub] = x[1,indices] 
+  yaug[1:numbub] = x[2,indices] 
   ptr = numbub+1
   for j = 0:e-1
     xi = 2.*j/e-1
@@ -195,11 +203,11 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   end
   invVbub = inv(Vbub)
   C = zeros(T, (Naug, cub.numnodes))
-  C[1:N,1:N] = invVbndry
-  C[:,numbndry+1:end] += invVbub[:,1:numbub]
-  # corrections 
-  for i = 1:N
-    C[:,i] -= invVbub[:,1:numbub]*Perr[:,i]
+  C[1:N,bndryindices] = invVbndry[:,1:numbndry]
+  C[:,indices] += invVbub[:,1:numbub]
+  # corrections
+  for i = 1:numbndry
+    C[:,bndryindices[i]] -= invVbub[:,1:numbub]*Perr[:,i]
   end
   return C
 end
@@ -207,10 +215,9 @@ end
 @doc """
 ### SummationByParts.boundaryoperators
 
-Finds and returns the element mass matrix, `w`, as well as the symmetric part of
-the SBP operators, `Ex`, `Ey` (`Ez`).  The latter operators coorespond to
-boundary integrals in the divergence theorem, and are related to the mass
-matrices of the boundary faces.
+Finds the symmetric part of the SBP operators, `Ex`, `Ey` (`Ez`).  These
+operators coorespond to boundary integrals in the divergence theorem, and are
+related to the mass matrices of the boundary faces.
 
 **Inputs**
 
@@ -230,13 +237,14 @@ function boundaryoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   P = zeros(T, (cub.numnodes,N) )
   dPdx = zeros(P)
   dPdy = zeros(P)
-  x, y = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   ptr = 1
   for r = 0:d
     for j = 0:r
       i = r-j
-      P[:,ptr] = OrthoPoly.proriolpoly(x, y, i, j)
-      dPdx[:,ptr], dPdy[:,ptr] = OrthoPoly.diffproriolpoly(x, y, i, j)
+      P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      dPdx[:,ptr], dPdy[:,ptr] = 
+      OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       ptr += 1
     end
   end
@@ -246,12 +254,13 @@ function boundaryoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   dPdy *= E
   # compute and return the boundary operators
   w = SymCubatures.calcweights(cub)
+  indices = SymCubatures.getbndrynodeindices(cub)  
   Ex = zeros(T, (cub.numnodes,cub.numnodes) )
   Ey = zeros(Ex)
   Q = P.'*diagm(w)*dPdx
-  Ex[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
+  Ex[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   Q = P.'*diagm(w)*dPdy
-  Ey[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
+  Ey[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   return Ex, Ey
 end
 
@@ -263,15 +272,17 @@ function boundaryoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   dPdx = zeros(P)
   dPdy = zeros(P)
   dPdz = zeros(P)
-  x, y, z = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   ptr = 1
   for r = 0:d
     for k = 0:r
       for j = 0:r-k
         i = r-j-k
-        P[:,ptr] = OrthoPoly.proriolpoly(x, y, z, i, j, k)
+        P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), vec(x[3,:]),
+                                         i, j, k)
         dPdx[:,ptr], dPdy[:,ptr], dPdz[:,ptr] =
-          OrthoPoly.diffproriolpoly(x, y, z, i, j, k)
+          OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), vec(x[3,:]),
+                                    i, j, k)
         ptr += 1
       end
     end
@@ -283,17 +294,48 @@ function boundaryoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   dPdz *= E
   # compute and return the boundary operators
   w = SymCubatures.calcweights(cub)
+  indices = SymCubatures.getbndrynodeindices(cub)  
   Ex = zeros(T, (cub.numnodes,cub.numnodes) )
   Ey = zeros(Ex)
   Ez = zeros(Ex)
   Q = P.'*diagm(w)*dPdx
-  Ex[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
+  Ex[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   Q = P.'*diagm(w)*dPdy
-  Ey[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
+  Ey[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   Q = P.'*diagm(w)*dPdz
-  Ez[1:numbndry,1:numbndry] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
+  Ez[indices,indices] = Q[1:numbndry,1:numbndry] + Q[1:numbndry,1:numbndry].'
   return Ex, Ey, Ez
 end  
+
+@doc """
+The following will eventually supercede current version and is based on the face operators
+
+Finds the symmetric part of the SBP operators, e.g. `Ex`.  These operators
+coorespond to boundary integrals in the divergence theorem, and are related to
+the mass matrices of the boundary faces.
+
+**Inputs**
+
+* `face`: SBP face operator for a particular element
+* `di`: desired coordinate direction of operator
+
+**InOuts**
+
+* `E`: symmetric part of the SBP first derivative operator in direction di
+
+"""->
+function boundaryoperator!{T}(face::AbstractFace{T}, di::Int,
+                              E::AbstractArray{T,2})
+  @assert( size(face.interp,1) <= size(E,1) == size(E,2) )
+  @assert( di >= 1 && di <= 3)
+  fill!(E, zero(T))
+  # loop over faces of the element
+  for findex = 1:size(face.perm,2) 
+    E[face.perm[:,findex],face.perm[:,findex]] += 
+      face.interp*diagm(face.wface.*face.normal[di,findex])*face.interp.'
+  end
+  return E
+end
 
 @doc """
 ### SummationByParts.boundarymassmatrix
@@ -302,7 +344,7 @@ Returns the (dense) mass matrix for a set of nodes on a reference boundary.
 This mass matrix can be used for boundary integration or to impose boundary
 conditions weakly.  The array `bndryindices` is also returned, which is a list
 of element-node indices for each boundary (see also
-SymCubatures.getbndryindices).
+SymCubatures.getfacenodeindices).
 
 **Inputs**
 
@@ -317,10 +359,10 @@ SymCubatures.getbndryindices).
 
 """->
 function boundarymassmatrix{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
-  bndryindices = SymCubatures.getbndryindices(cub)
+  bndryindices = SymCubatures.getfacenodeindices(cub)
   numbndrynodes = size(bndryindices,1)
-  x, y = SymCubatures.calcnodes(cub, vtx)
-  xbndry = x[bndryindices[:,1]]
+  x = SymCubatures.calcnodes(cub, vtx)
+  xbndry = vec(x[1,bndryindices[:,1]])
   P = zeros(T, (numbndrynodes,numbndrynodes))
   for j = 0:d
     P[:,j+1] = OrthoPoly.jacobipoly(xbndry, 0.0, 0.0, j)
@@ -331,11 +373,11 @@ function boundarymassmatrix{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
 end
 
 function boundarymassmatrix{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
-  bndryindices = SymCubatures.getbndryindices(cub)
+  bndryindices = SymCubatures.getfacenodeindices(cub)
   numbndrynodes = size(bndryindices,1)
-  x, y, z = SymCubatures.calcnodes(cub, vtx)
-  xbndry = x[bndryindices[:,1]]
-  ybndry = y[bndryindices[:,1]]
+  x = SymCubatures.calcnodes(cub, vtx)
+  xbndry = vec(x[1,bndryindices[:,1]])
+  ybndry = vec(x[2,bndryindices[:,1]])
   P = zeros(T, (numbndrynodes,numbndrynodes))
   ptr = 1
   for r = 0:d
@@ -368,6 +410,7 @@ Q_32 = -Q_23 is the number 3 variable.
 * `cub`: symmetric cubature rule
 * `vtx`: vertices of the right simplex
 * `d`: maximum total degree for the Proriol polynomials
+* `E`: the symmetric part of the SBP stiffness matrices
 
 **Outputs**
 
@@ -375,11 +418,12 @@ Q_32 = -Q_23 is the number 3 variable.
 * `bx`,`by` (`bz`): the right-hand-sides of the accuracy constraints
 
 """->
-function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
-  x, y = SymCubatures.calcnodes(cub, vtx) 
-  Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
+function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int,
+                                E::Array{T,3})
+  x = SymCubatures.calcnodes(cub, vtx)
+#  Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
   w = SymCubatures.calcweights(cub)
-  Ex *= 0.5; Ey *= 0.5
+#  Ex *= 0.5; Ey *= 0.5
   # the number of unknowns for in the skew-symmetric matrices
   numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
   # the number of accuracy equations
@@ -392,8 +436,8 @@ function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   for r = 0:d
     for j = 0:r
       i = r-j
-      P = OrthoPoly.proriolpoly(x, y, i, j)
-      dPdx, dPdy = OrthoPoly.diffproriolpoly(x, y, i, j)
+      P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      dPdx, dPdy = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       # loop over the lower part of the skew-symmetric matrices
       for row = 2:cub.numnodes
         offset = convert(Int, (row-1)*(row-2)/2)
@@ -402,8 +446,8 @@ function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
           A[ptr+col, offset+col] -= P[row]
         end
       end
-      bx[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdx - Ex*P
-      by[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdy - Ey*P
+      bx[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdx - E[:,:,1]*P
+      by[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdy - E[:,:,2]*P
       ptr += cub.numnodes
     end
   end
@@ -411,7 +455,7 @@ function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
 end
 
 function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
-  x, y, z = SymCubatures.calcnodes(cub, vtx) 
+  x = SymCubatures.calcnodes(cub, vtx) 
   Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
   w = SymCubatures.calcweights(cub)
   Ex *= 0.5; Ey *= 0.5; Ez *= 0.5
@@ -429,8 +473,9 @@ function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
     for k = 0:r
       for j = 0:r-k
         i = r-j-k
-        P = OrthoPoly.proriolpoly(x, y, z, i, j, k)
-        dPdx, dPdy, dPdz = OrthoPoly.diffproriolpoly(x, y, z, i, j, k)
+        P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), vec(x[3,:]), i, j, k)
+        dPdx, dPdy, dPdz = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]),
+                                                     vec(x[3,:]), i, j, k)
         # loop over the lower part of the skew-symmetric matrices
         for row = 2:cub.numnodes
           offset = convert(Int, (row-1)*(row-2)/2)
@@ -469,7 +514,8 @@ Dz*Dx)||^2 + ||H*(Dy*Dz - Dz*Dx||^2.
 * `f`: commute-error objective value
 
 """->
-function commuteerror{T,T2}(w::Array{T}, Qxpart::Array{T,2}, Qypart::Array{T,2},
+function commuteerror{T,T2}(w::Array{T}, Qxpart::AbstractArray{T,2},
+                            Qypart::AbstractArray{T,2},
                             Z::Array{T,2}, reducedsol::Array{T2})
   # build Qx and Qy
   Qx = convert(Array{T2,2}, Qxpart)
@@ -533,28 +579,35 @@ matrix and the stiffness matrices.
 **Outputs**
 
 * `w`: the diagonal norm stored as a 1D array
-* `Qx`,`Qy` (`Qz`): the stiffness matrices
+* `Q`: the stiffness matrices
 
 """->
-function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
+                           internal::Bool=false)
   w = SymCubatures.calcweights(cub)
-  Qx, Qy = SummationByParts.boundaryoperators(cub, vtx, d)
-  A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d)
+  face = TriFace{T}(d, cub, vtx)
+  Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
+  SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+  scale!(Q, 0.5)
+  A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   # use the minimum norm least-squares solution
-  Afact = qrfact(A)
-  x = Afact\bx; y = Afact\by
-  scale!(Qx, 0.5)
-  scale!(Qy, 0.5)
+  #Afact = qrfact(A)
+  #x = Afact\bx; y = Afact\by
+  #x = A\bx; y = A\by
+  # use the minimum norm least-squares solution
+  Ainv = pinv(A)
+  x = Ainv*bx; y = Ainv*by
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
     for col = 1:row-1
-      Qx[row,col] += x[offset+col]
-      Qx[col,row] -= x[offset+col]
-      Qy[row,col] += y[offset+col]
-      Qy[col,row] -= y[offset+col]
+      Q[row,col,1] += x[offset+col]
+      Q[col,row,1] -= x[offset+col]
+      Q[row,col,2] += y[offset+col]
+      Q[col,row,2] -= y[offset+col]
     end
   end
-  return w, Qx, Qy
+  return w, Q
 end
 
 function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
@@ -564,6 +617,8 @@ function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   # use the minimum norm least-squares solution
   Afact = qrfact(A)
   x = Afact\bx; y = Afact\by; z = Afact\bz
+  #Ainv = pinv(A)
+  #x = Ainv*bx; y = Ainv*by; z = Ainv*bz
   scale!(Qx, 0.5)
   scale!(Qy, 0.5)
   scale!(Qz, 0.5)
@@ -595,13 +650,14 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   P = zeros(T, (cub.numnodes, N) )
   dPdx = zeros(P)
   dPdy = zeros(P)
-  x, y = SymCubatures.calcnodes(cub, vtx)
+  x = SymCubatures.calcnodes(cub, vtx)
   ptr = 1
   for r = 0:e
     for j = 0:r
       i = r-j
-      P[:,ptr] = OrthoPoly.proriolpoly(x, y, i, j)
-      dPdx[:,ptr], dPdy[:,ptr] = OrthoPoly.diffproriolpoly(x, y, i, j)
+      P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      dPdx[:,ptr], dPdy[:,ptr] =
+        OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       ptr += 1
     end
   end
@@ -611,11 +667,19 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   dPdy *= C
   # compute and return the operators
   w = SymCubatures.calcweights(cub)
-  Qx = zeros(T, (cub.numnodes,cub.numnodes) )
-  Qy = zeros(Qx)
-  Qx = P.'*diagm(w)*dPdx
-  Qy = P.'*diagm(w)*dPdy
-  return w, Qx, Qy  
+  Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
+  Q[:,:,1] = P.'*diagm(w)*dPdx
+  Q[:,:,2] = P.'*diagm(w)*dPdy
+
+  # # The following forms the skew-symmetric form of the SEM operators
+  # face = TriFace{T}(degree=d, faceonly=true)
+  # SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
+  # SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+  # Q[:,:,1] += P.'*diagm(w)*dPdx - dPdx.'*diagm(w)*P
+  # Q[:,:,2] += P.'*diagm(w)*dPdy - dPdy.'*diagm(w)*P
+  # scale!(Q, 0.5)
+
+  return w, Q  
 end
 
 @doc """
@@ -642,19 +706,33 @@ returns a reordering that is more suited for local-to-global mapping.
 """->
 function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
   perm = zeros(Int, (cub.numnodes))
-  perm[1:3] = [1;2;3] # vertices are unchanged
-  ptr = 3 # index pointer for TriSymCub nodes
-  permptr = 3 # index pointer for reordered nodes
+  ptr = 0 # index pointer for TriSymCub nodes
+  permptr = 0 # index pointer for reordered nodes
   paramptr = 0 # index pointer for free-node parameters
-
-  # permute edge nodes; there are d-1 nodes on an edge, if vertices are excluded
+  permptrint = SymCubatures.getnumboundarynodes(cub)
+  
+  # first, deal with 3-symmetries
+  if cub.vertices
+    perm[permptr+1:permptr+3] = [1;2;3] # vertices are unchanged
+    ptr += 3
+    permptr += 3
+  end
   if cub.midedges
     # if midedges present there must be an odd number of nodes along the edge
-    perm[permptr + div(d-1,2) + 1] = 4
-    perm[permptr + (d-1) + div(d-1,2) + 1] = 5
-    perm[permptr + 2*(d-1) + div(d-1,2) + 1] = 6
+    perm[permptr + div(d-1,2) + 1] = ptr+1
+    perm[permptr + (d-1) + div(d-1,2) + 1] = ptr+2
+    perm[permptr + 2*(d-1) + div(d-1,2) + 1] = ptr+3
     ptr += 3
   end
+  for i = 1:cub.numS21
+    # set S21 orbit nodes
+    perm[permptrint+1:permptrint+3] = [ptr+1;ptr+2;ptr+3]
+    permptrint += 3
+    ptr += 3
+    paramptr += 1
+  end
+  # next, deal with 6-symmetries
+
   # edge nodes in sequence along an edge, which requires that we order the
   # respective edge parameters, accounting for symmetry about alpha = 1/2
   edgeparam = cub.params[paramptr+1:paramptr+cub.numedge]
@@ -675,8 +753,20 @@ function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
   end
   ptr += 6*cub.numedge
   permptr += 3*(d-1)
-  # Now the internal nodes; these have the same ordering as TriSymCub
-  perm[permptr+1:end] = Array(ptr+1:cub.numnodes)
+  paramptr += cub.numedge
+ 
+  for i = 1:cub.numS111
+    perm[permptrint+1:permptrint+6] = [ptr+1:ptr+6;]
+    ptr += 6
+    permptrint + 6
+    paramptr += 2
+  end
+  if cub.centroid
+    perm[permptrint+1] = ptr+1
+    permptrint += 1
+    ptr += 1
+  end
+  @assert(ptr == permptrint == cub.numnodes)
 
   # Next, find the permutation for the face nodes
   numbndrynodes = SymCubatures.getnumfacenodes(cub)
@@ -700,12 +790,40 @@ end
 function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
   @assert(d >= 1 && d <= 4, "implemented for d in [1,4] only")
   perm = zeros(Int, (cub.numnodes))
-  perm[1:4] = [1;2;3;4] # vertices are unchanged
-  ptr = 4 # index pointer for TetSymCub nodes
-  permptr = 4 # index pointer for reordered nodes
+  ptr = 0 # index pointer for TetSymCub nodes
+  permptr = 0 # index pointer for reordered nodes
   paramptr = 0 # index pointer for free-node parameters
+  permptrint = SymCubatures.getnumboundarynodes(cub)
+  numface = div((d-1)*(d-2),2) # this would need to change for d > 4
 
-  # permute edge nodes; there are d-1 nodes on an edge, if vertices are excluded
+  # first, deal with 4-symmetries
+  if cub.vertices
+    perm[permptr+1:permptr+4] = [ptr+1:ptr+4;] # vertices are unchanged
+    ptr += 4
+    permptr += 4
+  end
+  fc = 0
+  if cub.facecentroid
+    # first, shift permptr to account for the edge nodes
+    permptr += 12*cub.numedge
+    cub.midedges ? permptr += 6 : nothing
+    # assume face centroids are first in the face ordering
+    for face = 1:4
+      perm[permptr + (face-1)*numface + 1] = ptr + face
+    end
+    ptr += 4
+    permptr -= 12*cub.numedge
+    cub.midedges ? permptr -= 6 : nothing
+    fc = 1
+  end
+  for i = 1:cub.numS31
+    # set S31 orbit nodes
+    perm[permptrint+1:permptrint+4] = [ptr+1:ptr+4;]
+    permptrint += 4
+    ptr += 4
+    paramptr += 1
+  end
+  # next, deal with 6-symmetries
   if cub.midedges
     # if midedges present there must be an odd number of nodes along the edge
     for edge = 1:6
@@ -713,8 +831,16 @@ function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
     end
     ptr += 6
   end
-
-  # edge nodes in sequence along an edge, which requires that we order the
+  for i = 1:cub.numS22
+    # set S22 oribt nodes
+    perm[permptrint+1:permptrint+6] = [ptr+1:ptr+6;]
+    permptrint += 6
+    ptr += 6
+    paramptr += 1
+  end
+  # next, deal with 12-symmetries
+  # permute edge nodes; there are d-1 nodes on an edge, if vertices are excluded.
+  # Edge nodes in sequence along an edge, which requires that we order the
   # respective edge parameters, accounting for symmetry about alpha = 1/2
   edgeparam = cub.params[paramptr+1:paramptr+cub.numedge]
   #for i = 1:cub.numedge
@@ -730,20 +856,11 @@ function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
   end
   ptr += 12*cub.numedge
   permptr += 6*(d-1)
-  
-  # Face nodes; the following would need to change for d > 4
-  numface = div((d-1)*(d-2),2)
-  fc = 0
-  if cub.facecentroid
-    # assume these are first in the face ordering
-    for face = 1:4
-      perm[permptr + (face-1)*numface + 1] = ptr + face
-    end
-    ptr += 4
-    fc = 1
-  end
-  
+  paramptr += cub.numedge
+  # edge nodes are now completed
+
   for i = 1:cub.numfaceS21
+    # set face-based S21 orbit nodes
     for face = 1:4
       for j = 1:3
         # the + fc after permptr is for the face centroid
@@ -751,11 +868,19 @@ function getnodepermutation{T}(cub::TetSymCub{T}, d::Int)
       end
       ptr += 3
     end
+    paramptr += 1
   end
   permptr += 4*numface
-  
-  # Now the internal nodes; these have the same ordering as TetSymCub
-  perm[permptr+1:end] = Array(ptr+1:cub.numnodes)
+
+  # next, deal with 24-symmetries
+  # ...
+
+  # finally, deal with 1-symmetry (centroid)
+  if cub.centroid
+    perm[permptrint+1] = ptr+1
+    permptrint += 1
+    ptr += 1
+  end
 
   # Next, find the permutation for the face nodes
   numbndrynodes = SymCubatures.getnumfacenodes(cub)

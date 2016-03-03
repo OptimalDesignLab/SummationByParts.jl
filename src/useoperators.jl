@@ -53,14 +53,14 @@ This function assumes the element mapping is linear, i.e. edges are lines.
 function calcnodes{T}(sbp::TriSBP{T}, vtx::Array{T})
   perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
   x = zeros(T, (2, sbp.numnodes))
-  x[1,:], x[2,:] = SymCubatures.calcnodes(sbp.cub, vtx)
+  x = SymCubatures.calcnodes(sbp.cub, vtx)
   return x[:,perm]
 end
 
 function calcnodes{T}(sbp::TetSBP{T}, vtx::Array{T})
   perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
   x = zeros(T, (3, sbp.numnodes))
-  x[1,:], x[2,:], x[3,:] = SymCubatures.calcnodes(sbp.cub, vtx)
+  x = SymCubatures.calcnodes(sbp.cub, vtx)
   return x[:,perm]
 end
 
@@ -79,7 +79,7 @@ Returns the minimum distance between distinct nodes on an element with straight 
 * `mindist`: the minimum distance between distinct nodes
 
 """->
-function calcminnodedistance{T}(sbp::SBPOperator{T}, vtx::Array{T})
+function calcminnodedistance{T}(sbp::AbstractSBP{T}, vtx::Array{T})
   x = calcnodes(sbp, vtx)
   mindist = convert(T, Inf)
   for i = 1:size(x,2)
@@ -120,7 +120,7 @@ operator sbp.
 * `res`: where the result of applying Q[:,:,di] to u is stored
 
 """->
-function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int, 
+function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int, 
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2};
                                             trans::Bool=false)
@@ -150,7 +150,7 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
   end
 end
 
-function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
+function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                             flux::AbstractArray{Tflx,3},
                                             res::AbstractArray{Tres,3};
                                             trans::Bool=false)
@@ -187,7 +187,7 @@ end
 # macro update(x,op,y)
 #   return :($x=$op($x,$y))
 # end
-# function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int, 
+# function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int, 
 #                                             flux::AbstractArray{Tflx,2},
 #                                             res::AbstractArray{Tres,2},
 #                                             op::Function; trans::Bool=false)
@@ -250,7 +250,7 @@ operator sbp.
 * `res`: where the result of applying inv(H)*Q[:,:,di] to u is stored
 
 """->
-function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
+function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux::AbstractArray{Tflx,2},
                                         res::AbstractArray{Tres,2})
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
@@ -269,7 +269,7 @@ function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
   end
 end
 
-function differentiate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp}, di::Int,
+function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux::AbstractArray{Tflx,3},
                                         res::AbstractArray{Tres,3})
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
@@ -314,7 +314,7 @@ single element**, not a collection of elements.
 * `Ddir`: derivative of `u` in direction `dir`
 
 """->
-function directionaldifferentiate!{Tsbp,Tmsh,Tsol}(sbp::SBPOperator{Tsbp},
+function directionaldifferentiate!{Tsbp,Tmsh,Tsol}(sbp::AbstractSBP{Tsbp},
                                                    dir::Array{Tmsh,1},
                                                    u::AbstractArray{Tsol,1},
                                                    i::Int)
@@ -332,7 +332,7 @@ function directionaldifferentiate!{Tsbp,Tmsh,Tsol}(sbp::SBPOperator{Tsbp},
   return Ddir
 end
 
-function directionaldifferentiate!{Tsbp,Tmsh,Tsol,Tres}(sbp::SBPOperator{Tsbp},
+function directionaldifferentiate!{Tsbp,Tmsh,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                                         dir::Array{Tmsh,1}, 
                                                         u::AbstractArray{Tsol,2},
                                                         i::Int,
@@ -381,7 +381,7 @@ operator sbp.
 * `res`: where the result of applying H to u is stored
 
 """->
-function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::SBPOperator{Tsbp},
+function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                           u::AbstractArray{Tsol,2},
                                           res::AbstractArray{Tres,2})
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
@@ -396,7 +396,7 @@ function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::SBPOperator{Tsbp},
   end
 end
 
-function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::SBPOperator{Tsbp},
+function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                           u::AbstractArray{Tsol,3},
                                           res::AbstractArray{Tres,3})
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
@@ -407,161 +407,6 @@ function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::SBPOperator{Tsbp},
       for i = 1:sbp.numnodes
         for field = 1:size(u,1)
           res[field,i,elem] += H[i]*u[field,i,elem]
-        end
-      end
-    end
-  end
-end
-
-@doc """
-### SummationByParts.boundaryintegrate!
-
-Integrates a given flux over a boundary using appropriate mass matrices defined
-on the element faces.  Different methods are available depending on the rank of
-`flux`:
-
-* For *scalar* fields, it is assumed that `flux` is a rank-2 array, with the
-first dimension for the face-node index, and the second dimension for the
-boundary index.
-* For *vector* fields, `flux` is a rank-3 array, with the first dimension for
-the index of the vector field, the second dimension for the face-node index, and
-the third dimension for the boundary index.
-
-The dimensions of `res` are still based on elements; the last dimension is for
-the element index and the second-last dimension is for the element-local node
-index.
-
-**Inputs**
-
-* `sbp`: an SBP operator type
-* `bndryfaces`: list of boundary faces stored as an array of `Boundary`s
-* `flux`: array of flux data that is being integrated
-
-**In/Outs**
-
-* `res`: where the result of the integration is stored
-
-**WARNING**: the order of the boundaries in `bndryfaces` and `flux` must be
-  consistent.
-
-"""->
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
-                                            bndryfaces::Array{Boundary},
-                                            flux::AbstractArray{Tflx,2},
-                                            res::AbstractArray{Tres,2})
-  @assert( sbp.numnodes == size(res,1) )
-  @assert( sbp.numfacenodes == size(flux,1) )
-  @assert( size(bndryfaces,1) == size(flux,2) )
-  @inbounds begin
-    for (bindex, bndry) in enumerate(bndryfaces)
-      for i = 1:sbp.numfacenodes        
-        for j = 1:sbp.numfacenodes
-          jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
-          res[jB,bndry.element] += sbp.wface[j,i]*flux[i,bindex]
-        end
-      end
-    end
-  end
-end
-
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
-                                            bndryfaces::Array{Boundary},
-                                            flux::AbstractArray{Tflx,3},
-                                            res::AbstractArray{Tres,3})
-  @assert( size(res,1) == size(flux,1) )
-  @assert( sbp.numnodes == size(res,2) )
-  @assert( sbp.numfacenodes == size(flux,2) )
-  @assert( size(bndryfaces,1) == size(flux,3) )
-  @inbounds begin
-    for (bindex, bndry) in enumerate(bndryfaces)
-      for i = 1:sbp.numfacenodes        
-        for j = 1:sbp.numfacenodes
-          jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
-          for field = 1:size(res,1)
-            res[field,jB,bndry.element] += sbp.wface[j,i]*flux[field,i,bindex]
-          end
-        end
-      end
-    end
-  end
-end
-
-@doc """
-### SummationByParts.interiorfaceintegrate!
-
-Integrates a given flux over interior element interfaces using appropriate mass
-matrices defined on the element faces.  Different methods are available
-depending on the rank of `flux`:
-
-* For *scalar* fields, it is assumed that `flux` is a rank-2 array, with the
-first dimension for the face-node index, and the second dimension for the
-interface index.
-
-* For *vector* fields, `flux` is a rank-3 array, with the first dimension for
-the index of the vector field, the second dimension for the face-node index, and
-the third dimension for the interface index.
-
-The dimensions of `res` are still based on elements; the last dimension is for
-the element index and the second-last dimension is for the element-local node
-index.
-
-**Inputs**
-
-* `sbp`: an SBP operator type
-* `ifaces`: list of element interfaces stored as an array of `Interface`s
-* `flux`: array of flux data that is being integrated
-
-**In/Outs**
-
-* `res`: where the result of the integration is stored
-
-**WARNING**: the order of the interfaces in `ifaces` and `flux` must be
-  consistent.
-
-"""->
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
-                                                ifaces::Array{Interface},
-                                                flux::AbstractArray{Tflx,2},
-                                                res::AbstractArray{Tres,2})
-  @assert( sbp.numnodes == size(res,1) )
-  @assert( sbp.numfacenodes == size(flux,1) )
-  @assert( size(ifaces,1) == size(flux,2) )
-  # JEH: temporary, until nbrnodeindex is part of sbp type
-  nbrnodeindex = [sbp.numfacenodes:-1:1;]
-  @inbounds begin
-    for (findex, face) in enumerate(ifaces)
-      for i = 1:sbp.numfacenodes    
-        for j = 1:sbp.numfacenodes
-          jL = sbp.facenodes[j, face.faceL]::Int
-          jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
-          res[jL,face.elementL] += sbp.wface[j,i]*flux[i,findex]
-          res[jR,face.elementR] -= sbp.wface[j,i]*flux[i,findex]
-        end
-      end
-    end
-  end
-end
-
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::SBPOperator{Tsbp},
-                                                ifaces::Array{Interface},
-                                                flux::AbstractArray{Tflx,3},
-                                                res::AbstractArray{Tres,3})
-  @assert( size(res,1) == size(flux,1) )
-  @assert( sbp.numnodes == size(res,2) )
-  @assert( sbp.numfacenodes == size(flux,2) )
-  @assert( size(ifaces,1) == size(flux,3) )
-  # JEH: temporary, until nbrnodeindex is part of sbp type
-  nbrnodeindex = [sbp.numfacenodes:-1:1;]
-  @inbounds begin
-    for (findex, face) in enumerate(ifaces)
-      for i = 1:sbp.numfacenodes    
-        for j = 1:sbp.numfacenodes
-          jL = sbp.facenodes[j, face.faceL]::Int
-          jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
-          for field = 1:size(res,1)
-            res[field,jL,face.elementL] += sbp.wface[j,i]*flux[field,i,findex]
-            res[field,jR,face.elementR] -= sbp.wface[j,i]*flux[field,i,findex]
-          end
         end
       end
     end
