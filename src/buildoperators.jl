@@ -411,6 +411,7 @@ Q_32 = -Q_23 is the number 3 variable.
 * `vtx`: vertices of the right simplex
 * `d`: maximum total degree for the Proriol polynomials
 * `E`: the symmetric part of the SBP stiffness matrices
+* `dl`: (optional) the minimum total degree for the Proriol polynomials
 
 **Outputs**
 
@@ -419,7 +420,7 @@ Q_32 = -Q_23 is the number 3 variable.
 
 """->
 function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int,
-                                E::Array{T,3})
+                                E::Array{T,3}; dl::Int=0)
   x = SymCubatures.calcnodes(cub, vtx)
 #  Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
   w = SymCubatures.calcweights(cub)
@@ -427,13 +428,15 @@ function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int,
   # the number of unknowns for in the skew-symmetric matrices
   numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
   # the number of accuracy equations
-  numeqns = convert(Int, cub.numnodes*(d+1)*(d+2)/2)
+  #numeqns = convert(Int, cub.numnodes*(d+1)*(d+2)/2)
+  numeqns = convert(Int, cub.numnodes*((d+1)*(d+2)/2 - dl*(dl+1)/2))
   A = zeros(T, (numeqns, numQvars))
   bx = zeros(T, numeqns)
   by = zeros(T, numeqns)
   # loop over ortho polys up to degree d
   ptr = 0
-  for r = 0:d
+  #for r = 0:d
+  for r = dl:d
     for j = 0:r
       i = r-j
       P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
@@ -598,6 +601,16 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
   # use the minimum norm least-squares solution
   Ainv = pinv(A)
   x = Ainv*bx; y = Ainv*by
+  if false
+    # temporary test of using auxillary accuracy conditions; will leave this
+    # here until it can be tested more thoroughly
+    C, dx, dy = SummationByParts.accuracyconstraints(cub, vtx, d+1, Q, dl=d+1)
+    Z = nullspace(A)
+    CZ = C*Z
+    rhsx = CZ.'*dx; rhsy = CZ.'*dy
+    H = CZ.'*CZ
+    x += Z*(H\rhsx); y += Z*(H\rhsy)
+  end
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
     for col = 1:row-1
