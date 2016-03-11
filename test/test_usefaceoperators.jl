@@ -261,16 +261,19 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
       ifaces = Array(Interface, 1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (sbp.numnodes,2))
-      uface = zeros(Float64, (sbpface.numnodes, 2, 1))
+      uface = zeros(Float64, (2, sbpface.numnodes, 1))
       for d = 0:p
         for j = 0:d
           i = d-j
           u[:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)
           interiorfaceinterpolate!(sbpface, ifaces, u, uface)
           # check that interpolation from left and right elements is exact
-          @fact uface[:,1,1] --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact uface[sbpface.nbrperm[:,1],2,1] --> 
-          roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @fact vec(uface[1,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
+                                              atol=1e-13)
+          #@fact uface[2,sbpface.nbrperm[:,1],1] --> 
+          #roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @fact vec(uface[2,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
+                                              atol=1e-13)
         end
       end
     end
@@ -292,7 +295,7 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
       ifaces = Array(Interface, 1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (2,sbp.numnodes,2))
-      uface = zeros(Float64, (2,sbpface.numnodes, 2, 1))
+      uface = zeros(Float64, (2, 2, sbpface.numnodes, 1))
       for d = 0:p
         for j = 0:d
           i = d-j
@@ -300,12 +303,10 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
           u[2,:,:] = 2.0.*(x[1,:,:].^i).*(x[2,:,:].^j)
           interiorfaceinterpolate!(sbpface, ifaces, u, uface)
           # check that interpolation from left and right elements is exact
-          @fact vec(uface[1,:,1,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,:,1,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[1,sbpface.nbrperm[:,1],2,1]) --> 
-          roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,sbpface.nbrperm[:,1],2,1]) --> 
-          roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @fact vec(uface[1,1,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @fact vec(uface[2,1,:,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @fact vec(uface[1,2,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @fact vec(uface[2,2,:,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
         end
       end
     end
