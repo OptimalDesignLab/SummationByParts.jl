@@ -183,6 +183,67 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
+@doc """
+### SummationByParts.integratefunctional!
+
+Integrates a given scalar (or vector) field over the boundary faces.
+
+* For *scalar* fields, the dimensions of `uface` correspond to [face-node index,
+  boundary index] and the scalar functional is a return value
+* For *vector* fields, the dimensions of `uface` correspond to [field index,
+  face-node index, boundary index] and the dimensions of `fun` correspond to
+  [field index].
+
+**Inputs**
+
+* `sbpface`: an SBP face operator type
+* `bndryfaces`: list of boundary faces stored as an array of `Boundary`s
+* `flux`:  array of field data that is being integrated
+
+**In/Outs**
+
+* `fun`: functional value (or vector) being *contributed* to by the integration
+
+**Returns**
+
+* `fun`: in the case of the scalar version, the functional value is returned
+
+"""->
+
+function integratefunctional!{Tsbp,Tflx}(sbpface::AbstractFace{Tsbp},
+                                         bndryfaces::Array{Boundary},
+                                         flux::AbstractArray{Tflx,2})
+  @assert( size(sbpface.interp,2) == size(flux,1) )
+  @assert( size(bndryfaces,1) == size(flux,2) )
+  fun = zero(Tflx)
+  @inbounds begin
+    for (bindex, bndry) in enumerate(bndryfaces)
+      for i = 1:sbpface.numnodes
+        fun += sbpface.wface[i]*flux[i,bindex]
+      end
+    end
+  end
+  return fun
+end
+
+function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::AbstractFace{Tsbp},
+                                              bndryfaces::Array{Boundary},
+                                              flux::AbstractArray{Tflx,3},
+                                              fun::AbstractArray{Tfun,1})
+  @assert( size(sbpface.interp,2) == size(flux,2) )
+  @assert( size(flux,1) == size(fun,1) )
+  @assert( size(bndryfaces,1) == size(flux,3) )
+  @inbounds begin
+    for (bindex, bndry) in enumerate(bndryfaces)
+      for i = 1:sbpface.numnodes
+        for field = 1:size(fun,1)
+          fun[field] += sbpface.wface[i]*flux[field,i,bindex]
+        end
+      end
+    end
+  end
+end
+
 # function boundaryintegrate!{Tsbp,Tsol,Tres}(sbpface::AbstractFace{Tsbp},
 #                                             bndryfaces::Array{Boundary},
 #                                             u::AbstractArray{Tsol,2},

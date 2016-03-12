@@ -245,6 +245,78 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.integratefunctional! (TriSBP, scalar field method)") do
+    # build a two element grid and verify the accuracy of boundary integration
+    for p = 1:4
+      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+      x = zeros(Float64, (2,sbp.numnodes,2))
+      xf = zeros(Float64, (2,sbpface.numnodes,4))
+      vtx = [0. 0.; 1. 0.; 0. 1.]
+      #x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+      xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
+      xf[:,:,2] = SymCubatures.calcnodes(sbpface.cub, vtx[[3;1],:])
+      vtx = [1. 0.; 1. 1.; 0. 1.]
+      xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
+      xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
+      bndryfaces = Array(Boundary, 4)
+      bndryfaces[1] = Boundary(1,1)
+      bndryfaces[2] = Boundary(1,3)
+      bndryfaces[3] = Boundary(2,1)
+      bndryfaces[4] = Boundary(2,2)
+      uface = zeros(Float64, (sbpface.numnodes, 4))
+      for d = 0:2*p
+        for j = 0:d
+          i = d-j
+          # the function be integrated is (x+1)^i (y+1)^j
+          uface[:,:] = ((xf[1,:,:]+1).^i).*((xf[2,:,:]+1).^j)
+          scale!(uface, 0.5) # 0.5 factor accounts for tranformation to ref space
+          fun = integratefunctional!(sbpface, bndryfaces, uface)
+          funexact = (2^(i+1)-1)*(1 + 2^j)/(i+1) + (2^(j+1)-1)*(1 + 2^i)/(j+1)
+          @fact fun --> roughly(funexact, atol=1e-14)
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.integratefunctional! (TriSBP, vector field method)") do
+    # build a two element grid and verify the accuracy of boundary integration
+    for p = 1:4
+      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+      x = zeros(Float64, (2,sbp.numnodes,2))
+      xf = zeros(Float64, (2,sbpface.numnodes,4))
+      vtx = [0. 0.; 1. 0.; 0. 1.]
+      #x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+      xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
+      xf[:,:,2] = SymCubatures.calcnodes(sbpface.cub, vtx[[3;1],:])
+      vtx = [1. 0.; 1. 1.; 0. 1.]
+      xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
+      xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
+      bndryfaces = Array(Boundary, 4)
+      bndryfaces[1] = Boundary(1,1)
+      bndryfaces[2] = Boundary(1,3)
+      bndryfaces[3] = Boundary(2,1)
+      bndryfaces[4] = Boundary(2,2)
+      uface = zeros(Float64, (2, sbpface.numnodes, 4))
+      fun = zeros(2)
+      for d = 0:2*p
+        for j = 0:d
+          i = d-j
+          # the function be integrated is (x+1)^i (y+1)^j; 0.5 factor accounts
+          # for the transformation to ref space
+          uface[1,:,:] = 0.5*((xf[1,:,:]+1).^i).*((xf[2,:,:]+1).^j)
+          uface[2,:,:] = 0.5 # integrate constant, gives perimeter
+          fill!(fun, 0.0)
+          integratefunctional!(sbpface, bndryfaces, uface, fun)
+          funexact = (2^(i+1)-1)*(1 + 2^j)/(i+1) + (2^(j+1)-1)*(1 + 2^i)/(j+1)
+          @fact fun[1] --> roughly(funexact, atol=1e-14)
+          @fact fun[2] --> roughly(4.0, atol=1e-14)
+        end
+      end
+    end
+  end
+
   context("Testing SummationByParts.interiorfaceinterpolate! (TriSBP, scalar field method)") do
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
