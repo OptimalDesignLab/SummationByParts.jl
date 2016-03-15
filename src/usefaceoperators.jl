@@ -466,9 +466,9 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
         for j = 1:sbpface.stencilsize
           for field = 1:size(res,1)
             res[field,sbpface.perm[j,face.faceL],face.elementL] += 
-              sbpface.interp[j,i]*sbpface.wface[i]*flux[i,findex]
+              sbpface.interp[j,i]*sbpface.wface[i]*flux[field,i,findex]
             res[field,sbpface.perm[j,face.faceR],face.elementR] -=
-              sbpface.interp[j,iR]*sbpface.wface[iR]*flux[i,findex]
+              sbpface.interp[j,iR]*sbpface.wface[iR]*flux[field,i,findex]
           end
         end
       end
