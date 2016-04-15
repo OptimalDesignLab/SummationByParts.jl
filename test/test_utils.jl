@@ -42,4 +42,50 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.permuteface!") do
+    permvec = [2, 1, 3, 4]
+    vals = rand(5, 4)
+    vals2 = copy(vals)  # permute a copy, leaving the original unchanged
+    workarr = zeros(vals)
+    SummationByParts.permuteface!(permvec, workarr, vals2)
+
+    for i=1:4
+      for j=1:5
+        @fact vals[j, i] --> roughly(vals2[j, permvec[i] ], atol=1e-13)
+      end
+    end
+
+  end
+
+  context("Testing SummationByParts.permuteinterface!") do
+
+    nfaces = 2
+    ndofpernode = 5
+
+    # create an SBP with non-trivial number of face nodes
+    sbp = TriSBP{Float64}(degree = 3, reorder=false, internal=true)
+    ref_verts = [-1. 1 -1; -1 -1 1]
+    sbpface = TriFace{Float64}(sbp.degree, sbp.cub, ref_verts.')
+
+    # create some data
+    q = rand(ndofpernode, sbpface.numnodes, nfaces)
+    q2 = copy(q)
+
+    ifaces = Array(Interface, 2)
+    for i=1:nfaces
+      ifaces[i] = Interface(1,1,1,1,1)
+    end
+
+    SummationByParts.permuteinterface!(sbpface, ifaces, q2)
+
+    for iface=1:nfaces
+      for j=1:sbpface.numnodes
+        for k=1:ndofpernode
+          @fact q[k, j, iface] --> roughly(q2[k, sbpface.nbrperm[j, 1], iface], atol=1e-13)
+        end
+      end
+    end
+
+  end
+        
 end

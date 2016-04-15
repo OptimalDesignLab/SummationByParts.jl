@@ -1,6 +1,14 @@
 # This file gathers together a hodge-podge of functions that are not easily
 # categorized
 
+# make sview point to either safe or unsafe views
+global const use_safe_views = true
+if use_safe_views
+  global const sview = view
+else
+  global const sview = unsafe_view
+end
+
 @doc """
 ### SummationByParts.buildinterpolation
 
@@ -36,4 +44,67 @@ function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2})
   end
   R = (pinv(Psbp.')*Pinterp.').'
   return R
+end
+
+@doc """
+### SummationByParts.permuteinterface!
+
+Permutes the node values to be in the specified orientation (in place)
+
+  ifaces: use the orientation field to determine the permutation
+  uface: numDofPerNode x numNodesPerFace x length(ifaces)
+"""->
+function permuteinterface!{Tsbp, Tsol}(sbpface::AbstractFace{Tsbp}, 
+                                       ifaces::AbstractArray{Interface}, 
+                                       uface::AbstractArray{Tsol, 3})
+  @assert length(ifaces) == size(uface, 3)
+  @assert sbpface.numnodes == size(uface, 2)
+
+  dofpernode, numfacenodes, numfaces = size(uface)
+  # temporary array needed during permutation
+  workarr = Array(Tsol, dofpernode, numfacenodes)
+
+  for iface =1:length(ifaces)
+    orient = ifaces[iface].orient
+    permvec = sview(sbpface.nbrperm, :, orient)
+    facedata = sview(uface, :, :, iface)
+    permuteface!(permvec, workarr, facedata)
+  end
+
+  return nothing
+end
+
+@doc """
+### SummationByParts.permuteface!
+
+This function applys a permutation to the data on a particular face.
+
+**Inputs**
+
+* `permvec`: vector specifying the permutation to apply
+* `workarr`: a temporary array, same size as face_data, that is overwritten
+             during the computation
+**In/Outs**
+
+* `face_data`: a 2D array containing the data to be pemuted, where the
+              permutation is applied to the second dimension of the array
+"""->
+function permuteface!{Ti <: Integer, Tsol}(permvec::AbstractArray{Ti, 1},
+                                           workarr::AbstractArray{Tsol, 2},
+                                           facedata::AbstractArray{Tsol, 2})
+
+  # copy to temporary array, applying permutation
+  for i=1:size(facedata, 2)  # loop over nodes on the face
+    idx = permvec[i]
+    for j=1:size(facedata, 1)  # all dofs on the node
+      workarr[j, idx] = facedata[j, i]
+    end
+  end
+
+  # copy back, using linear indexing
+  for i=1:length(facedata)
+    facedata[i] = workarr[i]
+  end
+
+  return nothing
 end
