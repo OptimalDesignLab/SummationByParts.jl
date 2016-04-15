@@ -14,7 +14,8 @@ export AbstractSBP, TriSBP, TetSBP, TriFace, Boundary, Interface, calcnodes,
   calcminnodedistance, weakdifferentiate!, differentiate!,
   directionaldifferentiate!, volumeintegrate!, mappingjacobian!,
   boundaryinterpolate!, boundaryintegrate!, interiorfaceintegrate!,
-  interiorfaceinterpolate!, edgestabilize!, integratefunctional!
+  interiorfaceinterpolate!, edgestabilize!, integratefunctional!,
+  permuteinterface!
 
 @doc """
 ### SBP.AbstractSBP

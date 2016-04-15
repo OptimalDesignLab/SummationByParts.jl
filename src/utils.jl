@@ -49,10 +49,21 @@ end
 @doc """
 ### SummationByParts.permuteinterface!
 
-Permutes the node values to be in the specified orientation (in place)
+For a given array of values on a faces, permutes the node values (in place) to 
+be in the orientation specified by the orient field of the corresponding 
+Interface.
 
-  ifaces: use the orientation field to determine the permutation
-  uface: numDofPerNode x numNodesPerFace x length(ifaces)
+
+**Inputs**
+
+* `sbp`: an SBPFace operator
+* `ifaces`: an array of Interfaces
+
+**In/Outs**
+
+* `uface`: the array of face values, must have dimensions
+           [n x sbpface.numnodes x length(ifaces].  The permutation is applied
+           to the second array dimension. n is arbitrary
 """->
 function permuteinterface!{Tsbp, Tsol}(sbpface::AbstractFace{Tsbp}, 
                                        ifaces::AbstractArray{Interface}, 
