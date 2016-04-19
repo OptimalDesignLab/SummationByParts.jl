@@ -43,10 +43,12 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
   end
 
   context("Testing SummationByParts.permuteface!") do
+    # test 2D version
     permvec = [2, 1, 3, 4]
     vals = rand(5, 4)
     vals2 = copy(vals)  # permute a copy, leaving the original unchanged
     workarr = zeros(vals)
+
     SummationByParts.permuteface!(permvec, workarr, vals2)
 
     for i=1:4
@@ -55,10 +57,21 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
       end
     end
 
-  end
+    # test 1D version
+    vals = rand(4)
+    vals2 = copy(vals)
+    workarr = zeros(vals)
+    SummationByParts.permuteface!(permvec, workarr, vals2)
+
+    for i=1:4
+      @fact vals[i] --> roughly(vals2[permvec[i]], atol=1e-13)
+    end
+
+  end  # end context(testing permuteface!)
 
   context("Testing SummationByParts.permuteinterface!") do
 
+    # test 3D version
     nfaces = 2
     ndofpernode = 5
 
@@ -86,6 +99,16 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
       end
     end
 
-  end
+    # test 2D version
+    q = rand(sbpface.numnodes, nfaces)
+    q2 = copy(q)
+    SummationByParts.permuteinterface!(sbpface, ifaces, q2)
+    for iface=1:nfaces
+      for j=1:sbpface.numnodes
+          @fact q[j, iface] --> roughly(q2[sbpface.nbrperm[j, 1], iface], atol=1e-13)
+      end
+    end
+
+  end  # end context(Testing permuteinterface!)
         
 end
