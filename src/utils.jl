@@ -129,7 +129,6 @@ This function applys a permutation to the data on a particular face.
 function permuteface!{Ti <: Integer, Tsol}(permvec::AbstractArray{Ti, 1},
                                            workarr::AbstractArray{Tsol, 2},
                                            facedata::AbstractArray{Tsol, 2})
-
   # copy to temporary array, applying permutation
   for i=1:size(facedata, 2)  # loop over nodes on the face
     idx = permvec[i]
@@ -149,7 +148,6 @@ end
 function permuteface!{Ti <: Integer, Tsol}(permvec::AbstractArray{Ti, 1},
                                            workarr::AbstractArray{Tsol, 1},
                                            facedata::AbstractArray{Tsol, 1})
-
   # copy to temporary array, applying permutation
   for i=1:size(facedata, 1)  # loop over nodes on the face
     idx = permvec[i]
