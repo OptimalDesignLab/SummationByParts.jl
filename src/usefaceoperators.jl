@@ -332,8 +332,10 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
     for (findex, face) in enumerate(ifaces)
       for i = 1:sbpface.numnodes
         iR = sbpface.nbrperm[i,face.orient]
-        uface[:,1,i,findex] = zeros(Tsol, size(uvol,1))
-        uface[:,2,i,findex] = zeros(Tsol, size(uvol,1))
+        for field=1:size(uvol, 1)
+          uface[field,1,i,findex] = zero(Tsol)
+          uface[field,2,i,findex] = zero(Tsol)
+        end
         for j = 1:sbpface.stencilsize
           for field = 1:size(uvol,1)
             uface[field,1,i,findex] += sbpface.interp[j,i]*
