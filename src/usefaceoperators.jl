@@ -53,7 +53,9 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   @inbounds begin
     for (bindex, bndry) in enumerate(bndryfaces)
       for i = 1:sbpface.numnodes
-        uface[:,i,bindex] = zeros(Tsol, size(uvol,1))
+        for field=1:size(uvol, 1)
+          uface[field,i,bindex] = zero(Tsol)
+        end
         for j = 1:sbpface.stencilsize
            for field = 1:size(uvol,1)
              uface[field,i,bindex] += sbpface.interp[j,i]*
