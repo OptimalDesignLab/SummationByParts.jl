@@ -1,6 +1,8 @@
 #!/bin/bash
 
 odlcommontools_git="https://github.com/OptimalDesignLab/ODLCommonTools.jl.git"
-wget $odlcommontools_git
-mv -v ./ODLCommonTools.jl ./ODLCommonTools
+if [ ! -d "ODLCommonTools" ]; then
+  git clone $odlcommontools_git ../../ODLCommonTools
+fi
+
 
