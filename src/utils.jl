@@ -1,14 +1,6 @@
 # This file gathers together a hodge-podge of functions that are not easily
 # categorized
 
-# make sview point to either safe or unsafe views
-global const use_safe_views = true
-if use_safe_views
-  global const sview = view
-else
-  global const sview = unsafe_view
-end
-
 @doc """
 ### SummationByParts.buildinterpolation
 
@@ -52,7 +44,6 @@ end
 For a given array of values on a faces, permutes the node values (in place) to 
 be in the orientation specified by the orient field of the corresponding 
 Interface.  Methods are available for scalar and vector fields.
-
 
 **Inputs**
 
