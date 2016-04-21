@@ -8,3 +8,5 @@ if !haskey(pkg_dict, "ODLCommonTools")
   run(`./download.sh`)
   Pkg.build("ODLCommonTools")
 end
+
+cd(start_dir)
