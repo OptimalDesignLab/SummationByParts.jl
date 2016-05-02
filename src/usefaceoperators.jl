@@ -68,6 +68,40 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
 end
 
 @doc """
+### SummationByParts.boundaryinterpolate!
+
+Interpolates vector field values at the nodes of a given element to a 
+specified face of the element.
+
+**Inputs**
+
+* `sbpface`: an SBP face operator
+* `face`: the face of the element to interpolate to
+* `uvol`: the values at the nodes of the elements, dimensions numcomp x numnodes
+           where numcomp is the number of components in the vector field and
+           numnodes is the number of nodes in the element
+
+**In/Outs**
+* `uface`: the result of the interpolation, numcomp x sbpface.numnodes
+
+"""->
+function boundaryinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+                                         face::Integer,
+                                         uvol::AbstractArray{Tsol,2},
+                                         uface::AbstractArray{Tsol,2})
+  for i = 1:sbpface.numnodes
+    for field=1:size(uvol, 1)
+      uface[field,i] = zero(Tsol)
+    end
+    for j = 1:sbpface.stencilsize
+       for field = 1:size(uvol,1)
+         uface[field,i] += sbpface.interp[j,i]*uvol[field,sbpface.perm[j,face]]
+       end
+    end
+  end
+end
+
+@doc """
 ### SummationByParts.boundaryintegrate!
 
 Integrates a given flux over a boundary using appropriate mass matrices defined
