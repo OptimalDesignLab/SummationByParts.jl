@@ -128,22 +128,18 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
   if trans # apply transposed Q
-    @inbounds begin
-      for elem = 1:size(flux,2)
-        for i = 1:sbp.numnodes
-          for j = 1:sbp.numnodes
-            res[i,elem] += sbp.Q[j,i,di]*flux[j,elem] 
-          end
+    for elem = 1:size(flux,2)
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          res[i,elem] += sbp.Q[j,i,di]*flux[j,elem] 
         end
       end
     end
   else # apply Q
-    @inbounds begin
-      for elem = 1:size(flux,2)
-        for i = 1:sbp.numnodes
-          for j = 1:sbp.numnodes
-            res[i,elem] += sbp.Q[i,j,di]*flux[j,elem] 
-          end
+    for elem = 1:size(flux,2)
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          res[i,elem] += sbp.Q[i,j,di]*flux[j,elem] 
         end
       end
     end
@@ -158,25 +154,21 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
   if trans # apply transposed Q
-    @inbounds begin
-      for elem = 1:size(flux,3)
-        for i = 1:sbp.numnodes
-          for j = 1:sbp.numnodes
-            for field = 1:size(flux,1)
-              res[field,i,elem] += sbp.Q[j,i,di]*flux[field,j,elem]
-            end
+    for elem = 1:size(flux,3)
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          for field = 1:size(flux,1)
+            res[field,i,elem] += sbp.Q[j,i,di]*flux[field,j,elem]
           end
         end
       end
     end
   else # apply Q
-    @inbounds begin
-      for elem = 1:size(flux,3)
-        for i = 1:sbp.numnodes
-          for j = 1:sbp.numnodes
-            for field = 1:size(flux,1)
-              res[field,i,elem] += sbp.Q[i,j,di]*flux[field,j,elem]
-            end
+    for elem = 1:size(flux,3)
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          for field = 1:size(flux,1)
+            res[field,i,elem] += sbp.Q[i,j,di]*flux[field,j,elem]
           end
         end
       end
@@ -257,14 +249,12 @@ function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
   Hinv = 1./sbp.w
-  @inbounds begin
-    for elem = 1:size(flux,2)
-      for i = 1:sbp.numnodes
-        for j = 1:sbp.numnodes
-          res[i,elem] += sbp.Q[i,j,di]*flux[j,elem]
-        end
-        res[i,elem] *= Hinv[i]
+  for elem = 1:size(flux,2)
+    for i = 1:sbp.numnodes
+      for j = 1:sbp.numnodes
+        res[i,elem] += sbp.Q[i,j,di]*flux[j,elem]
       end
+      res[i,elem] *= Hinv[i]
     end
   end
 end
@@ -276,17 +266,15 @@ function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
   Hinv = 1./sbp.w
-  @inbounds begin
-    for elem = 1:size(flux,3)
-      for i = 1:sbp.numnodes
-        for j = 1:sbp.numnodes
-          for field = 1:size(flux,1)
-            res[field,i,elem] += sbp.Q[i,j,di]*flux[field,j,elem]
-          end
-        end
+  for elem = 1:size(flux,3)
+    for i = 1:sbp.numnodes
+      for j = 1:sbp.numnodes
         for field = 1:size(flux,1)
-          res[field,i,elem] *= Hinv[i]
+          res[field,i,elem] += sbp.Q[i,j,di]*flux[field,j,elem]
         end
+      end
+      for field = 1:size(flux,1)
+        res[field,i,elem] *= Hinv[i]
       end
     end
   end
@@ -320,14 +308,12 @@ function directionaldifferentiate!{Tsbp,Tmsh,Tsol}(sbp::AbstractSBP{Tsbp},
                                                    i::Int)
   @assert( size(sbp.Q, 3) == size(dir,1) )
   Ddir = zero(Tmsh)*zero(Tsol)
-  @inbounds begin
-    for di = 1:size(sbp.Q, 3)
-      tmp = zero(Tmsh)*zero(Tsol)
-      for j = 1:sbp.numnodes
-        tmp += sbp.Q[i,j,di]*u[j]
-      end
-      Ddir += dir[di]*tmp/sbp.w[i]
+  for di = 1:size(sbp.Q, 3)
+    tmp = zero(Tmsh)*zero(Tsol)
+    for j = 1:sbp.numnodes
+      tmp += sbp.Q[i,j,di]*u[j]
     end
+    Ddir += dir[di]*tmp/sbp.w[i]
   end
   return Ddir
 end
@@ -338,17 +324,15 @@ function directionaldifferentiate!{Tsbp,Tmsh,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                                         i::Int,
                                                         Ddir::Array{Tres,1})
   @assert( size(sbp.Q, 3) == size(dir,1) )
-  @inbounds begin
-    for di = 1:size(sbp.Q, 3)
-      tmp = zeros(Ddir)
-      for j = 1:sbp.numnodes
-        for field = 1:size(u,1)
-          tmp[field] += sbp.Q[i,j,di]*u[field,j]
-        end
-      end
+  for di = 1:size(sbp.Q, 3)
+    tmp = zeros(Ddir)
+    for j = 1:sbp.numnodes
       for field = 1:size(u,1)
-        Ddir[field] += dir[di]*tmp[field]/sbp.w[i]
+        tmp[field] += sbp.Q[i,j,di]*u[field,j]
       end
+    end
+    for field = 1:size(u,1)
+      Ddir[field] += dir[di]*tmp[field]/sbp.w[i]
     end
   end
 end
@@ -387,11 +371,9 @@ function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   H = sbp.w
-  @inbounds begin
-    for elem = 1:size(u,2)
-      for i = 1:sbp.numnodes
-        res[i,elem] += H[i]*u[i,elem]
-      end
+  for elem = 1:size(u,2)
+    for i = 1:sbp.numnodes
+      res[i,elem] += H[i]*u[i,elem]
     end
   end
 end
@@ -402,12 +384,10 @@ function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   H = sbp.w
-  @inbounds begin
-    for elem = 1:size(u,3)
-      for i = 1:sbp.numnodes
-        for field = 1:size(u,1)
-          res[field,i,elem] += H[i]*u[field,i,elem]
-        end
+  for elem = 1:size(u,3)
+    for i = 1:sbp.numnodes
+      for field = 1:size(u,1)
+        res[field,i,elem] += H[i]*u[field,i,elem]
       end
     end
   end
