@@ -123,7 +123,8 @@ operator sbp.
 function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int, 
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2};
-                                            trans::Bool=false)
+                                            trans::Bool=false,
+                                            update::UnaryFunctor=add)
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -131,7 +132,7 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
     for elem = 1:size(flux,2)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          res[i,elem] += sbp.Q[j,i,di]*flux[j,elem] 
+          res[i,elem] += update(sbp.Q[j,i,di]*flux[j,elem])
         end
       end
     end
@@ -139,7 +140,7 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
     for elem = 1:size(flux,2)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          res[i,elem] += sbp.Q[i,j,di]*flux[j,elem] 
+          res[i,elem] += update(sbp.Q[i,j,di]*flux[j,elem])
         end
       end
     end

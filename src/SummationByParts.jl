@@ -226,6 +226,41 @@ immutable TriFace{T} <: AbstractFace{T}
   end
 end
 
+@doc """
+### SBP.UnaryFunctor
+
+`UnaryFunctor` is abstract type that is used to specify different types of
+residual updates in the useoperators.jl and usefaceoperators.jl files
+
+"""->
+abstract UnaryFunctor
+
+@doc """
+### SBP.PlusFunctor
+
+`MinusFunctor` is basically an identity operator.  It is needed as a default
+UnaryFunctor.
+
+"""->
+type PlusFunctor <: UnaryFunctor
+end
+function call(update::PlusFunctor, scalar)
+  return scalar
+end
+add = PlusFunctor()
+
+@doc """
+### SBP.MinusFunctor
+
+`MinusFunctor` is used to negate values
+
+"""->
+type MinusFunctor <: UnaryFunctor
+end
+function call(update::MinusFunctor, scalar)
+  return -scalar
+end
+
 include("buildfaceoperators.jl") #<--- functions related to building face operators
 include("buildoperators.jl") #<--- functions related to building SBP operators
 include("useoperators.jl") #<--- functions for applying SBP operators
