@@ -1,3 +1,4 @@
+__precompile__(false)
 module SummationByParts
 
 include("orthopoly.jl")
@@ -14,7 +15,17 @@ export AbstractSBP, TriSBP, TetSBP, TriFace, Boundary, Interface, calcnodes,
   calcminnodedistance, weakdifferentiate!, differentiate!,
   directionaldifferentiate!, volumeintegrate!, mappingjacobian!,
   boundaryinterpolate!, boundaryintegrate!, interiorfaceintegrate!,
-  interiorfaceinterpolate!, edgestabilize!, integratefunctional!
+  interiorfaceinterpolate!, edgestabilize!, integratefunctional!,
+  permuteinterface!
+
+
+# make sview point to either safe or unsafe views
+global const use_safe_views = true
+if use_safe_views
+  global const sview = view
+else
+  global const sview = unsafe_view
+end
 
 @doc """
 ### SBP.AbstractSBP
