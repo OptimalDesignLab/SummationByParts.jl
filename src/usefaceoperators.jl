@@ -30,14 +30,12 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
                                          uface::AbstractArray{Tsol,2})
   @assert( size(sbpface.interp,1) <= size(uvol,1) )
   @assert( size(sbpface.interp,2) == size(uface,1) )
-  @inbounds begin
-    for (bindex, bndry) in enumerate(bndryfaces)
-      for i = 1:sbpface.numnodes
-        uface[i,bindex] = zero(Tsol)
-        for j = 1:sbpface.stencilsize
-          uface[i,bindex] += sbpface.interp[j,i]*uvol[sbpface.perm[j,bndry.face],
-                                                      bndry.element]
-        end
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      uface[i,bindex] = zero(Tsol)
+      for j = 1:sbpface.stencilsize
+        uface[i,bindex] += sbpface.interp[j,i]*uvol[sbpface.perm[j,bndry.face],
+                                                    bndry.element]
       end
     end
   end
@@ -50,15 +48,13 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   @assert( size(uvol,1) == size(uface,1) )
   @assert( size(sbpface.interp,1) <= size(uvol,2) )
   @assert( size(sbpface.interp,2) == size(uface,2) )
-  @inbounds begin
-    for (bindex, bndry) in enumerate(bndryfaces)
-      for i = 1:sbpface.numnodes
-        uface[:,i,bindex] = zeros(Tsol, size(uvol,1))
-        for j = 1:sbpface.stencilsize
-           for field = 1:size(uvol,1)
-             uface[field,i,bindex] += sbpface.interp[j,i]*
-             uvol[field,sbpface.perm[j,bndry.face],bndry.element]
-           end
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      uface[:,i,bindex] = zeros(Tsol, size(uvol,1))
+      for j = 1:sbpface.stencilsize
+        for field = 1:size(uvol,1)
+          uface[field,i,bindex] += sbpface.interp[j,i]*
+          uvol[field,sbpface.perm[j,bndry.face],bndry.element]
         end
       end
     end
@@ -104,13 +100,11 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
   @assert( sbp.numnodes == size(res,1) )
   @assert( sbp.numfacenodes == size(flux,1) )
   @assert( size(bndryfaces,1) == size(flux,2) )
-  @inbounds begin
-    for (bindex, bndry) in enumerate(bndryfaces)
-      for i = 1:sbp.numfacenodes        
-        for j = 1:sbp.numfacenodes
-          jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
-          res[jB,bndry.element] += sbp.wface[j,i]*flux[i,bindex]
-        end
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbp.numfacenodes        
+      for j = 1:sbp.numfacenodes
+        jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
+        res[jB,bndry.element] += sbp.wface[j,i]*flux[i,bindex]
       end
     end
   end
@@ -124,14 +118,12 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
   @assert( sbp.numnodes == size(res,2) )
   @assert( sbp.numfacenodes == size(flux,2) )
   @assert( size(bndryfaces,1) == size(flux,3) )
-  @inbounds begin
-    for (bindex, bndry) in enumerate(bndryfaces)
-      for i = 1:sbp.numfacenodes        
-        for j = 1:sbp.numfacenodes
-          jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
-          for field = 1:size(res,1)
-            res[field,jB,bndry.element] += sbp.wface[j,i]*flux[field,i,bindex]
-          end
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbp.numfacenodes        
+      for j = 1:sbp.numfacenodes
+        jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
+        for field = 1:size(res,1)
+          res[field,jB,bndry.element] += sbp.wface[j,i]*flux[field,i,bindex]
         end
       end
     end
@@ -145,14 +137,12 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   @assert( size(sbpface.interp,1) <= size(res,1) )
   @assert( size(sbpface.interp,2) == size(flux,1) )
   @assert( size(bndryfaces,1) == size(flux,2) )
-  @inbounds begin
-    for (bindex, bndry) in enumerate(bndryfaces)
-      for i = 1:sbpface.numnodes
-        wflux = sbpface.wface[i]*flux[i,bindex]
-        for j = 1:sbpface.stencilsize
-          res[sbpface.perm[j,bndry.face],bndry.element] +=
-            sbpface.interp[j,i]*wflux
-        end
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      wflux = sbpface.wface[i]*flux[i,bindex]
+      for j = 1:sbpface.stencilsize
+        res[sbpface.perm[j,bndry.face],bndry.element] +=
+          sbpface.interp[j,i]*wflux
       end
     end
   end
@@ -166,17 +156,15 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   @assert( size(sbpface.interp,2) == size(flux,2) )
   @assert( size(bndryfaces,1) == size(flux,3) )
   wflux = zeros(Tflx, size(res,1))
-  @inbounds begin
-    for (bindex, bndry) in enumerate(bndryfaces)
-      for i = 1:sbpface.numnodes
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      for field = 1:size(res,1)
+        wflux[field] = sbpface.wface[i]*flux[field,i,bindex]
+      end
+      for j = 1:sbpface.stencilsize
         for field = 1:size(res,1)
-          wflux[field] = sbpface.wface[i]*flux[field,i,bindex]
-        end
-        for j = 1:sbpface.stencilsize
-          for field = 1:size(res,1)
-            res[field,sbpface.perm[j,bndry.face],bndry.element] +=
-              sbpface.interp[j,i]*wflux[field]
-          end
+          res[field,sbpface.perm[j,bndry.face],bndry.element] +=
+            sbpface.interp[j,i]*wflux[field]
         end
       end
     end
@@ -216,11 +204,9 @@ function integratefunctional!{Tsbp,Tflx}(sbpface::AbstractFace{Tsbp},
   @assert( size(sbpface.interp,2) == size(flux,1) )
   @assert( size(bndryfaces,1) == size(flux,2) )
   fun = zero(Tflx)
-  @inbounds begin
-    for (bindex, bndry) in enumerate(bndryfaces)
-      for i = 1:sbpface.numnodes
-        fun += sbpface.wface[i]*flux[i,bindex]
-      end
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      fun += sbpface.wface[i]*flux[i,bindex]
     end
   end
   return fun
@@ -233,12 +219,10 @@ function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::AbstractFace{Tsbp},
   @assert( size(sbpface.interp,2) == size(flux,2) )
   @assert( size(flux,1) == size(fun,1) )
   @assert( size(bndryfaces,1) == size(flux,3) )
-  @inbounds begin
-    for (bindex, bndry) in enumerate(bndryfaces)
-      for i = 1:sbpface.numnodes
-        for field = 1:size(fun,1)
-          fun[field] += sbpface.wface[i]*flux[field,i,bindex]
-        end
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      for field = 1:size(fun,1)
+        fun[field] += sbpface.wface[i]*flux[field,i,bindex]
       end
     end
   end
@@ -304,18 +288,16 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
                                              uface::AbstractArray{Tsol,3})
   @assert( size(sbpface.interp,1) <= size(uvol,1) )
   @assert( size(sbpface.interp,2) == size(uface,2) )
-  @inbounds begin
-    for (findex, face) in enumerate(ifaces)
-      for i = 1:sbpface.numnodes
-        iR = sbpface.nbrperm[i,face.orient]
-        uface[1,i,findex] = zero(Tsol)
-        uface[2,i,findex] = zero(Tsol)
-        for j = 1:sbpface.stencilsize
-          uface[1,i,findex] += sbpface.interp[j,i]*uvol[sbpface.perm[j,face.faceL],
-                                                        face.elementL]
-          uface[2,i,findex] += sbpface.interp[j,iR]*uvol[sbpface.perm[j,face.faceR],
-                                                         face.elementR]
-        end
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbpface.numnodes
+      iR = sbpface.nbrperm[i,face.orient]
+      uface[1,i,findex] = zero(Tsol)
+      uface[2,i,findex] = zero(Tsol)
+      for j = 1:sbpface.stencilsize
+        uface[1,i,findex] += sbpface.interp[j,i]*uvol[sbpface.perm[j,face.faceL],
+                                                      face.elementL]
+        uface[2,i,findex] += sbpface.interp[j,iR]*uvol[sbpface.perm[j,face.faceR],
+                                                       face.elementR]
       end
     end
   end
@@ -328,19 +310,17 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   @assert( size(uvol,1) == size(uface,1) )
   @assert( size(sbpface.interp,1) <= size(uvol,2) )
   @assert( size(sbpface.interp,2) == size(uface,3) )
-  @inbounds begin
-    for (findex, face) in enumerate(ifaces)
-      for i = 1:sbpface.numnodes
-        iR = sbpface.nbrperm[i,face.orient]
-        uface[:,1,i,findex] = zeros(Tsol, size(uvol,1))
-        uface[:,2,i,findex] = zeros(Tsol, size(uvol,1))
-        for j = 1:sbpface.stencilsize
-          for field = 1:size(uvol,1)
-            uface[field,1,i,findex] += sbpface.interp[j,i]*
-            uvol[field,sbpface.perm[j,face.faceL],face.elementL]
-            uface[field,2,i,findex] += sbpface.interp[j,iR]*
-            uvol[field,sbpface.perm[j,face.faceR],face.elementR]
-          end
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbpface.numnodes
+      iR = sbpface.nbrperm[i,face.orient]
+      uface[:,1,i,findex] = zeros(Tsol, size(uvol,1))
+      uface[:,2,i,findex] = zeros(Tsol, size(uvol,1))
+      for j = 1:sbpface.stencilsize
+        for field = 1:size(uvol,1)
+          uface[field,1,i,findex] += sbpface.interp[j,i]*
+          uvol[field,sbpface.perm[j,face.faceL],face.elementL]
+          uface[field,2,i,findex] += sbpface.interp[j,iR]*
+          uvol[field,sbpface.perm[j,face.faceR],face.elementR]
         end
       end
     end
@@ -389,15 +369,13 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
   @assert( size(ifaces,1) == size(flux,2) )
   # JEH: temporary, until nbrnodeindex is part of sbp type
   nbrnodeindex = [sbp.numfacenodes:-1:1;]
-  @inbounds begin
-    for (findex, face) in enumerate(ifaces)
-      for i = 1:sbp.numfacenodes    
-        for j = 1:sbp.numfacenodes
-          jL = sbp.facenodes[j, face.faceL]::Int
-          jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
-          res[jL,face.elementL] += sbp.wface[j,i]*flux[i,findex]
-          res[jR,face.elementR] -= sbp.wface[j,i]*flux[i,findex]
-        end
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbp.numfacenodes    
+      for j = 1:sbp.numfacenodes
+        jL = sbp.facenodes[j, face.faceL]::Int
+        jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
+        res[jL,face.elementL] += sbp.wface[j,i]*flux[i,findex]
+        res[jR,face.elementR] -= sbp.wface[j,i]*flux[i,findex]
       end
     end
   end
@@ -413,16 +391,14 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
   @assert( size(ifaces,1) == size(flux,3) )
   # JEH: temporary, until nbrnodeindex is part of sbp type
   nbrnodeindex = [sbp.numfacenodes:-1:1;]
-  @inbounds begin
-    for (findex, face) in enumerate(ifaces)
-      for i = 1:sbp.numfacenodes    
-        for j = 1:sbp.numfacenodes
-          jL = sbp.facenodes[j, face.faceL]::Int
-          jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
-          for field = 1:size(res,1)
-            res[field,jL,face.elementL] += sbp.wface[j,i]*flux[field,i,findex]
-            res[field,jR,face.elementR] -= sbp.wface[j,i]*flux[field,i,findex]
-          end
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbp.numfacenodes    
+      for j = 1:sbp.numfacenodes
+        jL = sbp.facenodes[j, face.faceL]::Int
+        jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
+        for field = 1:size(res,1)
+          res[field,jL,face.elementL] += sbp.wface[j,i]*flux[field,i,findex]
+          res[field,jR,face.elementR] -= sbp.wface[j,i]*flux[field,i,findex]
         end
       end
     end
@@ -436,16 +412,14 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   @assert( size(sbpface.interp,1) <= size(res,1) )
   @assert( size(sbpface.interp,2) == size(flux,1) )
   @assert( size(ifaces,1) == size(flux,2) )
-  @inbounds begin
-    for (findex, face) in enumerate(ifaces)
-      for i = 1:sbpface.numnodes
-        iR = sbpface.nbrperm[i,face.orient]
-        for j = 1:sbpface.stencilsize
-          res[sbpface.perm[j,face.faceL],face.elementL] += 
-            sbpface.interp[j,i]*sbpface.wface[i]*flux[i,findex]
-          res[sbpface.perm[j,face.faceR],face.elementR] -=
-            sbpface.interp[j,iR]*sbpface.wface[iR]*flux[i,findex]
-        end
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbpface.numnodes
+      iR = sbpface.nbrperm[i,face.orient]
+      for j = 1:sbpface.stencilsize
+        res[sbpface.perm[j,face.faceL],face.elementL] += 
+        sbpface.interp[j,i]*sbpface.wface[i]*flux[i,findex]
+        res[sbpface.perm[j,face.faceR],face.elementR] -=
+          sbpface.interp[j,iR]*sbpface.wface[iR]*flux[i,findex]
       end
     end
   end
@@ -459,17 +433,15 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   @assert( size(sbpface.interp,1) <= size(res,2) )
   @assert( size(sbpface.interp,2) == size(flux,2) )
   @assert( size(ifaces,1) == size(flux,3) )
-  @inbounds begin
-    for (findex, face) in enumerate(ifaces)
-      for i = 1:sbpface.numnodes
-        iR = sbpface.nbrperm[i,face.orient]
-        for j = 1:sbpface.stencilsize
-          for field = 1:size(res,1)
-            res[field,sbpface.perm[j,face.faceL],face.elementL] += 
-              sbpface.interp[j,i]*sbpface.wface[i]*flux[field,i,findex]
-            res[field,sbpface.perm[j,face.faceR],face.elementR] -=
-              sbpface.interp[j,iR]*sbpface.wface[iR]*flux[field,i,findex]
-          end
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbpface.numnodes
+      iR = sbpface.nbrperm[i,face.orient]
+      for j = 1:sbpface.stencilsize
+        for field = 1:size(res,1)
+          res[field,sbpface.perm[j,face.faceL],face.elementL] += 
+          sbpface.interp[j,i]*sbpface.wface[i]*flux[field,i,findex]
+          res[field,sbpface.perm[j,face.faceR],face.elementR] -=
+            sbpface.interp[j,iR]*sbpface.wface[iR]*flux[field,i,findex]
         end
       end
     end
@@ -503,42 +475,40 @@ function mappingjacobian!{Tsbp,Tmsh}(sbpface::AbstractFace{Tsbp},
   @assert( size(dξdx,4) == size(jac,2) == 2 )
   @assert( size(dξdx,3) == size(jac,1) == sbpface.numnodes )
   @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
-  @inbounds begin
-    for (findex, face) in enumerate(ifaces)
-      for i = 1:sbpface.numnodes
-        iR = sbpface.nbrperm[i,face.orient]
-        # compute the derivatives dxdξ
-        dxdξL = zeros(Tmsh, (2,2))
-        dxdξR = zeros(Tmsh, (2,2))
-        for di = 1:2
-          for di2 = 1:2
-            for j = 1:sbpface.dstencilsize
-              dxdξL[di,di2] +=
-                sbpface.deriv[j,i,di2]*x[di,sbpface.dperm[j,face.faceL],
-                                         face.elementL]
-              dxdξR[di,di2] +=
-                sbpface.deriv[j,iR,di2]*x[di,sbpface.dperm[j,face.faceR],
-                                          face.elementR]
-            end
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbpface.numnodes
+      iR = sbpface.nbrperm[i,face.orient]
+      # compute the derivatives dxdξ
+      dxdξL = zeros(Tmsh, (2,2))
+      dxdξR = zeros(Tmsh, (2,2))
+      for di = 1:2
+        for di2 = 1:2
+          for j = 1:sbpface.dstencilsize
+            dxdξL[di,di2] +=
+              sbpface.deriv[j,i,di2]*x[di,sbpface.dperm[j,face.faceL],
+                                       face.elementL]
+            dxdξR[di,di2] +=
+              sbpface.deriv[j,iR,di2]*x[di,sbpface.dperm[j,face.faceR],
+                                        face.elementR]
           end
         end
-        # compute the Jacobian determinants
-        jac[i,1,findex] = one(Tmsh)/(dxdξL[1,1]*dxdξL[2,2] - 
-                                     dxdξL[1,2]*dxdξL[2,1])
-        jac[iR,2,findex] = one(Tmsh)/(dxdξR[1,1]*dxdξR[2,2] - 
-                                      dxdξR[1,2]*dxdξR[2,1])
-
-        # compute the derivatives dξdx
-        dξdx[1,1,i,1,findex] = dxdξL[2,2]*jac[i,1,findex]
-        dξdx[1,2,i,1,findex] = -dxdξL[1,2]*jac[i,1,findex]
-        dξdx[2,2,i,1,findex] = dxdξL[1,1]*jac[i,1,findex]
-        dξdx[2,1,i,1,findex] = -dxdξL[2,1]*jac[i,1,findex]
-
-        dξdx[1,1,iR,2,findex] = dxdξR[2,2]*jac[iR,2,findex]
-        dξdx[1,2,iR,2,findex] = -dxdξR[1,2]*jac[iR,2,findex]
-        dξdx[2,2,iR,2,findex] = dxdξR[1,1]*jac[iR,2,findex]
-        dξdx[2,1,iR,2,findex] = -dxdξR[2,1]*jac[iR,2,findex]
       end
+      # compute the Jacobian determinants
+      jac[i,1,findex] = one(Tmsh)/(dxdξL[1,1]*dxdξL[2,2] - 
+                                   dxdξL[1,2]*dxdξL[2,1])
+      jac[iR,2,findex] = one(Tmsh)/(dxdξR[1,1]*dxdξR[2,2] - 
+                                    dxdξR[1,2]*dxdξR[2,1])
+
+      # compute the derivatives dξdx
+      dξdx[1,1,i,1,findex] = dxdξL[2,2]*jac[i,1,findex]
+      dξdx[1,2,i,1,findex] = -dxdξL[1,2]*jac[i,1,findex]
+      dξdx[2,2,i,1,findex] = dxdξL[1,1]*jac[i,1,findex]
+      dξdx[2,1,i,1,findex] = -dxdξL[2,1]*jac[i,1,findex]
+      
+      dξdx[1,1,iR,2,findex] = dxdξR[2,2]*jac[iR,2,findex]
+      dξdx[1,2,iR,2,findex] = -dxdξR[1,2]*jac[iR,2,findex]
+      dξdx[2,2,iR,2,findex] = dxdξR[1,1]*jac[iR,2,findex]
+      dξdx[2,1,iR,2,findex] = -dxdξR[2,1]*jac[iR,2,findex]
     end
   end
 end
@@ -575,36 +545,34 @@ function edgestabilize!{Tsbp,Tmsh,Tsol}(sbpface::AbstractFace{Tsbp},
   dudξ = zeros(Tsol, (2))
   const left = 1
   const right = 1
-  @inbounds begin
-    for (findex, face) in enumerate(ifaces)
-      for i = 1:sbpface.numnodes
-        iR = sbpface.nbrperm[i,face.orient]
-        Du = zero(Tsol)
-        for di = 1:2
-          fill!(dudξ, zero(Tsol))
-          # compute the derivatives in the ξ[di] direction
-          for j = 1:sbpface.dstencilsize
-            dudξ[left] += sbpface.deriv[j,i,di]*u[sbpface.dperm[j,face.faceL],
-                                                  face.elementL]
-            dudξ[right] += sbpface.deriv[j,iR,di]*u[sbpface.dperm[j,face.faceR],
-                                                    face.elementR]
-          end
-          # contract with direction vector
-          Du += dudξ[left]*dirvec[di,i,left,findex] + 
-          dudξ[right]*dirvec[di,iR,right,findex]
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbpface.numnodes
+      iR = sbpface.nbrperm[i,face.orient]
+      Du = zero(Tsol)
+      for di = 1:2
+        fill!(dudξ, zero(Tsol))
+        # compute the derivatives in the ξ[di] direction
+        for j = 1:sbpface.dstencilsize
+          dudξ[left] += sbpface.deriv[j,i,di]*u[sbpface.dperm[j,face.faceL],
+                                                face.elementL]
+          dudξ[right] += sbpface.deriv[j,iR,di]*u[sbpface.dperm[j,face.faceR],
+                                                  face.elementR]
         end
-        # scale by tau and face cubature
-        Du *= sbpface.wface[i]*tau[i,findex]
-        # now apply transposed jump derivative
-        for di = 1:2
-          dudξ[left] = Du*dirvec[di,i,left,findex]
-          dudξ[right] = Du*dirvec[di,iR,right,findex]
-          for j = 1:sbpface.dstencilsize
-            res[sbpface.dperm[j,face.faceL],face.elementL] +=
-              sbpface.deriv[j,i,di]*dudξ[left]
-            res[sbpface.dperm[j,face.faceR],face.elementR] += 
-              sbpface.deriv[j,iR,di]*dudξ[right]
-          end
+        # contract with direction vector
+        Du += dudξ[left]*dirvec[di,i,left,findex] + 
+        dudξ[right]*dirvec[di,iR,right,findex]
+      end
+      # scale by tau and face cubature
+      Du *= sbpface.wface[i]*tau[i,findex]
+      # now apply transposed jump derivative
+      for di = 1:2
+        dudξ[left] = Du*dirvec[di,i,left,findex]
+        dudξ[right] = Du*dirvec[di,iR,right,findex]
+        for j = 1:sbpface.dstencilsize
+          res[sbpface.dperm[j,face.faceL],face.elementL] +=
+            sbpface.deriv[j,i,di]*dudξ[left]
+          res[sbpface.dperm[j,face.faceR],face.elementR] += 
+          sbpface.deriv[j,iR,di]*dudξ[right]
         end
       end
     end
