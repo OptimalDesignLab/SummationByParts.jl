@@ -10,7 +10,7 @@ to an auxlliary set of nodes.
 **Inputs**
 
 * `sbp`: an SBP operator
-* `xinterp`: location of points to interpolate to, size = [ndim,numpoints]
+* `xinterp`: points to interpolate to in ref coords, size = [ndim,numpoints]
 
 **Returns**
 
