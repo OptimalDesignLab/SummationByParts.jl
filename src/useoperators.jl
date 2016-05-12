@@ -113,6 +113,7 @@ operator sbp.
 * `sbp`: an SBP operator type
 * `di`: direction index of the operator that is desired (di=1 for Qx, etc)
 * `flux`: the array that the operator is applied to
+* `±` : PlusFunctor to add to res, MinusFunctor to subract
 * `trans` (optional): if true, the transpose operation is applied
 
 **In/Outs**
@@ -122,9 +123,9 @@ operator sbp.
 """->
 function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int, 
                                             flux::AbstractArray{Tflx,2},
-                                            res::AbstractArray{Tres,2};
-                                            trans::Bool=false,
-                                            update::UnaryFunctor=add)
+                                            res::AbstractArray{Tres,2},
+                                            (±)::UnaryFunctor=Add();
+                                            trans::Bool=false)
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -132,7 +133,7 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
     for elem = 1:size(flux,2)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          res[i,elem] += update(sbp.Q[j,i,di]*flux[j,elem])
+          res[i,elem] += ±(sbp.Q[j,i,di]*flux[j,elem])
         end
       end
     end
@@ -140,7 +141,7 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
     for elem = 1:size(flux,2)
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
-          res[i,elem] += update(sbp.Q[i,j,di]*flux[j,elem])
+          res[i,elem] += ±(sbp.Q[i,j,di]*flux[j,elem])
         end
       end
     end
@@ -149,7 +150,8 @@ end
 
 function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                             flux::AbstractArray{Tflx,3},
-                                            res::AbstractArray{Tres,3};
+                                            res::AbstractArray{Tres,3},
+                                            (±)::UnaryFunctor=Add();
                                             trans::Bool=false)
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
   @assert( length(flux) == length(res) )
@@ -159,7 +161,7 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
           for field = 1:size(flux,1)
-            res[field,i,elem] += sbp.Q[j,i,di]*flux[field,j,elem]
+            res[field,i,elem] += ±(sbp.Q[j,i,di]*flux[field,j,elem])
           end
         end
       end
@@ -169,7 +171,7 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
       for i = 1:sbp.numnodes
         for j = 1:sbp.numnodes
           for field = 1:size(flux,1)
-            res[field,i,elem] += sbp.Q[i,j,di]*flux[field,j,elem]
+            res[field,i,elem] += ±(sbp.Q[i,j,di]*flux[field,j,elem])
           end
         end
       end
@@ -237,6 +239,7 @@ operator sbp.
 * `sbp`: an SBP operator type
 * `di`: direction index of the operator that is desired (di=1 for Dx, etc)
 * `flux`: the array that the operator is applied to
+* `±`: PlusFunctor to add to res, MinusFunctor to subract
 
 **In/Outs**
 
@@ -245,7 +248,8 @@ operator sbp.
 """->
 function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux::AbstractArray{Tflx,2},
-                                        res::AbstractArray{Tres,2})
+                                        res::AbstractArray{Tres,2},
+                                        (±)::UnaryFunctor=Add())
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -253,7 +257,7 @@ function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   for elem = 1:size(flux,2)
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
-        res[i,elem] += sbp.Q[i,j,di]*flux[j,elem]
+        res[i,elem] += ±(sbp.Q[i,j,di]*flux[j,elem])
       end
       res[i,elem] *= Hinv[i]
     end
@@ -262,7 +266,8 @@ end
 
 function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux::AbstractArray{Tflx,3},
-                                        res::AbstractArray{Tres,3})
+                                        res::AbstractArray{Tres,3},
+                                        (±)::UnaryFunctor=Add())
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -271,7 +276,7 @@ function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
         for field = 1:size(flux,1)
-          res[field,i,elem] += sbp.Q[i,j,di]*flux[field,j,elem]
+          res[field,i,elem] += ±(sbp.Q[i,j,di]*flux[field,j,elem])
         end
       end
       for field = 1:size(flux,1)
@@ -360,6 +365,7 @@ operator sbp.
 
 * `sbp`: an SBP operator type
 * `u`: the array that the operator is applied to
+* `±`: PlusFunctor to add to res, MinusFunctor to subract
 
 **In/Outs**
 
@@ -368,27 +374,29 @@ operator sbp.
 """->
 function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                           u::AbstractArray{Tsol,2},
-                                          res::AbstractArray{Tres,2})
+                                          res::AbstractArray{Tres,2},
+                                          (±)::UnaryFunctor=Add())
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   H = sbp.w
   for elem = 1:size(u,2)
     for i = 1:sbp.numnodes
-      res[i,elem] += H[i]*u[i,elem]
+      res[i,elem] += ±(H[i]*u[i,elem])
     end
   end
 end
 
 function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                           u::AbstractArray{Tsol,3},
-                                          res::AbstractArray{Tres,3})
+                                          res::AbstractArray{Tres,3},
+                                          (±)::UnaryFunctor=Add())
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   H = sbp.w
   for elem = 1:size(u,3)
     for i = 1:sbp.numnodes
       for field = 1:size(u,1)
-        res[field,i,elem] += H[i]*u[field,i,elem]
+        res[field,i,elem] += ±(H[i]*u[field,i,elem])
       end
     end
   end

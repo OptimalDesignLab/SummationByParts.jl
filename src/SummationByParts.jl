@@ -247,28 +247,27 @@ residual updates in the useoperators.jl and usefaceoperators.jl files
 abstract UnaryFunctor
 
 @doc """
-### SBP.PlusFunctor
+### SBP.Add
 
-`MinusFunctor` is basically an identity operator.  It is needed as a default
+`Add` is basically an identity operator.  It is needed as a default
 UnaryFunctor.
 
 """->
-type PlusFunctor <: UnaryFunctor
+type Add <: UnaryFunctor
 end
-function call(update::PlusFunctor, scalar)
+function call(update::Add, scalar)
   return scalar
 end
-add = PlusFunctor()
 
 @doc """
-### SBP.MinusFunctor
+### SBP.Subtract
 
-`MinusFunctor` is used to negate values
+`Subtract` is used to negate values, which is useful in residual updates
 
 """->
-type MinusFunctor <: UnaryFunctor
+type Subtract <: UnaryFunctor
 end
-function call(update::MinusFunctor, scalar)
+function call(update::Subtract, scalar)
   return -scalar
 end
 
