@@ -79,8 +79,8 @@ Returns the minimum distance between distinct nodes on an element with straight 
 * `mindist`: the minimum distance between distinct nodes
 
 """->
-function calcminnodedistance{T}(sbp::AbstractSBP{T}, vtx::Array{T})
-  x = calcnodes(sbp, vtx)
+function calcminnodedistance{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx)
+  x = SymCubatures.calcnodes(sbp.cub, vtx)
   mindist = convert(T, Inf)
   for i = 1:size(x,2)
     for j = i+1:size(x,2)

@@ -605,11 +605,31 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
     # temporary test of using auxillary accuracy conditions; will leave this
     # here until it can be tested more thoroughly
     C, dx, dy = SummationByParts.accuracyconstraints(cub, vtx, d+1, Q, dl=d+1)
-    Z = nullspace(A)
+    svd = svdfact(A, thin=false)
+    rnk = rank(A)
+    #println("size(A) = ",size(A))
+    #println("rank(A) = ",rnk)
+    #println("size(C) = ",size(C))
+    #println("rank(C) = ",rank(C))
+    Y = svd[:V][:,1:rnk]
+    Z = svd[:V][:,rnk+1:end]
+    xp = diagm(1./svd[:S][1:rnk])*(svd[:U][:,1:rnk].'*bx)
+    yp = diagm(1./svd[:S][1:rnk])*(svd[:U][:,1:rnk].'*by)
     CZ = C*Z
-    rhsx = CZ.'*dx; rhsy = CZ.'*dy
-    H = CZ.'*CZ
-    x += Z*(H\rhsx); y += Z*(H\rhsy)
+    xn = (CZ.'*CZ)\(Z.'*C.'*dx - CZ.'*C*Y*xp)
+    yn = (CZ.'*CZ)\(Z.'*C.'*dy - CZ.'*C*Y*yp)
+    x = Y*xp + Z*xn
+    y = Y*yp + Z*yn
+
+    @assert( norm(A*x - bx) < 1e-12)
+    @assert( norm(A*y - by) < 1e-12)
+    #println( norm(A*x - bx))
+    #println( norm(A*y - by))
+    #Z = nullspace(A)
+    #CZ = C*Z
+    #rhsx = CZ.'*dx; rhsy = CZ.'*dy
+    #H = CZ.'*CZ
+    #x += Z*(H\rhsx); y += Z*(H\rhsy)
   end
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
