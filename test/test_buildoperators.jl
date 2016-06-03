@@ -416,7 +416,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       ptr += (d-1)
       # check ordering of y nodes on third edge
       @fact x[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
-      @fact issorted(y[ptr+1:ptr+d-1]) --> true
+      @fact issorted(y[ptr+1:ptr+d-1], rev=true) --> true
     end
   end
 
