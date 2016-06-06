@@ -110,5 +110,47 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     end
 
   end  # end context(Testing permuteinterface!)
+
+  context("Testing SummationByParts.findleftperm!") do
+    # This uses the matrix for computing the Tetrahedron's S22 orbit to test the
+    # findleftperm! method
+    alpha = pi
+    A = [alpha alpha (0.5-alpha) (0.5-alpha);
+         alpha (0.5-alpha) alpha (0.5-alpha);
+         alpha (0.5-alpha) (0.5-alpha) alpha;
+         (0.5-alpha) alpha alpha (0.5-alpha);
+         (0.5-alpha) alpha (0.5-alpha) alpha;
+         (0.5-alpha) (0.5-alpha) alpha alpha]
+    n = size(A,1)
+    m = size(A,2)
+    permR = shuffle([1:m;])
+    perm = zeros(Int, (n))
+
+    # First, find a valid left permutation, and check it
+    success = SummationByParts.findleftperm!(A, permR, perm)
+    @fact success --> true
+    @fact A[perm,:] --> A[:,permR]
+
+    # Next, transpose the matrix, and check that we recover the right permutation
+    permL = deepcopy(perm)
+    resize!(perm, m)
+    success = SummationByParts.findleftperm!(A.', permL, perm)
+    @fact success --> true
+    @fact A[:,perm] --> A[permL,:]
+    @fact perm --> permR
+
+    # Finally, check for failure in a 3x2 case that has no valid left permutation
+    A = [1.0 2.0; 3.0 4.0; 5.0 6.0]
+    n = size(A,1)
+    m = size(A,2)
+    resize!(permR, m)
+    resize!(perm, n)
+    permR = shuffle([1:m;])
+    while permR == [1:m;]
+      permR = shuffle([1:m;])
+    end
+    success = SummationByParts.findleftperm!(A, permR, perm)
+    @fact success --> false
+  end
         
 end
