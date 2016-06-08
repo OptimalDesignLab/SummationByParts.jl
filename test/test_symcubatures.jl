@@ -179,12 +179,14 @@ facts("Testing SymCubatures Module...") do
                                 midedges=true, numS22=1, numfaceS21=1,
                                 centroid=true)
     bndryindices = SymCubatures.getfacenodeindices(tetcub)
-    @fact bndryindices --> [1 2 3 4; 3 3 1 1; 2 4 4 2; # vertices
+    @fact bndryindices --> [1 1 2 1; # vertices
+                            2 4 4 3; #
+                            3 2 3 4; # 
                             5 6 7 8; # face centroids
-                            17 14 17 16; 14 15 16 13; 13 18 15 18; # midedges
-                            33 27 34 32; 34 28 33 31; 28 29 31 25;
-                            27 30 32 26; 26 36 30 35; 25 35 29 36; # edge nodes
-                            37 40 43 46; 38 41 44 47; 39 42 45 48] # face S21
+                            13 16 17 15; 14 17 18 18; 15 13 14 16; # midedges
+                            25 31 33 30; 26 32 34 29; 27 34 36 35; 
+                            28 33 35 36; 29 26 28 32; 30 25 27 31; # edge nodes
+                            37 46 40 43; 38 47 41 44; 39 48 42 45] # face S21
   end
 
   context("Test getfacebasedpermutation (LineSymCub method)") do
@@ -310,14 +312,15 @@ facts("Testing SymCubatures Module...") do
                  (1-alpha) alpha 0 0;
                  0 alpha (1-alpha) 0;
                  0 (1-alpha) alpha 0;
-                 0 0 alpha (1-alpha);
-                 0 0 (1-alpha) alpha;                 
+                 (1-alpha) 0 alpha 0;
+                 alpha 0 (1-alpha) 0;
                  alpha 0 0 (1-alpha);
                  (1-alpha) 0 0 alpha;
-                 alpha 0 (1-alpha) 0;
-                 (1-alpha) 0 alpha 0;
-                 0 alpha 0 (1-alpha)
-                 0 (1-alpha) 0 alpha]
+                 0 alpha 0 (1-alpha);
+                 0 (1-alpha) 0 alpha;
+                 0 0 alpha (1-alpha);
+                 0 0 (1-alpha) alpha]
+
         SymCubatures.setparams!(tetcub, [alpha])
         x = SymCubatures.calcnodes(tetcub, vtx)
         @fact vec(x[1,:]) --> [vtx[:,1]; (A*vtx[:,1])]
@@ -331,9 +334,9 @@ facts("Testing SymCubatures Module...") do
         A = ($T)[alpha alpha (1-2*alpha);
                  (1-2*alpha) alpha alpha;
                  alpha (1-2*alpha) alpha]
-        facevtx = [1 2 3 4;
-                   3 3 1 1;
-                   2 4 4 2]
+        facevtx = [1 1 2 1;
+                   2 4 4 3;
+                   3 2 3 4]
         x = SymCubatures.calcnodes(tetcub, vtx)
         @fact vec(x[1,:]) --> [vtx[:,1]; A*vtx[facevtx[:,1],1]; A*vtx[facevtx[:,2],1]; A*vtx[facevtx[:,3],1]; A*vtx[facevtx[:,4],1]]
         @fact vec(x[2,:]) --> [vtx[:,2]; A*vtx[facevtx[:,1],2]; A*vtx[facevtx[:,2],2]; A*vtx[facevtx[:,3],2]; A*vtx[facevtx[:,4],2]]

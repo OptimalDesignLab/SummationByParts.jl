@@ -607,9 +607,9 @@ function getfacenodeindices{T}(cub::TetSymCub{T})
   idxptr = 0
   # add vertices to indices
   if cub.vertices
-    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+2 ptr+3 ptr+4;
-                                         ptr+3 ptr+3 ptr+1 ptr+1;
-                                         ptr+2 ptr+4 ptr+4 ptr+2] 
+    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+1 ptr+2 ptr+1;
+                                         ptr+2 ptr+4 ptr+4 ptr+3;
+                                         ptr+3 ptr+2 ptr+3 ptr+4] 
     ptr += 4
     idxptr += 3
   end
@@ -623,9 +623,9 @@ function getfacenodeindices{T}(cub::TetSymCub{T})
   ptr += 4*cub.numS31
   # add mid-edge to indices
   if cub.midedges
-    bndryindices[idxptr+1:idxptr+3,:] = [ptr+5 ptr+2 ptr+5 ptr+4;
-                                         ptr+2 ptr+3 ptr+4 ptr+1;
-                                         ptr+1 ptr+6 ptr+3 ptr+6]
+    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+4 ptr+5 ptr+3;
+                                         ptr+2 ptr+5 ptr+6 ptr+6;
+                                         ptr+3 ptr+1 ptr+2 ptr+4]
     ptr += 6
     idxptr += 3
   end
@@ -633,20 +633,20 @@ function getfacenodeindices{T}(cub::TetSymCub{T})
   ptr += 6*cub.numS22
   # add edge nodes to indices
   for i = 1:cub.numedge
-    bndryindices[idxptr+1:idxptr+6,:] = [ptr+9  ptr+3  ptr+10 ptr+8;
-                                         ptr+10 ptr+4  ptr+9  ptr+7;
-                                         ptr+4  ptr+5  ptr+7  ptr+1;
-                                         ptr+3  ptr+6  ptr+8  ptr+2;
-                                         ptr+2  ptr+12 ptr+6  ptr+11;
-                                         ptr+1  ptr+11 ptr+5  ptr+12]
+    bndryindices[idxptr+1:idxptr+6,:] = [ptr+1 ptr+7  ptr+9  ptr+6;
+                                         ptr+2 ptr+8  ptr+10 ptr+5;
+                                         ptr+3 ptr+10 ptr+12 ptr+11;
+                                         ptr+4 ptr+9  ptr+11 ptr+12;
+                                         ptr+5 ptr+2  ptr+4  ptr+8;
+                                         ptr+6 ptr+1  ptr+3  ptr+7]
     ptr += 12
     idxptr += 6
   end
   # add face S21 orbits to indices
   for i = 1:cub.numfaceS21
-    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+4 ptr+7 ptr+10;
-                                         ptr+2 ptr+5 ptr+8 ptr+11;
-                                         ptr+3 ptr+6 ptr+9 ptr+12]
+    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+10 ptr+4 ptr+7;
+                                         ptr+2 ptr+11 ptr+5 ptr+8;
+                                         ptr+3 ptr+12 ptr+6 ptr+9]
     ptr += 12
     idxptr += 3
   end
@@ -757,24 +757,31 @@ function getfacebasedpermutation{T}(cub::TetSymCub{T}; faceonly::Bool=false)
     perm = zeros(Int, (cub.numnodes, 4))
     perm[:,1] = [1:cub.numnodes;] # no permutation on face 1
     ptr = 0
+    # define the vertex permutations on each face, which can be used to find the
+    # remaining permutations
+    vtxperm = zeros(Int, (4, 4))
+    vtxperm[:,1] = [1:4;]
+    vtxperm[:,2] = [1;4;2;3]
+    vtxperm[:,3] = [2;4;3;1]
+    vtxperm[:,4] = [1;3;4;2]
     # set permutation for nodes with 4-symmetries
     # set vertices
     if cub.vertices
-      perm[ptr+1:ptr+4,2] = [ptr+2; ptr+3; ptr+1; ptr+4]
-      perm[ptr+1:ptr+4,3] = [ptr+3; ptr+1; ptr+2; ptr+4]
-      perm[ptr+1:ptr+4,4] = [ptr+4; ptr+2; ptr+1; ptr+3]
+      for f = 2:4
+        perm[ptr+1:ptr+4,f] = vtxperm[:,f] + ptr
+      end
       ptr += 4
     end
     if cub.facecentroid
-      perm[ptr+1:ptr+4,2] = [ptr+2; ptr+3; ptr+1; ptr+4]
-      perm[ptr+1:ptr+4,3] = [ptr+3; ptr+1; ptr+2; ptr+4]
-      perm[ptr+1:ptr+4,4] = [ptr+4; ptr+2; ptr+1; ptr+3]
+      for f = 2:4
+        perm[ptr+1:ptr+4,f] = vtxperm[:,f] + ptr
+      end
       ptr += 4
     end
     for i = 1:cub.numS31
-      perm[ptr+1:ptr+4,2] = [ptr+2; ptr+3; ptr+1; ptr+4]
-      perm[ptr+1:ptr+4,3] = [ptr+3; ptr+1; ptr+2; ptr+4]
-      perm[ptr+1:ptr+4,4] = [ptr+4; ptr+2; ptr+1; ptr+3]
+      for f = 2:4
+        perm[ptr+1:ptr+4,f] = vtxperm[:,f] + ptr
+      end
       ptr += 4
     end
     # set permutation for nodes with 6-symmetries
@@ -1005,9 +1012,9 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   if cub.facecentroid
     alpha = (T)(1/3)
     A = T[alpha alpha alpha 0;
+          alpha alpha 0 alpha;
           0 alpha alpha alpha;
-          alpha 0 alpha alpha;
-          alpha alpha 0 alpha]
+          alpha 0 alpha alpha]
     x[:,ptr+1:ptr+4] = (A*vtx).'
     ptr += 4
   end
@@ -1015,9 +1022,9 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   for i = 1:cub.numS31
     alpha = cub.params[paramptr+1]/3
     A = T[alpha alpha alpha (1-3*alpha);
+          alpha alpha (1-3*alpha) alpha;
           (1-3*alpha) alpha alpha alpha;
-          alpha (1-3*alpha) alpha alpha;
-          alpha alpha (1-3*alpha) alpha]
+          alpha (1-3*alpha) alpha alpha]
     x[:,ptr+1:ptr+4] = (A*vtx).'
     ptr += 4
     paramptr += 1
@@ -1027,10 +1034,10 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   if cub.midedges
     A = T[0.5 0.5 0 0;
           0 0.5 0.5 0;
-          0 0 0.5 0.5;
-          0.5 0 0 0.5;
           0.5 0 0.5 0;
-          0 0.5 0 0.5]
+          0.5 0 0 0.5;
+          0 0.5 0 0.5;
+          0 0 0.5 0.5]
     x[:,ptr+1:ptr+6] = (A*vtx).'
     ptr += 6
   end
@@ -1051,18 +1058,18 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   # set edge nodes
   for i = 1:cub.numedge
     alpha = cub.params[paramptr+1]
-    A = T[alpha (1-alpha) 0 0;
-          (1-alpha) alpha 0 0;
-          0 alpha (1-alpha) 0;
-          0 (1-alpha) alpha 0;
-          0 0 alpha (1-alpha);
-          0 0 (1-alpha) alpha;
-          alpha 0 0 (1-alpha);
-          (1-alpha) 0 0 alpha;
-          alpha 0 (1-alpha) 0;
-          (1-alpha) 0 alpha 0;
-          0 alpha 0 (1-alpha);
-          0 (1-alpha) 0 alpha]
+    A = T[alpha (1-alpha) 0 0; # edge 1
+          (1-alpha) alpha 0 0; # edge 1
+          0 alpha (1-alpha) 0; # edge 2
+          0 (1-alpha) alpha 0; # edge 2
+          (1-alpha) 0 alpha 0; # edge 3
+          alpha 0 (1-alpha) 0; # edge 3
+          alpha 0 0 (1-alpha); # edge 4
+          (1-alpha) 0 0 alpha; # edge 4
+          0 alpha 0 (1-alpha); # edge 5
+          0 (1-alpha) 0 alpha; # edge 5
+          0 0 alpha (1-alpha); # edge 6
+          0 0 (1-alpha) alpha] # edge 6
     x[:,ptr+1:ptr+12] = (A*vtx).'
     ptr += 12
     paramptr += 1
@@ -1073,9 +1080,9 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
     A = T[alpha alpha (1-2*alpha);
           (1-2*alpha) alpha alpha;
           alpha (1-2*alpha) alpha]
-    facevtx = [1 2 3 4;
-               3 3 1 1;
-               2 4 4 2]
+    facevtx = [1 1 2 1;
+               2 4 4 3;
+               3 2 3 4]
     for face = 1:4
       x[:,ptr+1:ptr+3] = (A*vtx[facevtx[:,face],:]).'
       ptr += 3
@@ -1194,9 +1201,9 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   end
   # set Jacobian for S31 nodes
   A = T[1 1 1 -3;
+        1 1 -3 1;
         -3 1 1 1;
-        1 -3 1 1;
-        1 1 -3 1]./3
+        1 -3 1 1]./3
   for i = 1:cub.numS31
     for j = 1:3
       Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+4,
@@ -1221,18 +1228,18 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   end
   # set Jacobian for all nodes with 12-symmetries  
   # set Jacobian for edge nodes
-  A = T[1 -1 0 0;
-        -1 1 0 0;
-        0 1 -1 0;
-        0 -1 1 0;
-        0 0 1 -1;
-        0 0 -1 1;
-        1 0 0 -1;
-        -1 0 0 1;
-        1 0 -1 0;
-        -1 0 1 0;
-        0 1 0 -1;
-        0 -1 0 1]
+  A = T[1 -1 0 0; # edge 1
+        -1 1 0 0; # edge 1
+        0 1 -1 0; # edge 2
+        0 -1 1 0; # edge 2
+        -1 0 1 0; # edge 3
+        1 0 -1 0; # edge 3
+        1 0 0 -1; # edge 4
+        -1 0 0 1; # edge 4
+        0 1 0 -1; # edge 5
+        0 -1 0 1; # edge 5
+        0 0 1 -1; # edge 6
+        0 0 -1 1] # edge 6
   for i = 1:cub.numedge
     for j = 1:3
       Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+12,
@@ -1245,9 +1252,9 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   A = T[0.5 0.5 -1;
         -1 0.5 0.5;
         0.5 -1 0.5]
-  facevtx = [1 2 3 4;
-             3 3 1 1;
-             2 4 4 2]
+  facevtx = [1 1 2 1;
+             2 4 4 3;
+             3 2 3 4]
   for i = 1:cub.numfaceS21
     for face = 1:4
       for j = 1:3

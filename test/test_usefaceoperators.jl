@@ -1,5 +1,7 @@
 facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
 
+  if false
+    # this version of boundaryintegrate! is deprecated
   context("Testing SummationByParts.boundaryintegrate! (TriSBP, scalar field method)") do
     # build a two element grid, and verify the accuracy of the boundary integration
     function bndryflux(u, dξdx, nrm)
@@ -74,16 +76,16 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
       mappingjacobian!(sbp, x, dξdx, jac)
       bndryfaces = Array(Boundary, 12)
       bndryfaces[1] = Boundary(1,1)
-      bndryfaces[2] = Boundary(1,3)
+      bndryfaces[2] = Boundary(1,2)
       bndryfaces[3] = Boundary(1,4)
       bndryfaces[4] = Boundary(2,1)
-      bndryfaces[5] = Boundary(2,3)
+      bndryfaces[5] = Boundary(2,2)
       bndryfaces[6] = Boundary(2,4)
       bndryfaces[7] = Boundary(3,1)
-      bndryfaces[8] = Boundary(3,3)
+      bndryfaces[8] = Boundary(3,2)
       bndryfaces[9] = Boundary(3,4)
       bndryfaces[10] = Boundary(4,1)
-      bndryfaces[11] = Boundary(4,3)
+      bndryfaces[11] = Boundary(4,2)
       bndryfaces[12] = Boundary(4,4)
 
       u = zeros(Float64, (sbp.numnodes,4))
@@ -201,16 +203,16 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
       mappingjacobian!(sbp, x, dξdx, jac)
       bndryfaces = Array(Boundary, 12)
       bndryfaces[1] = Boundary(1,1)
-      bndryfaces[2] = Boundary(1,3)
+      bndryfaces[2] = Boundary(1,2)
       bndryfaces[3] = Boundary(1,4)
       bndryfaces[4] = Boundary(2,1)
-      bndryfaces[5] = Boundary(2,3)
+      bndryfaces[5] = Boundary(2,2)
       bndryfaces[6] = Boundary(2,4)
       bndryfaces[7] = Boundary(3,1)
-      bndryfaces[8] = Boundary(3,3)
+      bndryfaces[8] = Boundary(3,2)
       bndryfaces[9] = Boundary(3,4)
       bndryfaces[10] = Boundary(4,1)
-      bndryfaces[11] = Boundary(4,3)
+      bndryfaces[11] = Boundary(4,2)
       bndryfaces[12] = Boundary(4,4)
 
       u = zeros(Float64, (1,sbp.numnodes,4))
@@ -244,6 +246,8 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
       end
     end
   end
+
+  end # block of commented-out boundaryintegrate!
 
   context("Testing SummationByParts.integratefunctional! (TriSBP, scalar field method)") do
     # build a two element grid and verify the accuracy of boundary integration

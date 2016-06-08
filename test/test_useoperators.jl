@@ -170,9 +170,9 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       di = 1
       res = zeros(x)
       differentiate!(sbp, di, x, res)
-      @fact vec(res[1,:,1]) --> roughly(0.5.*ones(sbp.numnodes), atol=1e-13)
-      @fact vec(res[2,:,1]) --> roughly(zeros(sbp.numnodes), atol=1e-13)
-      @fact vec(res[3,:,1]) --> roughly(zeros(sbp.numnodes), atol=1e-13)
+      @fact vec(res[1,:,1]) --> roughly(0.5.*ones(sbp.numnodes), atol=5e-13)
+      @fact vec(res[2,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-13)
+      @fact vec(res[3,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-13)
     end
   end
 

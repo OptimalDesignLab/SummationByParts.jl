@@ -228,18 +228,18 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
 
   context("Testing SummationByParts.boundarymassmatrix (TetSymCub method)") do
     # check that mass matrix can be assembled into Ex and Ey
-    for d = 1:4
+    for d = 1:3
       cub, vtx = tetcubature(2*d-1, Float64)
       Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
       Hbndry, bndindx = SummationByParts.boundarymassmatrix(cub, vtx, d)
       Ex_inject = zeros(Ex)
       Ey_inject = zeros(Ey)
       Ez_inject = zeros(Ez)
-      Ex_inject[bndindx[:,2],bndindx[:,2]] += Hbndry
-      Ex_inject[bndindx[:,3],bndindx[:,3]] -= Hbndry
-      Ey_inject[bndindx[:,2],bndindx[:,2]] += Hbndry
-      Ey_inject[bndindx[:,4],bndindx[:,4]] -= Hbndry
-      Ez_inject[bndindx[:,2],bndindx[:,2]] += Hbndry
+      Ex_inject[bndindx[:,3],bndindx[:,3]] += Hbndry
+      Ex_inject[bndindx[:,4],bndindx[:,4]] -= Hbndry
+      Ey_inject[bndindx[:,3],bndindx[:,3]] += Hbndry
+      Ey_inject[bndindx[:,2],bndindx[:,2]] -= Hbndry
+      Ez_inject[bndindx[:,3],bndindx[:,3]] += Hbndry
       Ez_inject[bndindx[:,1],bndindx[:,1]] -= Hbndry
       @fact Ex_inject --> roughly(Ex, atol=1e-15)
       @fact Ey_inject --> roughly(Ey, atol=1e-15)
@@ -445,24 +445,24 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       @fact issorted(y[ptr+1:ptr+d-1]) --> true
       @fact z[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
       ptr += (d-1)
-      # check ordering of y and z nodes on third edge
+      # check ordering of y nodes on third edge
       @fact x[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
       @fact issorted(y[ptr+1:ptr+d-1], rev=true) --> true
-      @fact issorted(z[ptr+1:ptr+d-1]) --> true
-      ptr += (d-1)
-      # check ordering of z on fourth edge
-      @fact x[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
-      @fact y[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
-      @fact issorted(z[ptr+1:ptr+d-1]) --> true
-      ptr += (d-1)
-      # check ordering of y on fifth edge
-      @fact x[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
-      @fact issorted(y[ptr+1:ptr+d-1]) --> true
       @fact z[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
       ptr += (d-1)
-      # check ordering of x and z on sixth edge
+      # check ordering of z nodes on fourth edge
+      @fact x[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact y[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(z[ptr+1:ptr+d-1]) --> true
+      ptr += (d-1)
+      # check ordering of x and z on fifth edge
       @fact issorted(x[ptr+1:ptr+d-1], rev=true) --> true
       @fact y[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(z[ptr+1:ptr+d-1]) --> true
+      ptr += (d-1)
+      # check ordering of y and z on sixth edge
+      @fact x[ptr+1:ptr+d-1] --> roughly(-ones(d-1), atol=1e-15)
+      @fact issorted(y[ptr+1:ptr+d-1], rev=true) --> true
       @fact issorted(z[ptr+1:ptr+d-1]) --> true
       ptr += (d-1)
       # check that face nodes lie on appropriate faces
@@ -470,16 +470,16 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       # check that z = -1 on face 1
       @fact z[ptr+1:ptr+numface] --> roughly(-ones(numface), atol=1e-15)
       ptr += numface
-      # check that z = -1 - x - y on face 2
+      # check that y = -1 on face 2
+      @fact y[ptr+1:ptr+numface] --> roughly(-ones(numface), atol=1e-15)
+      ptr += numface
+      # check that z = -1 - x - y on face 3
       @fact z[ptr+1:ptr+numface] --> roughly(-ones(numface)
                                             -x[ptr+1:ptr+numface]
                                             -y[ptr+1:ptr+numface], atol=1e-15)
       ptr += numface
-      # check that x = -1 on face 3
+      # check that x = -1 on face 4
       @fact x[ptr+1:ptr+numface] --> roughly(-ones(numface), atol=1e-15)
-      ptr += numface
-      # check that y = -1 on face 4
-      @fact y[ptr+1:ptr+numface] --> roughly(-ones(numface), atol=1e-15)
       ptr += numface
     end
   end
