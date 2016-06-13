@@ -18,7 +18,6 @@ export AbstractSBP, TriSBP, TetSBP, TriFace, Boundary, Interface, calcnodes,
   interiorfaceinterpolate!, edgestabilize!, integratefunctional!,
   permuteinterface!
 
-
 # make sview point to either safe or unsafe views
 global const use_safe_views = true
 if use_safe_views

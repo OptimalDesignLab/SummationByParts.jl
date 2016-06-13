@@ -151,41 +151,4 @@ function permuteface!{Ti <: Integer, Tsol}(permvec::AbstractArray{Ti, 1},
   return nothing
 end
 
-@doc """
-### SummationByParts.findleftperm
 
-For a matrix `A`, we are given a right permutation of the columns, `A[:,permR]`.
-This function attempts to find the left permultation of rows such that
-                      `A[permL,:] = A[:,permR]`
-
-**Inputs**
-
-* `A`: a rectangular matrix for which the left permutation is sought
-* `permR`: the given right permutation of the columns
-
-**Outputs**
-
-* `permL`: the left permutation of the rows, if it exists
-
-**Returns**
-
-* `true` if the permutation exists, `false` otherwise
-
-"""->
-function findleftperm!{T}(A::AbstractArray{T,2}, permR::AbstractVector{Int},
-                          permL::AbstractVector{Int})
-  @assert( size(A,1) == length(permL) )
-  @assert( size(A,2) == length(permR) )
-  rows = [ sub(A,i,1:size(A,2)) for i=1:size(A,1) ]
-  permA = sortperm(rows; order=Base.Lexicographic)
-  AR = A[:,permR]
-  rows = [ sub(AR,i,1:size(AR,2)) for i=1:size(AR,1) ]
-  permAR = sortperm(rows, order=Base.Lexicographic)
-  invpermAR = invperm(permAR)
-  permL[:] = permA[invpermAR]
-  if A[permL,:] == AR
-    return true
-  else
-    return false
-  end
-end

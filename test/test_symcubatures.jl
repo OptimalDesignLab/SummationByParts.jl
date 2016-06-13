@@ -189,6 +189,48 @@ facts("Testing SymCubatures Module...") do
                             37 46 40 43; 38 47 41 44; 39 48 42 45] # face S21
   end
 
+  context("Testing findleftperm!") do
+    # This uses the matrix for computing the Tetrahedron's S22 orbit to test the
+    # findleftperm! method
+    alpha = pi
+    A = [alpha alpha (0.5-alpha) (0.5-alpha);
+         alpha (0.5-alpha) alpha (0.5-alpha);
+         alpha (0.5-alpha) (0.5-alpha) alpha;
+         (0.5-alpha) alpha alpha (0.5-alpha);
+         (0.5-alpha) alpha (0.5-alpha) alpha;
+         (0.5-alpha) (0.5-alpha) alpha alpha]
+    n = size(A,1)
+    m = size(A,2)
+    permR = shuffle([1:m;])
+    perm = zeros(Int, (n))
+
+    # First, find a valid left permutation, and check it
+    success = SymCubatures.findleftperm!(A, permR, perm)
+    @fact success --> true
+    @fact A[perm,:] --> A[:,permR]
+
+    # Next, transpose the matrix, and check that we recover the right permutation
+    permL = deepcopy(perm)
+    resize!(perm, m)
+    success = SymCubatures.findleftperm!(A.', permL, perm)
+    @fact success --> true
+    @fact A[:,perm] --> A[permL,:]
+    @fact perm --> permR
+
+    # Finally, check for failure in a 3x2 case that has no valid left permutation
+    A = [1.0 2.0; 3.0 4.0; 5.0 6.0]
+    n = size(A,1)
+    m = size(A,2)
+    resize!(permR, m)
+    resize!(perm, n)
+    permR = shuffle([1:m;])
+    while permR == [1:m;]
+      permR = shuffle([1:m;])
+    end
+    success = SymCubatures.findleftperm!(A, permR, perm)
+    @fact success --> false
+  end
+
   context("Test getfacebasedpermutation (LineSymCub method)") do
     quad = LineSymCub{Float64}(numedge=1, centroid=true)
     perm = SymCubatures.getfacebasedpermutation(quad)
@@ -216,6 +258,33 @@ facts("Testing SymCubatures Module...") do
     @fact perm[:,1] --> [1; 2; 4; 10; 11]
     @fact perm[:,2] --> [2; 3; 5; 12; 13]
     @fact perm[:,3] --> [3; 1; 6; 14; 15]
+  end
+
+  context("Test getfacebasedpermutation (TetSymCub method)") do
+    # This test works by providing different sets of vertices to calcnodes, and
+    # then checking for equivalence with a base set of vertices reordered using
+    # the face-based permutation
+    tetcub = TetSymCub{Float64}(vertices=true, midedges=true, centroid=true,
+                                facecentroid=true, numedge=2, numfaceS21=2,
+                                numS31=2, numS22=2)
+    SymCubatures.setparams!(tetcub, rand(tetcub.numparams))
+    perm = SymCubatures.getfacebasedpermutation(tetcub)
+
+    # get the nodes for each vertex arrangement
+    vtx = Float64[0 0 0; 1 0 0; 0 1 0; 0 0 1]
+    xf1 = SymCubatures.calcnodes(tetcub, vtx)   
+    vtx = Float64[0 0 0; 0 0 1; 1 0 0; 0 1 0]
+    xf2 = SymCubatures.calcnodes(tetcub, vtx)
+    vtx = Float64[1 0 0; 0 0 1; 0 1 0; 0 0 0]
+    xf3 = SymCubatures.calcnodes(tetcub, vtx)
+    vtx = Float64[0 0 0; 0 1 0; 0 0 1; 1 0 0]
+    xf4 = SymCubatures.calcnodes(tetcub, vtx)
+
+    # now, reorder xf1 and check against the other vertex arrangments
+    @fact xf1[:,perm[:,1]] --> roughly(xf1, atol=eps())
+    @fact xf1[:,perm[:,2]] --> roughly(xf2, atol=eps())
+    @fact xf1[:,perm[:,3]] --> roughly(xf3, atol=eps())
+    @fact xf1[:,perm[:,4]] --> roughly(xf4, atol=eps())
   end
 
   context("Test getneighbourpermutation (LineSymCub method)") do
