@@ -231,6 +231,45 @@ facts("Testing SymCubatures Module...") do
     @fact success --> false
   end
 
+  context("Test getpermutation (LineSymCub method)") do
+    quad = LineSymCub{Float64}(vertices=true, numedge=2, centroid=true)
+    SymCubatures.setparams!(quad, rand(quad.numparams))
+    vtxperm = [2; 1]
+    perm = SymCubatures.getpermutation(quad, vtxperm)
+    vtx = Float64[0 0; 1 1]
+    x = SymCubatures.calcnodes(quad, vtx)
+    vtx = Float64[1 1; 0 0]
+    xr = SymCubatures.calcnodes(quad, vtx)
+    @fact x[:,perm] --> roughly(xr, atol=eps())
+  end
+
+  context("Test getpermutation (TriSymCub method)") do
+    tricub = TriSymCub{Float64}(vertices=true, numedge=2, midedges=true,
+                                numS21 = 3, numS111=4, centroid=true)
+    SymCubatures.setparams!(tricub, rand(tricub.numparams))
+    vtxperm = [3; 2; 1]
+    perm = SymCubatures.getpermutation(tricub, vtxperm)
+    vtx = Float64[0 0 0; 1 0 0; 0.5 0.5 0.5]
+    x = SymCubatures.calcnodes(tricub, vtx)
+    vtx = Float64[0.5 0.5 0.5; 1 0 0; 0 0 0]
+    xr = SymCubatures.calcnodes(tricub, vtx)
+    @fact x[:,perm] --> roughly(xr, atol=eps())
+  end
+
+  context("Test getpermutation (TetSymCub method)") do
+    tetcub = TetSymCub{Float64}(vertices=true, midedges=true, centroid=true,
+                                facecentroid=true, numedge=2, numfaceS21=2,
+                                numS31=2, numS22=2)
+    SymCubatures.setparams!(tetcub, rand(tetcub.numparams))
+    vtxperm = [3; 4; 1; 2]
+    perm = SymCubatures.getpermutation(tetcub, vtxperm)
+    vtx = Float64[0 0 0; 1 0 0; 0 1 0; 0 0 1]
+    x = SymCubatures.calcnodes(tetcub, vtx)   
+    vtx = Float64[0 1 0; 0 0 1; 0 0 0; 1 0 0]
+    xr = SymCubatures.calcnodes(tetcub, vtx)
+    @fact x[:,perm] --> roughly(xr, atol=eps())
+  end  
+
   context("Test getfacebasedpermutation (LineSymCub method)") do
     quad = LineSymCub{Float64}(numedge=1, centroid=true)
     perm = SymCubatures.getfacebasedpermutation(quad)

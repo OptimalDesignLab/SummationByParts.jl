@@ -693,6 +693,209 @@ function findleftperm!{T}(A::AbstractArray{T,2}, permR::AbstractVector{Int},
 end
 
 @doc """
+### SymCubatures.getpermutation
+
+Returns a permutation of the cubature nodes based on a reordering of the
+vertices from their canonical orientation.  That is, finds the node ordering
+such that the new nodes have the same order as the old nodes, but relative to
+`vtxperm`.  This is useful for face-based operations.
+
+**Inputs**
+
+* `cub`: a symmetric cubature rule for which the permutation is sought
+* `vtxperm`: the permutation that is applied to the vertices
+
+**Outputs**
+
+* `perm`: permutation of the cubature nodes
+
+"""->
+function getpermutation{T}(cub::LineSymCub{T}, vtxperm::Array{Int,1})
+  @assert( length(vtxperm) == 2 )
+  perm = zeros(Int, (cub.numnodes))
+  ptr = 0
+  # set permutation for nodes with 2-symmetries
+  # set vertices
+  if cub.vertices
+    perm[ptr+1:ptr+2] = invperm(vtxperm) + ptr
+    ptr += 2
+  end
+  # set edge nodes
+  A = T[1 -1; -1 1]
+  permL = zeros(Int, 2)
+  @assert( findleftperm!(A, vtxperm, permL) )
+  for i = 1:cub.numedge
+    perm[ptr+1:ptr+2] = permL + ptr
+    ptr += 2
+  end
+  # set permutation for node with 1-symmetry
+  if cub.centroid
+    perm[ptr+1] = ptr+1
+    ptr += 1
+  end
+  @assert( ptr == cub.numnodes )
+  return perm  
+end
+
+function getpermutation{T}(cub::TriSymCub{T}, vtxperm::AbstractArray{Int,1})
+  @assert( length(vtxperm) == 3 )
+  perm = zeros(Int, (cub.numnodes))
+  ptr = 0
+  # set permutation for nodes with 3-symmetries
+  # set vertices
+  if cub.vertices
+    perm[ptr+1:ptr+3] = invperm(vtxperm) + ptr
+    ptr += 3
+  end
+  # mid-edge nodes
+  A = T[0.5 0.5 0; 0 0.5 0.5; 0.5 0 0.5]
+  permL = zeros(Int, 3)
+  @assert( findleftperm!(A, vtxperm, permL) )
+  if cub.midedges
+    perm[ptr+1:ptr+3] = permL + ptr
+    ptr += 3
+  end
+  # set S21 orbit nodes
+  A = T[0.5 0.5 -1; -1 0.5 0.5; 0.5 -1 0.5]
+  permL = zeros(Int, 3)
+  @assert( findleftperm!(A, vtxperm, permL) )
+  for i = 1:cub.numS21
+    perm[ptr+1:ptr+3] = permL + ptr
+    ptr += 3
+  end
+  # set permutation for nodes with 6-symmetries
+  # set edge nodes
+  A = T[1 -1 0; -1 1 0; 0 1 -1; 0 -1 1; -1 0 1; 1 0 -1]
+  permL = zeros(Int, 6)
+  @assert( findleftperm!(A, vtxperm, permL) )
+  for i = 1:cub.numedge
+    perm[ptr+1:ptr+6] = permL + ptr
+    ptr += 6
+  end
+  # set S111 orbit nodes
+  alpha = 0.1
+  beta = 0.4
+  A = T[alpha beta (1-alpha-beta);
+        beta alpha (1-alpha-beta);
+        (1-alpha-beta) alpha beta;
+        (1-alpha-beta) beta alpha;
+        beta (1-alpha-beta) alpha;
+        alpha (1-alpha-beta) beta]
+  permL = zeros(Int, 6)
+  @assert( findleftperm!(A, vtxperm, permL) )
+  for i = 1:cub.numS111
+    perm[ptr+1:ptr+6] = permL + ptr
+    ptr += 6
+  end
+  # set permutation for node with 1-symmetry
+  if cub.centroid
+    perm[ptr+1:ptr+1] = ptr+1
+    ptr += 1
+  end
+  @assert( ptr == cub.numnodes )  
+  return perm
+end
+
+function getpermutation{T}(cub::TetSymCub{T}, vtxperm::AbstractArray{Int,1})
+  @assert( length(vtxperm) == 4 )
+  perm = zeros(Int, (cub.numnodes))
+  ptr = 0
+  # set permutation for nodes with 4-symmetries
+  # set vertices
+  if cub.vertices
+    perm[ptr+1:ptr+4] = invperm(vtxperm) + ptr
+    ptr += 4
+  end
+  # set face centroid
+  A = T[1 1 1 0; 1 1 0 1; 0 1 1 1; 1 0 1 1]
+  permL = zeros(Int, 4)
+  @assert( findleftperm!(A, vtxperm, permL) )
+  if cub.facecentroid
+    perm[ptr+1:ptr+4] = permL + ptr
+    ptr += 4
+  end
+  # set S31 orbits
+  A = T[1 1 1 -3; 1 1 -3 1; -3 1 1 1; 1 -3 1 1]
+  permL = zeros(Int, 4)
+  @assert( findleftperm!(A, vtxperm, permL) )
+  for i = 1:cub.numS31
+    perm[ptr+1:ptr+4] = permL + ptr
+    ptr += 4
+  end
+  # set permutation for nodes with 6-symmetries
+  # set mid-edge nodes
+  A = T[0.5 0.5 0 0;
+        0 0.5 0.5 0;
+        0.5 0 0.5 0;
+        0.5 0 0 0.5;
+        0 0.5 0 0.5;
+        0 0 0.5 0.5]
+  permL = zeros(Int, 6)
+  @assert( findleftperm!(A, vtxperm, permL) )
+  if cub.midedges
+    perm[ptr+1:ptr+6] = permL + ptr
+    ptr += 6
+  end
+  # set S22 oribt nodes
+  A = T[1 1 -1 -1; 1 -1 1 -1; 1 -1 -1 1; -1 1 1 -1; -1 1 -1 1; -1 -1 1 1]
+  permL = zeros(Int, 6)
+  findleftperm!(A, vtxperm, permL)
+  for i = 1:cub.numS22
+    perm[ptr+1:ptr+6] = permL + ptr
+    ptr += 6
+  end
+  # set all nodes with 12-symmetries
+  # set edge nodes
+  A = T[1 -1 0 0; # edge 1
+        -1 1 0 0; # edge 1
+        0 1 -1 0; # edge 2
+        0 -1 1 0; # edge 2
+        -1 0 1 0; # edge 3
+        1 0 -1 0; # edge 3
+        1 0 0 -1; # edge 4
+        -1 0 0 1; # edge 4
+        0 1 0 -1; # edge 5
+        0 -1 0 1; # edge 5
+        0 0 1 -1; # edge 6
+        0 0 -1 1] # edge 6
+  permL = zeros(Int, 12)
+  findleftperm!(A, vtxperm, permL)
+  for i = 1:cub.numedge
+    perm[ptr+1:ptr+12] = permL + ptr
+    ptr += 12
+  end
+  # set face nodes corresponding to S21 orbit
+  A = T[0.5 0.5 -1 0; # face 1
+        -1 0.5 0.5 0;
+        0.5 -1 0.5 0;
+        0.5 -1 0 0.5; # face 2
+        -1 0.5 0 0.5;
+        0.5 0.5 0 -1;
+        0 0.5 -1 0.5; # face 3
+        0 -1 0.5 0.5;
+        0 0.5 0.5 -1;
+        0.5 0 0.5 -1; # face 4
+        -1 0 0.5 0.5;
+        0.5 0 -1 0.5]
+  permL = zeros(Int, 12)
+  findleftperm!(A, vtxperm, permL)
+  for i = 1:cub.numfaceS21
+    perm[ptr+1:ptr+12] = permL + ptr
+    ptr += 12
+  end
+  # set all nodes with 24-symmetries
+  # ... face nodes with 6 nodes and volume nodes
+    
+  # set node with 1 symmetry (i.e. the centroid)
+  if cub.centroid
+    perm[ptr+1:ptr+1] = ptr+1
+    ptr += 1
+  end
+  @assert( ptr == cub.numnodes )
+  return perm
+end
+
+@doc """
 ### SymCubatures.getfacebasedpermutation
 
 Returns a permutation of the volume nodes (or a subset of them) for each face,
@@ -717,23 +920,7 @@ function getfacebasedpermutation{T}(cub::LineSymCub{T}; faceonly::Bool=false)
   else
     perm = zeros(Int, (cub.numnodes, 2))
     perm[:,1] = [1:cub.numnodes;]
-    ptr = 0
-    # set permutation for nodes with 2-symmetries
-    # set vertices
-    if cub.vertices
-      perm[ptr+1:ptr+2,2] = [2; 1]
-      ptr += 2
-    end
-    # set edge nodes
-    for i = 1:cub.numedge
-      perm[ptr+1:ptr+2,2] = [ptr+2; ptr+1]
-      ptr += 2
-    end
-    # set permutation for node with 1-symmetry
-    if cub.centroid
-      perm[ptr+1,2] = ptr+1
-      ptr =+ 1
-    end
+    perm[:,2] = getpermutation(cub, [2;1])
   end
   return perm
 end
@@ -745,45 +932,8 @@ function getfacebasedpermutation{T}(cub::TriSymCub{T}; faceonly::Bool=false)
   else
     perm = zeros(Int, (cub.numnodes, 3))
     perm[:,1] = [1:cub.numnodes;] # no permutation on face 1
-    ptr = 0
-    # set permutation for nodes with 3-symmetries
-    # set vertices
-    if cub.vertices
-      perm[ptr+1:ptr+3,2] = [ptr+2; ptr+3; ptr+1]
-      perm[ptr+1:ptr+3,3] = [ptr+3; ptr+1; ptr+2]
-      ptr += 3
-    end
-    # mid-edge nodes
-    if cub.midedges
-      perm[ptr+1:ptr+3,2] = [ptr+2; ptr+3; ptr+1]
-      perm[ptr+1:ptr+3,3] = [ptr+3; ptr+1; ptr+2]
-      ptr += 3
-    end
-    # set S21 orbit nodes
-    for i = 1:cub.numS21
-      perm[ptr+1:ptr+3,2] = [ptr+2; ptr+3; ptr+1]
-      perm[ptr+1:ptr+3,3] = [ptr+3; ptr+1; ptr+2]
-      ptr += 3
-    end
-    # set permutation for nodes with 6-symmetries
-    # set edge nodes
-    for i = 1:cub.numedge
-      perm[ptr+1:ptr+6,2] = [ptr+3; ptr+4; ptr+5; ptr+6; ptr+1; ptr+2]
-      perm[ptr+1:ptr+6,3] = [ptr+5; ptr+6; ptr+1; ptr+2; ptr+3; ptr+4]
-      ptr += 6
-    end
-    # set S111 orbit nodes
-    for i = 1:cub.numS111
-      perm[ptr+1:ptr+6,2] = [ptr+3; ptr+4; ptr+5; ptr+6; ptr+1; ptr+2]
-      perm[ptr+1:ptr+6,3] = [ptr+5; ptr+6; ptr+1; ptr+2; ptr+3; ptr+4]
-      ptr += 6
-    end
-    # set permutation for node with 1-symmetry
-    if cub.centroid
-      perm[ptr+1,2] = ptr+1
-      perm[ptr+1,3] = ptr+1
-      ptr += 1
-    end
+    perm[:,2] = getpermutation(cub, invperm([2;3;1]))
+    perm[:,3] = getpermutation(cub, invperm([3;1;2]))
   end
   return perm
 end
@@ -795,120 +945,9 @@ function getfacebasedpermutation{T}(cub::TetSymCub{T}; faceonly::Bool=false)
   else
     perm = zeros(Int, (cub.numnodes, 4))
     perm[:,1] = [1:cub.numnodes;] # no permutation on face 1
-    ptr = 0
-    # define the vertex permutations on each face, which can be used to find the
-    # remaining permutations
-    vtxperm = zeros(Int, (4, 4))
-    vtxperm[:,1] = [1:4;]
-    vtxperm[:,2] = invperm([1;4;2;3])
-    vtxperm[:,3] = invperm([2;4;3;1])
-    vtxperm[:,4] = invperm([1;3;4;2])
-    # set permutation for nodes with 4-symmetries
-    # set vertices
-    if cub.vertices
-      for f = 2:4
-        perm[ptr+1:ptr+4,f] = invperm(vtxperm[:,f]) + ptr
-      end
-      ptr += 4
-    end
-    if cub.facecentroid
-      A = T[1 1 1 0; 1 1 0 1; 0 1 1 1; 1 0 1 1]
-      permL = zeros(Int, 4)
-      for f = 2:4
-        @assert( findleftperm!(A, vtxperm[:,f], permL) )
-        perm[ptr+1:ptr+4,f] = permL + ptr
-      end
-      ptr += 4
-    end
-    for i = 1:cub.numS31
-      A = T[1 1 1 -3; 1 1 -3 1; -3 1 1 1; 1 -3 1 1]
-      permL = zeros(Int, 4)
-      for f = 2:4
-        @assert( findleftperm!(A, vtxperm[:,f], permL) )
-        perm[ptr+1:ptr+4,f] = permL + ptr
-      end
-      ptr += 4
-    end
-    # set permutation for nodes with 6-symmetries
-    # set mid-edge nodes
-    if cub.midedges
-      A = T[0.5 0.5 0 0;
-            0 0.5 0.5 0;
-            0.5 0 0.5 0;
-            0.5 0 0 0.5;
-            0 0.5 0 0.5;
-            0 0 0.5 0.5]
-      permL = zeros(Int, 6)
-      for f = 2:4
-        @assert( findleftperm!(A, vtxperm[:,f], permL) )
-        perm[ptr+1:ptr+6,f] = permL + ptr
-      end
-      ptr += 6
-    end
-    # set S22 oribt nodes
-    for i = 1:cub.numS22
-      A = T[1 1 -1 -1; 1 -1 1 -1; 1 -1 -1 1; -1 1 1 -1; -1 1 -1 1; -1 -1 1 1]
-      permL = zeros(Int, 6)
-      for f = 2:4
-        findleftperm!(A, vtxperm[:,f], permL)
-        perm[ptr+1:ptr+6,f] = permL + ptr
-      end
-      ptr += 6
-    end
-    # set all nodes with 12-symmetries
-    # set edge nodes
-    for i = 1:cub.numedge
-      A = T[1 -1 0 0; # edge 1
-            -1 1 0 0; # edge 1
-            0 1 -1 0; # edge 2
-            0 -1 1 0; # edge 2
-            -1 0 1 0; # edge 3
-            1 0 -1 0; # edge 3
-            1 0 0 -1; # edge 4
-            -1 0 0 1; # edge 4
-            0 1 0 -1; # edge 5
-            0 -1 0 1; # edge 5
-            0 0 1 -1; # edge 6
-            0 0 -1 1] # edge 6
-      permL = zeros(Int, 12)
-      for f = 2:4
-        findleftperm!(A, vtxperm[:,f], permL)
-        perm[ptr+1:ptr+12,f] = permL + ptr
-      end
-      ptr += 12
-    end
-    # set face nodes corresponding to S21 orbit
-    for i = 1:cub.numfaceS21
-      A = T[0.5 0.5 -1 0; # face 1
-            -1 0.5 0.5 0;
-            0.5 -1 0.5 0;
-            0.5 -1 0 0.5; # face 2
-            -1 0.5 0 0.5;
-            0.5 0.5 0 -1;
-            0 0.5 -1 0.5; # face 3
-            0 -1 0.5 0.5;
-            0 0.5 0.5 -1;
-            0.5 0 0.5 -1; # face 4
-            -1 0 0.5 0.5;
-            0.5 0 -1 0.5]
-      permL = zeros(Int, 12)
-      for f = 2:4
-        findleftperm!(A, vtxperm[:,f], permL)
-        perm[ptr+1:ptr+12,f] = permL + ptr
-      end
-      ptr += 12
-    end
-    # set all nodes with 24-symmetries
-    # ... face nodes with 6 nodes and volume nodes
-    
-    # set node with 1 symmetry (i.e. the centroid)
-    if cub.centroid
-      for f = 2:4
-        perm[ptr+1:ptr+1,f] = ptr+1
-      end
-      ptr += 1
-    end
-    @assert( ptr == cub.numnodes )
+    perm[:,2] = getpermutation(cub, invperm([1;4;2;3]))
+    perm[:,3] = getpermutation(cub, invperm([2;4;3;1]))
+    perm[:,4] = getpermutation(cub, invperm([1;3;4;2]))
   end
   return perm
 end
@@ -922,7 +961,11 @@ the 'right' element's nodes match the 'left' element's nodes.  The permutation
 depends on the face dimension:
 
 * For triangle faces, i.e. line segments, there is only one possible orientation.
-* For tetrahedral faces, i.e. triangles, there are three orientations.
+* For tetrahedral faces, i.e. triangles, there are three orientations:
+
+1. The \"1\" vertex from each element's face is coincident;
+2. The \"1\" vertex from element 1 coincides with \"2\" vertex from element 2;
+3. The \"1\" vertex from element 1 coincides with \"3\" vertex from element 3.
 
 **Inputs**
 
@@ -930,7 +973,7 @@ depends on the face dimension:
 
 **Outputs**
 
-* `perm`: permutation of the volume nodes for each possible orientation
+* `perm`: permutation of the interface nodes for each possible orientation
 
 """->
 function getneighbourpermutation{T}(cub::LineSymCub{T})

@@ -219,8 +219,6 @@ immutable TriFace{T} <: AbstractFace{T}
   nbrperm::Array{Int,2}
   function TriFace(degree::Int, volcub::TriSymCub{T}, vtx::Array{T,2})
     @assert( degree >= 1 && degree <= 4 )
-    
-    #volcub, vtx = tricubature(2*degree-1, Float64, internal=!faceonly)
     facecub, facevtx = quadrature(2*degree, T, internal=true)
     normal = T[0 -1; 1 1; -1 0].'
     R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
