@@ -335,6 +335,28 @@ facts("Testing SymCubatures Module...") do
     @fact perm[:,1] --> [2; 1; 3]
   end
 
+  context("Test getneighbourpermutation (TriSymCub method)") do
+    # This test constructs a face in 3D based on the vertices [0,0,0], [1,1,1],
+    # and [-1,1,1].  It then computes the cubature nodes for this face using a
+    # reference orientation, and three different neigbhour orientations.  The
+    # permuted reference orientation should match the neighbour orientations.
+    tricub = TriSymCub{Float64}(vertices=true, numedge=2, midedges=true,
+                                numS21=3, numS111=4, centroid=true)
+    SymCubatures.setparams!(tricub, rand(tricub.numparams))
+    perm = SymCubatures.getneighbourpermutation(tricub)   
+    vtx = Float64[0 0 0; 1 1 1; -1 1 1]
+    x = SymCubatures.calcnodes(tricub, vtx)
+    vtx = Float64[0 0 0; -1 1 1; 1 1 1]
+    x1 = SymCubatures.calcnodes(tricub, vtx)
+    vtx = Float64[1 1 1; 0 0 0; -1 1 1]
+    x2 = SymCubatures.calcnodes(tricub, vtx)
+    vtx = Float64[-1 1 1; 1 1 1; 0 0 0]
+    x3 = SymCubatures.calcnodes(tricub, vtx)
+    @fact x[:,perm[:,1]] --> roughly(x1, atol=eps())
+    @fact x[:,perm[:,2]] --> roughly(x2, atol=eps())
+    @fact x[:,perm[:,3]] --> roughly(x3, atol=eps())
+  end
+
   for T = (Float32, Float64, Complex64, Complex128)
     @eval begin
       context("Testing calcnodes (LineSymCub method) for DataType "string($T)) do

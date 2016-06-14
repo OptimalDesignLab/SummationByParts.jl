@@ -964,8 +964,8 @@ depends on the face dimension:
 * For tetrahedral faces, i.e. triangles, there are three orientations:
 
 1. The \"1\" vertex from each element's face is coincident;
-2. The \"1\" vertex from element 1 coincides with \"2\" vertex from element 2;
-3. The \"1\" vertex from element 1 coincides with \"3\" vertex from element 3.
+2. The \"1\" vertex from face 1 coincides with \"2\" vertex from face 2;
+3. The \"1\" vertex from face 1 coincides with \"3\" vertex from face 2.
 
 **Inputs**
 
@@ -978,28 +978,16 @@ depends on the face dimension:
 """->
 function getneighbourpermutation{T}(cub::LineSymCub{T})
   perm = zeros(Int, (cub.numnodes, 1))
-  ptr = 0
-  # set permutation for nodes with 2-symmetries
-  # set vertices
-  if cub.vertices
-    perm[ptr+1:ptr+2,1] = [2; 1]
-    ptr += 2
-  end
-  # set edge nodes
-  for i = 1:cub.numedge
-    perm[ptr+1:ptr+2,1] = [ptr+2; ptr+1]
-    ptr += 2
-  end
-  # set permutation for node with 1-symmetry
-  if cub.centroid
-    perm[ptr+1,1] = ptr+1
-    ptr =+ 1
-  end
+  perm[:,1] = getpermutation(cub, [2;1])
   return perm
 end
 
 function getneighbourpermutation{T}(cub::TriSymCub{T})
-  error("getneighbourpermutation is not implemented (yet) for triangles")
+  perm = zeros(Int, (cub.numnodes, 3))
+  perm[:,1] = getpermutation(cub, invperm([1;3;2]))
+  perm[:,2] = getpermutation(cub, invperm([2;1;3]))
+  perm[:,3] = getpermutation(cub, invperm([3;2;1]))
+  return perm
 end
 
 @doc """
