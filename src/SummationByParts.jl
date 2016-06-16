@@ -11,8 +11,10 @@ using .OrthoPoly
 using .SymCubatures
 using .Cubature
 
-export AbstractSBP, TriSBP, TetSBP, TriFace, Boundary, Interface, calcnodes,
-  calcminnodedistance, weakdifferentiate!, differentiate!,
+export AbstractSBP, TriSBP, TetSBP
+export AbstractFace, TriFace, TetFace
+export Boundary, Interface
+export calcnodes, calcminnodedistance, weakdifferentiate!, differentiate!,
   directionaldifferentiate!, volumeintegrate!, mappingjacobian!,
   boundaryinterpolate!, boundaryintegrate!, interiorfaceintegrate!,
   interiorfaceinterpolate!, edgestabilize!, integratefunctional!,
@@ -187,11 +189,11 @@ abstract AbstractFace{T<:Number}
 @doc """
 ### SBP.TriFace
 
-Defines a face between two TriSBP operators of the same order.
+Defines a face between two TriSBP operators with the same cubature nodes
 
 **Fields**
 
-* `degree` : face integration is exact for polys of degree 2*degree
+* `degree` : face integration is exact for polys of degree 2*`degree`
 * `numnodes` : number of cubature nodes
 * `stencilsize` : number of nodes in the reconstruction stencil
 * `dstencilsize` : number of nodes in the derivative operator stencils
@@ -225,6 +227,56 @@ immutable TriFace{T} <: AbstractFace{T}
                                                        degree)
     D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
                                                      degree)
+    nbrperm = SymCubatures.getneighbourpermutation(facecub)
+    wface = SymCubatures.calcweights(facecub)
+    stencilsize = size(R,2)
+    dstencilsize = size(D,1)
+    new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, wface,
+        normal, R.', perm, D, Dperm, nbrperm)
+  end
+end
+
+@doc """
+### SBP.TetFace
+
+Defines a face between two TetSBP operators with the same cubature nodes
+
+**Fields**
+
+* `degree` : face integration is exact for polys of degree 2*`degree`
+* `numnodes` : number of cubature nodes
+* `stencilsize` : number of nodes in the reconstruction stencil
+* `dstencilsize` : number of nodes in the derivative operator stencils
+* `cub` : a symmetric cubature type for tetrahedral faces (i.e. triangles)
+* `wface` : mass matrix (quadrature) for the face
+* `interp[:,:]` : volume-to-face-nodes reconstruction operator
+* `perm[:,:]` : permutation for volume nodes so `interp` can be used on all sides
+* `deriv[:,:]` : derivative operators for face-based coordinate system
+* `dperm[:,:]` : permutation for volume nodes so `deriv` can be used on all sides
+* `nbrperm[:,:]` : permutation for face nodes on neighbour element
+
+"""->
+immutable TetFace{T} <: AbstractFace{T}
+  degree::Int
+  numnodes::Int
+  stencilsize::Int
+  dstencilsize::Int
+  cub::TriSymCub{T}
+  wface::Array{T,1}
+  normal::Array{T,2}
+  interp::Array{T,2}
+  perm::Array{Int,2}
+  deriv::Array{T,3}
+  dperm::Array{Int,2}
+  nbrperm::Array{Int,2}
+  function TetFace(degree::Int, volcub::TetSymCub{T}, vtx::Array{T,2})
+    @assert( degree >= 1 && degree <= 4 )
+    facecub, facevtx = tricubature(2*degree, T, internal=true)
+    normal = T[0 0 -1; 1 1 1; -1 0 0; 0 -1 0].'
+    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+                                                       degree)
+    #D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
+    #                                                 degree)
     nbrperm = SymCubatures.getneighbourpermutation(facecub)
     wface = SymCubatures.calcweights(facecub)
     stencilsize = size(R,2)

@@ -72,6 +72,60 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.buildfacereconstruction (TetSymCub method, faceonly=true)") do
+    # this checks that polynomials of total degree d are reconstructed accurately
+    for d = 1:3
+      cub, vtx = tetcubature(2*d-1, Float64, internal=false)
+      facecub, tmp = tricubature(2*d, Float64, internal=true)
+      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
+                                                         faceonly=true)
+      vtxface = [1 2 3; 1 4 2; 2 4 3; 1 3 4].'
+      xyz = SymCubatures.calcnodes(cub, vtx)
+      # loop over all monomials
+      for r = 0:d
+        for k = 0:r
+          for j = 0:r-k
+            i = r-j-k
+            u = vec((xyz[1,:].^i).*(xyz[2,:].^j).*(xyz[3,:].^k))
+            # loop over each face
+            for f = 1:4
+              xyzface = SymCubatures.calcnodes(facecub, vtx[vtxface[:,f],:])
+              uface = vec((xyzface[1,:].^i).*(xyzface[2,:].^j).*(xyzface[3,:].^k))
+              @fact R*u[perm[:,f]] --> roughly(uface, atol=1e-15)
+            end
+          end
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildfacereconstruction (TetSymCub method, faceonly=false, internal=true)") do
+    # this checks that polynomials of total degree d are reconstructed accurately
+    for d = 1:2
+      cub, vtx = tetcubature(2*d-1, Float64, internal=true)
+      facecub, tmp = tricubature(2*d, Float64, internal=true)
+      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
+                                                         faceonly=true)
+      vtxface = [1 2 3; 1 4 2; 2 4 3; 1 3 4].'
+      xyz = SymCubatures.calcnodes(cub, vtx)
+      # loop over all monomials
+      for r = 0:d
+        for k = 0:r
+          for j = 0:r-k
+            i = r-j-k
+            u = vec((xyz[1,:].^i).*(xyz[2,:].^j).*(xyz[3,:].^k))
+            # loop over each face
+            for f = 1:4
+              xyzface = SymCubatures.calcnodes(facecub, vtx[vtxface[:,f],:])
+              uface = vec((xyzface[1,:].^i).*(xyzface[2,:].^j).*(xyzface[3,:].^k))
+              @fact R*u[perm[:,f]] --> roughly(uface, atol=1e-15)
+            end
+          end
+        end
+      end
+    end
+  end
+
   context("Testing SummationByParts.buildfacederivative (TriSymCub method)") do
     # this checks that polynomials of total degree d are differentiated
     for d = 1:4

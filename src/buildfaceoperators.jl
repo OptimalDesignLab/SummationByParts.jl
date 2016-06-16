@@ -51,6 +51,40 @@ function buildfacereconstruction{T}(facecub::LineSymCub{T}, cub::TriSymCub{T},
   return R, perm
 end
 
+function buildfacereconstruction{T}(facecub::TriSymCub{T}, cub::TetSymCub{T},
+                                    vtx::Array{T,2}, d::Int; faceonly::Bool=false)
+  # first, decide whether or not to use volume nodes or just face nodes
+  if SymCubatures.getnumfacenodes(cub) >= (d+1)
+    perm = SymCubatures.getfacebasedpermutation(cub, faceonly=true)
+  else
+    perm = SymCubatures.getfacebasedpermutation(cub, faceonly=false)
+  end
+  # evaluate the basis at the volume and face cubature points
+  N = convert(Int, (d+1)*(d+2)*(d+3)/6 )
+  Pv = zeros(T, (size(perm,1),N) )  
+  Pf = zeros(T, (facecub.numnodes,N) ) 
+  xv = SymCubatures.calcnodes(cub, vtx)
+  xf = SymCubatures.calcnodes(facecub, vtx[[1;2;3],:])
+  ptr = 1
+  for r = 0:d
+    for k = 0:r
+      for j = 0:r-k
+        i = r-j-k
+        Pv[:,ptr] = OrthoPoly.proriolpoly(vec(xv[1,perm[:,1]]),
+                                          vec(xv[2,perm[:,1]]),
+                                          vec(xv[3,perm[:,1]]),
+                                          i, j, k)
+        Pf[:,ptr] = OrthoPoly.proriolpoly(vec(xf[1,:]), vec(xf[2,:]),
+                                          vec(xf[3,:]), i, j, k)
+        ptr += 1
+      end
+    end
+  end
+  #R = Pf/Pv
+  R = (pinv(Pv.')*Pf.').'
+  return R, perm
+end
+
 @doc """
 ### SummationByParts.buildfacederivatives
 

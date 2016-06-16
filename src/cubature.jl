@@ -430,12 +430,12 @@ function tetcubature(q::Int, T=Float64; internal::Bool=false,
   if internal
     # all nodes are internal
     @assert( q >= 1 )
-    if q == 2
+    if q <= 2
       # P1; 3rd order cubature
       cub = SymCubatures.TetSymCub{T}(vertices=false, numS31=1)
       SymCubatures.setweights!(cub, T[1/3])
       SymCubatures.setparams!(cub, T[(1 - sqrt(5)/5)*3/4])
-    elseif q == 3
+    elseif q <= 3
       # P2; 4th order cubature
       cub = SymCubatures.TetSymCub{T}(vertices=false, numS31=1, numS22=1)
       SymCubatures.setweights!(cub, T[0.06483158243276162;
