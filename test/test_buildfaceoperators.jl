@@ -74,7 +74,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
 
   context("Testing SummationByParts.buildfacereconstruction (TetSymCub method, faceonly=true)") do
     # this checks that polynomials of total degree d are reconstructed accurately
-    for d = 1:3
+    for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64, internal=false)
       facecub, tmp = tricubature(2*d, Float64, internal=true)
       R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
@@ -105,7 +105,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
       cub, vtx = tetcubature(2*d-1, Float64, internal=true)
       facecub, tmp = tricubature(2*d, Float64, internal=true)
       R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
-                                                         faceonly=true)
+                                                         faceonly=false)
       vtxface = [1 2 3; 1 4 2; 2 4 3; 1 3 4].'
       xyz = SymCubatures.calcnodes(cub, vtx)
       # loop over all monomials

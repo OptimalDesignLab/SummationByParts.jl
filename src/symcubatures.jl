@@ -644,9 +644,9 @@ function getfacenodeindices{T}(cub::TetSymCub{T})
   end
   # add face S21 orbits to indices
   for i = 1:cub.numfaceS21
-    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+10 ptr+4 ptr+7;
-                                         ptr+2 ptr+11 ptr+5 ptr+8;
-                                         ptr+3 ptr+12 ptr+6 ptr+9]
+    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+4 ptr+7 ptr+10;
+                                         ptr+2 ptr+5 ptr+8 ptr+11;
+                                         ptr+3 ptr+6 ptr+9 ptr+12]
     ptr += 12
     idxptr += 3
   end
@@ -940,7 +940,7 @@ end
 
 function getfacebasedpermutation{T}(cub::TetSymCub{T}; faceonly::Bool=false)
   if faceonly
-    perm = zeros(Int, (getnumfacenodes(cub), 3))
+    perm = zeros(Int, (getnumfacenodes(cub), 4))
     perm = getfacenodeindices(cub)
   else
     perm = zeros(Int, (cub.numnodes, 4))

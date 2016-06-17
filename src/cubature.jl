@@ -259,17 +259,6 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
                                      0.18315242701954149])
       cub_degree = 4
     elseif q <= 5
-      # P3; 7th order cubature
-      # cub = SymCubatures.TriSymCub{T}(vertices=false, centroid=false,
-      #                                 numS21=2, numS111=1)
-      # SymCubatures.setweights!(cub, T[0.1016898127404136;
-      #                                 0.23357255145275863;
-      #                                 0.16570215123674722])
-      # SymCubatures.setparams!(cub, T[0.1261780289830045;
-      #                                0.49857349034182097;
-      #                                0.10629009968963399;
-      #                                0.6207049020675687])
-      # cub_degree = 6
       # P3; 6th order cubature
       cub = SymCubatures.TriSymCub{T}(vertices=false, centroid=true,
                                       numS21=1, numS111=1)
@@ -280,21 +269,19 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
                                      0.14215944055500324;
                                      0.6226442585632832])
       cub_degree = 5
+    elseif q <= 6
+      # P3; 7th order cubature
+      cub = SymCubatures.TriSymCub{T}(vertices=false, centroid=false,
+                                      numS21=2, numS111=1)
+      SymCubatures.setweights!(cub, T[0.1016898127404136;
+                                      0.23357255145275863;
+                                      0.16570215123674722])
+      SymCubatures.setparams!(cub, T[0.1261780289830045;
+                                     0.49857349034182097;
+                                     0.10629009968963399;
+                                     0.6207049020675687])
+      cub_degree = 6
     elseif q <= 7
-      # P4; 9th order cubature
-      # cub = SymCubatures.TriSymCub{T}(vertices=false, numS21=4, numS111=1)
-      # SymCubatures.setweights!(cub, T[0.05415768359243055;
-      #                                 0.11606844251884181;
-      #                                 0.16305903205856434;
-      #                                 0.18042409969012593;
-      #                                 0.07647870440335205])
-      # SymCubatures.setparams!(cub, T[0.09199464041197784;
-      #                                0.9547402313677645;
-      #                                0.353676230440559;
-      #                                0.8037465193903021;
-      #                                0.4612850345245523;
-      #                                0.06105167151116454])
-      # cub_degree = 8
       # P4; 8th order cubature
       cub = SymCubatures.TriSymCub{T}(vertices=false, numS21=3, numS111=1)
       SymCubatures.setweights!(cub, T[0.045386157905236965;
@@ -318,6 +305,21 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
       #                                0.8413468069012109;
       #                                0.08815074437486997;
       #                                0.624003943088726])
+    elseif q <= 8
+      # P4; 9th order cubature
+      cub = SymCubatures.TriSymCub{T}(vertices=false, numS21=4, numS111=1)
+      SymCubatures.setweights!(cub, T[0.05415768359243055;
+                                      0.11606844251884181;
+                                      0.16305903205856434;
+                                      0.18042409969012593;
+                                      0.07647870440335205])
+      SymCubatures.setparams!(cub, T[0.09199464041197784;
+                                     0.9547402313677645;
+                                     0.353676230440559;
+                                     0.8037465193903021;
+                                     0.4612850345245523;
+                                     0.06105167151116454])
+      cub_degree = 8
     else
       error("polynomial degree must be <= 7 (presently)\n")
     end
@@ -446,21 +448,21 @@ function tetcubature(q::Int, T=Float64; internal::Bool=false,
   else
     # at least (q+1)/2+1 nodes along each edge
     @assert( q >= 1 && q <= 7 && mod(q,2) == 1)
-    if q == 1
+    if q <= 1
       # P1 (vertices only); 2nd order cubature
       cub = SymCubatures.TetSymCub{T}()
       SymCubatures.setweights!(cub, T[1/3])
-    elseif q == 3
+    elseif q <= 3
       # P2 + 1 bubble node; 4th order cubature
       cub = SymCubatures.TetSymCub{T}(midedges=true, centroid=true)
       SymCubatures.setweights!(cub, T[1/45 4/45 32/45])
-    elseif q == 5
+    elseif q <= 5
       # P3 + 4 bubble nodes; 6th order cubature
       cub = SymCubatures.TetSymCub{T}(facecentroid=true, numedge=1, numS31=1)
       SymCubatures.setweights!(cub, T[0.004421633248304776 0.20653163611605146
                                       0.06935370366814568 0.0176754534336105])
       SymCubatures.setparams!(cub, T[0.45720884759834435 0.30480589839889616])
-    elseif q == 7
+    elseif q <= 7
       # P3 + 11 bubble nodes; 8th order cubature
       cub = SymCubatures.TetSymCub{T}(midedges=true, centroid=true, numedge=1,
                                       numfaceS21=1, numS31=1, numS22=1)

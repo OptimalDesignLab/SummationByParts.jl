@@ -186,7 +186,7 @@ facts("Testing SymCubatures Module...") do
                             13 16 17 15; 14 17 18 18; 15 13 14 16; # midedges
                             25 31 33 30; 26 32 34 29; 27 34 36 35; 
                             28 33 35 36; 29 26 28 32; 30 25 27 31; # edge nodes
-                            37 46 40 43; 38 47 41 44; 39 48 42 45] # face S21
+                            37 40 43 46; 38 41 44 47; 39 42 45 48] # face S21
   end
 
   context("Testing findleftperm!") do
