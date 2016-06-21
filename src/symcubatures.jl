@@ -543,6 +543,33 @@ function getinteriornodeindices{T}(cub::TetSymCub{T})
 end
 
 @doc """
+### SymCubatures.getfacevertexindices
+
+Returns the indices of the vertices that make up each face.  This is useful when
+building nodes on a given face using Barycentric coordinates
+
+**Inputs**
+
+* `cub`: a symmetric cubature rule whose face vertices are sought
+
+**Outputs**
+
+* `facevtx`: subarray `facevtx[:,f]` lists the vertices of face `f` 
+
+"""->
+function getfacevertexindices{T}(cub::LineSymCub{T})
+  return [1 2]
+end
+
+function getfacevertexindices{T}(cub::TriSymCub{T})
+  return [1 2 3; 2 3 1]
+end
+
+function getfacevertexindices{T}(cub::TetSymCub{T})
+  return [1 1 2 1; 2 4 4 3; 3 2 3 4]
+end
+
+@doc """
 ### SymCubatures.getfacenodeindices
 
 Returns the indices of the nodes that lie on each face.  See getbndrynodeindices

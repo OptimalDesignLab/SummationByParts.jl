@@ -132,12 +132,12 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int;
     F, dF = Cubature.cubatureresidual(cub, q)
     res = norm(F)
     hist ? print("\titer ",k,": res norm = ",res,"\n") : nothing
-    if (res < tol)
+    if res < tol
       return
     end
 
     # trust-region like update
-    if (res > res_old)
+    if res > res_old
       v -= dv
       SymCubatures.setparams!(cub, v[1:cub.numparams])
       SymCubatures.setweights!(cub, v[cub.numparams+1:end])

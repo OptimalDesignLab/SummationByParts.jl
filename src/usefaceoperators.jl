@@ -15,7 +15,7 @@ the third dimension for the element index (boundary index).
 
 **Inputs**
 
-* `sbpface`: an SBP face operator type
+* `sbpface`: an SBP AbstractFace operator type
 * `bndryfaces`: list of boundary faces stored as an array of `Boundary`s
 * `uvol`: array of field data that is being interpolated
 
@@ -71,7 +71,7 @@ specified face of the element.
 
 **Inputs**
 
-* `sbpface`: an SBP face operator
+* `sbpface`: an SBP AbstractFace operator
 * `face`: the face of the element to interpolate to
 * `uvol`: the values at the nodes of the elements, dimensions numcomp x numnodes
            where numcomp is the number of components in the vector field and
@@ -100,9 +100,9 @@ end
 @doc """
 ### SummationByParts.boundaryintegrate!
 
-Integrates a given flux over a boundary using appropriate mass matrices defined
-on the element faces.  Different methods are available depending on the rank of
-`flux`:
+Scales flux values at boundary cubature points by cubature weights, and then
+performs transposed interpolation/extropolation back to volume nodes. Different
+methods are available depending on the rank of `flux`:
 
 * For *scalar* fields, it is assumed that `flux` is a rank-2 array, with the
 first dimension for the face-node index, and the second dimension for the
@@ -117,7 +117,7 @@ index.
 
 **Inputs**
 
-* `sbp`: an SBP operator type
+* `sbpface`: an SBP AbstractFace type
 * `bndryfaces`: list of boundary faces stored as an array of `Boundary`s
 * `flux`: array of flux data that is being integrated
 * `±`: PlusFunctor to add to res, MinusFunctor to subract
@@ -130,45 +130,6 @@ index.
   consistent.
 
 """->
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
-                                            bndryfaces::Array{Boundary},
-                                            flux::AbstractArray{Tflx,2},
-                                            res::AbstractArray{Tres,2},
-                                            (±)::UnaryFunctor=Add())
-  @assert( sbp.numnodes == size(res,1) )
-  @assert( sbp.numfacenodes == size(flux,1) )
-  @assert( size(bndryfaces,1) == size(flux,2) )
-  for (bindex, bndry) in enumerate(bndryfaces)
-    for i = 1:sbp.numfacenodes        
-      for j = 1:sbp.numfacenodes
-        jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
-        res[jB,bndry.element] += ±(sbp.wface[j,i]*flux[i,bindex])
-      end
-    end
-  end
-end
-
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
-                                            bndryfaces::Array{Boundary},
-                                            flux::AbstractArray{Tflx,3},
-                                            res::AbstractArray{Tres,3};
-                                            (±)::UnaryFunctor=Add())
-  @assert( size(res,1) == size(flux,1) )
-  @assert( sbp.numnodes == size(res,2) )
-  @assert( sbp.numfacenodes == size(flux,2) )
-  @assert( size(bndryfaces,1) == size(flux,3) )
-  for (bindex, bndry) in enumerate(bndryfaces)
-    for i = 1:sbp.numfacenodes        
-      for j = 1:sbp.numfacenodes
-        jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
-        for field = 1:size(res,1)
-          res[field,jB,bndry.element] += ±(sbp.wface[j,i]*flux[field,i,bindex])
-        end
-      end
-    end
-  end
-end
-
 function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
                                             bndryfaces::Array{Boundary},
                                             flux::AbstractArray{Tflx,2},
@@ -272,35 +233,6 @@ function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-# function boundaryintegrate!{Tsbp,Tsol,Tres}(sbpface::AbstractFace{Tsbp},
-#                                             bndryfaces::Array{Boundary},
-#                                             u::AbstractArray{Tsol,2},
-#                                             fluxfunc::FluxFunction{Tsol},
-#                                             res::AbstractArray{Tres,2})
-#   @assert( size(sol,1) == size(res,1) )
-#   @assert( size(sbpface.interp,2) <= size(sol,1) )
-#   @inbounds begin
-#     for (bindex, bndry) in enumerate(bndryfaces)
-#       for i = 1:sbpface.numnodes
-#         # interpolate to face
-#         uface = 0.0
-#         for j = 1:sbpface.stencilsize
-#           uface += sbpface.interp[i,j]*u[sbpface.perm[j,bndry.face],
-#                                          bndry.element]
-#         end
-#         # compute flux at this face node
-#         flux = 0.0
-#         fluxfunc(uface, sbpface.normal, flux)
-#         # return to volume nodes
-#         for j = 1:sbpface.numvolnodes
-#           res[sbpface.perm[j,bndry.face],bndry.element] +=
-#             sbpface.wface[i]*sbpface.interp[i,j]*flux
-#         end
-#       end
-#     end
-#   end
-# end
-
 @doc """
 ### SummationByParts.interiorfaceinterpolate!
 
@@ -376,14 +308,13 @@ end
 @doc """
 ### SummationByParts.interiorfaceintegrate!
 
-Integrates a given flux over interior element interfaces using appropriate mass
-matrices defined on the element faces.  Different methods are available
-depending on the rank of `flux`:
+Scales flux values at element-interface cubature points by cubature weights, and
+then performs transposed interpolation/extropolation back to volume nodes.
+Different methods are available depending on the rank of `flux`:
 
 * For *scalar* fields, it is assumed that `flux` is a rank-2 array, with the
 first dimension for the face-node index, and the second dimension for the
 interface index.
-
 * For *vector* fields, `flux` is a rank-3 array, with the first dimension for
 the index of the vector field, the second dimension for the face-node index, and
 the third dimension for the interface index.
@@ -394,7 +325,7 @@ index.
 
 **Inputs**
 
-* `sbp`: an SBP operator type
+* `sbpface`: an SBP AbstractFace type
 * `ifaces`: list of element interfaces stored as an array of `Interface`s
 * `flux`: array of flux data that is being integrated
 * `±`: PlusFunctor to add to res, MinusFunctor to subract
@@ -407,53 +338,6 @@ index.
   consistent.
 
 """->
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
-                                                ifaces::Array{Interface},
-                                                flux::AbstractArray{Tflx,2},
-                                                res::AbstractArray{Tres,2},
-                                                (±)::UnaryFunctor=Add())
-  @assert( sbp.numnodes == size(res,1) )
-  @assert( sbp.numfacenodes == size(flux,1) )
-  @assert( size(ifaces,1) == size(flux,2) )
-  # JEH: temporary, until nbrnodeindex is part of sbp type
-  nbrnodeindex = [sbp.numfacenodes:-1:1;]
-  for (findex, face) in enumerate(ifaces)
-    for i = 1:sbp.numfacenodes    
-      for j = 1:sbp.numfacenodes
-        jL = sbp.facenodes[j, face.faceL]::Int
-        jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
-        res[jL,face.elementL] += ±(sbp.wface[j,i]*flux[i,findex])
-        res[jR,face.elementR] -= ±(sbp.wface[j,i]*flux[i,findex])
-      end
-    end
-  end
-end
-
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
-                                                ifaces::Array{Interface},
-                                                flux::AbstractArray{Tflx,3},
-                                                res::AbstractArray{Tres,3},
-                                                (±)::UnaryFunctor=Add())
-  @assert( size(res,1) == size(flux,1) )
-  @assert( sbp.numnodes == size(res,2) )
-  @assert( sbp.numfacenodes == size(flux,2) )
-  @assert( size(ifaces,1) == size(flux,3) )
-  # JEH: temporary, until nbrnodeindex is part of sbp type
-  nbrnodeindex = [sbp.numfacenodes:-1:1;]
-  for (findex, face) in enumerate(ifaces)
-    for i = 1:sbp.numfacenodes    
-      for j = 1:sbp.numfacenodes
-        jL = sbp.facenodes[j, face.faceL]::Int
-        jR = sbp.facenodes[nbrnodeindex[j], face.faceR]::Int
-        for field = 1:size(res,1)
-          res[field,jL,face.elementL] += ±(sbp.wface[j,i]*flux[field,i,findex])
-          res[field,jR,face.elementR] -= ±(sbp.wface[j,i]*flux[field,i,findex])
-        end
-      end
-    end
-  end
-end
-
 function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
                                                 ifaces::Array{Interface},
                                                 flux::AbstractArray{Tflx,2},

@@ -24,10 +24,9 @@ end
 @doc """
 ### SummationByParts.calcnodes
 
-This function returns the node coordinates for an SBP operator.  The nodes are
-ordered first by vertex, then by edge (with nodes ordered in sequence along the
-directed edge), then by face (if appropriate), and then finally by volumn nodes.
-This function assumes the element mapping is linear, i.e. edges are lines.
+This function returns the node coordinates for an SBP operator.  It basically
+calls calcnodes for the underlying SymCubature.  This function assumes the
+element mapping is linear, i.e. edges are lines.
 
 **Inputs**
 
@@ -50,18 +49,8 @@ This function assumes the element mapping is linear, i.e. edges are lines.
   x[:,:,2] = calcnodes(sbp, vtx)
 ```
 """->
-function calcnodes{T}(sbp::TriSBP{T}, vtx::Array{T}=sbp.vtx)
-  perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
-  x = zeros(T, (2, sbp.numnodes))
-  x = SymCubatures.calcnodes(sbp.cub, vtx)
-  return x[:,perm]
-end
-
-function calcnodes{T}(sbp::TetSBP{T}, vtx::Array{T}=sbp.vtx)
-  perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
-  x = zeros(T, (3, sbp.numnodes))
-  x = SymCubatures.calcnodes(sbp.cub, vtx)
-  return x[:,perm]
+function calcnodes{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx)
+  return SymCubatures.calcnodes(sbp.cub, vtx)
 end
 
 @doc """
@@ -178,43 +167,6 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
     end
   end
 end
-
-# macro update(x,op,y)
-#   return :($x=$op($x,$y))
-# end
-# function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int, 
-#                                             flux::AbstractArray{Tflx,2},
-#                                             res::AbstractArray{Tres,2},
-#                                             op::Function; trans::Bool=false)
-#   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
-#   @assert( length(flux) == length(res) )
-#   @assert( di > 0 && di <= size(sbp.Q,3) )
-#   if trans # apply transposed Q
-#     @inbounds begin
-#       for elem = 1:size(flux,2)
-#         for i = 1:sbp.numnodes
-#           for j = 1:sbp.numnodes
-#             # for op = + the following is equivalent to
-#             # res[i,elem] += sbp.Q[j,i,di]*flux[j,elem] 
-#             @update(res[i,elem], op, sbp.Q[j,i,di]*flux[j,elem])
-#           end
-#         end
-#       end
-#     end
-#   else # apply Q
-#     @inbounds begin
-#       for elem = 1:size(flux,2)
-#         for i = 1:sbp.numnodes
-#           for j = 1:sbp.numnodes
-#             # for op = + the following is equivalent to
-#             # res[i,elem] += sbp.Q[i,j,di]*flux[j,elem] 
-#             @update(res[i,elem], op, sbp.Q[i,j,di]*flux[j,elem])
-#           end
-#         end
-#       end
-#     end
-#   end
-# end
 
 @doc """
 ### SummationByParts.differentiate!

@@ -209,6 +209,23 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.boundaryoperator! (TetFace method)") do
+    # check by comparing with Ex, Ey produced by boundaryoperators
+    for d = 1:4
+      cub, vtx = tetcubature(2*d-1, Float64)
+      w = SymCubatures.calcweights(cub)
+      Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
+      face = TetFace{Float64}(d, cub, vtx)
+      E = zeros(cub.numnodes,cub.numnodes)
+      SummationByParts.boundaryoperator!(face, 1, E)
+      @fact E --> roughly(Ex, atol=1e-15)
+      SummationByParts.boundaryoperator!(face, 2, E)
+      @fact E --> roughly(Ey, atol=1e-15)
+      SummationByParts.boundaryoperator!(face, 3, E)
+      @fact E --> roughly(Ez, atol=1e-15)
+    end
+  end
+
   context("Testing SummationByParts.boundarymassmatrix (TriSymCub method)") do
     # check that mass matrix can be assembled into Ex and Ey
     for d = 1:4
@@ -269,7 +286,13 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     sizenull = [0, 0, 6, 45]
     for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64)
-      A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d)
+      face = TetFace{Float64}(d, cub, vtx)
+      Q = zeros(cub.numnodes,cub.numnodes,3)
+      SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
+      SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+      SummationByParts.boundaryoperator!(face, 3, slice(Q,:,:,3))
+      scale!(Q, 0.5)
+      A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
       @fact size(nullspace(A),2) --> sizenull[d]
     end
   end
@@ -346,13 +369,14 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildoperators (TetSymCub method)") do
+  context("Testing SummationByParts.buildoperators (TetSymCub method, internal=false)") do
+    tol = [1e-12; 1e-12; 1e-12; 5e-8]
     for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64)
-      w, Qx, Qy, Qz = SummationByParts.buildoperators(cub, vtx, d)
-      Dx = diagm(1./w)*Qx
-      Dy = diagm(1./w)*Qy
-      Dz = diagm(1./w)*Qz
+      w, Q = SummationByParts.buildoperators(cub, vtx, d)
+      Dx = diagm(1./w)*Q[:,:,1]
+      Dy = diagm(1./w)*Q[:,:,2]
+      Dz = diagm(1./w)*Q[:,:,3]
       xyz = SymCubatures.calcnodes(cub, vtx)      
       x = vec(xyz[1,:]); y = vec(xyz[2,:]); z = vec(xyz[3,:])
       for r = 0:d
@@ -363,9 +387,36 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
             dudx = (i.*x.^max(0,i-1)).*(y.^j).*(z.^k)
             dudy = (x.^i).*(j.*y.^max(0,j-1)).*(z.^k)
             dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
-            @fact Dx*u --> roughly(dudx, atol=1e-12)
-            @fact Dy*u --> roughly(dudy, atol=1e-12)
-            @fact Dz*u --> roughly(dudz, atol=1e-12)
+            @fact Dx*u --> roughly(dudx, atol=tol[d])
+            @fact Dy*u --> roughly(dudy, atol=tol[d])
+            @fact Dz*u --> roughly(dudz, atol=tol[d])
+          end
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildoperators (TetSymCub method, internal=true)") do
+    tol = [1e-12; 1e-12; 1e-12; 5e-8]
+    for d = 1:2
+      cub, vtx = tetcubature(2*d-1, Float64, internal=true)
+      w, Q = SummationByParts.buildoperators(cub, vtx, d)
+      Dx = diagm(1./w)*Q[:,:,1]
+      Dy = diagm(1./w)*Q[:,:,2]
+      Dz = diagm(1./w)*Q[:,:,3]
+      xyz = SymCubatures.calcnodes(cub, vtx)      
+      x = vec(xyz[1,:]); y = vec(xyz[2,:]); z = vec(xyz[3,:])
+      for r = 0:d
+        for k = 0:r
+          for j = 0:r-k
+            i = r-j-k
+            u = (x.^i).*(y.^j).*(z.^k)
+            dudx = (i.*x.^max(0,i-1)).*(y.^j).*(z.^k)
+            dudy = (x.^i).*(j.*y.^max(0,j-1)).*(z.^k)
+            dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
+            @fact Dx*u --> roughly(dudx, atol=tol[d])
+            @fact Dy*u --> roughly(dudy, atol=tol[d])
+            @fact Dz*u --> roughly(dudz, atol=tol[d])
           end
         end
       end

@@ -72,7 +72,7 @@ immutable TriSBP{T} <: AbstractSBP{T}
   Q::Array{T,3}
 
   function TriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
-                  bubble::Int=-1, reorder=true, internal=false, vertices=true)
+                  bubble::Int=-1, reorder=false, internal=false, vertices=true)
     @assert( degree >= 1 && degree <= 4 )
     cub, vtx = tricubature(2*degree-1, T, internal=internal, vertices=vertices)
     numnodes = cub.numnodes
@@ -143,17 +143,17 @@ immutable TetSBP{T} <: AbstractSBP{T}
   Q::Array{T,3}
 
   function TetSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4],
-                  reorder=true)
+                  reorder=false, internal=false)
     @assert( degree >= 1 && degree <= 4 )
-    cub, vtx = tetcubature(2*degree-1, T)
+    cub, vtx = tetcubature(2*degree-1, T, internal=internal)
     numnodes = cub.numnodes
     numbndry = SymCubatures.getnumboundarynodes(cub)
     numfacenodes = SymCubatures.getnumfacenodes(cub)
-    wface, facenodes = boundarymassmatrix(cub, vtx, degree)
+    wface = zeros(T,(1,1))
+    facenodes = zeros(Int, (1,1))
     facenormal = T[0 0 -1; 1 1 1; -1 0 0; 0 -1 0].'
     Q = zeros(T, (numnodes, numnodes, 3))
-    w, Q[:,:,1], Q[:,:,2], Q[:,:,3] = SummationByParts.buildoperators(cub, vtx, degree)
-
+    w, Q = SummationByParts.buildoperators(cub, vtx, degree, internal=internal)
     if reorder
       # reorder the nodes
       perm, faceperm = SummationByParts.getnodepermutation(cub, degree)
@@ -162,6 +162,7 @@ immutable TetSBP{T} <: AbstractSBP{T}
       Q[:,:,2] = Q[perm,perm,2]
       Q[:,:,3] = Q[perm,perm,3]
       perminv = invperm(perm)
+      wface, facenodes = boundarymassmatrix(cub, vtx, degree)
       for k = 1:4
         facenodes[:,k] = perminv[facenodes[:,k]]
       end
@@ -260,19 +261,19 @@ immutable TetFace{T} <: AbstractFace{T}
   degree::Int
   numnodes::Int
   stencilsize::Int
-  dstencilsize::Int
+  #dstencilsize::Int
   cub::TriSymCub{T}
   wface::Array{T,1}
   normal::Array{T,2}
   interp::Array{T,2}
   perm::Array{Int,2}
-  deriv::Array{T,3}
-  dperm::Array{Int,2}
+  #deriv::Array{T,3}
+  #dperm::Array{Int,2}
   nbrperm::Array{Int,2}
   function TetFace(degree::Int, volcub::TetSymCub{T}, vtx::Array{T,2})
     @assert( degree >= 1 && degree <= 4 )
     facecub, facevtx = tricubature(2*degree, T, internal=true)
-    normal = T[0 0 -1; 1 1 1; -1 0 0; 0 -1 0].'
+    normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'
     R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
                                                        degree)
     #D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
@@ -280,9 +281,11 @@ immutable TetFace{T} <: AbstractFace{T}
     nbrperm = SymCubatures.getneighbourpermutation(facecub)
     wface = SymCubatures.calcweights(facecub)
     stencilsize = size(R,2)
-    dstencilsize = size(D,1)
-    new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, wface,
-        normal, R.', perm, D, Dperm, nbrperm)
+    #dstencilsize = size(D,1)
+    #new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, wface,
+    #    normal, R.', perm, D, Dperm, nbrperm)
+    new(degree, facecub.numnodes, stencilsize, facecub, wface, normal, R.',
+        perm, nbrperm)
   end
 end
 

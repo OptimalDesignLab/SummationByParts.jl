@@ -158,6 +158,32 @@ facts("Testing SymCubatures Module...") do
     @fact indices --> [9:12; 19:24; 61]
   end
 
+  context("Testing getfacevertexindices (LineSymCub method)") do
+    quad = LineSymCub{Float64}(numedge=1, centroid=true)
+    facevtx = SymCubatures.getfacevertexindices(quad)
+    @fact facevtx[1,1] --> 1
+    @fact facevtx[1,2] --> 2
+  end
+
+  context("Testing getfacevertexindices (TriSymCub method)") do
+    tricub = TriSymCub{Float64}(numedge=1, midedges=true, numS21 = 4)
+    facevtx = SymCubatures.getfacevertexindices(tricub)
+    @fact facevtx[:,1] --> [1; 2]
+    @fact facevtx[:,2] --> [2; 3]
+    @fact facevtx[:,3] --> [3; 1]
+  end
+
+  context("Testing getfacevertexindices (TetSymCub method)") do
+    tetcub = TetSymCub{Float64}(numedge=1, facecentroid=true, numS31=1, 
+                                midedges=true, numS22=1, numfaceS21=1,
+                                centroid=true)
+    facevtx = SymCubatures.getfacevertexindices(tetcub)
+    @fact facevtx[:,1] --> [1; 2; 3]
+    @fact facevtx[:,2] --> [1; 4; 2]
+    @fact facevtx[:,3] --> [2; 4; 3]
+    @fact facevtx[:,4] --> [1; 3; 4]
+  end
+
   context("Testing getfacenodeindices (LineSymCub method)") do
     quad = LineSymCub{Float64}(numedge=1, centroid=true)
     bndryindices = SymCubatures.getfacenodeindices(quad)

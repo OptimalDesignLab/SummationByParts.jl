@@ -457,11 +457,12 @@ function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int,
   return A, bx, by
 end
 
-function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
+function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int,
+                                E::Array{T,3})
   x = SymCubatures.calcnodes(cub, vtx) 
-  Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
+  #Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
   w = SymCubatures.calcweights(cub)
-  Ex *= 0.5; Ey *= 0.5; Ez *= 0.5
+  #Ex *= 0.5; Ey *= 0.5; Ez *= 0.5
   # the number of unknowns for both skew-symmetric matrices Qx, Qy, and Qz
   numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
   # the number of accuracy equations
@@ -487,9 +488,9 @@ function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
             A[ptr+col, offset+col] -= P[row]
           end
         end
-        bx[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdx - Ex*P
-        by[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdy - Ey*P
-        bz[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdz - Ez*P
+        bx[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdx - E[:,:,1]*P
+        by[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdy - E[:,:,2]*P
+        bz[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdz - E[:,:,3]*P
         ptr += cub.numnodes
       end
     end
@@ -594,6 +595,12 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
   SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
   scale!(Q, 0.5)
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
+
+  #F = svdfact(A)
+  #for i = 1:size(A,2)
+  #  @printf("singular value %d = %g\n",i,F[:S][i])
+  #end
+
   # use the minimum norm least-squares solution
   #Afact = qrfact(A)
   #x = Afact\bx; y = Afact\by
@@ -643,30 +650,67 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
   return w, Q
 end
 
-function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
+function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int;
+                           internal::Bool=false)
   w = SymCubatures.calcweights(cub)
-  Qx, Qy, Qz = SummationByParts.boundaryoperators(cub, vtx, d)
-  A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d)
+  face = TetFace{T}(d, cub, vtx)
+  Q = zeros(T, (cub.numnodes,cub.numnodes,3) )
+  SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+  SummationByParts.boundaryoperator!(face, 3, slice(Q,:,:,3))
+  scale!(Q, 0.5)
+  A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
+
+  #w = SymCubatures.calcweights(cub)
+  #Q[:,:,1], Q[:,:,2], Q[:,:,3] = SummationByParts.boundaryoperators(cub, vtx, d)
+  #A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   # use the minimum norm least-squares solution
-  Afact = qrfact(A)
-  x = Afact\bx; y = Afact\by; z = Afact\bz
+  #Afact = qrfact(A)
+  #x = Afact\bx; y = Afact\by; z = Afact\bz
   #Ainv = pinv(A)
   #x = Ainv*bx; y = Ainv*by; z = Ainv*bz
-  scale!(Qx, 0.5)
-  scale!(Qy, 0.5)
-  scale!(Qz, 0.5)
+  # use the minimum norm least-squares solution
+  #Ainv = pinv(A)
+  #x = Ainv*bx; y = Ainv*by; z = Ainv*bz
+  #x = A\bx; y = A\by; z = A\bz
+
+  if d <= 3
+    F = svdfact(A)
+    # for i = 1:size(A,2)
+    #   @printf("singular value %d = %g\n",i,F[:S][i])
+    # end
+    rnk = 1
+    for i = 2:size(A,2)
+      if F[:S][i] > sqrt(eps(T))
+        rnk += 1
+      else
+        break
+      end
+    end
+    #@assert(rank(A) == rnk)
+    #@printf("rank(A) = %g, rnk = %g\n",rank(A),rnk)
+    #rnk = rank(A)
+    x = F[:V][:,1:rnk]*(diagm(1./F[:S][1:rnk])*(F[:U][:,1:rnk].'*bx))
+    y = F[:V][:,1:rnk]*(diagm(1./F[:S][1:rnk])*(F[:U][:,1:rnk].'*by))
+    z = F[:V][:,1:rnk]*(diagm(1./F[:S][1:rnk])*(F[:U][:,1:rnk].'*bz))
+  else
+    # the p=4 case has one badly behaved singular value
+    Afact = qrfact(A)
+    x = Afact\bx; y = Afact\by; z = Afact\bz
+  end
+
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
     for col = 1:row-1
-      Qx[row,col] += x[offset+col]
-      Qx[col,row] -= x[offset+col]
-      Qy[row,col] += y[offset+col]
-      Qy[col,row] -= y[offset+col]
-      Qz[row,col] += z[offset+col]
-      Qz[col,row] -= z[offset+col]
+      Q[row,col,1] += x[offset+col]
+      Q[col,row,1] -= x[offset+col]
+      Q[row,col,2] += y[offset+col]
+      Q[col,row,2] -= y[offset+col]
+      Q[row,col,3] += z[offset+col]
+      Q[col,row,3] -= z[offset+col]
     end
   end
-  return w, Qx, Qy, Qz
+  return w, Q
 end
 
 @doc """
