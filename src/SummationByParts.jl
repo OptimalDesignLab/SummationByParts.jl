@@ -70,6 +70,7 @@ immutable TriSBP{T} <: AbstractSBP{T}
   w::Array{T,1}
   wface::Array{T,2}
   Q::Array{T,3}
+  reorder::Bool
 
   function TriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
                   bubble::Int=-1, reorder=false, internal=false, vertices=true)
@@ -105,7 +106,7 @@ immutable TriSBP{T} <: AbstractSBP{T}
     end
 
     new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
-        vtx, w, wface, Q)
+        vtx, w, wface, Q, reorder)
   end
 end
 
@@ -141,6 +142,7 @@ immutable TetSBP{T} <: AbstractSBP{T}
   w::Array{T,1}
   wface::Array{T,2}
   Q::Array{T,3}
+  reorder::Bool
 
   function TetSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4],
                   reorder=false, internal=false)
@@ -173,7 +175,7 @@ immutable TetSBP{T} <: AbstractSBP{T}
     end
 
     new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
-        vtx, w, wface, Q)
+        vtx, w, wface, Q, reorder)
   end
 end
 
