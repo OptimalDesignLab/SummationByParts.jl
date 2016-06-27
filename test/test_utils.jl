@@ -1,13 +1,13 @@
 facts("Testing SummationByParts Module (utils.jl file)...") do
 
-  context("Testing SummationByParts.buildinterpolation (TriSymCub method)") do
+  context("Testing SummationByParts.buildinterpolation (TriSBP method)") do
     # this checks that polynomials of total degree d are reconstructed accurately
     numpoints = 3
     for d = 1:4
       sbp = TriSBP{Float64}(degree=d)
       x = 2.*rand(2,numpoints) - 1.0
       R = SummationByParts.buildinterpolation(sbp, x)
-      xsbp = SymCubatures.calcnodes(sbp.cub, sbp.vtx)
+      xsbp = calcnodes(sbp)
       # loop over all monomials
       for r = 0:d
         for j = 0:r
@@ -21,14 +21,14 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildinterpolation (TriSymCub method, internal=true)") do
+  context("Testing SummationByParts.buildinterpolation (TriSBP method, internal=true)") do
     # this checks that polynomials of total degree d are reconstructed accurately
     numpoints = 3
     for d = 1:4
       sbp = TriSBP{Float64}(degree=d, reorder=false, internal=true)
       x = 2.*rand(2,numpoints) - 1.0
       R = SummationByParts.buildinterpolation(sbp, x)
-      xsbp = SymCubatures.calcnodes(sbp.cub, sbp.vtx)
+      xsbp = calcnodes(sbp)
       # loop over all monomials
       for r = 0:d
         for j = 0:r
@@ -37,6 +37,52 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
           usbp = vec((xsbp[1,:].^i).*(xsbp[2,:].^j))
           uinterp = R*usbp
           @fact uinterp --> roughly(u, atol=1e-14)
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildinterpolation (TetSBP method)") do
+    # this checks that polynomials of total degree d are reconstructed accurately
+    numpoints = 10
+    for d = 1:4
+      sbp = TetSBP{Float64}(degree=d)
+      x = 2.*rand(3,numpoints) - 1.0
+      R = SummationByParts.buildinterpolation(sbp, x)
+      xsbp = calcnodes(sbp)
+      # loop over all monomials
+      for r = 0:d
+        for k = 0:r
+          for j = 0:r-k
+            i = r-j-k
+            u = vec((x[1,:].^i).*(x[2,:].^j).*(x[3,:].^k))
+            usbp = vec((xsbp[1,:].^i).*(xsbp[2,:].^j).*(xsbp[3,:].^k))
+            uinterp = R*usbp
+            @fact uinterp --> roughly(u, atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildinterpolation (TetSBP method, internal=true)") do
+    # this checks that polynomials of total degree d are reconstructed accurately
+    numpoints = 10
+    for d = 1:2
+      sbp = TetSBP{Float64}(degree=d, internal=true)
+      x = 2.*rand(3,numpoints) - 1.0
+      R = SummationByParts.buildinterpolation(sbp, x)
+      xsbp = calcnodes(sbp)
+      # loop over all monomials
+      for r = 0:d
+        for k = 0:r
+          for j = 0:r-k
+            i = r-j-k
+            u = vec((x[1,:].^i).*(x[2,:].^j).*(x[3,:].^k))
+            usbp = vec((xsbp[1,:].^i).*(xsbp[2,:].^j).*(xsbp[3,:].^k))
+            uinterp = R*usbp
+            @fact uinterp --> roughly(u, atol=1e-14)
+          end
         end
       end
     end

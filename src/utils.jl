@@ -23,7 +23,7 @@ function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2})
   N = convert(Int, (d+1)*(d+2)/2 )
   Psbp = zeros(T, (sbp.numnodes,N) )
   Pinterp = zeros(T, (size(xinterp,2),N) )
-  xsbp = SymCubatures.calcnodes(sbp.cub, sbp.vtx)
+  xsbp = calcnodes(sbp, sbp.vtx)
   ptr = 1
   for r = 0:d
     for j = 0:r
@@ -32,6 +32,32 @@ function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2})
       Pinterp[:,ptr] = OrthoPoly.proriolpoly(vec(xinterp[1,:]),
                                              vec(xinterp[2,:]), i, j)
       ptr += 1
+    end
+  end
+  R = (pinv(Psbp.')*Pinterp.').'
+  return R
+end
+
+function buildinterpolation{T}(sbp::TetSBP{T}, xinterp::AbstractArray{T,2})
+  # evaluate the basis at the SBP nodes and the interpolation points
+  d = sbp.degree
+  N = convert(Int, (d+1)*(d+2)*(d+3)/6)
+  Psbp = zeros(T, (sbp.numnodes,N) )
+  Pinterp = zeros(T, (size(xinterp,2),N) )
+  xsbp = calcnodes(sbp, sbp.vtx)
+  ptr = 1
+  for r = 0:d
+    for k = 0:r
+      for j = 0:r-k
+        i = r-j-k
+        Psbp[:,ptr] = OrthoPoly.proriolpoly(vec(xsbp[1,:]), vec(xsbp[2,:]),
+                                            vec(xsbp[3,:]), i, j, k)
+        Pinterp[:,ptr] = OrthoPoly.proriolpoly(vec(xinterp[1,:]),
+                                               vec(xinterp[2,:]), 
+                                               vec(xinterp[3,:]),
+                                               i, j, k)
+        ptr += 1
+      end
     end
   end
   R = (pinv(Psbp.')*Pinterp.').'
