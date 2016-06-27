@@ -51,7 +51,7 @@ element mapping is linear, i.e. edges are lines.
 """->
 function calcnodes{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx)
   if sbp.reorder
-    perm, faceperm = SummationByParts.getnodepermutation(cub, degree)
+    perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, degree)
     x = SymCubatures.calcnodes(sbp.cub, vtx)
     return x[:,perm]
   else
