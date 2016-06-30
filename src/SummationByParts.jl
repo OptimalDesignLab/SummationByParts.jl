@@ -153,7 +153,7 @@ immutable TetSBP{T} <: AbstractSBP{T}
     numfacenodes = SymCubatures.getnumfacenodes(cub)
     wface = zeros(T,(1,1))
     facenodes = zeros(Int, (1,1))
-    facenormal = T[0 0 -1; 1 1 1; -1 0 0; 0 -1 0].'
+    facenormal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'
     Q = zeros(T, (numnodes, numnodes, 3))
     w, Q = SummationByParts.buildoperators(cub, vtx, degree, internal=internal)
     if reorder
