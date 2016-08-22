@@ -674,6 +674,10 @@ function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int;
   #x = Ainv*bx; y = Ainv*by; z = Ainv*bz
   #x = A\bx; y = A\by; z = A\bz
 
+  #println("size(A) = ",size(A))
+  #println("rank(A) = ",rank(A))
+  #println("ndof    = ",size(A,2)-rank(A))
+
   if d <= 3
     F = svdfact(A)
     # for i = 1:size(A,2)
