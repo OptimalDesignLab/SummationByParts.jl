@@ -14,11 +14,12 @@ using .Cubature
 export AbstractSBP, TriSBP, TetSBP
 export AbstractFace, TriFace, TetFace
 export Boundary, Interface
+
 export calcnodes, calcminnodedistance, weakdifferentiate!, differentiate!,
   directionaldifferentiate!, volumeintegrate!, mappingjacobian!,
-  boundaryinterpolate!, boundaryintegrate!, interiorfaceintegrate!,
-  interiorfaceinterpolate!, edgestabilize!, integratefunctional!,
-  permuteinterface!
+  calcmappingjacobian!, boundaryinterpolate!, boundaryintegrate!,
+  interiorfaceintegrate!, interiorfaceinterpolate!, edgestabilize!,
+  integratefunctional!, permuteinterface!, facenormal!
 
 # make sview point to either safe or unsafe views
 global const use_safe_views = true
@@ -201,6 +202,7 @@ Defines a face between two TriSBP operators with the same cubature nodes
 * `stencilsize` : number of nodes in the reconstruction stencil
 * `dstencilsize` : number of nodes in the derivative operator stencils
 * `cub` : a symmetric cubature type for triangle faces (i.e. edges)
+* `vtx` : the vertices of the face in reference space, [-1,1]
 * `wface` : mass matrix (quadrature) for the face
 * `interp[:,:]` : volume-to-face-nodes reconstruction operator
 * `perm[:,:]` : permutation for volume nodes so `interp` can be used on all sides
@@ -215,6 +217,7 @@ immutable TriFace{T} <: AbstractFace{T}
   stencilsize::Int
   dstencilsize::Int
   cub::LineSymCub{T}
+  vtx::Array{T,2}
   wface::Array{T,1}
   normal::Array{T,2}
   interp::Array{T,2}
@@ -234,8 +237,8 @@ immutable TriFace{T} <: AbstractFace{T}
     wface = SymCubatures.calcweights(facecub)
     stencilsize = size(R,2)
     dstencilsize = size(D,1)
-    new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, wface,
-        normal, R.', perm, D, Dperm, nbrperm)
+    new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, facevtx, 
+        wface, normal, R.', perm, D, Dperm, nbrperm)
   end
 end
 
@@ -251,6 +254,7 @@ Defines a face between two TetSBP operators with the same cubature nodes
 * `stencilsize` : number of nodes in the reconstruction stencil
 * `dstencilsize` : number of nodes in the derivative operator stencils
 * `cub` : a symmetric cubature type for tetrahedral faces (i.e. triangles)
+* `vtx` : the vertices of the face in the reference space of the face
 * `wface` : mass matrix (quadrature) for the face
 * `interp[:,:]` : volume-to-face-nodes reconstruction operator
 * `perm[:,:]` : permutation for volume nodes so `interp` can be used on all sides
@@ -265,6 +269,7 @@ immutable TetFace{T} <: AbstractFace{T}
   stencilsize::Int
   #dstencilsize::Int
   cub::TriSymCub{T}
+  vtx::Array{T,2}
   wface::Array{T,1}
   normal::Array{T,2}
   interp::Array{T,2}
@@ -286,8 +291,8 @@ immutable TetFace{T} <: AbstractFace{T}
     #dstencilsize = size(D,1)
     #new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, wface,
     #    normal, R.', perm, D, Dperm, nbrperm)
-    new(degree, facecub.numnodes, stencilsize, facecub, wface, normal, R.',
-        perm, nbrperm)
+    new(degree, facecub.numnodes, stencilsize, facecub, facevtx, wface, normal,
+        R.', perm, nbrperm)
   end
 end
 
