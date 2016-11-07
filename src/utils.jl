@@ -177,4 +177,94 @@ function permuteface!{Ti <: Integer, Tsol}(permvec::AbstractArray{Ti, 1},
   return nothing
 end
 
+@doc """
+### SummationByParts.basispursuit!
 
+Finds a solution to the underdetermined problem `Ax = b` that is sparse using
+the alternating direction method of multipliers (ADMM).
+
+**Inputs**
+
+* `A`: matrix in the linear equation that must be satisfied
+* `b`: vector in the linear equation that must be satisfied
+* `rho` (optional) : augmented Lagrangian parameter
+* `alpha` (optional) : over-relaxation parameter (usually between 1.0 and 1.8)
+* `hist` (optional): output the convergence history to the terminal
+* `abstol` (optional): absolute tolerance
+* `reltol` (optional): relative tolerance
+
+**In/Outs**
+
+* `x`: sparse solution of the problem
+
+**Notes**
+
+This is a direct translation of Boyd et al.'s Matlab implementation of ADMM for
+basis pursuit.  This method is not well suited to high-accuracy solutions, so,
+for our purposes, it is best used as a means of identifying the sparsity
+pattern.
+
+"""->
+function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
+                       x::AbstractVector{Float64}; rho::Float64=1.0,
+                       alpha::Float64=1.0, hist::Bool=false,
+                       abstol::Float64=1e-4, reltol::Float64=1e-2)
+  @assert( size(A,1) == size(b,1) )
+  @assert( size(A,2) == size(x,1) )
+  @assert( rho > 0.0 )
+  @assert( alpha >= 1.0 && alpha <= 1.8 )
+  @assert( abstol > 0.0 && reltol > 0.0 )
+  function objective(x)
+    return norm(x,1)    
+  end
+  function shrinkage(a, kappa)
+    return max(0, a-kappa) - max(0, -a-kappa)
+  end
+
+  maxiter = 1000
+  (m, n) = size(A)
+  fill!(x, 0.0)
+  z = zeros(x)
+  u = zeros(x)
+  
+  if hist
+    @printf("%10s %10s %10s %10s %10s %10s\n", "iter", "r norm", "eps pri",
+            "s norm", "eps dual", "objective")
+  end
+
+  # precompute some static variables for x-update (projection on to Ax=b)
+  AAt = A*A.'
+  P = eye(n,n) - A.'*(AAt\A)
+  q = A.'*(AAt \ b)
+  #Ainv = pinv(A)
+  #P = eye(n,n) - Ainv*Ainv.'
+  #q = Ainv*b
+
+  for k = 1:maxiter
+    # x-update
+    x[:] = P*(z - u) + q
+
+    # z-update
+    zold = z
+    x_hat = alpha*x + (1 - alpha)*zold
+    z = shrinkage(x_hat + u, 1/rho)
+
+    u += (x_hat - z)
+    
+    # diagnostics, reporting, termination checks
+    objval = objective(x)
+    r_norm = norm(x - z)
+    s_norm = norm(-rho*(z - zold))
+    
+    eps_pri = sqrt(n)*abstol + reltol*max(norm(x), norm(-z))
+    eps_dual = sqrt(n)*abstol + reltol*norm(rho*u)
+
+    if hist
+      @printf("%10d %10f %10f %10f %10f %10f\n", k, r_norm, eps_pri, s_norm, eps_dual,
+              objval)
+    end
+    if r_norm < eps_pri && s_norm < eps_dual
+      break
+    end
+  end
+end

@@ -764,6 +764,133 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
 end
 
 @doc """
+### SummationByParts.buildsparseoperators
+
+Construct and return sparse SBP matrix operators, specifically the diagonal norm
+matrix and the stiffness matrices.  These are sparse in the sense that there are
+zeros in the S matrices, but they are not returned as sparse matrices.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+* `vtx`: vertices of the right simplex
+* `d`: maximum total degree for the Proriol polynomials
+
+**Outputs**
+
+* `w`: the diagonal norm stored as a 1D array
+* `Q`: the stiffness matrices
+
+"""->
+function buildsparseoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
+                                 internal::Bool=false)
+  w = SymCubatures.calcweights(cub)
+  face = TriFace{T}(d+1, cub, vtx)
+  Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
+  SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+  scale!(Q, 0.5)
+  A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
+  rankA = rank(A)
+  # find a sparse solution for skew-symmetric Sx
+  s = zeros(size(A,2))
+  SummationByParts.basispursuit!(A, bx, s, rho=1.5, alpha=1.0, hist=false,
+                                 abstol=1e-6, reltol=1e-6)
+  P = zeros(size(A,2),rankA)
+  idx = sortperm(abs(s), rev=true)
+  for i = 1:rankA
+    P[idx[i],i] = 1.0
+  end
+  AP = A*P
+  x = P*(AP\bx)
+  # find a sparse solution for skew-symmetric Sy
+  SummationByParts.basispursuit!(A, by, s, rho=1.5, alpha=1.0, hist=false,
+                                 abstol=1e-6, reltol=1e-6)
+  fill!(P, 0.0)
+  idx = sortperm(abs(s), rev=true)
+  for i = 1:rankA
+    P[idx[i],i] = 1.0
+  end
+  AP = A*P
+  y = P*(AP\by)
+
+  @assert( norm(A*x - bx) < 1e-12)
+  @assert( norm(A*y - by) < 1e-12)
+
+  for row = 2:cub.numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      Q[row,col,1] += x[offset+col]
+      Q[col,row,1] -= x[offset+col]
+      Q[row,col,2] += y[offset+col]
+      Q[col,row,2] -= y[offset+col]
+    end
+  end
+  return w, Q
+end
+
+function buildsparseoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int;
+                                 internal::Bool=false)
+  w = SymCubatures.calcweights(cub)
+  face = TetFace{T}(d+1, cub, vtx)
+  Q = zeros(T, (cub.numnodes,cub.numnodes,3) )
+  SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+  SummationByParts.boundaryoperator!(face, 3, slice(Q,:,:,3))
+  scale!(Q, 0.5)
+  A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
+  rankA = rank(A)
+  # find a sparse solution for skew-symmetric Sx
+  s = zeros(size(A,2))
+  SummationByParts.basispursuit!(A, bx, s, rho=1.5, alpha=1.0, hist=false,
+                                 abstol=1e-6, reltol=1e-6)
+  P = zeros(size(A,2),rankA)
+  idx = sortperm(abs(s), rev=true)
+  for i = 1:rankA
+    P[idx[i],i] = 1.0
+  end
+  AP = A*P
+  x = P*(AP\bx)
+  # find a sparse solution for skew-symmetric Sy
+  SummationByParts.basispursuit!(A, by, s, rho=1.5, alpha=1.0, hist=false,
+                                 abstol=1e-6, reltol=1e-6)
+  fill!(P, 0.0)
+  idx = sortperm(abs(s), rev=true)
+  for i = 1:rankA
+    P[idx[i],i] = 1.0
+  end
+  AP = A*P
+  y = P*(AP\by)
+  # find a sparse solution for skew-symmetric Sz
+  SummationByParts.basispursuit!(A, bz, s, rho=1.5, alpha=1.0, hist=false,
+                                 abstol=1e-6, reltol=1e-6)
+  fill!(P, 0.0)
+  idx = sortperm(abs(s), rev=true)
+  for i = 1:rankA
+    P[idx[i],i] = 1.0
+  end
+  AP = A*P
+  z = P*(AP\bz)
+
+  @assert( norm(A*x - bx) < 1e-12)
+  @assert( norm(A*y - by) < 1e-12)
+  @assert( norm(A*z - bz) < 1e-12)
+
+  for row = 2:cub.numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      Q[row,col,1] += x[offset+col]
+      Q[col,row,1] -= x[offset+col]
+      Q[row,col,2] += y[offset+col]
+      Q[col,row,2] -= y[offset+col]
+      Q[row,col,3] += z[offset+col]
+      Q[col,row,3] -= z[offset+col]
+    end
+  end
+  return w, Q
+end
+
+@doc """
 ### SummationByParts.getnodepermutation
 
 The node ordering produced by SymCubature is not convenient for mapping local to

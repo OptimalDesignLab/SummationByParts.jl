@@ -418,6 +418,42 @@ function mappingjacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
   # check for negative jac here?
 end
 
+function mappingjacobian!{Tsbp,Tmsh}(sbp::SparseTriSBP{Tsbp},
+                                     x::AbstractArray{Tmsh,3},
+                                     dξdx::AbstractArray{Tmsh,4},
+                                     jac::AbstractArray{Tmsh,2})
+  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
+  @assert( size(x,3) == size(dξdx,4) )
+  @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
+  fill!(dξdx, zero(Tmsh))
+  dxdξ = zeros(Tmsh, (2,sbp.numnodes,size(x,3)))
+  # compute d(x,y)/dxi and set deta/dx and deta/dy
+  differentiate!(sbp, 1, x, dxdξ)
+  for elem = 1:size(x,3)
+    for i = 1:size(x,2)
+      dξdx[2,1,i,elem] = -dxdξ[2,i,elem]
+      dξdx[2,2,i,elem] = dxdξ[1,i,elem]
+    end
+  end
+  # compute d(x,y)/deta and set dxi/dx and dxi/dy
+  fill!(dxdξ, zero(Tmsh))
+  differentiate!(sbp, 2, x, dxdξ)
+  for elem = 1:size(x,3)
+    for i = 1:size(x,2)
+      dξdx[1,2,i,elem] = -dxdξ[1,i,elem]
+      dξdx[1,1,i,elem] = dxdξ[2,i,elem]
+    end
+  end
+  # compute the determinant of the Jacobian
+  for elem = 1:size(x,3)
+    for i = 1:sbp.numnodes
+      jac[i,elem] = one(Tmsh)/(dξdx[1,1,i,elem]*dξdx[2,2,i,elem] - 
+                               dξdx[1,2,i,elem]*dξdx[2,1,i,elem])
+    end
+  end
+  # check for negative jac here?
+end
+
 function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
                                      x::AbstractArray{Tmsh,3},
                                      dξdx::AbstractArray{Tmsh,4},

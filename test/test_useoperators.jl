@@ -18,18 +18,22 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.weakdifferentiate! (TriSBP, scalar field method)") do
-    # build a two element grid, and verify that Qxi * 1 = 0
-    for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
-      u = ones(Float64, (sbp.numnodes,2))
-      di = 1
-      res = zeros(u)
-      weakdifferentiate!(sbp, di, u, res)
-      @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=5e-13)
-      @fact res[:,2] --> roughly(zeros(sbp.numnodes), atol=5e-13)
+  for TSBP = (TriSBP, SparseTriSBP)
+    @eval begin
+      context("Testing SummationByParts.weakdifferentiate! ("string($TSBP)" scalar field method)") do
+        # build a two element grid, and verify that Qxi * 1 = 0
+        for p = 1:4
+          sbp = ($TSBP){Float64}(degree=p)
+          u = ones(Float64, (sbp.numnodes,2))
+          di = 1
+          res = zeros(u)
+          weakdifferentiate!(sbp, di, u, res)
+          @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=5e-13)
+          @fact res[:,2] --> roughly(zeros(sbp.numnodes), atol=5e-13)
+        end
+      end 
     end
-  end 
+  end
 
   context("Testing SummationByParts.weakdifferentiate! (TetSBP, scalar field method)") do
     # build a single element grid, and verify that Qxi * 1 = 0
