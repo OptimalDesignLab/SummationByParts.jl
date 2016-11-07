@@ -365,7 +365,7 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
                                        0.17313630713608186,0.6472196801547492])
         cub_degree = 9
       else
-        error("polynomial degree must be <= 7 (presently)\n")
+        error("polynomial degree must be <= 9 (presently)\n")
       end
     else 
       # do not include vertices in the cubature rule

@@ -24,7 +24,7 @@ export calcnodes, calcminnodedistance, weakdifferentiate!, differentiate!,
 # make sview point to either safe or unsafe views
 global const use_safe_views = true
 if use_safe_views
-  global const sview = view
+  global const sview = ArrayViews.view
 else
   global const sview = unsafe_view
 end
