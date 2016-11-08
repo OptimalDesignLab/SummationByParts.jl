@@ -4,6 +4,7 @@ using SummationByParts.Cubature
 using SummationByParts.SymCubatures
 using FactCheck
 using ArrayViews
+using ODLCommonTools
 
 include("test_orthopoly.jl")
 include("test_symcubatures.jl")

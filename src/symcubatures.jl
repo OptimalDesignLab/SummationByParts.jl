@@ -2,6 +2,9 @@ module SymCubatures
 # types and methods for mapping between symmetry groups and nodes for cubatures
 # on various domains
 
+using ODLCommonTools
+import ODLCommonTools.sview
+
 export SymCub, LineSymCub, TriSymCub, TetSymCub
 
 @doc """
@@ -705,10 +708,10 @@ function findleftperm!{T}(A::AbstractArray{T,2}, permR::AbstractVector{Int},
                           permL::AbstractVector{Int})
   @assert( size(A,1) == length(permL) )
   @assert( size(A,2) == length(permR) )
-  rows = [ sub(A,i,1:size(A,2)) for i=1:size(A,1) ]
+  rows = [ sview(A,i,1:size(A,2)) for i=1:size(A,1) ]
   permA = sortperm(rows; order=Base.Lexicographic)
   AR = A[:,permR]
-  rows = [ sub(AR,i,1:size(AR,2)) for i=1:size(AR,1) ]
+  rows = [ sview(AR,i,1:size(AR,2)) for i=1:size(AR,1) ]
   permAR = sortperm(rows, order=Base.Lexicographic)
   invpermAR = invperm(permAR)
   permL[:] = permA[invpermAR]

@@ -583,7 +583,7 @@ function calcmappingjacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int,
       P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       dPdξ, dPdη = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       for di = 1:2
-        xsbp[di,:] += coeff[ptr,di]*P.'
+        xsbp[di,:] += reshape(coeff[ptr,di]*P, (1,sbp.numnodes))
         dxdξ[di,1,:] += reshape(coeff[ptr,di]*dPdξ, (1,1,sbp.numnodes))
         dxdξ[di,2,:] += reshape(coeff[ptr,di]*dPdη, (1,1,sbp.numnodes))
       end
@@ -642,7 +642,7 @@ function calcmappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
         dPdξ, dPdη, dPdζ = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]),
                                                      vec(x[3,:]), i, j, k)
         for di = 1:3
-          xsbp[di,:] += coeff[ptr,di]*P.'
+          xsbp[di,:] += reshape(coeff[ptr,di]*P, (1,sbp.numnodes))
           dxdξ[di,1,:] += reshape(coeff[ptr,di]*dPdξ, (1,1,sbp.numnodes))
           dxdξ[di,2,:] += reshape(coeff[ptr,di]*dPdη, (1,1,sbp.numnodes))
           dxdξ[di,3,:] += reshape(coeff[ptr,di]*dPdζ, (1,1,sbp.numnodes))

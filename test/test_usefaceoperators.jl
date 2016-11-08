@@ -773,8 +773,8 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
       nrm = zeros(2,sbpface.numnodes,3)
       divfree = zeros(2)
       for f = 1:3
-        facenormal!(sbpface, p+1, slice(xlag,:,:,f), xref,
-                    slice(xsbp,:,:,f), slice(nrm,:,:,f))
+        facenormal!(sbpface, p+1, sview(xlag,:,:,f), xref,
+                    sview(xsbp,:,:,f), sview(nrm,:,:,f))
         divfree[1] += dot(vec(nrm[1,:,f]),sbpface.wface)
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
       end
@@ -822,8 +822,8 @@ facts("Testing SummationByParts Module (usefaceoperators.jl file)...") do
       nrm = zeros(3,sbpface.numnodes,4)
       divfree = zeros(3)
       for f = 1:4
-        facenormal!(sbpface, p+1, slice(xlag,:,:,f), xref,
-                    slice(xsbp,:,:,f), slice(nrm,:,:,f))
+        facenormal!(sbpface, p+1, sview(xlag,:,:,f), xref,
+                    sview(xsbp,:,:,f), sview(nrm,:,:,f))
         divfree[1] += dot(vec(nrm[1,:,f]),sbpface.wface)
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
         divfree[3] += dot(vec(nrm[3,:,f]),sbpface.wface)

@@ -272,8 +272,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tricubature(2*d-1, Float64)
       face = TriFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,2)
-      SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
-      SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+      SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
+      SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
       scale!(Q, 0.5)
       A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
       @fact size(nullspace(A),2) --> sizenull[d]
@@ -288,9 +288,9 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tetcubature(2*d-1, Float64)
       face = TetFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,3)
-      SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
-      SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
-      SummationByParts.boundaryoperator!(face, 3, slice(Q,:,:,3))
+      SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
+      SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
+      SummationByParts.boundaryoperator!(face, 3, sview(Q,:,:,3))
       scale!(Q, 0.5)
       A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
       @fact size(nullspace(A),2) --> sizenull[d]
@@ -304,8 +304,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tricubature(2*d-1, Float64)
       face = TriFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,2)
-      SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
-      SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+      SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
+      SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
       scale!(Q, 0.5)
       w = SymCubatures.calcweights(cub)
       A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
@@ -321,7 +321,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
         end
       end
       Z = nullspace(A)
-      f, dfdx = SummationByParts.commuteerror(w, slice(Q,:,:,1), slice(Q,:,:,2),
+      f, dfdx = SummationByParts.commuteerror(w, sview(Q,:,:,1), sview(Q,:,:,2),
                                               Z, reducedsol[d])
       @fact f --> roughly(error[d], atol=1e-15)
     end

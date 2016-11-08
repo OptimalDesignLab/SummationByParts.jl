@@ -1,12 +1,14 @@
 __precompile__(false)
 module SummationByParts
 
+using ArrayViews
+using ODLCommonTools
+import ODLCommonTools.sview
+
 include("orthopoly.jl")
 include("symcubatures.jl")
 include("cubature.jl")
 
-using ArrayViews
-using ODLCommonTools
 using .OrthoPoly
 using .SymCubatures
 using .Cubature
@@ -20,14 +22,6 @@ export calcnodes, calcminnodedistance, weakdifferentiate!, differentiate!,
   calcmappingjacobian!, boundaryinterpolate!, boundaryintegrate!,
   interiorfaceintegrate!, interiorfaceinterpolate!, edgestabilize!,
   integratefunctional!, permuteinterface!, facenormal!
-
-# make sview point to either safe or unsafe views
-global const use_safe_views = true
-if use_safe_views
-  global const sview = ArrayViews.view
-else
-  global const sview = unsafe_view
-end
 
 @doc """
 ### SBP.AbstractSBP

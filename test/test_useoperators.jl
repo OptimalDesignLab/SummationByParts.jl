@@ -451,8 +451,8 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
       nrm = zeros(3,sbpface.numnodes,4)
       E = zeros(sbp.numnodes,sbp.numnodes,3)
       for f = 1:4
-        facenormal!(sbpface, p+1, slice(xlag,:,:,f), xref,
-                    slice(xsbp,:,:,f), slice(nrm,:,:,f))
+        facenormal!(sbpface, p+1, sview(xlag,:,:,f), xref,
+                    sview(xsbp,:,:,f), sview(nrm,:,:,f))
         for di = 1:3
           # for the given Lagrangian nodes, the face-normal is inward pointing,
           # so subtract to reverse sign
@@ -522,9 +522,9 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
   #           mappingjacobian!(sbp, x, dξdx, jac)
   
   #           invariant = zeros(Float64, (3,sbp.numnodes,1))
-  #           differentiate!(sbp, 1, slice(dξdx,1,:,:,:), invariant)
-  #           differentiate!(sbp, 2, slice(dξdx,2,:,:,:), invariant)
-  #           differentiate!(sbp, 3, slice(dξdx,3,:,:,:), invariant)
+  #           differentiate!(sbp, 1, sview(dξdx,1,:,:,:), invariant)
+  #           differentiate!(sbp, 2, sview(dξdx,2,:,:,:), invariant)
+  #           differentiate!(sbp, 3, sview(dξdx,3,:,:,:), invariant)
   #           @fact invariant --> roughly(zeros(Float64, (3,sbp.numnodes,1)), atol=1e-13)
   #         end
   #       end
