@@ -493,10 +493,12 @@ function facenormal!{Tsbp,Tmsh}(sbpface::TriFace{Tsbp},
   for i = 0:mapdegree
     P = OrthoPoly.jacobipoly(vec(x[1,:]), 0.0, 0.0, i)
     dPdξ = OrthoPoly.diffjacobipoly(vec(x[1,:]), 0.0, 0.0, i)
-    xsbp[1,:] += coeff[i+1,1]*P.'
-    xsbp[2,:] += coeff[i+1,2]*P.'
-    nrm[1,:] += coeff[i+1,2]*dPdξ.'
-    nrm[2,:] -= coeff[i+1,1]*dPdξ.'
+    for nd = 1:sbpface.numnodes
+      xsbp[1,nd] += coeff[i+1,1]*P[nd]
+      xsbp[2,nd] += coeff[i+1,2]*P[nd]
+      nrm[1,nd] += coeff[i+1,2]*dPdξ[nd]
+      nrm[2,nd] -= coeff[i+1,1]*dPdξ[nd]
+    end
   end
 end
 
