@@ -534,9 +534,11 @@ function facenormal!{Tsbp,Tmsh}(sbpface::TetFace{Tsbp},
       P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       dPdξ, dPdη = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
       for di = 1:3
-        xsbp[di,:] += coeff[ptr,di]*P.'
-        dxdξ[di,1,:] += reshape(coeff[ptr,di]*dPdξ, (1,1,sbpface.numnodes))
-        dxdξ[di,2,:] += reshape(coeff[ptr,di]*dPdη, (1,1,sbpface.numnodes))
+        for nd = 1:sbpface.numnodes
+          xsbp[di,nd] += coeff[ptr,di]*P[nd]
+          dxdξ[di,1,nd] += coeff[ptr,di]*dPdξ[nd]
+          dxdξ[di,2,nd] += coeff[ptr,di]*dPdη[nd]
+        end
       end
       ptr += 1
     end
