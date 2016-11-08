@@ -5,6 +5,7 @@ using SummationByParts.SymCubatures
 using FactCheck
 using ArrayViews
 using ODLCommonTools
+import ODLCommonTools.sview
 
 include("test_orthopoly.jl")
 include("test_symcubatures.jl")
