@@ -185,8 +185,11 @@ setting vertices=true rather than relying on a specific value of a parameter.
 * `facecentroid` : if true, face centroids are present in the set of nodes
 * `numedge` : number of unique edge parameters
 * `numfaceS21` : number of S21 face orbits (same tri orbit on face)
+* `numfaceS111` : number of S111 face orbits (same tri orbit on face)
 * `numS31` : number of S31 orbits (vertex to opposite face)
 * `numS22` : number of S22 orbits
+* `numS211`: number of S211 orbits
+* `numS1111`: number of S1111 orbits
 * `numsym` : number of node sets in each symmetry group (5 groups for Tet)
 * `params` : the actual values of the orbit nodal parameters
 * `weights` : values of the unique weights
@@ -202,23 +205,31 @@ type TetSymCub{T} <: SymCub{T}
   facecentroid::Bool
   numedge::Int
   numfaceS21::Int
+  numfaceS111::Int
   numS31::Int
   numS22::Int
+  numS211::Int
+  numS1111::Int
   numsym::Array{Int,1}
   params::Array{T,1}
   weights::Array{T,1}
 
-  function TetSymCub(;numedge::Int=0, numfaceS21::Int=0, numS31::Int=0,
-                     numS22::Int=0, vertices::Bool=true, midedges::Bool=false,
+  function TetSymCub(;numedge::Int=0, numfaceS21::Int=0, numfaceS111::Int=0,
+                     numS31::Int=0, numS22::Int=0, numS211::Int=0,
+                     numS1111::Int=0, vertices::Bool=true, midedges::Bool=false,
                      centroid::Bool=false, facecentroid::Bool=false)
     @assert(numedge >= 0)
     @assert(numfaceS21 >= 0)
+    @assert(numfaceS111 >= 0)
     @assert(numS31 >= 0)
     @assert(numS22 >= 0)
+    @assert(numS211 >= 0)
+    @assert(numS1111 >= 0)
     # compute the number of degrees of freedom and unique weights
     numparams = 0
     numweights = 0
-    numparams += numedge + numfaceS21 + numS31 + numS22
+    numparams += (numedge + numfaceS21 + 2*numfaceS111 + numS31 + numS22
+                  + 2*numS211 + 3*numS1111)
     numsym = zeros(Int, 5)
     # compute the number of nodes and symmetries
     numnodes = 0
@@ -242,25 +253,34 @@ type TetSymCub{T} <: SymCub{T}
       numweights += 1
       numsym[2] += 1
     end
-    numnodes += 12*numedge # 2 * (6 edges) X (number of edge parameters)
+    numnodes += 12*numedge # 2 X (6 edges) X (number of edge parameters)
     numsym[4] += numedge
     numweights += numedge
-    numnodes += 12*numfaceS21 # 3 * (4 faces) X (number of S21 orbits)
+    numnodes += 12*numfaceS21 # 3 X (4 faces) X (number of face S21 orbits)
     numsym[4] += numfaceS21
     numweights += numfaceS21
+    numnodes += 24*numfaceS111 # 6 X (4 faces) X (number of face S111 orbits)
+    numsym[5] += numfaceS111
+    numweights += numfaceS111
     numnodes += 4*numS31 # (4 permutations) X (number of S31 orbits)
     numsym[2] += numS31
     numweights += numS31
     numnodes += 6*numS22 # (6 permutations) X (number of S22 orbits)
     numsym[3] += numS22
     numweights += numS22
+    numnodes += 12*numS211 # (12 permutations) X (number of S211 orbits)
+    numsym[4] += numS211
+    numweights += numS211
+    numnodes += 24*numS1111 # (24 permutations) X (number of S1111 orbits)
+    numsym[5] += numS1111
+    numweights += numS1111
     # initialize parameter arrays
     @assert(numweights == sum(numsym))
     params = zeros(T, numparams)
     weights = zeros(T, numweights)
     new(numparams, numweights, numnodes, vertices, midedges, centroid,
-        facecentroid, numedge, numfaceS21, numS31, numS22, numsym, params,
-        weights)
+        facecentroid, numedge, numfaceS21, numfaceS111, numS31, numS22, numS211,
+        numS1111, numsym, params, weights)
   end
 end
 
@@ -301,6 +321,7 @@ function getnumboundarynodes{T}(cub::TetSymCub{T})
   cub.facecentroid ? numboundary += 4 : nothing
   numboundary += 12*cub.numedge
   numboundary += 12*cub.numfaceS21
+  numboundary += 24*cub.numfaceS111
   return numboundary
 end
 
@@ -337,6 +358,7 @@ function getnumfacenodes{T}(cub::TetSymCub{T})
   cub.facecentroid ? numfacenodes += 1 : nothing
   numfacenodes += 6*cub.numedge
   numfacenodes += 3*cub.numfaceS21
+  numfacenodes += 6*cub.numfaceS111
   return numfacenodes
 end
 
@@ -437,8 +459,14 @@ function getbndrynodeindices{T}(cub::TetSymCub{T})
     ptr += 12
     idxptr += 12
   end
-  # more to come...
-
+  # account for S211 nodes
+  ptr += 12*cub.numS211
+  # add face nodes corresponding to S111 orbit
+  for i = 1:cub.numfaceS111
+    bndryindices[idxptr+1:idxptr+24] = (ptr+1):(ptr+24)
+    ptr += 24
+    idxptr += 24
+  end  
   return bndryindices
 end
 
@@ -536,7 +564,21 @@ function getinteriornodeindices{T}(cub::TetSymCub{T})
   ptr += 12*cub.numedge
   # account for face nodes corresponding to S21 orbit
   ptr += 12*cub.numfaceS21
-  # ...
+  # set S211 orbit node indices
+  for i = 1:cub.numS211
+    indices[idxptr+1:idxptr+12] = [ptr+1:ptr+12;]
+    ptr += 12
+    idxptr += 12
+  end
+  # account for face nodes corresponding to S111 orbit
+  ptr += 24*cub.numfaceS111
+  # set S1111 oribt node indices
+  for i = 1:cub.numS1111
+    indices[idxptr+1:idxptr+24] = [ptr+1:ptr+24;]
+    ptr += 24
+    idxptr += 24
+  end
+  # set centroid node
   if cub.centroid
     indices[idxptr+1] = ptr+1
     ptr += 1
@@ -680,6 +722,19 @@ function getfacenodeindices{T}(cub::TetSymCub{T})
     ptr += 12
     idxptr += 3
   end
+  # account for S211 oribts
+  ptr += 12*cub.numS211
+  # add face S111 orbits to indices
+  for i = 1:cub.numfaceS111
+    bndryindices[idxptr+1:idxptr+6,:] = [ptr+1 ptr+7  ptr+13 ptr+19;
+                                         ptr+2 ptr+8  ptr+14 ptr+20;
+                                         ptr+3 ptr+9  ptr+15 ptr+21;
+                                         ptr+4 ptr+10 ptr+16 ptr+22;
+                                         ptr+5 ptr+11 ptr+17 ptr+23;
+                                         ptr+6 ptr+12 ptr+18 ptr+24]
+    ptr += 24
+    idxptr += 6
+  end    
   return bndryindices
 end
 
@@ -913,9 +968,53 @@ function getpermutation{T}(cub::TetSymCub{T}, vtxperm::AbstractArray{Int,1})
     perm[ptr+1:ptr+12] = permL + ptr
     ptr += 12
   end
+  # set S211 oribt nodes
+  alpha = 0.1
+  beta = 0.3
+  Aface = [alpha alpha (1-2*alpha-beta) beta;
+           (1-2*alpha-beta) alpha alpha beta;
+           alpha (1-2*alpha-beta) alpha beta]
+  facevtx = [1 1 2 1;
+             2 4 4 3;
+             3 2 3 4;
+             4 3 1 2]
+  A = zeros(12, 4)
+  for face = 1:4
+    A[3*(face-1)+1:3*face,:] = Aface[:,invperm(facevtx[:,face])]
+  end
+  permL = zeros(Int, 12)
+  findleftperm!(A, vtxperm, permL)
+  for i = 1:cub.numS211
+    perm[ptr+1:ptr+12] = permL + ptr
+    ptr += 12
+  end
   # set all nodes with 24-symmetries
-  # ... face nodes with 6 nodes and volume nodes
-    
+  # set face nodes corresponding to S111 orbit
+  alpha = 0.1
+  beta = 0.3
+  gamma = 0.25 # these have gamma = 0, but for permL this is not important
+  Aface = [alpha beta (1-alpha-beta-gamma) gamma;
+           beta alpha (1-alpha-beta-gamma) gamma;
+           (1-alpha-beta-gamma) alpha beta gamma;
+           (1-alpha-beta-gamma) beta alpha gamma;
+           beta (1-alpha-beta-gamma) alpha gamma;
+           alpha (1-alpha-beta-gamma) beta gamma]  
+  A = zeros(24, 4)
+  for face = 1:4
+    A[6*(face-1)+1:6*face,:] = Aface[:,invperm(facevtx[:,face])]
+  end
+  permL = zeros(Int, 24)
+  findleftperm!(A, vtxperm, permL)
+  for i = 1:cub.numfaceS111
+    perm[ptr+1:ptr+24] = permL + ptr
+    ptr += 24
+  end
+  # set S1111 orbit nodes
+  # ...these use the same permL as the face S111 orbits above
+  for i = 1:cub.numS1111
+    perm[ptr+1:ptr+24] = permL + ptr
+    ptr += 24
+  end
   # set node with 1 symmetry (i.e. the centroid)
   if cub.centroid
     perm[ptr+1:ptr+1] = ptr+1
@@ -1269,16 +1368,70 @@ function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
     end
     paramptr += 1
   end
+  # set S211 orbit nodes
+  for i = 1:cub.numS211
+    alpha = 0.5*cub.params[paramptr+1]
+    beta = 0.5*cub.params[paramptr+2]
+    A = T[alpha alpha (1-2*alpha-beta) beta;
+          (1-2*alpha-beta) alpha alpha beta;
+          alpha (1-2*alpha-beta) alpha beta]
+    facevtx = [1 1 2 1;
+               2 4 4 3;
+               3 2 3 4;
+               4 3 1 2]
+    for face = 1:4
+      x[:,ptr+1:ptr+3] = (A*vtx[facevtx[:,face],:]).'
+      ptr += 3
+    end
+    paramptr += 2
+  end
   # set all nodes with 24-symmetries
-  # ... face nodes with 6 nodes and volume nodes
-
+  # set face nodes corresponding to S111 orbit
+  for i = 1:cub.numfaceS111
+    alpha = 0.5*cub.params[paramptr+1]
+    beta = 0.5*cub.params[paramptr+2]
+    A = T[alpha beta (1-alpha-beta);
+          beta alpha (1-alpha-beta);
+          (1-alpha-beta) alpha beta;
+          (1-alpha-beta) beta alpha;
+          beta (1-alpha-beta) alpha;
+          alpha (1-alpha-beta) beta]
+    facevtx = [1 1 2 1;
+               2 4 4 3;
+               3 2 3 4]
+    for face = 1:4
+      x[:,ptr+1:ptr+6] = (A*vtx[facevtx[:,face],:]).'
+      ptr += 6
+    end
+    paramptr += 2
+  end
+  # set S1111 orbit nodes
+  for i = 1:cub.numS1111
+    alpha = 0.5*cub.params[paramptr+1]
+    beta = 0.5*cub.params[paramptr+2]
+    gamma = 0.5*cub.params[paramptr+3]
+    A = T[alpha beta (1-alpha-beta-gamma) gamma;
+          beta alpha (1-alpha-beta-gamma) gamma;
+          (1-alpha-beta-gamma) alpha beta gamma;
+          (1-alpha-beta-gamma) beta alpha gamma;
+          beta (1-alpha-beta-gamma) alpha gamma;
+          alpha (1-alpha-beta-gamma) beta gamma]
+    facevtx = [1 1 2 1;
+               2 4 4 3;
+               3 2 3 4;
+               4 3 1 2]
+    for face = 1:4
+      x[:,ptr+1:ptr+6] = (A*vtx[facevtx[:,face],:]).'
+      ptr += 6
+    end
+    paramptr += 3
+  end
   # set node with 1 symmetry (i.e. the centroid)
   if cub.centroid
     A = T[0.25 0.25 0.25 0.25]
     x[:,ptr+1] = (A*vtx).'
     ptr += 1
   end
-
   return x
 end
 
@@ -1445,9 +1598,75 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
     end
     paramptr += 1
   end
+  # set Jacobian for S211 oribt nodes
+  Aalpha = T[ 0.5  0.5 -1.0 0.0;
+             -1.0  0.5  0.5 0.0;
+              0.5 -1.0  0.5 0.0]
+  Abeta = T[ 0.0  0.0 -0.5 0.5;
+            -0.5  0.0  0.0 0.5;
+             0.0 -0.5  0.0 0.5]
+  facevtx = [1 1 2 1;
+             2 4 4 3;
+             3 2 3 4;
+             4 3 1 2]
+  for i = 1:cub.numS211
+    for face = 1:4
+      for j = 1:3
+        Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+3,
+            paramptr+1] = Aalpha*vtx[facevtx[:,face],j]
+        Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+3,
+            paramptr+2] = Abeta*vtx[facevtx[:,face],j]
+      end
+      ptr += 3
+    end
+    paramptr += 2
+  end
   # set Jacobian for all nodes with 24-symmetries
-  # ...
-
+  # set Jacobian for face nodes corresponding to S111 orbit
+  Aalpha = T[0.5 0 -0.5; 0 0.5 -0.5; -0.5 0.5 0;
+             -0.5 0 0.5; 0 -0.5 0.5; 0.5 -0.5 0]
+  Abeta =  T[0 0.5 -0.5; 0.5 0 -0.5; -0.5 0 0.5;
+             -0.5 0.5 0; 0.5 -0.5 0; 0 -0.5 0.5]
+  facevtx = [1 1 2 1;
+             2 4 4 3;
+             3 2 3 4]   
+  for i = 1:cub.numfaceS111
+    for face = 1:4
+      for j = 1:3
+        Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+6,
+            paramptr+1] = Aalpha*vtx[facevtx[:,face],j]
+        Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+6,
+            paramptr+2] = Abeta*vtx[facevtx[:,face],j]
+      end
+      ptr += 6
+    end
+    paramptr += 2
+  end
+  # set Jacobian for S1111 node orbits 
+  Aalpha = T[0.5 0 -0.5 0; 0 0.5 -0.5 0; -0.5 0.5 0 0;
+             -0.5 0 0.5 0; 0 -0.5 0.5 0; 0.5 -0.5 0 0]
+  Abeta = T[0 0.5 -0.5 0; 0.5 0 -0.5 0; -0.5 0 0.5 0;
+            -0.5 0.5 0 0; 0.5 -0.5 0 0; 0 -0.5 0.5 0]
+  Agamma = T[0 0 -0.5 0.5; 0 0 -0.5 0.5; -0.5 0 0 0.5;
+             -0.5 0 0 0.5; 0 -0.5 0 0.5; 0 -0.5 0 0.5]
+  facevtx = [1 1 2 1;
+             2 4 4 3;
+             3 2 3 4;
+             4 3 1 2]
+  for i = 1:cub.numS1111
+    for face = 1:4
+      for j = 1:3
+        Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+6,
+            paramptr+1] = Aalpha*vtx[facevtx[:,face],j]
+        Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+6,
+            paramptr+2] = Abeta*vtx[facevtx[:,face],j]
+        Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+6,
+            paramptr+3] = Agamma*vtx[facevtx[:,face],j]
+      end
+      ptr += 6
+    end
+    paramptr += 3
+  end
   # set Jacobian for node with 1-symmetry
   if cub.centroid
     ptr += 1 # block of zeros, because the centroid is not parameterized
@@ -1597,9 +1816,25 @@ function calcweights{T}(cub::TetSymCub{T})
     ptr += 12
     wptr += 1
   end
+  # set S211 orbit weights
+  for i = 1:cub.numS211
+    w[ptr+1:ptr+12] = cub.weights[wptr+1]
+    ptr += 12
+    wptr += 1
+  end
   # set weights for all nodes with 24-symmetries
-  # ...
-
+  # set face S111 weights
+  for i = 1:cub.numfaceS111
+    w[ptr+1:ptr+24] = cub.weights[wptr+1]
+    ptr += 24
+    wptr += 1
+  end
+  # set S1111 orbit weights
+  for i = 1:cub.numS1111
+    w[ptr+1:ptr+24] = cub.weights[wptr+1]
+    ptr += 24
+    wptr += 1
+  end
   # set weight for node with 1-symmetry
   # set centroid weight
   if cub.centroid
@@ -1671,7 +1906,6 @@ function calcjacobianofweights{T}(cub::TriSymCub{T})
     ptr += 1
     wptr += 1
   end
-
   return Jac
 end
 
@@ -1727,8 +1961,25 @@ function calcjacobianofweights{T}(cub::TetSymCub{T})
     ptr += 12
     wptr += 1
   end
+  # set Jacobian of S211 orbit weights
+  for i = 1:cub.numS211
+    Jac[ptr+1:ptr+12,wptr+1] = ones(T, (12,1))
+    ptr += 12
+    wptr += 1
+  end
   # set Jacobian for all nodes with 24-symmetries
-  # ...
+  # set Jacobian of face S111 nodes
+  for i = 1:cub.numfaceS111
+    Jac[ptr+1:ptr+24,wptr+1] = ones(T, (24,1))
+    ptr += 24
+    wptr += 1
+  end
+  # set Jacobian of S1111 nodes
+  for i = 1:cub.numS1111
+    Jac[ptr+1:ptr+24,wptr+1] = ones(T, (24,1))
+    ptr += 24
+    wptr += 1
+  end
   # set Jacobian for node with 1-symmetry
   # set Jacobian of centroid weight
   if cub.centroid

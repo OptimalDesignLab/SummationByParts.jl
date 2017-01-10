@@ -68,19 +68,21 @@ facts("Testing SummationByParts Module (useoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.weakdifferentiate! (TetSBP, vector field method)") do
-    # build a single element grid, and verify that \int (Dxi * x) d\Omega = 2/3
+    # build a single element grid, and verify that \int (D * x) d\Omega = 2/3
     # or 0, depending on orientation of local coordinates
-    for p = 1:4
-      sbp = TetSBP{Float64}(degree=p)
-      vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
-      x = zeros(Float64, (3,sbp.numnodes,1))
-      x[:,:,1] = calcnodes(sbp, vtx)
-      di = 1
-      res = zeros(x)
-      weakdifferentiate!(sbp, di, x, res)
-      @fact sum(res[1,:,1]) --> roughly(2/3, atol=1e-15)
-      @fact sum(res[2,:,1]) --> roughly(0.0, atol=1e-15)
-      @fact sum(res[3,:,1]) --> roughly(0.0, atol=1e-15)
+    Id = (2/3).*eye(3,3)
+    vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
+    for di = 1:3
+      for p = 1:4
+        sbp = TetSBP{Float64}(degree=p)
+        x = zeros(Float64, (3,sbp.numnodes,1))
+        x[:,:,1] = calcnodes(sbp, vtx)
+        res = zeros(x)
+        weakdifferentiate!(sbp, di, x, res)
+        @fact sum(res[1,:,1]) --> roughly(Id[di,1], atol=1e-14)
+        @fact sum(res[2,:,1]) --> roughly(Id[di,2], atol=1e-14)
+        @fact sum(res[3,:,1]) --> roughly(Id[di,3], atol=1e-14)
+      end
     end
   end
 
