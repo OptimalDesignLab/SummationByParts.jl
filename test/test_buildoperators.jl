@@ -397,8 +397,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.buildoperators (TetSymCub method, internal=true)") do
-    tol = [1e-12; 1e-12; 1e-12; 5e-8]
-    for d = 1:2
+    tol = [1e-12; 1e-12; 1e-12; 1e-12] #5e-8]
+    for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64, internal=true)
       w, Q = SummationByParts.buildoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
@@ -516,8 +516,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.buildsparseoperators (TetSymCub method, internal=true)") do
-    tol = [1e-12; 1e-12; 1e-12; 5e-8]
-    for d = 1:1
+    tol = [1e-12; 1e-12; 1e-12; 1e-12] #5e-8]
+    for d = 1:3
       cub, vtx = tetcubature(2*d+1, Float64, internal=true)
       w, Q = SummationByParts.buildsparseoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]

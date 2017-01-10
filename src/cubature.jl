@@ -133,6 +133,8 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int;
     res = norm(F)
     hist ? print("\titer ",k,": res norm = ",res,"\n") : nothing
     if res < tol
+      #println("size(JtJ) = ",size(JtJ))
+      #println("rank(JtJ) = ",rank(JtJ))
       return
     end
 
@@ -460,10 +462,40 @@ function tetcubature(q::Int, T=Float64; internal::Bool=false,
     elseif q <= 3
       # P2; 4th order cubature
       cub = SymCubatures.TetSymCub{T}(vertices=false, numS31=1, numS22=1)
-      SymCubatures.setweights!(cub, T[0.06483158243276162;
-                                      0.17900116726703835])
-      SymCubatures.setparams!(cub, T[0.22511815489558668;
-                                     0.18771315212883505])
+      #SymCubatures.setweights!(cub, T[0.06483158243276162;
+      #                                0.17900116726703835])
+      #SymCubatures.setparams!(cub, T[0.22511815489558668;
+      #                               0.18771315212883505])
+      SymCubatures.setweights!(cub, T[0.1302091416313459;
+                                      0.13541612780132486])
+      SymCubatures.setparams!(cub, T[0.33398409622579817;
+                                     0.18658191164952043])
+    elseif q <= 5
+      # P3; 6th order cubature
+      cub = SymCubatures.TetSymCub{T}(vertices=false, numS31=2, numS211=1)
+      SymCubatures.setweights!(cub, T[0.061630217648090097;
+                                      0.13793513058238085;
+                                      0.04458932836762084])
+      SymCubatures.setparams!(cub, T[0.24722530396402584;
+                                     0.9298082909679131;
+                                     0.11664936229736803;
+                                     0.6505900754758551])
+    elseif q <= 7
+      # P4; 8th order cubature
+      cub = SymCubatures.TetSymCub{T}(vertices=false, numS31=2, numS22=1,
+                                      numS211=2)
+      SymCubatures.setweights!(cub, T[0.02832965568227839;
+                                      0.048583147669377845;
+                                      0.039177188602071006;
+                                      0.03021820473246459;
+                                      0.03566671096039236])
+      SymCubatures.setparams!(cub, T[0.18167711419341304;
+                                     0.5398647398205032;
+                                     0.7170540544966304;
+                                     0.0881323679975843;
+                                     0.5992257377201948;
+                                     0.4688384403943167;
+                                     1.0098301020743294])
     end
   else
     # at least (q+1)/2+1 nodes along each edge
