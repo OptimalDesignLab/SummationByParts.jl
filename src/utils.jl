@@ -19,6 +19,7 @@ to an auxlliary set of nodes.
 """->
 function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2})
   # evaluate the basis at the SBP nodes and the interpolation points
+  @assert size(xinterp, 1) == 2
   d = sbp.degree
   N = convert(Int, (d+1)*(d+2)/2 )
   Psbp = zeros(T, (sbp.numnodes,N) )
@@ -40,6 +41,8 @@ end
 
 function buildinterpolation{T}(sbp::TetSBP{T}, xinterp::AbstractArray{T,2})
   # evaluate the basis at the SBP nodes and the interpolation points
+  @assert size(xinterp, 1) == 3
+
   d = sbp.degree
   N = convert(Int, (d+1)*(d+2)*(d+3)/6)
   Psbp = zeros(T, (sbp.numnodes,N) )
