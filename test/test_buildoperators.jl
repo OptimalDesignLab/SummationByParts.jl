@@ -272,8 +272,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tricubature(2*d-1, Float64)
       face = TriFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,2)
-      SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
-      SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+      SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
+      SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
       scale!(Q, 0.5)
       A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
       @fact size(nullspace(A),2) --> sizenull[d]
@@ -288,9 +288,9 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tetcubature(2*d-1, Float64)
       face = TetFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,3)
-      SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
-      SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
-      SummationByParts.boundaryoperator!(face, 3, slice(Q,:,:,3))
+      SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
+      SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
+      SummationByParts.boundaryoperator!(face, 3, sview(Q,:,:,3))
       scale!(Q, 0.5)
       A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
       @fact size(nullspace(A),2) --> sizenull[d]
@@ -304,8 +304,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
       cub, vtx = tricubature(2*d-1, Float64)
       face = TriFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,2)
-      SummationByParts.boundaryoperator!(face, 1, slice(Q,:,:,1))
-      SummationByParts.boundaryoperator!(face, 2, slice(Q,:,:,2))
+      SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
+      SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
       scale!(Q, 0.5)
       w = SymCubatures.calcweights(cub)
       A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
@@ -321,7 +321,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
         end
       end
       Z = nullspace(A)
-      f, dfdx = SummationByParts.commuteerror(w, slice(Q,:,:,1), slice(Q,:,:,2),
+      f, dfdx = SummationByParts.commuteerror(w, sview(Q,:,:,1), sview(Q,:,:,2),
                                               Z, reducedsol[d])
       @fact f --> roughly(error[d], atol=1e-15)
     end
@@ -397,8 +397,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.buildoperators (TetSymCub method, internal=true)") do
-    tol = [1e-12; 1e-12; 1e-12; 5e-8]
-    for d = 1:2
+    tol = [1e-12; 1e-12; 1e-12; 1e-12] #5e-8]
+    for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64, internal=true)
       w, Q = SummationByParts.buildoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
@@ -440,6 +440,103 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
           dudy = (x.^i).*(j.*y.^max(0,j-1))
           @fact Dx*u --> roughly(dudx, atol=1e-13)
           @fact Dy*u --> roughly(dudy, atol=1e-13)
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildsparseoperators (TriSymCub method, internal=false)") do
+    for d = 1:3 # cannot do d=4 yet, since we do not have the cubature
+      cub, vtx = tricubature(2*d+1, Float64)
+      w, Q = SummationByParts.buildsparseoperators(cub, vtx, d)
+      Dx = diagm(1./w)*Q[:,:,1]
+      Dy = diagm(1./w)*Q[:,:,2]
+      xy = SymCubatures.calcnodes(cub, vtx)
+      x = vec(xy[1,:]); y = vec(xy[2,:])
+      for r = 0:d
+        for j = 0:r
+          i = r-j
+          u = (x.^i).*(y.^j)
+          dudx = (i.*x.^max(0,i-1)).*(y.^j)
+          dudy = (x.^i).*(j.*y.^max(0,j-1))
+          @fact Dx*u --> roughly(dudx; atol=5e-13)
+          @fact Dy*u --> roughly(dudy; atol=5e-13)
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildsparseoperators (TriSymCub method, internal=true)") do
+    for d = 1:3 # cannot do d=4 yet, since we do not have the cubature
+      cub, vtx = tricubature(2*d+1, Float64, internal=true)
+      w, Q = SummationByParts.buildsparseoperators(cub, vtx, d, internal=true)
+      Dx = diagm(1./w)*Q[:,:,1]
+      Dy = diagm(1./w)*Q[:,:,2]
+      xy = SymCubatures.calcnodes(cub, vtx)  
+      x = vec(xy[1,:]); y = vec(xy[2,:])
+      for r = 0:d
+        for j = 0:r
+          i = r-j
+          u = (x.^i).*(y.^j)
+          dudx = (i.*x.^max(0,i-1)).*(y.^j)
+          dudy = (x.^i).*(j.*y.^max(0,j-1))
+          @fact Dx*u --> roughly(dudx, atol=5e-13)
+          @fact Dy*u --> roughly(dudy, atol=5e-13)
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildsparseoperators (TetSymCub method, internal=false)") do
+    #tol = [1e-12; 1e-12; 1e-12; 5e-8]
+    tol = [1e-13; 5e-13; 5e-13; 5e-13]
+    for d = 1:3 # cannot do d=4 yet, since we do not have the cubature
+      cub, vtx = tetcubature(2*d+1, Float64)
+      w, Q = SummationByParts.buildsparseoperators(cub, vtx, d)
+      Dx = diagm(1./w)*Q[:,:,1]
+      Dy = diagm(1./w)*Q[:,:,2]
+      Dz = diagm(1./w)*Q[:,:,3]
+      xyz = SymCubatures.calcnodes(cub, vtx)      
+      x = vec(xyz[1,:]); y = vec(xyz[2,:]); z = vec(xyz[3,:])
+      for r = 0:d
+        for k = 0:r
+          for j = 0:r-k
+            i = r-j-k
+            u = (x.^i).*(y.^j).*(z.^k)
+            dudx = (i.*x.^max(0,i-1)).*(y.^j).*(z.^k)
+            dudy = (x.^i).*(j.*y.^max(0,j-1)).*(z.^k)
+            dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
+            @fact Dx*u --> roughly(dudx, atol=tol[d])
+            @fact Dy*u --> roughly(dudy, atol=tol[d])
+            @fact Dz*u --> roughly(dudz, atol=tol[d])
+          end
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildsparseoperators (TetSymCub method, internal=true)") do
+    tol = [1e-12; 1e-12; 1e-12; 1e-12] #5e-8]
+    for d = 1:3
+      cub, vtx = tetcubature(2*d+1, Float64, internal=true)
+      w, Q = SummationByParts.buildsparseoperators(cub, vtx, d)
+      Dx = diagm(1./w)*Q[:,:,1]
+      Dy = diagm(1./w)*Q[:,:,2]
+      Dz = diagm(1./w)*Q[:,:,3]
+      xyz = SymCubatures.calcnodes(cub, vtx)      
+      x = vec(xyz[1,:]); y = vec(xyz[2,:]); z = vec(xyz[3,:])
+      for r = 0:d
+        for k = 0:r
+          for j = 0:r-k
+            i = r-j-k
+            u = (x.^i).*(y.^j).*(z.^k)
+            dudx = (i.*x.^max(0,i-1)).*(y.^j).*(z.^k)
+            dudy = (x.^i).*(j.*y.^max(0,j-1)).*(z.^k)
+            dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
+            @fact Dx*u --> roughly(dudx, atol=tol[d])
+            @fact Dy*u --> roughly(dudy, atol=tol[d])
+            @fact Dz*u --> roughly(dudz, atol=tol[d])
+          end
         end
       end
     end

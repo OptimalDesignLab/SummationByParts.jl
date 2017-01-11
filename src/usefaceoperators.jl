@@ -449,6 +449,113 @@ function mappingjacobian!{Tsbp,Tmsh}(sbpface::AbstractFace{Tsbp},
 end
 
 @doc """
+### SummationByParts.facenormal!
+
+Uses a given set of Lagrangian face nodes to determine an analytical
+(polynomial) mapping, and then uses this mapping to determine the scaled
+face-normal vector.
+
+**Inputs**
+
+* `sbpface`: an SBP face operator type
+* `mapdegree`: the polynomial degree of the mapping
+* `xlag`: Lagrangian nodes in physical space; [coord, Lagrangian node]
+* `xref`: Lagrangian nodes in reference space; [coord, Lagrangian node]
+
+**In/Outs**
+
+* `xsbp`: location of the SBP-face nodes in physical space; [coord, sbp node]
+* `nrm`: scaled face-normal at the sbpface nodes
+
+"""->
+function facenormal!{Tsbp,Tmsh}(sbpface::TriFace{Tsbp},
+                                mapdegree::Int,
+                                xlag::AbstractArray{Tmsh,2},
+                                xref::AbstractArray{Tmsh,2},
+                                xsbp::AbstractArray{Tmsh,2},
+                                nrm::AbstractArray{Tmsh,2})
+  @assert( size(xlag,1) == size(xsbp,1) == size(nrm,1) == 2 )
+  @assert( size(xref,1) == 1 )
+  @assert( size(xsbp,2) == size(nrm,2) )
+  numdof = (mapdegree+1)
+  @assert( size(xlag,2) == size(xref,2) == numdof )
+  # Step 1: find the polynomial mapping using xlag
+  V = zeros(Tmsh, (numdof,numdof) )
+  for i = 0:mapdegree
+    V[:,i+1] = OrthoPoly.jacobipoly(vec(xref[1,:]), 0.0, 0.0, i)
+  end
+  coeff = zeros(Tmsh, (numdof,2))
+  coeff = V\(xlag.')
+  # Step 2: compute the mapped SBP nodes and the analytical normal at sbp nodes
+  x = SymCubatures.calcnodes(sbpface.cub, sbpface.vtx) # <-- SBP nodes, ref. spc
+  fill!(nrm, zero(Tmsh))
+  fill!(xsbp, zero(Tmsh))
+  for i = 0:mapdegree
+    P = OrthoPoly.jacobipoly(vec(x[1,:]), 0.0, 0.0, i)
+    dPdξ = OrthoPoly.diffjacobipoly(vec(x[1,:]), 0.0, 0.0, i)
+    for nd = 1:sbpface.numnodes
+      xsbp[1,nd] += coeff[i+1,1]*P[nd]
+      xsbp[2,nd] += coeff[i+1,2]*P[nd]
+      nrm[1,nd] += coeff[i+1,2]*dPdξ[nd]
+      nrm[2,nd] -= coeff[i+1,1]*dPdξ[nd]
+    end
+  end
+end
+
+function facenormal!{Tsbp,Tmsh}(sbpface::TetFace{Tsbp},
+                                mapdegree::Int,
+                                xlag::AbstractArray{Tmsh,2},
+                                xref::AbstractArray{Tmsh,2},
+                                xsbp::AbstractArray{Tmsh,2},
+                                nrm::AbstractArray{Tmsh,2})
+  @assert( size(xlag,1) == size(xsbp,1) == size(nrm,1) == 3 )
+  @assert( size(xref,1) == 2 )
+  @assert( size(xsbp,2) == size(nrm,2) )
+  numdof = binomial(mapdegree+2,2)
+  @assert( size(xlag,2) == size(xref,2) == numdof )
+  # Step 1: find the polynomial mapping using xlag
+  V = zeros(Tmsh, (numdof,numdof) )
+  ptr = 1
+  for r = 0:mapdegree
+    for j = 0:r
+      i = r-j
+      V[:,ptr] = OrthoPoly.proriolpoly(vec(xref[1,:]), vec(xref[2,:]), i, j)
+      ptr += 1
+    end
+  end
+  coeff = zeros(Tmsh, (numdof,3))
+  coeff = V\(xlag.')
+  # Step 2: compute the mapped SBP nodes and the tangent vectors at sbp nodes
+  x = SymCubatures.calcnodes(sbpface.cub, sbpface.vtx) # <-- SBP nodes, ref. spc
+  fill!(xsbp, zero(Tmsh))
+  dxdξ = zeros(Tmsh, (3,2,sbpface.numnodes))
+  ptr = 1
+  for r = 0:mapdegree
+    for j = 0:r
+      i = r-j
+      P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      dPdξ, dPdη = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      for di = 1:3
+        for nd = 1:sbpface.numnodes
+          xsbp[di,nd] += coeff[ptr,di]*P[nd]
+          dxdξ[di,1,nd] += coeff[ptr,di]*dPdξ[nd]
+          dxdξ[di,2,nd] += coeff[ptr,di]*dPdη[nd]
+        end
+      end
+      ptr += 1
+    end
+  end
+  # Step 3: compute the face-normal vector using the tangent vectors
+  for di = 1:3
+    it1 = mod(di,3)+1
+    it2 = mod(di+1,3)+1
+    for i = 1:sbpface.numnodes
+      nrm[di,i] = dxdξ[it1,1,i]*dxdξ[it2,2,i] - dxdξ[it2,1,i]*dxdξ[it1,2,i]
+    end
+  end
+end
+
+@doc """
 ### SummationByParts.edgestabilize!
 
 Applies edge stabilization to a given field, differentiating in the direction
