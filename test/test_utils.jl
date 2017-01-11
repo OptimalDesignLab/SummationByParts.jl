@@ -1,5 +1,23 @@
 facts("Testing SummationByParts Module (utils.jl file)...") do
 
+  context("Testing SummationByParts.calcminnodedistance (TriSBP method)") do
+    mindist = [1.0; 0.2357022603955159; 0.1487006728783353; 0.09492895652255572]
+    for p = 1:4
+      sbp = TriSBP{Float64}(degree=p)
+      vtx = [0. 0.; 1. 0.; 0. 1.]
+      @fact calcminnodedistance(sbp, vtx) --> roughly(mindist[p], atol=1e-13)
+    end
+  end
+
+  context("Testing SummationByParts.calcminnodedistance (TetSBP method)") do
+    mindist = [1.0; 0.4330127018922193; 0.2639696512367827; 0.1366241982649621]
+    for p = 1:4
+      sbp = TetSBP{Float64}(degree=p)
+      vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
+      @fact calcminnodedistance(sbp, vtx) --> roughly(mindist[p], atol=1e-13)
+    end
+  end
+      
   context("Testing SummationByParts.buildinterpolation (TriSBP method)") do
     # this checks that polynomials of total degree d are reconstructed accurately
     numpoints = 3

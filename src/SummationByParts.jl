@@ -17,9 +17,13 @@ export AbstractSBP, TriSBP, TetSBP, SparseTriSBP, SparseTetSBP
 export AbstractFace, TriFace, TetFace
 export Boundary, Interface
 
-export calcnodes, calcminnodedistance, weakdifferentiate!, differentiate!,
-  directionaldifferentiate!, volumeintegrate!, mappingjacobian!,
-  calcmappingjacobian!, boundaryinterpolate!, boundaryintegrate!,
+export calcnodes, calcminnodedistance
+export weakdifferentiate!, weakDifferentiateElement!
+export differentiate!, differentiateElement!
+export directionalDifferentiateElement!
+export volumeintegrate!, volumeIntegrateElement!
+export mappingjacobian!, calcmappingjacobian!
+export boundaryinterpolate!, boundaryintegrate!,
   interiorfaceintegrate!, interiorfaceinterpolate!, edgestabilize!,
   integratefunctional!, permuteinterface!, facenormal!
 
@@ -470,7 +474,11 @@ end
 
 include("buildfaceoperators.jl") #<--- functions related to building face operators
 include("buildoperators.jl") #<--- functions related to building SBP operators
-include("useoperators.jl") #<--- functions for applying SBP operators
+include("weakdifferentiate.jl") #<--- functions for weak differentiation
+include("differentiate.jl") #<--- functions for strong differentiation
+include("directionaldifferentiate.jl") #<--- directional differentiation
+include("volumeintegrate.jl") #<--- volume integration against test functions
+include("mappingjacobian.jl") #<--- function to compute the mapping jacobian
 include("usefaceoperators.jl") #<--- functions for face operations
 include("utils.jl") # <--- miscillaneous functions
 

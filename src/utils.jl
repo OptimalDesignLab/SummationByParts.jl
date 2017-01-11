@@ -2,6 +2,91 @@
 # categorized
 
 @doc """
+### SummationByParts.getnbrnodeindex
+
+Returns the face-node index on `face.faceR` equivalent to index `i` on
+`face.faceL`.
+
+**Inputs**
+
+* `sbp`: an SBP operator
+* `face`: an element interface
+* `i`: face-node index on `face.faceL`
+
+**Returns**
+
+* `j`: face-node index on `face.faceR`
+
+"""->
+function getnbrnodeindex{T}(sbp::TriSBP{T}, face::Interface, i::Int)
+  return [2; 1; sbp.numfacenodes:-1:3][i]
+end
+
+@doc """
+### SummationByParts.calcnodes
+
+This function returns the node coordinates for an SBP operator.  It basically
+calls calcnodes for the underlying SymCubature.  This function assumes the
+element mapping is linear, i.e. edges are lines.
+
+**Inputs**
+
+* `sbp`: an SBP operator
+* `vtx`: the vertices that define the element
+
+**Outputs**
+
+* `x`: the node coordinates; 1st dimension is the coordinate, the second the node
+
+**Example**
+```
+  # define a third-order accurate SBP on triangles
+  sbp = TriSBP{Float64}(degree=2)
+  # build a simple 2-element grid on a square domain
+  x = zeros(Float64, (2,sbp.numnodes,2))
+  vtx = [0. 0.; 1. 0.; 0. 1.]
+  x[:,:,1] = calcnodes(sbp, vtx)
+  vtx = [1. 0.; 1. 1.; 0. 1.]
+  x[:,:,2] = calcnodes(sbp, vtx)
+```
+"""->
+function calcnodes{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx)
+  if sbp.reorder
+    perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
+    x = SymCubatures.calcnodes(sbp.cub, vtx)
+    return x[:,perm]
+  else
+    return SymCubatures.calcnodes(sbp.cub, vtx)
+  end
+end
+
+@doc """
+### SummationByParts.calcminnodedistance
+
+Returns the minimum distance between distinct nodes on an element with straight sides
+
+**Inputs**
+
+* `sbp`: an SBP operator
+* `vtx`: the vertices that define the element
+
+**Returns**
+
+* `mindist`: the minimum distance between distinct nodes
+
+"""->
+function calcminnodedistance{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx)
+  x = SymCubatures.calcnodes(sbp.cub, vtx)
+  mindist = convert(T, Inf)
+  for i = 1:size(x,2)
+    for j = i+1:size(x,2)
+      mindist = min(mindist, norm(x[:,i] - x[:,j]))
+    end
+  end
+  return mindist
+end
+
+@doc """
 ### SummationByParts.buildinterpolation
 
 Builds a matrix operator that can reconstruct a field located at the sbp nodes
@@ -271,3 +356,4 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
     end
   end
 end
+
