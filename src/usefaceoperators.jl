@@ -173,29 +173,6 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-#=
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
-                                            bndryfaces::Array{Boundary},
-                                            flux::AbstractArray{Tflx,3},
-                                            res::AbstractArray{Tres,3})
-  @assert( size(res,1) == size(flux,1) )
-  @assert( sbp.numnodes == size(res,2) )
-  @assert( sbp.numfacenodes == size(flux,2) )
-  @assert( size(bndryfaces,1) == size(flux,3) )
-  for (bindex, bndry) in enumerate(bndryfaces)
-    for i = 1:sbp.numfacenodes        
-      for j = 1:sbp.numfacenodes
-        jB = sbp.facenodes[j, bndry.face]::Int # element index for jth node on face
-        for field = 1:size(res,1)
-          res[field,jB,bndry.element] += sbp.wface[j,i]*flux[field,i,bindex]
-        end
-      end
-    end
-  end
-end
-=#
-
-
 @doc """
 ### SummationByParts.integratefunctional!
 
