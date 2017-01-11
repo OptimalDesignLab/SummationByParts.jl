@@ -462,14 +462,14 @@ function tetcubature(q::Int, T=Float64; internal::Bool=false,
     elseif q <= 3
       # P2; 4th order cubature
       cub = SymCubatures.TetSymCub{T}(vertices=false, numS31=1, numS22=1)
-      #SymCubatures.setweights!(cub, T[0.06483158243276162;
-      #                                0.17900116726703835])
-      #SymCubatures.setparams!(cub, T[0.22511815489558668;
-      #                               0.18771315212883505])
-      SymCubatures.setweights!(cub, T[0.1302091416313459;
-                                      0.13541612780132486])
-      SymCubatures.setparams!(cub, T[0.33398409622579817;
-                                     0.18658191164952043])
+      SymCubatures.setweights!(cub, T[0.06483158243276162;
+                                      0.17900116726703835])
+      SymCubatures.setparams!(cub, T[0.22511815489558668;
+                                     0.18771315212883505])
+      #SymCubatures.setweights!(cub, T[0.1302091416313459;
+      #                                0.13541612780132486])
+      #SymCubatures.setparams!(cub, T[0.33398409622579817;
+      #                               0.18658191164952043])
     elseif q <= 5
       # P3; 6th order cubature
       cub = SymCubatures.TetSymCub{T}(vertices=false, numS31=2, numS211=1)

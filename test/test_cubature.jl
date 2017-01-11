@@ -227,10 +227,10 @@ facts("Testing Cubature Module...") do
     @fact cub.params --> roughly([(1 - sqrt(5)/5)*3/4], atol=1e-14)
 
     cub, vtx = tetcubature(3, Float64, internal=true)
-    @fact cub.weights --> roughly([0.1302091416313459;
-                                   0.13541612780132486], atol=1e-14)
-    @fact cub.params --> roughly([0.33398409622579817;
-                                  0.18658191164952043], atol=1e-14)
+    @fact cub.weights --> roughly([0.06483158243276162;
+                                   0.17900116726703835], atol=1e-14)
+    @fact cub.params --> roughly([0.22511815489558668;
+                                  0.18771315212883505], atol=1e-14)
   end
   
   context("Testing Cubature.equivalenceconstant (tricubature method)") do
