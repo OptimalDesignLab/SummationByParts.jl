@@ -23,12 +23,13 @@ export differentiate!, differentiateElement!
 export directionalDifferentiateElement!
 export volumeintegrate!, volumeIntegrateElement!
 export mappingjacobian!, calcmappingjacobian!
+export facenormal!, calcFaceNormals!
 export boundaryinterpolate!, boundaryFaceInterpolate!
 export interiorfaceinterpolate!, interiorFaceInterpolate!
 export integratefunctional!, integrateBoundaryFunctional!
 export boundaryintegrate!, boundaryFaceIntegrate!
 export interiorfaceintegrate!, interiorFaceIntegrate!
-export edgestabilize!, permuteinterface!, facenormal!
+export edgestabilize!, permuteinterface!
 
 @doc """
 ### SBP.AbstractSBP
