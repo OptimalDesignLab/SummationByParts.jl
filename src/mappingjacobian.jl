@@ -2,160 +2,7 @@
 # coordinate mapping Jacobian on elements and faces
 
 @doc """
-### SummationByParts.mappingjacobian!
-
-Evaluates the (scaled) Jacobian of the mapping from reference coordinates to
-physical coordinates, as well as the determinant of the Jacobian.  The values
-returned in dξdx are scaled by the determinant, so they have the same units as
-the boundary measure (i.e. length in 2D, or length^2 in 3D).  This scaling is
-adopted, because conservation laws written in conservative form in the reference
-frame use the scaled Jacobian.
-
-**Inputs**
-
-* `sbp`: an SBP operator type
-* `x`: the physical coordinates; 1st dim = coord, 2nd dim = node, 3rd dim = elem
-
-**In/Outs**
-
-* `dξdx`: the scaled Jacobian of the mapping; 1st dim = ref coord, 2nd dim =
-  phys coord, 3rd dim = node, 3rd dim = elem
-* `jac`: the determinant of the Jacobian; 1st dim = node, 2nd dim = elem
-
-"""->
-function mappingjacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
-                                     x::AbstractArray{Tmsh,3},
-                                     dξdx::AbstractArray{Tmsh,4},
-                                     jac::AbstractArray{Tmsh,2})
-  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
-  @assert( size(x,3) == size(dξdx,4) )
-  @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
-  fill!(dξdx, zero(Tmsh))
-  dxdξ = zeros(Tmsh, (2,sbp.numnodes,size(x,3)))
-  # compute d(x,y)/dxi and set deta/dx and deta/dy
-  differentiate!(sbp, 1, x, dxdξ)
-  for elem = 1:size(x,3)
-    for i = 1:size(x,2)
-      dξdx[2,1,i,elem] = -dxdξ[2,i,elem]
-      dξdx[2,2,i,elem] = dxdξ[1,i,elem]
-    end
-  end
-  # compute d(x,y)/deta and set dxi/dx and dxi/dy
-  fill!(dxdξ, zero(Tmsh))
-  differentiate!(sbp, 2, x, dxdξ)
-  for elem = 1:size(x,3)
-    for i = 1:size(x,2)
-      dξdx[1,2,i,elem] = -dxdξ[1,i,elem]
-      dξdx[1,1,i,elem] = dxdξ[2,i,elem]
-    end
-  end
-  # compute the determinant of the Jacobian
-  for elem = 1:size(x,3)
-    for i = 1:sbp.numnodes
-      jac[i,elem] = one(Tmsh)/(dξdx[1,1,i,elem]*dξdx[2,2,i,elem] - 
-                               dξdx[1,2,i,elem]*dξdx[2,1,i,elem])
-    end
-  end
-  # check for negative jac here?
-end
-
-function mappingjacobian!{Tsbp,Tmsh}(sbp::SparseTriSBP{Tsbp},
-                                     x::AbstractArray{Tmsh,3},
-                                     dξdx::AbstractArray{Tmsh,4},
-                                     jac::AbstractArray{Tmsh,2})
-  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
-  @assert( size(x,3) == size(dξdx,4) )
-  @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
-  fill!(dξdx, zero(Tmsh))
-  dxdξ = zeros(Tmsh, (2,sbp.numnodes,size(x,3)))
-  # compute d(x,y)/dxi and set deta/dx and deta/dy
-  differentiate!(sbp, 1, x, dxdξ)
-  for elem = 1:size(x,3)
-    for i = 1:size(x,2)
-      dξdx[2,1,i,elem] = -dxdξ[2,i,elem]
-      dξdx[2,2,i,elem] = dxdξ[1,i,elem]
-    end
-  end
-  # compute d(x,y)/deta and set dxi/dx and dxi/dy
-  fill!(dxdξ, zero(Tmsh))
-  differentiate!(sbp, 2, x, dxdξ)
-  for elem = 1:size(x,3)
-    for i = 1:size(x,2)
-      dξdx[1,2,i,elem] = -dxdξ[1,i,elem]
-      dξdx[1,1,i,elem] = dxdξ[2,i,elem]
-    end
-  end
-  # compute the determinant of the Jacobian
-  for elem = 1:size(x,3)
-    for i = 1:sbp.numnodes
-      jac[i,elem] = one(Tmsh)/(dξdx[1,1,i,elem]*dξdx[2,2,i,elem] - 
-                               dξdx[1,2,i,elem]*dξdx[2,1,i,elem])
-    end
-  end
-  # check for negative jac here?
-end
-
-function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
-                                     x::AbstractArray{Tmsh,3},
-                                     dξdx::AbstractArray{Tmsh,4},
-                                     jac::AbstractArray{Tmsh,2})
-  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
-  @assert( size(x,3) == size(dξdx,4) )
-  @assert( size(x,1) == 3 && size(dξdx,1) == 3 && size(dξdx,2) == 3 )
-  numelem = size(x,3)
-  dxdξ = zeros(Tmsh, (3,sbp.numnodes,numelem,3))
-  # calculate the derivative of the coordinates with respect to (xi,eta,zeta)
-  # using the SBP operator
-  for di = 1:3
-    differentiate!(sbp, di, x, sub(dxdξ,:,:,:,di)) 
-  end
-  fill!(dξdx, zero(Tmsh))
-  # calculate the metrics: the outer loop calculates the derivatives of
-  # coordinates-times-coordinate-derivatives, for example, d/deta( z * d(y)/d
-  # zeta), and this contribution is added to the relevant metric.
-  for di = 1:3
-    it1 = mod(di,3)+1
-    it2 = mod(di+1,3)+1
-    for elem = 1:numelem
-      for i = 1:sbp.numnodes
-        for j = 1:sbp.numnodes
-          # the 0.5 factor in the SBP entry accounts for the averaging over the
-          # two possible analytical formulations
-          coeff = 0.5*sbp.Q[i,j,di]
-          # this second set of indices (di2, it21, it22) denote the x-, y-,
-          # z-coordinate indices, while the first set (di, it1, it2) denotes the xi-,
-          # eta-, zeta-indices
-          for di2 = 1:3
-            it21 = mod(di2,3)+1
-            it22 = mod(di2+1,3)+1
-            dξdx[it1,di2,i,elem] += 
-            coeff*(x[it22,j,elem]*dxdξ[it21,j,elem,it2] -
-                   x[it21,j,elem]*dxdξ[it22,j,elem,it2])            
-            dξdx[it2,di2,i,elem] += 
-            coeff*(x[it21,j,elem]*dxdξ[it22,j,elem,it1] -
-                   x[it22,j,elem]*dxdξ[it21,j,elem,it1])
-          end
-        end
-      end
-    end
-  end
-  # scale metrics by norm and calculate the determinant of the mapping
-  for elem = 1:numelem
-    for i = 1:sbp.numnodes
-      dξdx[:,:,i,elem] /= sbp.w[i]
-      jac[i,elem] = one(Tmsh)/(dxdξ[1,i,elem,1]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,3] +
-                               dxdξ[1,i,elem,2]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,1] +
-                               dxdξ[1,i,elem,3]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,2] -
-                               dxdξ[1,i,elem,1]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,2] -
-                               dxdξ[1,i,elem,2]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,3] -
-                               dxdξ[1,i,elem,3]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,1])
-    end
-  end
-  # check for negative jac here?
-end
-
-@doc """
-### SummationByParts.calcmappingjacobian!
+### SummationByParts.calcMappingJacobian!
 
 Uses a given set of Lagrangian element nodes to determine an analytical
 (polynomial) mapping, and then uses this mapping to determine the Jacobian of
@@ -168,8 +15,243 @@ the mapping.  The approach varies depending on the dimension of the problem:
 
 * `sbp`: an SBP operator type
 * `mapdegree`: the polynomial degree of the mapping
-* `xlag`: Lagrangian nodes in physical space; [coord, Lagrangian node]
 * `xref`: Lagrangian nodes in reference space; [coord, Lagrangian node]
+* `xlag`: Lagrangian nodes in physical space; [coord, Lagrangian node, element]
+* `Eone`: Ex*one, Ey*one (Ez*one); [sbp node, coord, element] see notes below
+
+**In/Outs**
+
+* `xsbp`: location of the SBP nodes in physical space; [coord, sbp node, element]
+* `dξdx`: scaled Jacobian of mapping; [ref coord, phys coord, sbp node, element]
+* `jac`: the determinant of the Jacobian; [sbp node, element]
+
+**Notes**
+
+The array `Eone` is the product of the boundary operators, in physical space,
+with the vector of ones (see Crean et al., Entropy-Conservative,
+Multidimensional Summation-By-Parts Discretization of the Euler Equations, as
+well as the test in `test/test_mappingjacobian.jl`).  These products are used to
+define the metric invariants.  *They are not needed by the 2-dimensional code*,
+and so this array can be passed empty in that case.
+
+"""->
+function calcMappingJacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int,
+                                         xref::AbstractArray{Tmsh,2},
+                                         xlag::AbstractArray{Tmsh,3},
+                                         xsbp::AbstractArray{Tmsh,3},
+                                         dξdx::AbstractArray{Tmsh,4},
+                                         jac::AbstractArray{Tmsh,2},
+                                         Eone::AbstractArray{Tmsh,3}=
+                                           Array(Tmsh,0,0,0))
+  @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) )
+  @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
+           == size(dξdx,2) == 2 )
+  @assert( size(xsbp,3) == size(xlag,3) == size(dξdx,4) == size(jac,2) )
+  numdof = binomial(mapdegree+2,2)
+  @assert( size(xlag,2) == size(xref,2) == numdof )
+  # find the inverse of the Vandermonde matrix
+  V = zeros(Tmsh, (numdof,numdof) )
+  ptr = 1
+  for r = 0:mapdegree
+    for j = 0:r
+      i = r-j
+      V[:,ptr] = OrthoPoly.proriolpoly(vec(xref[1,:]), vec(xref[2,:]), i, j)
+      ptr += 1
+    end
+  end
+  Vinv = inv(V)
+  # get the SBP nodes in reference space in order to find the orthogonal
+  # polynomials and their derivatives at these nodes
+  x = calcnodes(sbp)
+  P = zeros(Tmsh, (sbp.numnodes, numdof))
+  dPdξ = zeros(Tmsh, (sbp.numnodes, numdof))
+  dPdη = zeros(Tmsh, (sbp.numnodes, numdof))
+  ptr = 1
+  for r = 0:mapdegree
+    for j = 0:r
+      i = r-j
+      P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      dPdξ[:,ptr], dPdη[:,ptr] =
+        OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
+      ptr += 1
+    end
+  end
+  # loop over each element...
+  fill!(xsbp, zero(Tmsh))
+  coeff = zeros(Tmsh, (numdof,2))
+  dxdξ = zeros(Tmsh, (2,2,sbp.numnodes))
+  for e = 1:size(xlag,3)  
+    # find the coefficents of the polynomial mapping using xlag and Vinv
+    for di = 1:2
+      for i = 1:numdof
+        coeff[i,di] = zero(Tmsh)
+        for j = 1:numdof
+          coeff[i,di] += Vinv[i,j]*xlag[di,j,e]
+        end
+      end
+    end
+    # compute the mapped SBP nodes and the coordinate derivatives at these nodes
+    fill!(dxdξ, zero(Tmsh))
+    for i = 1:numdof
+      for di = 1:2
+        for nd = 1:sbp.numnodes
+          xsbp[di,nd,e] += coeff[i,di]*P[nd,i]
+          dxdξ[di,1,nd] += coeff[i,di]*dPdξ[nd,i]
+          dxdξ[di,2,nd] += coeff[i,di]*dPdη[nd,i]
+        end
+      end
+    end
+    # form the scaled metrics and determinant
+    for i = 1:sbp.numnodes
+      dξdx[1,1,i,e] = dxdξ[2,2,i]
+      dξdx[1,2,i,e] = -dxdξ[1,2,i]
+      dξdx[2,1,i,e] = -dxdξ[2,1,i]
+      dξdx[2,2,i,e] = dxdξ[1,1,i]
+      jac[i,e] = one(Tmsh)/(dξdx[1,1,i]*dξdx[2,2,i] - dξdx[1,2,i]*dξdx[2,1,i])
+    end
+  end
+end
+
+function calcMappingJacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int,
+                                         xref::AbstractArray{Tmsh,2},
+                                         xlag::AbstractArray{Tmsh,3},
+                                         xsbp::AbstractArray{Tmsh,3},
+                                         dξdx::AbstractArray{Tmsh,4},
+                                         jac::AbstractArray{Tmsh,2},
+                                         Eone::AbstractArray{Tmsh,3})
+  @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) 
+           == size(Eone,1) )
+  @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
+           == size(dξdx,2) == size(Eone,2) == 3 )
+  @assert( size(xsbp,3) == size(xlag,3) == size(dξdx,4) == size(jac,2) ==
+           size(Eone,3) )
+  numdof = binomial(mapdegree+3,3)
+  @assert( size(xlag,2) == size(xref,2) == numdof )
+  # find the inverse of the Vandermonde matrix
+  V = zeros(Tmsh, (numdof,numdof) )
+  ptr = 1
+  for r = 0:mapdegree
+    for k = 0:r
+      for j = 0:r-k
+        i = r-j-k
+        V[:,ptr] = OrthoPoly.proriolpoly(vec(xref[1,:]), vec(xref[2,:]),
+                                         vec(xref[3,:]), i, j, k)
+        ptr += 1
+      end
+    end
+  end
+  Vinv = inv(V)
+  # get the SBP nodes in reference space in order to find the orthogonal
+  # polynomials and their derivatives at these nodes
+  x = calcnodes(sbp)
+  P = zeros(Tmsh, (sbp.numnodes, numdof))
+  dPdξ = zeros(Tmsh, (sbp.numnodes, numdof))
+  dPdη = zeros(Tmsh, (sbp.numnodes, numdof))
+  dPdζ = zeros(Tmsh, (sbp.numnodes, numdof))
+  ptr = 1
+  for r = 0:mapdegree
+    for k = 0:r
+      for j = 0:r-k
+        i = r-j-k
+        P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), vec(x[3,:]),
+                                         i, j, k)
+        dPdξ[:,ptr], dPdη[:,ptr] , dPdζ[:,ptr] =
+          OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), vec(x[3,:]),
+                                    i, j, k)
+        ptr += 1
+      end
+    end
+  end
+
+  fill!(xsbp, zero(Tmsh))
+  coeff = zeros(Tmsh, (numdof,3))
+  dxdξ = zeros(Tmsh, (3,3,sbp.numnodes))
+  dξdx_targ = zeros(dxdξ)
+  Qt = zeros(Tsbp, (sbp.numnodes, 3*sbp.numnodes) )
+  Qt = [sbp.Q[:,:,1].' sbp.Q[:,:,2].' sbp.Q[:,:,3].']
+  Qtinv = pinv(Qt)
+  targ = zeros(Tmsh, (3*sbp.numnodes))
+  sol = zeros(targ)
+  # loop over each element...  
+  for e = 1:size(xlag,3)
+    # find the coefficents of the polynomial mapping using xlag and Vinv
+    for di = 1:3
+      for i = 1:numdof
+        coeff[i,di] = zero(Tmsh)
+        for j = 1:numdof
+          coeff[i,di] += Vinv[i,j]*xlag[di,j,e]
+        end
+      end
+    end
+    # compute the mapped SBP nodes and the coordinate derivatives at these nodes
+    fill!(dxdξ, zero(Tmsh))
+    for i = 1:numdof
+      for di = 1:3
+        for nd = 1:sbp.numnodes
+          xsbp[di,nd,e] += coeff[i,di]*P[nd,i]
+          dxdξ[di,1,nd] += coeff[i,di]*dPdξ[nd,i]
+          dxdξ[di,2,nd] += coeff[i,di]*dPdη[nd,i]
+          dxdξ[di,3,nd] += coeff[i,di]*dPdζ[nd,i]
+        end
+      end
+    end
+    # find the target values for the mapping Jacobian; also, find the Jacobian
+    # determinant
+    for i = 1:sbp.numnodes
+      for di = 1:3
+        it1 = mod(di,3)+1
+        it2 = mod(di+1,3)+1
+        for di2 = 1:3
+          it21 = mod(di2,3)+1
+          it22 = mod(di2+1,3)+1
+          dξdx_targ[di2,di,i] = (dxdξ[it1,it21,i]*dxdξ[it2,it22,i] - 
+                                 dxdξ[it1,it22,i]*dxdξ[it2,it21,i])
+        end
+      end
+      jac[i] = one(Tmsh)/(dxdξ[1,1,i]*dxdξ[2,2,i]*dxdξ[3,3,i] +
+                          dxdξ[1,2,i]*dxdξ[2,3,i]*dxdξ[3,1,i] +
+                          dxdξ[1,3,i]*dxdξ[2,1,i]*dxdξ[3,2,i] -
+                          dxdξ[1,1,i]*dxdξ[2,3,i]*dxdξ[3,2,i] -
+                          dxdξ[1,2,i]*dxdξ[2,1,i]*dxdξ[3,3,i] -
+                          dxdξ[1,3,i]*dxdξ[2,2,i]*dxdξ[3,1,i])
+    end
+    # find the minimum-norm solution that satisfies the metric invariants    
+    for di = 1:3
+      # check that Eone sums to zero
+      @assert( abs(sum(Eone[:,di])) < 1e-14 )
+      for di2 = 1:3
+        for i = 1:sbp.numnodes      
+          targ[i + (di2-1)*sbp.numnodes] = dξdx_targ[di2,di,i]
+        end
+      end
+      b = Qt*targ - Eone[:,di]
+      sol = Qtinv*b
+      for di2 = 1:3
+        for i = 1:sbp.numnodes
+          dξdx[di2,di,i] = dξdx_targ[di2,di,i] - sol[i + (di2-1)*sbp.numnodes]
+        end
+      end  
+    end
+  end
+end
+
+@doc """
+### SummationByParts.calcMappingJacobianElement!
+
+Single element variant of calcMappingJacobian!.  Uses a given set of Lagrangian
+element nodes to determine an analytical (polynomial) mapping, and then uses
+this mapping to determine the Jacobian of the mapping.  The approach varies
+depending on the dimension of the problem:
+
+* For *2-dimensional problems* the exact Jacobian of the mapping is used;
+* For *3-dimensional problems* an optimization problem is solved
+
+**Inputs**
+
+* `sbp`: an SBP operator type
+* `mapdegree`: the polynomial degree of the mapping
+* `xref`: Lagrangian nodes in reference space; [coord, Lagrangian node]
+* `xlag`: Lagrangian nodes in physical space; [coord, Lagrangian node]
 * `Eone`: Ex*one, Ey*one (Ez*one); [sbp node, coord] see notes below
 
 **In/Outs**
@@ -188,14 +270,11 @@ define the metric invariants.  *They are not needed by the 2-dimensional code,
 and so this array can be passed empty in that case*.
 
 """->
-function calcmappingjacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int,
-                                         xlag::AbstractArray{Tmsh,2},
-                                         xref::AbstractArray{Tmsh,2},
-                                         xsbp::AbstractArray{Tmsh,2},
-                                         dξdx::AbstractArray{Tmsh,3},
-                                         jac::AbstractArray{Tmsh},
-                                         Eone::AbstractArray{Tmsh,2}=
-                                           Array(Tmsh,0,0))
+function calcMappingJacobianElement!{
+  Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
+             xlag::AbstractArray{Tmsh,2}, xsbp::AbstractArray{Tmsh,2},
+             dξdx::AbstractArray{Tmsh,3}, jac::AbstractArray{Tmsh},
+             Eone::AbstractArray{Tmsh,2}=Array(Tmsh,0,0))
   @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) )
   @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
            == size(dξdx,2) == 2 )
@@ -243,14 +322,11 @@ function calcmappingjacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int,
   end
 end
 
-function calcmappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
-                                         mapdegree::Int,
-                                         xlag::AbstractArray{Tmsh,2},
-                                         xref::AbstractArray{Tmsh,2},
-                                         xsbp::AbstractArray{Tmsh,2},
-                                         dξdx::AbstractArray{Tmsh,3},
-                                         jac::AbstractArray{Tmsh},
-                                         Eone::AbstractArray{Tmsh,2})
+function calcMappingJacobianElement!{
+  Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2}, 
+             xlag::AbstractArray{Tmsh,2}, xsbp::AbstractArray{Tmsh,2},
+             dξdx::AbstractArray{Tmsh,3}, jac::AbstractArray{Tmsh},
+             Eone::AbstractArray{Tmsh,2})
   @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) 
            == size(Eone,1) )
   @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
@@ -336,7 +412,6 @@ function calcmappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
     end  
   end
 end
-
 
 # @doc """
 # ### SummationByParts.calcmappingjacobianreverse!
@@ -494,257 +569,156 @@ function mappingjacobian!{Tsbp,Tmsh}(sbpface::AbstractFace{Tsbp},
 end
 
 @doc """
-### SummationByParts.calcFaceNormals!
+### SummationByParts.mappingjacobian!
 
-Uses a given set of Lagrangian face nodes to determine an analytical
-(polynomial) mapping, and then uses this mapping to determine the scaled
-face-normal vector.
+**Deprecated**:
 
-**Inputs**
-
-* `sbpface`: an SBP face operator type
-* `mapdegree`: the polynomial degree of the mapping
-* `xref`: Lagrangian nodes in reference space; [coord, Lag node]
-* `xlag`: Lagrangian nodes in physical space; [coord, Lag node, face]
-
-**In/Outs**
-
-* `xsbp`: SBP-face nodes in physical space; [coord, sbp node, face]
-* `nrm`: scaled face-normal at the sbpface nodes; [component, sbp node, face]
-
-"""->
-function calcFaceNormals!{Tsbp,Tmsh}(sbpface::TriFace{Tsbp},
-                                     mapdegree::Int,
-                                     xref::AbstractArray{Tmsh,2},
-                                     xlag::AbstractArray{Tmsh,3},
-                                     xsbp::AbstractArray{Tmsh,3},
-                                     nrm::AbstractArray{Tmsh,3})
-  @assert( size(xlag,1) == size(xsbp,1) == size(nrm,1) == 2 )
-  @assert( size(xref,1) == 1 )
-  @assert( size(xsbp,2) == size(nrm,2) )
-  numdof = (mapdegree+1)
-  @assert( size(xlag,2) == size(xref,2) == numdof )
-  @assert( size(xlag,3) == size(xsbp,3) == size(nrm,3) )
-  # find the inverse of the Vandermonde matrix
-  V = zeros(Tmsh, (numdof,numdof) )
-  for i = 0:mapdegree
-    V[:,i+1] = OrthoPoly.jacobipoly(vec(xref[1,:]), 0.0, 0.0, i)
-  end
-  Vinv = inv(V)
-  # get the SBP nodes in reference space in order to find the orthogonal
-  # polynomials and their derivatives at these nodes
-  x = SymCubatures.calcnodes(sbpface.cub, sbpface.vtx)
-  P = zeros(Tmsh, (sbpface.numnodes, numdof))
-  dPdξ = zeros(Tmsh, (sbpface.numnodes, numdof))
-  for i = 0:mapdegree
-    P[:,i+1] = OrthoPoly.jacobipoly(vec(x[1,:]), 0.0, 0.0, i)
-    dPdξ[:,i+1] = OrthoPoly.diffjacobipoly(vec(x[1,:]), 0.0, 0.0, i)
-  end
-  # loop over each face...
-  fill!(nrm, zero(Tmsh))
-  fill!(xsbp, zero(Tmsh))
-  coeff = zeros(Tmsh, (numdof,2))
-  for f = 1:size(xlag,3)
-    # find the coefficents of the polynomial mapping using xlag and Vinv
-    for i = 1:numdof
-      coeff[i,1] = zero(Tmsh)
-      coeff[i,2] = zero(Tmsh)
-      for j = 1:numdof
-        coeff[i,1] += Vinv[i,j]*xlag[1,j,f]
-        coeff[i,2] += Vinv[i,j]*xlag[2,j,f]
-      end
-    end
-    # compute the mapped SBP nodes and the analytical normal at these nodes
-    for i = 1:numdof
-      for nd = 1:sbpface.numnodes
-        xsbp[1,nd,f] += coeff[i,1]*P[nd,i]
-        xsbp[2,nd,f] += coeff[i,2]*P[nd,i]
-        nrm[1,nd,f] += coeff[i,2]*dPdξ[nd,i]
-        nrm[2,nd,f] -= coeff[i,1]*dPdξ[nd,i]
-      end
-    end
-  end
-end
-
-function calcFaceNormals!{Tsbp,Tmsh}(sbpface::TetFace{Tsbp},
-                                     mapdegree::Int,
-                                     xref::AbstractArray{Tmsh,2},
-                                     xlag::AbstractArray{Tmsh,3},
-                                     xsbp::AbstractArray{Tmsh,3},
-                                     nrm::AbstractArray{Tmsh,3})
-  @assert( size(xlag,1) == size(xsbp,1) == size(nrm,1) == 3 )
-  @assert( size(xref,1) == 2 )
-  @assert( size(xsbp,2) == size(nrm,2) )
-  numdof = binomial(mapdegree+2,2)
-  @assert( size(xlag,2) == size(xref,2) == numdof )
-  @assert( size(xlag,3) == size(xsbp,3) == size(nrm,3) )
-  # find the inverse of the Vandermonde matrix
-  V = zeros(Tmsh, (numdof,numdof) )
-  ptr = 1
-  for r = 0:mapdegree
-    for j = 0:r
-      i = r-j
-      V[:,ptr] = OrthoPoly.proriolpoly(vec(xref[1,:]), vec(xref[2,:]), i, j)
-      ptr += 1
-    end
-  end
-  Vinv = inv(V)
-  # get the SBP nodes in reference space in order to find the orthogonal
-  # polynomials and their derivatives at these nodes
-  x = SymCubatures.calcnodes(sbpface.cub, sbpface.vtx)
-  P = zeros(Tmsh, (sbpface.numnodes, numdof))
-  dPdξ = zeros(Tmsh, (sbpface.numnodes, numdof))
-  dPdη = zeros(Tmsh, (sbpface.numnodes, numdof))
-  ptr = 1
-  for r = 0:mapdegree
-    for j = 0:r
-      i = r-j
-      P[:,ptr] = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
-      dPdξ[:,ptr], dPdη[:,ptr] =
-        OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
-      ptr += 1
-    end
-  end
-  # loop over each face...
-  fill!(nrm, zero(Tmsh))
-  fill!(xsbp, zero(Tmsh))
-  coeff = zeros(Tmsh, (numdof,3))
-  dxdξ = zeros(Tmsh, (3,2,sbpface.numnodes))
-  for f = 1:size(xlag,3)
-    # find the coefficents of the polynomial mapping using xlag and Vinv
-    for di = 1:3
-      for i = 1:numdof
-        coeff[i,di] = zero(Tmsh)
-        for j = 1:numdof
-          coeff[i,di] += Vinv[i,j]*xlag[di,j,f]
-        end
-      end
-    end
-    # compute the mapped SBP nodes and the tangent vectors at these nodes
-    fill!(dxdξ, zero(Tmsh))
-    for i = 1:numdof
-      for di = 1:3
-        for nd = 1:sbpface.numnodes
-          xsbp[di,nd,f] += coeff[i,di]*P[nd,i]
-          dxdξ[di,1,nd] += coeff[i,di]*dPdξ[nd,i]
-          dxdξ[di,2,nd] += coeff[i,di]*dPdη[nd,i]
-        end
-      end
-    end
-    # compute the face-normal vector using the tangent vectors
-    for di = 1:3
-      it1 = mod(di,3)+1
-      it2 = mod(di+1,3)+1
-      for i = 1:sbpface.numnodes
-        nrm[di,i,f] = dxdξ[it1,1,i]*dxdξ[it2,2,i] - dxdξ[it2,1,i]*dxdξ[it1,2,i]
-      end
-    end
-  end
-end
-
-@doc """
-### SummationByParts.facenormal!
-
-This is the single face variant of calcFaceNormals!.  Uses a given set of
-Lagrangian face nodes to determine an analytical (polynomial) mapping, and then
-uses this mapping to determine the scaled face-normal vector.
+Evaluates the (scaled) Jacobian of the mapping from reference coordinates to
+physical coordinates, as well as the determinant of the Jacobian.  The values
+returned in dξdx are scaled by the determinant, so they have the same units as
+the boundary measure (i.e. length in 2D, or length^2 in 3D).  This scaling is
+adopted, because conservation laws written in conservative form in the reference
+frame use the scaled Jacobian.
 
 **Inputs**
 
-* `sbpface`: an SBP face operator type
-* `mapdegree`: the polynomial degree of the mapping
-* `xref`: Lagrangian nodes in reference space; [coord, Lagrangian node]
-* `xlag`: Lagrangian nodes in physical space; [coord, Lagrangian node]
+* `sbp`: an SBP operator type
+* `x`: the physical coordinates; 1st dim = coord, 2nd dim = node, 3rd dim = elem
 
 **In/Outs**
 
-* `xsbp`: location of the SBP-face nodes in physical space; [coord, sbp node]
-* `nrm`: scaled face-normal at the sbpface nodes
+* `dξdx`: the scaled Jacobian of the mapping; 1st dim = ref coord, 2nd dim =
+  phys coord, 3rd dim = node, 3rd dim = elem
+* `jac`: the determinant of the Jacobian; 1st dim = node, 2nd dim = elem
 
 """->
-function facenormal!{Tsbp,Tmsh}(sbpface::TriFace{Tsbp},
-                                mapdegree::Int,
-                                xref::AbstractArray{Tmsh,2},
-                                xlag::AbstractArray{Tmsh,2},
-                                xsbp::AbstractArray{Tmsh,2},
-                                nrm::AbstractArray{Tmsh,2})
-  @assert( size(xlag,1) == size(xsbp,1) == size(nrm,1) == 2 )
-  @assert( size(xref,1) == 1 )
-  @assert( size(xsbp,2) == size(nrm,2) )
-  numdof = (mapdegree+1)
-  @assert( size(xlag,2) == size(xref,2) == numdof )
-  # Step 1: find the polynomial mapping using xlag
-  V = zeros(Tmsh, (numdof,numdof) )
-  for i = 0:mapdegree
-    V[:,i+1] = OrthoPoly.jacobipoly(vec(xref[1,:]), 0.0, 0.0, i)
-  end
-  coeff = zeros(Tmsh, (numdof,2))
-  coeff = V\(xlag.')
-  # Step 2: compute the mapped SBP nodes and the analytical normal at sbp nodes
-  x = SymCubatures.calcnodes(sbpface.cub, sbpface.vtx) # <-- SBP nodes, ref. spc
-  fill!(nrm, zero(Tmsh))
-  fill!(xsbp, zero(Tmsh))
-  for i = 0:mapdegree
-    P = OrthoPoly.jacobipoly(vec(x[1,:]), 0.0, 0.0, i)
-    dPdξ = OrthoPoly.diffjacobipoly(vec(x[1,:]), 0.0, 0.0, i)
-    for nd = 1:sbpface.numnodes
-      xsbp[1,nd] += coeff[i+1,1]*P[nd]
-      xsbp[2,nd] += coeff[i+1,2]*P[nd]
-      nrm[1,nd] += coeff[i+1,2]*dPdξ[nd]
-      nrm[2,nd] -= coeff[i+1,1]*dPdξ[nd]
+function mappingjacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
+                                     x::AbstractArray{Tmsh,3},
+                                     dξdx::AbstractArray{Tmsh,4},
+                                     jac::AbstractArray{Tmsh,2})
+  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
+  @assert( size(x,3) == size(dξdx,4) )
+  @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
+  fill!(dξdx, zero(Tmsh))
+  dxdξ = zeros(Tmsh, (2,sbp.numnodes,size(x,3)))
+  # compute d(x,y)/dxi and set deta/dx and deta/dy
+  differentiate!(sbp, 1, x, dxdξ)
+  for elem = 1:size(x,3)
+    for i = 1:size(x,2)
+      dξdx[2,1,i,elem] = -dxdξ[2,i,elem]
+      dξdx[2,2,i,elem] = dxdξ[1,i,elem]
     end
   end
+  # compute d(x,y)/deta and set dxi/dx and dxi/dy
+  fill!(dxdξ, zero(Tmsh))
+  differentiate!(sbp, 2, x, dxdξ)
+  for elem = 1:size(x,3)
+    for i = 1:size(x,2)
+      dξdx[1,2,i,elem] = -dxdξ[1,i,elem]
+      dξdx[1,1,i,elem] = dxdξ[2,i,elem]
+    end
+  end
+  # compute the determinant of the Jacobian
+  for elem = 1:size(x,3)
+    for i = 1:sbp.numnodes
+      jac[i,elem] = one(Tmsh)/(dξdx[1,1,i,elem]*dξdx[2,2,i,elem] - 
+                               dξdx[1,2,i,elem]*dξdx[2,1,i,elem])
+    end
+  end
+  # check for negative jac here?
 end
 
-function facenormal!{Tsbp,Tmsh}(sbpface::TetFace{Tsbp},
-                                mapdegree::Int,
-                                xref::AbstractArray{Tmsh,2},
-                                xlag::AbstractArray{Tmsh,2},
-                                xsbp::AbstractArray{Tmsh,2},
-                                nrm::AbstractArray{Tmsh,2})
-  @assert( size(xlag,1) == size(xsbp,1) == size(nrm,1) == 3 )
-  @assert( size(xref,1) == 2 )
-  @assert( size(xsbp,2) == size(nrm,2) )
-  numdof = binomial(mapdegree+2,2)
-  @assert( size(xlag,2) == size(xref,2) == numdof )
-  # Step 1: find the polynomial mapping using xlag
-  V = zeros(Tmsh, (numdof,numdof) )
-  ptr = 1
-  for r = 0:mapdegree
-    for j = 0:r
-      i = r-j
-      V[:,ptr] = OrthoPoly.proriolpoly(vec(xref[1,:]), vec(xref[2,:]), i, j)
-      ptr += 1
+function mappingjacobian!{Tsbp,Tmsh}(sbp::SparseTriSBP{Tsbp},
+                                     x::AbstractArray{Tmsh,3},
+                                     dξdx::AbstractArray{Tmsh,4},
+                                     jac::AbstractArray{Tmsh,2})
+  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
+  @assert( size(x,3) == size(dξdx,4) )
+  @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
+  fill!(dξdx, zero(Tmsh))
+  dxdξ = zeros(Tmsh, (2,sbp.numnodes,size(x,3)))
+  # compute d(x,y)/dxi and set deta/dx and deta/dy
+  differentiate!(sbp, 1, x, dxdξ)
+  for elem = 1:size(x,3)
+    for i = 1:size(x,2)
+      dξdx[2,1,i,elem] = -dxdξ[2,i,elem]
+      dξdx[2,2,i,elem] = dxdξ[1,i,elem]
     end
   end
-  coeff = zeros(Tmsh, (numdof,3))
-  coeff = V\(xlag.')
-  # Step 2: compute the mapped SBP nodes and the tangent vectors at sbp nodes
-  x = SymCubatures.calcnodes(sbpface.cub, sbpface.vtx) # <-- SBP nodes, ref. spc
-  fill!(xsbp, zero(Tmsh))
-  dxdξ = zeros(Tmsh, (3,2,sbpface.numnodes))
-  ptr = 1
-  for r = 0:mapdegree
-    for j = 0:r
-      i = r-j
-      P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
-      dPdξ, dPdη = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
-      for di = 1:3
-        for nd = 1:sbpface.numnodes
-          xsbp[di,nd] += coeff[ptr,di]*P[nd]
-          dxdξ[di,1,nd] += coeff[ptr,di]*dPdξ[nd]
-          dxdξ[di,2,nd] += coeff[ptr,di]*dPdη[nd]
-        end
-      end
-      ptr += 1
+  # compute d(x,y)/deta and set dxi/dx and dxi/dy
+  fill!(dxdξ, zero(Tmsh))
+  differentiate!(sbp, 2, x, dxdξ)
+  for elem = 1:size(x,3)
+    for i = 1:size(x,2)
+      dξdx[1,2,i,elem] = -dxdξ[1,i,elem]
+      dξdx[1,1,i,elem] = dxdξ[2,i,elem]
     end
   end
-  # Step 3: compute the face-normal vector using the tangent vectors
+  # compute the determinant of the Jacobian
+  for elem = 1:size(x,3)
+    for i = 1:sbp.numnodes
+      jac[i,elem] = one(Tmsh)/(dξdx[1,1,i,elem]*dξdx[2,2,i,elem] - 
+                               dξdx[1,2,i,elem]*dξdx[2,1,i,elem])
+    end
+  end
+  # check for negative jac here?
+end
+
+function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
+                                     x::AbstractArray{Tmsh,3},
+                                     dξdx::AbstractArray{Tmsh,4},
+                                     jac::AbstractArray{Tmsh,2})
+  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
+  @assert( size(x,3) == size(dξdx,4) )
+  @assert( size(x,1) == 3 && size(dξdx,1) == 3 && size(dξdx,2) == 3 )
+  numelem = size(x,3)
+  dxdξ = zeros(Tmsh, (3,sbp.numnodes,numelem,3))
+  # calculate the derivative of the coordinates with respect to (xi,eta,zeta)
+  # using the SBP operator
+  for di = 1:3
+    differentiate!(sbp, di, x, sub(dxdξ,:,:,:,di)) 
+  end
+  fill!(dξdx, zero(Tmsh))
+  # calculate the metrics: the outer loop calculates the derivatives of
+  # coordinates-times-coordinate-derivatives, for example, d/deta( z * d(y)/d
+  # zeta), and this contribution is added to the relevant metric.
   for di = 1:3
     it1 = mod(di,3)+1
     it2 = mod(di+1,3)+1
-    for i = 1:sbpface.numnodes
-      nrm[di,i] = dxdξ[it1,1,i]*dxdξ[it2,2,i] - dxdξ[it2,1,i]*dxdξ[it1,2,i]
+    for elem = 1:numelem
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          # the 0.5 factor in the SBP entry accounts for the averaging over the
+          # two possible analytical formulations
+          coeff = 0.5*sbp.Q[i,j,di]
+          # this second set of indices (di2, it21, it22) denote the x-, y-,
+          # z-coordinate indices, while the first set (di, it1, it2) denotes the xi-,
+          # eta-, zeta-indices
+          for di2 = 1:3
+            it21 = mod(di2,3)+1
+            it22 = mod(di2+1,3)+1
+            dξdx[it1,di2,i,elem] += 
+            coeff*(x[it22,j,elem]*dxdξ[it21,j,elem,it2] -
+                   x[it21,j,elem]*dxdξ[it22,j,elem,it2])            
+            dξdx[it2,di2,i,elem] += 
+            coeff*(x[it21,j,elem]*dxdξ[it22,j,elem,it1] -
+                   x[it22,j,elem]*dxdξ[it21,j,elem,it1])
+          end
+        end
+      end
     end
   end
+  # scale metrics by norm and calculate the determinant of the mapping
+  for elem = 1:numelem
+    for i = 1:sbp.numnodes
+      dξdx[:,:,i,elem] /= sbp.w[i]
+      jac[i,elem] = one(Tmsh)/(dxdξ[1,i,elem,1]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,3] +
+                               dxdξ[1,i,elem,2]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,1] +
+                               dxdξ[1,i,elem,3]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,2] -
+                               dxdξ[1,i,elem,1]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,2] -
+                               dxdξ[1,i,elem,2]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,3] -
+                               dxdξ[1,i,elem,3]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,1])
+    end
+  end
+  # check for negative jac here?
 end
