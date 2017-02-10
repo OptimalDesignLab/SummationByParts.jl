@@ -1,18 +1,27 @@
 facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
 
-  context("Testing SummationByParts.calcMappingJacobian! (TriSBP method)") do
+  context("Testing calcMappingJacobian! (TriSBP method)") do
     # build a curvilinear Lagrangian element, and verify components of the
     # Jacobian and its determinant
     for p = 1:4
       sbp = TriSBP{Float64}(degree=p, internal=false)
-      
+
       function mapping(ξ)
-        return [(0.5*(ξ[1]+1))^p; (0.5*(ξ[2]+1))^p + (0.5*(ξ[1]+1))^(p-1)]
+        return [0.5*(ξ[1]+1) + (0.5*(ξ[1]+1))^p;
+                0.5*(ξ[2]+1) + (0.5*(ξ[2]+1))^p + (0.5*(ξ[1]+1))^(p-1)]
       end
       function diffmapping(ξ)
-        return [(0.5*p*(0.5*(ξ[1]+1))^(p-1)) 0.0;
-                (0.5*(p-1)*(0.5*(ξ[1]+1))^max(p-2,0)) (0.5*p*(0.5*(ξ[2]+1))^(p-1))]
-      end
+        return [(0.5 + 0.5*p*(0.5*(ξ[1]+1))^(p-1)) 0.0;
+                (0.5*(p-1)*(0.5*(ξ[1]+1))^max(p-2,0)) (0.5 + 0.5*p*(0.5*(ξ[2]+1))^(p-1))]
+      end      
+      
+      # function mapping(ξ)
+      #   return [(0.5*(ξ[1]+1))^p; (0.5*(ξ[2]+1))^p + (0.5*(ξ[1]+1))^(p-1)]
+      # end
+      # function diffmapping(ξ)
+      #   return [(0.5*p*(0.5*(ξ[1]+1))^(p-1)) 0.0;
+      #           (0.5*(p-1)*(0.5*(ξ[1]+1))^max(p-2,0)) (0.5*p*(0.5*(ξ[2]+1))^(p-1))]
+      # end
 
       numdof = div((p+2)*(p+3),2)
       # set the coordinates of the reference and mapped nodes of the Lagrange
@@ -34,21 +43,21 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
       dξdx = zeros(2,2,sbp.numnodes,1)
       jac = zeros(sbp.numnodes,1)
       calcMappingJacobian!(sbp, p+1, xref, xlag, xsbp, dξdx, jac)
-      
+
       x = calcnodes(sbp)
       for i = 1:sbp.numnodes
         dxdxi = diffmapping(x[:,i])
-        @fact dxdxi[2,2] --> roughly(dξdx[1,1,i,1], atol=1e-14)
-        @fact dxdxi[1,2] --> roughly(-dξdx[1,2,i,1], atol=1e-14)
-        @fact dxdxi[2,1] --> roughly(-dξdx[2,1,i,1], atol=1e-14)
-        @fact dxdxi[1,1] --> roughly(dξdx[2,2,i,1], atol=1e-14)
+        @fact dxdxi[2,2] --> roughly(dξdx[1,1,i,1], atol=5e-14)
+        @fact dxdxi[1,2] --> roughly(-dξdx[1,2,i,1], atol=5e-14)
+        @fact dxdxi[2,1] --> roughly(-dξdx[2,1,i,1], atol=5e-14)
+        @fact dxdxi[1,1] --> roughly(dξdx[2,2,i,1], atol=5e-14)
         @fact dxdxi[1,1,1]*dxdxi[2,2,1] - dxdxi[1,2,1]*dxdxi[2,1,1] -->
-        roughly(1./jac[i], atol=1e-14)
+        roughly(1./jac[i], atol=5e-14)
       end
     end
   end
 
-  context("Testing SummationByParts.calcMappingJacobian! (TetSBP method)") do
+  context("Testing calcMappingJacobian! (TetSBP method)") do
     # build a curvilinear Lagrangian element, and verify metric invariants are
     # satisfied
     for p = 1:4
@@ -138,20 +147,21 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
     end
   end
   
-  context("Testing SummationByParts.calcMappingJacobianElement! (TriSBP method)") do
+  context("Testing calcMappingJacobianElement! (TriSBP method)") do
     # build a curvilinear Lagrangian element, and verify components of the
     # Jacobian and its determinant
     for p = 1:4
       sbp = TriSBP{Float64}(degree=p, internal=false)
-      
+
       function mapping(ξ)
-        return [(0.5*(ξ[1]+1))^p; (0.5*(ξ[2]+1))^p + (0.5*(ξ[1]+1))^(p-1)]
+        return [0.5*(ξ[1]+1) + (0.5*(ξ[1]+1))^p;
+                0.5*(ξ[2]+1) + (0.5*(ξ[2]+1))^p + (0.5*(ξ[1]+1))^(p-1)]
       end
       function diffmapping(ξ)
-        return [(0.5*p*(0.5*(ξ[1]+1))^(p-1)) 0.0;
-                (0.5*(p-1)*(0.5*(ξ[1]+1))^max(p-2,0)) (0.5*p*(0.5*(ξ[2]+1))^(p-1))]
-      end
-
+        return [(0.5 + 0.5*p*(0.5*(ξ[1]+1))^(p-1)) 0.0;
+                (0.5*(p-1)*(0.5*(ξ[1]+1))^max(p-2,0)) (0.5 + 0.5*p*(0.5*(ξ[2]+1))^(p-1))]
+      end      
+      
       numdof = div((p+2)*(p+3),2)
       # set the coordinates of the reference and mapped nodes of the Lagrange
       # element
@@ -176,17 +186,17 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
       x = calcnodes(sbp)
       for i = 1:sbp.numnodes
         dxdxi = diffmapping(x[:,i])
-        @fact dxdxi[2,2] --> roughly(dξdx[1,1,i], atol=1e-14)
-        @fact dxdxi[1,2] --> roughly(-dξdx[1,2,i], atol=1e-14)
-        @fact dxdxi[2,1] --> roughly(-dξdx[2,1,i], atol=1e-14)
-        @fact dxdxi[1,1] --> roughly(dξdx[2,2,i], atol=1e-14)
+        @fact dxdxi[2,2] --> roughly(dξdx[1,1,i], atol=5e-14)
+        @fact dxdxi[1,2] --> roughly(-dξdx[1,2,i], atol=5e-14)
+        @fact dxdxi[2,1] --> roughly(-dξdx[2,1,i], atol=5e-14)
+        @fact dxdxi[1,1] --> roughly(dξdx[2,2,i], atol=5e-14)
         @fact dxdxi[1,1]*dxdxi[2,2] - dxdxi[1,2]*dxdxi[2,1] -->
-        roughly(1./jac[i], atol=1e-14)
+        roughly(1./jac[i], atol=5e-14)
       end
     end
   end
 
-  context("Testing SummationByParts.calcMappingJacobianElement! (TetSBP method)") do
+  context("Testing calcMappingJacobianElement! (TetSBP method)") do
     # build a curvilinear Lagrangian element, and verify metric invariants are
     # satisfied
     for p = 1:4
@@ -306,7 +316,7 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
   #   end
   # end
 
-  context("Testing SummationByParts.mappingjacobian! (TriFace method)") do
+  context("Testing mappingjacobian! (TriFace method)") do
     # build a two element grid, and verify components of the Jacobian and its
     # determinant
     for p = 1:4
@@ -337,7 +347,7 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
     end
   end
 
-  context("Testing SummationByParts.mappingjacobian! (TriSBP method)") do
+  context("Testing mappingjacobian! (TriSBP method)") do
     # build a two element grid, and verify components of the Jacobian and its
     # determinant
     for p = 1:4
@@ -365,7 +375,7 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
     end
   end
   
-  context("Testing SummationByParts.mappingjacobian! (TetSBP method)") do
+  context("Testing mappingjacobian! (TetSBP method)") do
     # build one element grid, and verify components of the Jacobian and its
     # determinant
     for p = 1:4

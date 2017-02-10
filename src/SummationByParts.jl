@@ -23,6 +23,7 @@ export differentiate!, differentiateElement!
 export directionalDifferentiateElement!
 export volumeintegrate!, volumeIntegrateElement!
 export calcMappingJacobian!, calcMappingJacobianElement!, mappingjacobian!
+export calcMappingJacobianRevDiff!
 export facenormal!, calcFaceNormals!
 export boundaryinterpolate!, boundaryFaceInterpolate!
 export interiorfaceinterpolate!, interiorFaceInterpolate!
@@ -484,6 +485,7 @@ include("directionaldifferentiate.jl") #<--- directional differentiation
 include("volumeintegrate.jl") #<--- volume integration against test functions
 include("facenormal.jl") #<--- functions to compute scaled face normals
 include("mappingjacobian.jl") #<--- functions to compute the mapping jacobian
+include("mappingjacobianrevdiff.jl") #<--- reverse-mode diff. of mappingjacobian
 include("faceinterpolate.jl") #<--- functions to interpolate data to faces
 include("faceintegrate.jl") #<--- functions for integration over faces
 include("edgestabilize.jl") #<--- functions related to edge stabilization
