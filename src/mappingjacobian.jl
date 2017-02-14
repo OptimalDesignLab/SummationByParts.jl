@@ -107,7 +107,8 @@ function calcMappingJacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int,
       dξdx[1,2,i,e] = -dxdξ[1,2,i]
       dξdx[2,1,i,e] = -dxdξ[2,1,i]
       dξdx[2,2,i,e] = dxdξ[1,1,i]
-      jac[i,e] = one(Tmsh)/(dξdx[1,1,i]*dξdx[2,2,i] - dξdx[1,2,i]*dξdx[2,1,i])
+      jac[i,e] = one(Tmsh)/(dξdx[1,1,i,e]*dξdx[2,2,i,e] -
+                            dξdx[1,2,i,e]*dξdx[2,1,i,e])
     end
   end
 end
@@ -208,12 +209,12 @@ function calcMappingJacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int,
                                  dxdξ[it1,it22,i]*dxdξ[it2,it21,i])
         end
       end
-      jac[i] = one(Tmsh)/(dxdξ[1,1,i]*dxdξ[2,2,i]*dxdξ[3,3,i] +
-                          dxdξ[1,2,i]*dxdξ[2,3,i]*dxdξ[3,1,i] +
-                          dxdξ[1,3,i]*dxdξ[2,1,i]*dxdξ[3,2,i] -
-                          dxdξ[1,1,i]*dxdξ[2,3,i]*dxdξ[3,2,i] -
-                          dxdξ[1,2,i]*dxdξ[2,1,i]*dxdξ[3,3,i] -
-                          dxdξ[1,3,i]*dxdξ[2,2,i]*dxdξ[3,1,i])
+      jac[i,e] = one(Tmsh)/(dxdξ[1,1,i]*dxdξ[2,2,i]*dxdξ[3,3,i] +
+                            dxdξ[1,2,i]*dxdξ[2,3,i]*dxdξ[3,1,i] +
+                            dxdξ[1,3,i]*dxdξ[2,1,i]*dxdξ[3,2,i] -
+                            dxdξ[1,1,i]*dxdξ[2,3,i]*dxdξ[3,2,i] -
+                            dxdξ[1,2,i]*dxdξ[2,1,i]*dxdξ[3,3,i] -
+                            dxdξ[1,3,i]*dxdξ[2,2,i]*dxdξ[3,1,i])
     end
     # find the minimum-norm solution that satisfies the metric invariants    
     for di = 1:3
