@@ -21,6 +21,7 @@ include("test_mappingjacobian.jl")
 include("test_mappingjacobianrevdiff.jl")
 include("test_faceinterpolate.jl")
 include("test_faceintegrate.jl")
+include("test_faceintegrate_rev.jl")
 include("test_edgestabilize.jl")
 include("test_utils.jl")
 

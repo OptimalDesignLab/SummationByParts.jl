@@ -28,7 +28,6 @@ Integrates a given scalar (or vector) field over the boundary faces.
 * `fun`: in the case of the scalar version, the functional value is returned
 
 """->
-
 function integratefunctional!{Tsbp,Tflx}(sbpface::AbstractFace{Tsbp},
                                          bndryfaces::Array{Boundary},
                                          flux::AbstractArray{Tflx,2},
