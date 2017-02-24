@@ -216,7 +216,7 @@ end
 #       sol = Qtinv*b
 #       for di2 = 1:3
 #         for i = 1:sbp.numnodes
-#           dξdx[di2,di,i] = dξdx_targ[di2,di,i] - sol[i + (di2-1)*sbp.numnodes]
+#           dξdx[di2,di,i,e] = dξdx_targ[di2,di,i] - sol[i + (di2-1)*sbp.numnodes]
 #         end
 #       end
 #     end
