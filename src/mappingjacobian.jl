@@ -219,13 +219,13 @@ function calcMappingJacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int,
     # find the minimum-norm solution that satisfies the metric invariants    
     for di = 1:3
       # check that Eone sums to zero
-      @assert( abs(sum(Eone[:,di])) < 1e-14 )
+      @assert( abs(sum(Eone[:,di,e])) < 1e-14 )
       for di2 = 1:3
         for i = 1:sbp.numnodes      
           targ[i + (di2-1)*sbp.numnodes] = dξdx_targ[di2,di,i]
         end
       end
-      b = Qt*targ - Eone[:,di]
+      b = Qt*targ - Eone[:,di,e]
       sol = Qtinv*b
       for di2 = 1:3
         for i = 1:sbp.numnodes
