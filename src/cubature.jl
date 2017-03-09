@@ -83,7 +83,7 @@ end
   
 Attempts to solve for the nodes and weights of a cubature that is exact for
 polynomials of degree r <= `q`.  The nodes and weights of the cubature are
-defined by `cub`, which is a parametric abstract type (see domainsymorbits.jl).
+defined by `cub`, which is a parametric abstract type (see symcubatures.jl).
 
 **Inputs**
 
@@ -107,7 +107,7 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int;
   res = norm(F)
   res0 = res
   res_old = res
-  hist ? print("calccubature:\n") : nothing
+  hist ? print("solvecubature!:\n") : nothing
   hist ? print("\titer ",0,": res norm = ",res,"\n") : nothing
   if (res < tol)
     return
@@ -151,7 +151,81 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int;
     end
 
   end
-  error("calccubature failed to find solution in ",maxiter," iterations")
+  error("solvecubature failed to find solution in ",maxiter," iterations")
+end
+
+@doc """
+### Cubature.solvecubatureweights!{SymCub{T}}
+  
+Attempts to solve for the weights of a cubature that is exact for
+polynomials of degree r <= `q`.  The weights (and nodes) of the cubature are
+defined by `cub`, which is a parametric abstract type (see symcubatures.jl).
+
+**Inputs**
+
+* `q`: maximum (desired) degree for which the cubature is exact
+* `tol`: tolerance with which to solve the accuracy conditions
+* `hist`: if true, print the residual-norm convergence history
+
+**In/Outs**
+
+* `cub`: on entry, defines the initial guess for the cubature nodes and weights.
+  on exit, defines the nodes and weights that satisfy the desired accuracy.
+
+"""->
+function solvecubatureweights!{T}(cub::SymCub{T}, q::Int;
+                                  tol=10*eps(typeof(real(one(T)))),
+                                  hist::Bool=false)
+  Jac = SymCubatures.calcjacobianofweights(cub)
+
+  # compute accuracy for initial guess 
+  F, dF = Cubature.cubatureresidual(cub, q)
+  res = norm(F)
+  res0 = res
+  res_old = res
+  hist ? print("solvecubatureweights!:\n") : nothing
+  hist ? print("\titer ",0,": res norm = ",res,"\n") : nothing
+  if (res < tol)
+    return
+  end
+  
+  # Levenberg–Marquardt loop
+  maxiter = 200
+  nu = 1000.0 #100.0
+  v = zeros(T, (cub.numweights) )
+  v = cub.weights
+  for k = 1:maxiter
+    JtJ = Jac.'*(dF[:,end-cub.numnodes+1:end].'*
+      dF[:,end-cub.numnodes+1:end])*Jac
+    H = JtJ + nu*diagm(diag(JtJ))
+    g = -Jac.'*dF[:,end-cub.numnodes+1:end].'*F
+    dv = H\g
+
+    # update cubature definition and check for convergence
+    v += dv
+    SymCubatures.setweights!(cub, v)
+    F, dF = Cubature.cubatureresidual(cub, q)
+    res = norm(F)
+    hist ? print("\titer ",k,": res norm = ",res,"\n") : nothing
+    if res < tol
+      #println("size(JtJ) = ",size(JtJ))
+      #println("rank(JtJ) = ",rank(JtJ))
+      return
+    end
+
+    # trust-region like update
+    if res > res_old
+      v -= dv
+      SymCubatures.setweights!(cub, v)
+      F, dF = Cubature.cubatureresidual(cub, q)
+      nu *= 4.0
+    else
+      nu /= 2.0
+      res_old = res
+    end
+
+  end
+  error("solvecubatureweights failed to find solution in ",maxiter," iterations")
 end
 
 @doc """

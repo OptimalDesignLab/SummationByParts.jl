@@ -19,6 +19,7 @@ export Boundary, Interface
 
 export calcnodes, calcminnodedistance
 export weakdifferentiate!, weakDifferentiateElement!
+export weakdifferentiate_rev!, weakDifferentiateElement_rev!
 export differentiate!, differentiateElement!
 export directionalDifferentiateElement!
 export volumeintegrate!, volumeIntegrateElement!
@@ -481,6 +482,7 @@ end
 include("buildfaceoperators.jl") #<--- functions related to building face operators
 include("buildoperators.jl") #<--- functions related to building SBP operators
 include("weakdifferentiate.jl") #<--- functions for weak differentiation
+include("weakdifferentiate_rev.jl") #<--- functions for weak differentiation
 include("differentiate.jl") #<--- functions for strong differentiation
 include("directionaldifferentiate.jl") #<--- directional differentiation
 include("volumeintegrate.jl") #<--- volume integration against test functions
