@@ -74,7 +74,7 @@ facts("Testing SummationByParts Module (reverse-diff of weak differentiate metho
       context("Testing weakDifferentiateElement_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4
           sbp = ($TSBP){Float64}(degree=p)
-          v = rand(Float64, (sbp.numnodes))
+          v = rand(Float64, (4,sbp.numnodes))
           Qv = zeros(v)
           vQ = zeros(v)
           for di = 1:2            

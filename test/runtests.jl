@@ -7,6 +7,8 @@ using ArrayViews
 using ODLCommonTools
 import ODLCommonTools.sview
 
+view = ArrayViews.view
+
 include("test_orthopoly.jl")
 include("test_symcubatures.jl")
 include("test_cubature.jl")
@@ -15,6 +17,7 @@ include("test_buildoperators.jl")
 include("test_weakdifferentiate.jl")
 include("test_weakdifferentiate_rev.jl")
 include("test_differentiate.jl")
+include("test_differentiate_rev.jl")
 include("test_directionaldifferentiate.jl")
 include("test_volumeintegrate.jl")
 include("test_facenormal.jl")
