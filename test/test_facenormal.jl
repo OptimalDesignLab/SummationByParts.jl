@@ -82,9 +82,9 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
         divfree[3] += dot(vec(nrm[3,:,f]),sbpface.wface)
       end
-      @fact divfree[1] --> roughly(0.0, atol=1e-15)
-      @fact divfree[2] --> roughly(0.0, atol=1e-15)
-      @fact divfree[3] --> roughly(0.0, atol=1e-15)
+      @fact divfree[1] --> roughly(0.0, atol=5e-15)
+      @fact divfree[2] --> roughly(0.0, atol=5e-15)
+      @fact divfree[3] --> roughly(0.0, atol=5e-15)
     end
   end
 
