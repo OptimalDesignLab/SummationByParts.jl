@@ -24,6 +24,7 @@ export differentiate!, differentiateElement!
 export differentiate_rev!, differentiateElement_rev!
 export directionalDifferentiateElement!
 export volumeintegrate!, volumeIntegrateElement!
+export volumeintegrate_rev!, volumeIntegrateElement_rev!
 export calcMappingJacobian!, calcMappingJacobianElement!, mappingjacobian!
 export calcMappingJacobianRevDiff!
 export facenormal!, calcFaceNormals!
@@ -488,6 +489,7 @@ include("differentiate.jl") #<--- functions for strong differentiation
 include("differentiate_rev.jl") #<--- reverse-diff of strong differentiation
 include("directionaldifferentiate.jl") #<--- directional differentiation
 include("volumeintegrate.jl") #<--- volume integration against test functions
+include("volumeintegrate_rev.jl") #<--- reverse-diff of volume integration
 include("facenormal.jl") #<--- functions to compute scaled face normals
 include("mappingjacobian.jl") #<--- functions to compute the mapping jacobian
 include("mappingjacobianrevdiff.jl") #<--- reverse-mode diff. of mappingjacobian
