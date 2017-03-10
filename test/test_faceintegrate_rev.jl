@@ -138,5 +138,217 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
       end
     end
   end
-    
+
+  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+    @eval begin
+      context("Testing boundaryFunctional_rev! ("string($TSBP)" vector field method)") do
+        for p = 1:4
+          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+          uface = rand(Float64, (4,sbpface.numnodes))
+          vface = zeros(uface)
+          vfun = rand(Float64, (4))
+          ufun = zeros(vfun)
+          for face = 1:size(sbp.Q,3)+1
+            fill!(ufun, 0.0)
+            integrateBoundaryFunctional!(sbpface, face, uface, ufun)
+            vtBu = sum(vfun.*ufun)
+            fill!(vface, 0.0)
+            integrateBoundaryFunctional_rev!(sbpface, face, vface, vfun)
+            utBv = sum(uface.*vface)
+            @fact vtBu --> roughly(utBv, atol=1e-15)
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+    @eval begin
+      context("Testing boundaryintegrate_rev! ("string($TSBP)" scalar field method)") do
+        for p = 1:4
+          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+          uface = rand(Float64, (sbpface.numnodes,4))
+          vface = zeros(uface)
+          vvol = rand(Float64, (sbp.numnodes,2))
+          uvol = zeros(vvol)
+          bndryfaces = Array(Boundary, 4)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(1,3)
+          bndryfaces[3] = Boundary(2,1)
+          bndryfaces[4] = Boundary(2,2)
+          boundaryintegrate!(sbpface, bndryfaces, uface, uvol)
+          vtRtBu = sum(vvol.*uvol)
+          boundaryintegrate_rev!(sbpface, bndryfaces, vface, vvol)
+          utBRv = sum(uface.*vface)
+          @fact vtRtBu --> roughly(utBRv, atol=1e-15)
+        end
+      end
+    end
+  end
+
+  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+    @eval begin
+      context("Testing boundaryintegrate_rev! ("string($TSBP)" vector field method)") do
+        for p = 1:4
+          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+          uface = rand(Float64, (4,sbpface.numnodes,4))
+          vface = zeros(uface)
+          vvol = rand(Float64, (4,sbp.numnodes,2))
+          uvol = zeros(vvol)
+          bndryfaces = Array(Boundary, 4)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(1,3)
+          bndryfaces[3] = Boundary(2,1)
+          bndryfaces[4] = Boundary(2,2)
+          boundaryintegrate!(sbpface, bndryfaces, uface, uvol)
+          vtRtBu = sum(vvol.*uvol)
+          boundaryintegrate_rev!(sbpface, bndryfaces, vface, vvol)
+          utBRv = sum(uface.*vface)
+          @fact vtRtBu --> roughly(utBRv, atol=1e-15)
+        end
+      end
+    end
+  end
+
+  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+    @eval begin
+      context("Testing boundaryFaceIntegrate_rev! ("string($TSBP)" scalar field method)") do
+        for p = 1:4
+          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+          uface = rand(Float64, (sbpface.numnodes))
+          vface = zeros(uface)
+          vvol = rand(Float64, (sbp.numnodes))
+          uvol = zeros(vvol)
+          for face = 1:size(sbp.Q,3)+1
+            fill!(uvol, 0.0)
+            boundaryFaceIntegrate!(sbpface, face, uface, uvol)
+            vtRtBu = sum(vvol.*uvol)
+            fill!(vface, 0.0)
+            boundaryFaceIntegrate_rev!(sbpface, face, vface, vvol)
+            utBRv = sum(uface.*vface)
+            @fact vtRtBu --> roughly(utBRv, atol=1e-15)
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+    @eval begin
+      context("Testing boundaryFaceIntegrate_rev! ("string($TSBP)" vector field method)") do
+        for p = 1:4
+          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+          uface = rand(Float64, (4,sbpface.numnodes))
+          vface = zeros(uface)
+          vvol = rand(Float64, (4,sbp.numnodes))
+          uvol = zeros(vvol)
+          for face = 1:size(sbp.Q,3)+1
+            fill!(uvol, 0.0)
+            boundaryFaceIntegrate!(sbpface, face, uface, uvol)
+            vtRtBu = sum(vvol.*uvol)
+            fill!(vface, 0.0)
+            boundaryFaceIntegrate_rev!(sbpface, face, vface, vvol)
+            utBRv = sum(uface.*vface)
+            @fact vtRtBu --> roughly(utBRv, atol=1e-15)
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+    @eval begin
+      context("Testing interiorfaceintegrate_rev! ("string($TSBP)" scalar field method)") do
+        for p = 1:4
+          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+          ifaces = Array(Interface, 1)
+          ifaces[1] = Interface(1,2,2,3,1)
+          uface = rand(sbpface.numnodes, 1)
+          vface = zeros(uface)
+          vvol = rand(sbp.numnodes,2)
+          uvol = zeros(vvol)
+          interiorfaceintegrate!(sbpface, ifaces, uface, uvol)
+          vtRtBu = sum(vvol.*uvol)
+          interiorfaceintegrate_rev!(sbpface, ifaces, vface, vvol)
+          utBRv = sum(uface.*vface)
+          @fact vtRtBu --> roughly(utBRv, atol=1e-15)
+        end
+      end
+    end
+  end
+
+  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+    @eval begin
+      context("Testing interiorfaceintegrate_rev! ("string($TSBP)" vector field method)") do
+        for p = 1:4
+          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+          ifaces = Array(Interface, 1)
+          ifaces[1] = Interface(1,2,2,3,1)
+          uface = rand(4,sbpface.numnodes, 1)
+          vface = zeros(uface)
+          vvol = rand(4,sbp.numnodes,2)
+          uvol = zeros(vvol)
+          interiorfaceintegrate!(sbpface, ifaces, uface, uvol)
+          vtRtBu = sum(vvol.*uvol)
+          interiorfaceintegrate_rev!(sbpface, ifaces, vface, vvol)
+          utBRv = sum(uface.*vface)
+          @fact vtRtBu --> roughly(utBRv, atol=1e-15)
+        end
+      end
+    end
+  end
+
+  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+    @eval begin
+      context("Testing interiorFaceIntegrate_rev! ("string($TSBP)" scalar field method)") do
+        for p = 1:4
+          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+          uface = rand(Float64, (sbpface.numnodes))
+          vface = zeros(uface)
+          vL = rand(Float64, (sbp.numnodes))
+          vR = rand(Float64, (sbp.numnodes))
+          uL = zeros(vL)
+          uR = zeros(vR)
+          face = Interface(1,2,2,3,1)
+          interiorFaceIntegrate!(sbpface, face, uface, uL, uR)
+          vtRtBu = sum(vL.*uL) + sum(vR.*uR)
+          interiorFaceIntegrate_rev!(sbpface, face, vface, vL, vR)
+          utBRv = sum(uface.*vface)
+          @fact vtRtBu --> roughly(utBRv, atol=1e-15)
+        end
+      end
+    end
+  end
+
+  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+    @eval begin
+      context("Testing interiorFaceIntegrate_rev! ("string($TSBP)" vector field method)") do
+        for p = 1:4
+          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+          uface = rand(Float64, (4,sbpface.numnodes))
+          vface = zeros(uface)
+          vL = rand(Float64, (4,sbp.numnodes))
+          vR = rand(Float64, (4,sbp.numnodes))
+          uL = zeros(vL)
+          uR = zeros(vR)
+          face = Interface(1,2,2,3,1)
+          interiorFaceIntegrate!(sbpface, face, uface, uL, uR)
+          vtRtBu = sum(vL.*uL) + sum(vR.*uR)
+          interiorFaceIntegrate_rev!(sbpface, face, vface, vL, vR)
+          utBRv = sum(uface.*vface)
+          @fact vtRtBu --> roughly(utBRv, atol=1e-15)
+        end
+      end
+    end
+  end
+
 end

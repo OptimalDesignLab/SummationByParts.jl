@@ -33,9 +33,11 @@ export boundaryinterpolate_rev!, boundaryFaceInterpolate_rev!
 export interiorfaceinterpolate!, interiorFaceInterpolate!
 export interiorfaceinterpolate_rev!, interiorFaceInterpolate_rev!
 export integratefunctional!, integrateBoundaryFunctional!
-export integratefunctional_rev!
+export integratefunctional_rev!, integrateBoundaryFunctional_rev!
 export boundaryintegrate!, boundaryFaceIntegrate!
+export boundaryintegrate_rev!, boundaryFaceIntegrate_rev!
 export interiorfaceintegrate!, interiorFaceIntegrate!
+export interiorfaceintegrate_rev!, interiorFaceIntegrate_rev!
 export edgestabilize!, permuteinterface!
 
 @doc """
