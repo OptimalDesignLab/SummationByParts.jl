@@ -24,9 +24,12 @@ The following documentation provides a brief overview of how to use the Summatio
 ### Building SBP operators
 
 The construction of an SBP operator is best explained with an example.  The following code produces a degree 3 (order 4) SBP operator on a triangle.
+
     using SummationByParts
     sbp = TriSBP{Float64}(degree=3)
+    
 Here is another example, which shows how to construct a degree 2 SBP element on a tetrahedron (in this example, it has been assumed that the `using SummationByParts` statement has already been executed).
+
     sbp = TetSBP{Float64}(degree=2)
 
 The `Float64` type is necessary, because the SBP operators in the package are parameterized.  This means that the matrix fields inside the `sbp` type are `Float64` arrarys.  We will describe the fields inside the operators below.
