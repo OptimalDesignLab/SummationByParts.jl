@@ -23,7 +23,7 @@ face-normal vector.
 """->
 function calcFaceNormals!{Tsbp,Tmsh}(sbpface::TriFace{Tsbp},
                                      mapdegree::Int,
-                                     xref::AbstractArray{Tmsh,2},
+                                     xref::AbstractArray{Tsbp,2},
                                      xlag::AbstractArray{Tmsh,3},
                                      xsbp::AbstractArray{Tmsh,3},
                                      nrm::AbstractArray{Tmsh,3})
@@ -76,7 +76,7 @@ end
 
 function calcFaceNormals!{Tsbp,Tmsh}(sbpface::TetFace{Tsbp},
                                      mapdegree::Int,
-                                     xref::AbstractArray{Tmsh,2},
+                                     xref::AbstractArray{Tsbp,2},
                                      xlag::AbstractArray{Tmsh,3},
                                      xsbp::AbstractArray{Tmsh,3},
                                      nrm::AbstractArray{Tmsh,3})
@@ -172,7 +172,7 @@ uses this mapping to determine the scaled face-normal vector.
 """->
 function facenormal!{Tsbp,Tmsh}(sbpface::TriFace{Tsbp},
                                 mapdegree::Int,
-                                xref::AbstractArray{Tmsh,2},
+                                xref::AbstractArray{Tsbp,2},
                                 xlag::AbstractArray{Tmsh,2},
                                 xsbp::AbstractArray{Tmsh,2},
                                 nrm::AbstractArray{Tmsh,2})
@@ -206,7 +206,7 @@ end
 
 function facenormal!{Tsbp,Tmsh}(sbpface::TetFace{Tsbp},
                                 mapdegree::Int,
-                                xref::AbstractArray{Tmsh,2},
+                                xref::AbstractArray{Tsbp,2},
                                 xlag::AbstractArray{Tmsh,2},
                                 xsbp::AbstractArray{Tmsh,2},
                                 nrm::AbstractArray{Tmsh,2})
