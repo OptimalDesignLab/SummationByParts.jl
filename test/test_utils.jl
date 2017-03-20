@@ -1,5 +1,16 @@
 facts("Testing SummationByParts Module (utils.jl file)...") do
 
+  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+    @eval begin
+      context("Testing SummationByParts.getNumFaceNodes("string($TSBP)" method)") do
+        for p = 1:4
+          sbp = ($TSBP){Float64}(degree=p)
+          @fact getNumFaceNodes(sbp) --> SymCubatures.getnumfacenodes(sbp.cub)
+        end
+      end
+    end
+  end
+  
   context("Testing SummationByParts.calcminnodedistance (TriSBP method)") do
     mindist = [1.0; 0.2357022603955159; 0.1487006728783353; 0.09492895652255572]
     for p = 1:4
@@ -43,7 +54,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     # this checks that polynomials of total degree d are reconstructed accurately
     numpoints = 3
     for d = 1:4
-      sbp = TriSBP{Float64}(degree=d, reorder=false, internal=true)
+      sbp = TriSBP{Float64}(degree=d, internal=true)
       x = 2.*rand(2,numpoints) - 1.0
       R = SummationByParts.buildinterpolation(sbp, x)
       xsbp = calcnodes(sbp)
@@ -140,7 +151,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     ndofpernode = 5
 
     # create an SBP with non-trivial number of face nodes
-    sbp = TriSBP{Float64}(degree = 3, reorder=false, internal=true)
+    sbp = TriSBP{Float64}(degree = 3, internal=true)
     ref_verts = [-1. 1 -1; -1 -1 1]
     sbpface = TriFace{Float64}(sbp.degree, sbp.cub, ref_verts.')
 

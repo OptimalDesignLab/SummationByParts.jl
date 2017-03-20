@@ -4,7 +4,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     @eval begin
       context("Testing boundaryinterpolate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
-          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbp = TriSBP{Float64}(degree=p)
           sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
           uvol = rand(Float64, (sbp.numnodes,2))
           vvol = zeros(uvol)
@@ -29,7 +29,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     @eval begin
       context("Testing boundaryinterpolate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4
-          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbp = TriSBP{Float64}(degree=p)
           sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
           uvol = rand(Float64, (4,sbp.numnodes,2))
           vvol = zeros(uvol)
@@ -54,7 +54,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     @eval begin
       context("Testing boundaryFaceInterpolate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
-          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbp = TriSBP{Float64}(degree=p)
           sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
           uvol = rand(Float64, (sbp.numnodes))
           vvol = zeros(uvol)
@@ -78,7 +78,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     @eval begin
       context("Testing boundaryFaceInterpolate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4
-          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbp = TriSBP{Float64}(degree=p)
           sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
           uvol = rand(Float64, (4,sbp.numnodes))
           vvol = zeros(uvol)
@@ -102,7 +102,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     @eval begin
       context("Testing interiorfaceinterpolate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
-          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbp = TriSBP{Float64}(degree=p)
           sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
           ifaces = Array(Interface, 1)
           ifaces[1] = Interface(1,2,2,3,1)
@@ -124,7 +124,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     @eval begin
       context("Testing interiorfaceinterpolate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4
-          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbp = TriSBP{Float64}(degree=p)
           sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
           ifaces = Array(Interface, 1)
           ifaces[1] = Interface(1,2,2,3,1)
@@ -146,7 +146,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     @eval begin
       context("Testing interiorFaceInterpolate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
-          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbp = TriSBP{Float64}(degree=p)
           sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
           uL = rand(Float64, (sbp.numnodes))
           uR = rand(Float64, (sbp.numnodes))
@@ -174,7 +174,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     @eval begin
       context("Testing interiorFaceInterpolate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4
-          sbp = TriSBP{Float64}(degree=p, reorder=false)
+          sbp = TriSBP{Float64}(degree=p)
           sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
           uL = rand(Float64, (4,sbp.numnodes))
           uR = rand(Float64, (4,sbp.numnodes))

@@ -586,8 +586,7 @@ matrix and the stiffness matrices.
 * `Q`: the stiffness matrices
 
 """->
-function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
-                           internal::Bool=false)
+function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
   face = TriFace{T}(d, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
@@ -650,8 +649,7 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
   return w, Q
 end
 
-function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int;
-                           internal::Bool=false)
+function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
   face = TetFace{T}(d, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,3) )
@@ -782,8 +780,7 @@ zeros in the S matrices, but they are not returned as sparse matrices.
 * `Q`: the stiffness matrices
 
 """->
-function buildsparseoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
-                                 internal::Bool=false)
+function buildsparseoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
   face = TriFace{T}(d+1, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
@@ -829,8 +826,7 @@ function buildsparseoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int;
   return w, Q
 end
 
-function buildsparseoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int;
-                                 internal::Bool=false)
+function buildsparseoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
   face = TetFace{T}(d+1, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,3) )

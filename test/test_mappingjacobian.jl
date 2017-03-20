@@ -320,7 +320,7 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
     # build a two element grid, and verify components of the Jacobian and its
     # determinant
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       vtx = [0. 0.; 1. 0.; 0. 1.]
       x = zeros(Float64, (2,sbp.numnodes,2))

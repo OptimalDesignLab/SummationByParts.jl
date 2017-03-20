@@ -327,7 +327,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildoperators (TriSymCub method, internal=false)") do
+  context("Testing SummationByParts.buildoperators (TriSymCub method)") do
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64)
       w, Q = SummationByParts.buildoperators(cub, vtx, d)
@@ -348,10 +348,10 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildoperators (TriSymCub method, internal=true)") do
+  context("Testing SummationByParts.buildoperators (TriSymCub method, internal nodes)") do
     for d = 1:4
       cub, vtx = tricubature(2*d-1, Float64, internal=true)
-      w, Q = SummationByParts.buildoperators(cub, vtx, d, internal=true)
+      w, Q = SummationByParts.buildoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
       xy = SymCubatures.calcnodes(cub, vtx)  
@@ -369,7 +369,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildoperators (TetSymCub method, internal=false)") do
+  context("Testing SummationByParts.buildoperators (TetSymCub method)") do
     tol = [1e-12; 1e-12; 1e-12; 5e-8]
     for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64)
@@ -396,7 +396,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildoperators (TetSymCub method, internal=true)") do
+  context("Testing SummationByParts.buildoperators (TetSymCub method, internal nodes)") do
     tol = [1e-12; 1e-12; 1e-12; 1e-12] #5e-8]
     for d = 1:4
       cub, vtx = tetcubature(2*d-1, Float64, internal=true)
@@ -445,7 +445,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildsparseoperators (TriSymCub method, internal=false)") do
+  context("Testing SummationByParts.buildsparseoperators (TriSymCub method)") do
     for d = 1:3 # cannot do d=4 yet, since we do not have the cubature
       cub, vtx = tricubature(2*d+1, Float64)
       w, Q = SummationByParts.buildsparseoperators(cub, vtx, d)
@@ -466,10 +466,10 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildsparseoperators (TriSymCub method, internal=true)") do
+  context("Testing SummationByParts.buildsparseoperators (TriSymCub method, internal nodes)") do
     for d = 1:3 # cannot do d=4 yet, since we do not have the cubature
       cub, vtx = tricubature(2*d+1, Float64, internal=true)
-      w, Q = SummationByParts.buildsparseoperators(cub, vtx, d, internal=true)
+      w, Q = SummationByParts.buildsparseoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
       xy = SymCubatures.calcnodes(cub, vtx)  
@@ -487,7 +487,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildsparseoperators (TetSymCub method, internal=false)") do
+  context("Testing SummationByParts.buildsparseoperators (TetSymCub method)") do
     #tol = [1e-12; 1e-12; 1e-12; 5e-8]
     tol = [1e-13; 5e-13; 5e-13; 5e-13]
     for d = 1:3 # cannot do d=4 yet, since we do not have the cubature
@@ -515,7 +515,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildsparseoperators (TetSymCub method, internal=true)") do
+  context("Testing SummationByParts.buildsparseoperators (TetSymCub method, internal nodes)") do
     tol = [1e-12; 1e-12; 1e-12; 1e-12] #5e-8]
     for d = 1:3
       cub, vtx = tetcubature(2*d+1, Float64, internal=true)

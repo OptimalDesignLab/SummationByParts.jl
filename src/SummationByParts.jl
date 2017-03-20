@@ -17,7 +17,7 @@ export AbstractSBP, TriSBP, TetSBP, SparseTriSBP, SparseTetSBP
 export AbstractFace, TriFace, TetFace
 export Boundary, Interface
 
-export calcnodes, calcminnodedistance
+export calcnodes, calcminnodedistance, getNumFaceNodes
 export weakdifferentiate!, weakDifferentiateElement!
 export weakdifferentiate_rev!, weakDifferentiateElement_rev!
 export differentiate!, differentiateElement!
@@ -60,66 +60,28 @@ Defines diagonal-norm SBP first-derivative operators on a right-triangle.
 
 * `degree` : maximum polynomial degree for which the derivatives are exact
 * `numnodes` : number of nodes in the triangle required for these operators
-* `numbndry` : number of boundary nodes for the operators
-* `numfacenodes` : number of nodes on an individual face of the domain
-* `facenodes` : indices of the nodes that lie on each face (no longer used)
-* `facenormal` : unit normal to the faces, in reference space (no longer used)
 * `cub` : a symmetric cubature type for triangles
 * `vtx` : vertices of the reference element in computational space
 * `w` : cubature weights, i.e. the diagonal SBP norm, stored as an array
-* `wface` : mass matrix (dense) for the faces (no longer used)
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """->
 immutable TriSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
-  numbndry::Int
-  numfacenodes::Int
-  facenodes::Array{Int,2}
-  facenormal::Array{T,2}
   cub::TriSymCub{T}
   vtx::Array{T,2}
   w::Array{T,1}
-  wface::Array{T,2}
   Q::Array{T,3}
-  reorder::Bool
 
   function TriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
-                  bubble::Int=-1, reorder=false, internal=false, vertices=true)
+                  internal=false, vertices=true)
     @assert( degree >= 1 && degree <= 4 )
     cub, vtx = tricubature(2*degree-1, T, internal=internal, vertices=vertices)
     numnodes = cub.numnodes
-    numbndry = SymCubatures.getnumboundarynodes(cub)
-    numfacenodes = SymCubatures.getnumfacenodes(cub)
-    wface = zeros(T,(1,1))
-    facenodes = zeros(Int, (1,1))
-    facenormal = T[0 -1; 1 1; -1 0].'
     Q = zeros(T, (numnodes, numnodes, 2))
-    if bubble < 0
-      w, Q = SummationByParts.buildoperators(cub, vtx, degree, internal=internal)
-    else
-      w, Q = SummationByParts.buildoperators(cub, vtx, degree, bubble)
-    end
-    if reorder
-      # reorder the nodes
-      perm, faceperm = SummationByParts.getnodepermutation(cub, degree)
-      w = w[perm]
-      Q[:,:,1] = Q[perm,perm,1]
-      Q[:,:,2] = Q[perm,perm,2]
-      perminv = invperm(perm)
-      wface, facenodes = boundarymassmatrix(cub, vtx, degree)
-      for k = 1:3
-        facenodes[:,k] = perminv[facenodes[:,k]]
-      end
-      wface = wface[faceperm,faceperm]
-      # reorder the faces
-      facenodes[:,:] = facenodes[faceperm,faceorder]
-      facenormal = facenormal[:,faceorder]
-    end
-
-    new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
-        vtx, w, wface, Q, reorder)
+    w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+    new(degree, numnodes, cub, vtx, w, Q)
   end
 end
 
@@ -134,64 +96,29 @@ in the SBP operator that is used to make a sparse S.
 
 * `degree` : maximum polynomial degree for which the derivatives are exact
 * `numnodes` : number of nodes in the triangle required for these operators
-* `numbndry` : number of boundary nodes for the operators
-* `numfacenodes` : number of nodes on an individual face of the domain
-* `facenodes` : indices of the nodes that lie on each face (no longer used)
-* `facenormal` : unit normal to the faces, in reference space (no longer used)
 * `cub` : a symmetric cubature type for triangles
 * `vtx` : vertices of the reference element in computational space
 * `w` : cubature weights, i.e. the diagonal SBP norm, stored as an array
-* `wface` : mass matrix (dense) for the faces (no longer used)
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """->
 immutable SparseTriSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
-  numbndry::Int
-  numfacenodes::Int
-  facenodes::Array{Int,2}
-  facenormal::Array{T,2}
   cub::TriSymCub{T}
   vtx::Array{T,2}
   w::Array{T,1}
-  wface::Array{T,2}
   Q::Array{T,3}
-  reorder::Bool
 
   function SparseTriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
-                        internal=false, reorder=false, vertices=true,
+                        internal=false, vertices=true,
                         cubdegree::Int=2*degree+1)
     @assert( degree >= 1 && degree <= 4 )
     cub, vtx = tricubature(cubdegree, T, internal=internal, vertices=vertices)
     numnodes = cub.numnodes
-    numbndry = SymCubatures.getnumboundarynodes(cub)
-    numfacenodes = SymCubatures.getnumfacenodes(cub)
-    wface = zeros(T,(1,1))
-    facenodes = zeros(Int, (1,1))
-    facenormal = T[0 -1; 1 1; -1 0].'
     Q = zeros(T, (numnodes, numnodes, 2))
-    w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree,
-                                                 internal=internal)
-    if reorder
-      # reorder the nodes
-      perm, faceperm = SummationByParts.getnodepermutation(cub, degree)
-      w = w[perm]
-      Q[:,:,1] = Q[perm,perm,1]
-      Q[:,:,2] = Q[perm,perm,2]
-      perminv = invperm(perm)
-      wface, facenodes = boundarymassmatrix(cub, vtx, degree)
-      for k = 1:3
-        facenodes[:,k] = perminv[facenodes[:,k]]
-      end
-      wface = wface[faceperm,faceperm]
-      # reorder the faces
-      facenodes[:,:] = facenodes[faceperm,faceorder]
-      facenormal = facenormal[:,faceorder]
-    end
-
-    new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
-        vtx, w, wface, Q, reorder)
+    w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)
+    new(degree, numnodes, cub, vtx, w, Q)
   end
 end
 
@@ -204,63 +131,28 @@ Defines diagonal-norm SBP first-derivative operators on a right-tetrahedron.
 
 * `degree` : maximum polynomial degree for which the derivatives are exact
 * `numnodes` : number of nodes in the tetrahedron required for these operators
-* `numbndry` : number of boundary nodes for the operators 
-* `numfacenodes` : number of nodes on an individual face of the domain
-* `facenodes` : indices of the nodes that lie on each face
-* `facenormal` : unit normal to the faces, in reference space
 * `cub` : a symmetric cubature type for tetrahedra
 * `vtx` : vertices of the reference element in computational space
 * `w` : cubature weights, i.e. the diagonal SBP norm, stored as an array
-* `wface` : mass matrix (dense) for the faces
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """->
 immutable TetSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
-  numbndry::Int
-  numfacenodes::Int
-  facenodes::Array{Int,2}
-  facenormal::Array{T,2}
   cub::TetSymCub{T}
   vtx::Array{T,2}
   w::Array{T,1}
-  wface::Array{T,2}
   Q::Array{T,3}
-  reorder::Bool
 
   function TetSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4],
-                  reorder=false, internal=false)
+                  internal=false)
     @assert( degree >= 1 && degree <= 4 )
     cub, vtx = tetcubature(2*degree-1, T, internal=internal)
     numnodes = cub.numnodes
-    numbndry = SymCubatures.getnumboundarynodes(cub)
-    numfacenodes = SymCubatures.getnumfacenodes(cub)
-    wface = zeros(T,(1,1))
-    facenodes = zeros(Int, (1,1))
-    facenormal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'
     Q = zeros(T, (numnodes, numnodes, 3))
-    w, Q = SummationByParts.buildoperators(cub, vtx, degree, internal=internal)
-    if reorder
-      # reorder the nodes
-      perm, faceperm = SummationByParts.getnodepermutation(cub, degree)
-      w = w[perm]
-      Q[:,:,1] = Q[perm,perm,1]
-      Q[:,:,2] = Q[perm,perm,2]
-      Q[:,:,3] = Q[perm,perm,3]
-      perminv = invperm(perm)
-      wface, facenodes = boundarymassmatrix(cub, vtx, degree)
-      for k = 1:4
-        facenodes[:,k] = perminv[facenodes[:,k]]
-      end
-      wface = wface[faceperm,faceperm]
-      # reorder the faces
-      facenodes[:,:] = facenodes[faceperm,faceorder]
-      facenormal = facenormal[:,faceorder]
-    end
-
-    new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
-        vtx, w, wface, Q, reorder)
+    w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+    new(degree, numnodes, cub, vtx, w, Q)
   end
 end
 
@@ -275,64 +167,28 @@ flexiblity in the SBP operator that is used to make a sparse S.
 
 * `degree` : maximum polynomial degree for which the derivatives are exact
 * `numnodes` : number of nodes in the tetrahedron required for these operators
-* `numbndry` : number of boundary nodes for the operators 
-* `numfacenodes` : number of nodes on an individual face of the domain
-* `facenodes` : indices of the nodes that lie on each face
-* `facenormal` : unit normal to the faces, in reference space
 * `cub` : a symmetric cubature type for tetrahedra
 * `vtx` : vertices of the reference element in computational space
 * `w` : cubature weights, i.e. the diagonal SBP norm, stored as an array
-* `wface` : mass matrix (dense) for the faces
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """->
 immutable SparseTetSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
-  numbndry::Int
-  numfacenodes::Int
-  facenodes::Array{Int,2}
-  facenormal::Array{T,2}
   cub::TetSymCub{T}
   vtx::Array{T,2}
   w::Array{T,1}
-  wface::Array{T,2}
   Q::Array{T,3}
-  reorder::Bool
 
   function SparseTetSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4],
-                        reorder=false, internal=false, cubdegree::Int=2*degree-1)
+                        internal=false, cubdegree::Int=2*degree-1)
     @assert( degree >= 1 && degree <= 3 )
     cub, vtx = tetcubature(cubdegree, T, internal=internal)
     numnodes = cub.numnodes
-    numbndry = SymCubatures.getnumboundarynodes(cub)
-    numfacenodes = SymCubatures.getnumfacenodes(cub)
-    wface = zeros(T,(1,1))
-    facenodes = zeros(Int, (1,1))
-    facenormal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'
     Q = zeros(T, (numnodes, numnodes, 3))
-    w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree,
-                                                 internal=internal)
-    if reorder
-      # reorder the nodes
-      perm, faceperm = SummationByParts.getnodepermutation(cub, degree)
-      w = w[perm]
-      Q[:,:,1] = Q[perm,perm,1]
-      Q[:,:,2] = Q[perm,perm,2]
-      Q[:,:,3] = Q[perm,perm,3]
-      perminv = invperm(perm)
-      wface, facenodes = boundarymassmatrix(cub, vtx, degree)
-      for k = 1:4
-        facenodes[:,k] = perminv[facenodes[:,k]]
-      end
-      wface = wface[faceperm,faceperm]
-      # reorder the faces
-      facenodes[:,:] = facenodes[faceperm,faceorder]
-      facenormal = facenormal[:,faceorder]
-    end
-
-    new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
-        vtx, w, wface, Q, reorder)
+    w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)
+    new(degree, numnodes, cub, vtx, w, Q)
   end
 end
 

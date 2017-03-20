@@ -2,6 +2,24 @@
 # categorized
 
 @doc """
+### SummationByParts.getNumFaceNodes
+
+Returns the number of SBP element nodes on a face.
+
+**Inputs**
+
+* `sbp`: an SBP operator
+
+**Returns**
+
+* `numfacenodes`: number of nodes on (one) face of the element
+
+"""->
+function getNumFaceNodes{T}(sbp::AbstractSBP{T})
+  return SymCubatures.getnumfacenodes(sbp.cub)
+end
+
+@doc """
 ### SummationByParts.getnbrnodeindex
 
 Returns the face-node index on `face.faceR` equivalent to index `i` on
@@ -50,14 +68,8 @@ element mapping is linear, i.e. edges are lines.
   x[:,:,2] = calcnodes(sbp, vtx)
 ```
 """->
-function calcnodes{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx)
-  if sbp.reorder
-    perm, faceperm = SummationByParts.getnodepermutation(sbp.cub, sbp.degree)
-    x = SymCubatures.calcnodes(sbp.cub, vtx)
-    return x[:,perm]
-  else
-    return SymCubatures.calcnodes(sbp.cub, vtx)
-  end
+function calcnodes{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx) 
+  return SymCubatures.calcnodes(sbp.cub, vtx)
 end
 
 @doc """
