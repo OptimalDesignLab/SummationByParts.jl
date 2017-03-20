@@ -74,15 +74,75 @@ immutable TriSBP{T} <: AbstractSBP{T}
   w::Array{T,1}
   Q::Array{T,3}
 
-  function TriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
-                  internal=false, vertices=true)
-    @assert( degree >= 1 && degree <= 4 )
-    cub, vtx = tricubature(2*degree-1, T, internal=internal, vertices=vertices)
+  # inner constructor
+  function TriSBP(degree::Int, cub::TriSymCub{T}, vtx::Array{T,2})
+    @assert( degree >= 1 && degree <= 4)
     numnodes = cub.numnodes
     Q = zeros(T, (numnodes, numnodes, 2))
     w, Q = SummationByParts.buildoperators(cub, vtx, degree)
     new(degree, numnodes, cub, vtx, w, Q)
   end
+end
+
+@doc """
+### SBP.TriSBP
+
+Outer constructor for backward compatibility
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `internal`: if true, all element nodes are strictly internal
+* `vertices`: if true, element vertices are included in the nodes
+
+**Returns**
+
+* `sbp`: an SBP type for triangular elements
+
+"""->
+function call{T}(::Type{TriSBP{T}}; degree::Int=1, internal::Bool=false,
+                 vertices::Bool=true) 
+  cub, vtx = tricubature(2*degree-1, T, internal=internal,
+                         vertices=vertices)
+  TriSBP{T}(degree, cub, vtx)
+end
+
+@doc """
+### SBP.getTriSBPGamma
+
+Returns SBP-Gamma type elements, that have nodes on the element boundary
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `Tsbp`: floating point type used for the operators
+
+**Returns**
+
+* `sbp`: an SBP-Gamma operator of the appropriate degree
+
+"""->
+function getTriSBPGamma(;degree::Int=1, Tsbp::Type=Float64)
+  return TriSBP{Tsbp}(degree=degree, internal=false, vertices=true)
+end
+
+@doc """
+### SBP.getTriSBPOmega
+
+Returns SBP-Omega type elements, that have no nodes on the element boundary
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `Tsbp`: floating point type used for the operators
+
+**Returns**
+
+* `sbp`: an SBP-Omega operator of the appropriate degree
+
+"""->
+function getTriSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
+  return TriSBP{Tsbp}(degree=degree, internal=true, vertices=false)
 end
 
 @doc """
@@ -145,15 +205,73 @@ immutable TetSBP{T} <: AbstractSBP{T}
   w::Array{T,1}
   Q::Array{T,3}
 
-  function TetSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4],
-                  internal=false)
-    @assert( degree >= 1 && degree <= 4 )
-    cub, vtx = tetcubature(2*degree-1, T, internal=internal)
+  # inner constructor
+  function TetSBP(degree::Int, cub::TetSymCub{T}, vtx::Array{T,2})
+    @assert( degree >= 1 && degree <= 4)
     numnodes = cub.numnodes
     Q = zeros(T, (numnodes, numnodes, 3))
     w, Q = SummationByParts.buildoperators(cub, vtx, degree)
     new(degree, numnodes, cub, vtx, w, Q)
   end
+end
+
+@doc """
+### SBP.TetSBP
+
+Outer constructor for backward compatibility
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `internal`: if true, all element nodes are strictly internal
+* `vertices`: if true, element vertices are included in the nodes
+
+**Returns**
+
+* `sbp`: an SBP type for tetrahedral elements
+
+"""->
+function call{T}(::Type{TetSBP{T}}; degree::Int=1, internal::Bool=false)
+  cub, vtx = tetcubature(2*degree-1, T, internal=internal)
+  TetSBP{T}(degree, cub, vtx)
+end
+
+@doc """
+### SBP.getTetSBPGamma
+
+Returns SBP-Gamma type elements, that have nodes on the element boundary
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `Tsbp`: floating point type used for the operators
+
+**Returns**
+
+* `sbp`: an SBP-Gamma operator of the appropriate degree
+
+"""->
+function getTetSBPGamma(;degree::Int=1, Tsbp::Type=Float64)
+  return TetSBP{Tsbp}(degree=degree, internal=false, vertices=true)
+end
+
+@doc """
+### SBP.getTetSBPOmega
+
+Returns SBP-Omega type elements, that have no nodes on the element boundary
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `Tsbp`: floating point type used for the operators
+
+**Returns**
+
+* `sbp`: an SBP-Omega operator of the appropriate degree
+
+"""->
+function getTetSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
+  return TetSBP{Tsbp}(degree=degree, internal=true, vertices=false)
 end
 
 @doc """
