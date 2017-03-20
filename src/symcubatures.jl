@@ -2029,4 +2029,78 @@ function calcjacobian{T}(cub::TetSymCub{T},
   return Jac
 end
 
+@doc """
+### SymCubatures.getInternalParamMask
+
+Returns the set of parameter indices corresponding to internal nodes; this is
+useful when finding cubature rules for which we wish to fix the boundary nodes
+and only allow the internal nodes to move.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+
+**Returns**
+
+* `mask`: integer array of parameter indices associated with internal nodes
+
+"""->
+function getInternalParamMask{T}(cub::TriSymCub{T})
+  mask = Array(Int64, (0))
+  paramptr = 1
+  # include S21 orbit parameters
+  for i = 1:cub.numS21
+    push!(mask, paramptr)
+    paramptr += 1
+  end
+  # account for edge node parameters (not included in mask)
+  paramptr += cub.numedge
+  # include S111 orbit nodes
+  for i = 1:cub.numS111
+    push!(mask, paramptr)
+    paramptr += 1
+    push!(mask, paramptr)
+    paramptr += 1
+  end
+  return mask
+end
+
+function getInternalParamMask{T}(cub::TetSymCub{T})
+  mask = Array(Int64, (0))
+  paramptr = 1
+  # include S31 orbit parameters
+  for i = 1:cub.numS31
+    push!(mask, paramptr)
+    paramptr += 1
+  end
+  # include S22 orbit parameters
+  for i = 1:cub.numS22
+    push!(mask, paramptr)
+    paramptr += 1
+  end
+  # account for edge node parameters (not included in mask)
+  paramptr += cub.numedge
+  # account for face S21 orbits (not included in mask)
+  paramptr += cub.numfaceS21
+  # include S211 orbit parameters
+  for i = 1:cub.numS211
+    push!(mask, paramptr)
+    paramptr += 1
+    push!(mask, paramptr)
+    paramptr += 1
+  end
+  # account for face S111 orbits (not included in mask)
+  paramptr += 2*cub.numfaceS111
+  # include S1111 orbit parameters
+  for i = 1:cub.numS1111
+    push!(mask, paramptr)
+    paramptr += 1
+    push!(mask, paramptr)
+    paramptr += 1
+    push!(mask, paramptr)
+    paramptr += 1
+  end
+  return mask
+end
+                                 
 end

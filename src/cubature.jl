@@ -307,6 +307,7 @@ accuracy on the right triangle.
 * `T`: the data type used to represent the cubature
 * `internal`: if true, all nodes are strictly internal (default false)
 * `vertices`: if true and `internal` is false, then vertices are not included
+* `facequad`: if true, the cubatures' face nodes coincide with a quadrature
 * `tol`: tolerance with which to solve the cubature
 
 **Outputs**
@@ -316,9 +317,29 @@ accuracy on the right triangle.
 
 """->
 function tricubature(q::Int, T=Float64; internal::Bool=false,
-                     vertices::Bool=true, tol=10*eps(typeof(real(one(T)))))
+                     vertices::Bool=true, facequad::Bool=false,
+                     tol=10*eps(typeof(real(one(T)))))
   cub_degree = q
-  if internal
+  weights_only = false
+  if facequad
+    # face nodes coincide with a quadrature rule
+    if q <= 1
+      cub = SymCubatures.TriSymCub{T}(vertices=true, midedges=true)
+      #cub = SymCubatures.TriSymCub{T}(vertices=false, numedge=1)
+      SymCubatures.setweights!(cub, T[1/3; 1/3])
+      #SymCubatures.setweights!(cub, T[1/3])
+      #SymCubatures.setparams!(cub, T[0.5*(1 + 1/sqrt(3))])
+      cub_degree = 1
+      weights_only = true
+    elseif q <= 3
+      cub = SymCubatures.TriSymCub{T}(vertices=true, numedge=1,
+                                      centroid=true)
+      SymCubatures.setweights!(cub, T[1/5; 1/5; 1/5])
+      SymCubatures.setparams!(cub, T[0.5*(1 + 1/sqrt(5))])
+      cub_degree = 3
+      weights_only = true
+    end
+  elseif internal
     # all nodes are internal
     if q <= 2
       # P1; 3rd order cubature
@@ -500,7 +521,11 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
     end
   end
   vtx = T[-1 -1; 1 -1; -1 1]
-  Cubature.solvecubature!(cub, cub_degree, tol=tol)
+  if weights_only
+    Cubature.solvecubatureweights!(cub, cub_degree, tol=tol)
+  else
+    Cubature.solvecubature!(cub, cub_degree, tol=tol)
+  end
   return cub, vtx
 end
 
