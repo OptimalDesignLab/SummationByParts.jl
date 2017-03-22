@@ -47,13 +47,24 @@ function buildfacereconstruction{T}(facecub::LineSymCub{T}, cub::TriSymCub{T},
     end
   end
   #R = Pf/Pv
-  R = (pinv(Pv.')*Pf.').'
+  #R = (pinv(Pv.')*Pf.').'
   # notes on sparse solution:
   # A = kron(eye(size(perm,1)),Pv)
   # b = vec(Pf)
   # use basis pursuit on A x = b
   # find dominant entries and resolve for R
-  
+  if SymCubatures.getnumfacenodes(cub) >= (d+1)
+    A = kron(Pv.',eye(facecub.numnodes))
+    #println("size(A) = ",size(A))
+    #println("rank(A) = ",rank(A))
+    b = vec(Pf)
+    #println("size(b) = ",size(b))
+    R = zeros(facecub.numnodes*size(perm,1))
+    SummationByParts.calcSparseSolution!(A, b, R)
+    R = reshape(R, (facecub.numnodes,size(perm,1)))
+  else
+    R = (pinv(Pv.')*Pf.').'
+  end
   return R, perm
 end
 

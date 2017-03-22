@@ -321,7 +321,7 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
     return max(0, a-kappa) - max(0, -a-kappa)
   end
 
-  maxiter = 1000
+  maxiter = 10000
   (m, n) = size(A)
   fill!(x, 0.0)
   z = zeros(x)
@@ -333,12 +333,12 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
   end
 
   # precompute some static variables for x-update (projection on to Ax=b)
-  AAt = A*A.'
-  P = eye(n,n) - A.'*(AAt\A)
-  q = A.'*(AAt \ b)
-  #Ainv = pinv(A)
-  #P = eye(n,n) - Ainv*Ainv.'
-  #q = Ainv*b
+  #AAt = A*A.'
+  #P = eye(n,n) - A.'*(AAt\A) # eye(n) - V*V.' where V are the right sing. vecs
+  #q = A.'*(AAt \ b)
+  Ainv = pinv(A)
+  P = eye(n,n) - Ainv*A
+  q = Ainv*b
 
   for k = 1:maxiter
     # x-update
@@ -403,5 +403,8 @@ function calcSparseSolution!(A::AbstractArray{Float64,2},
   end
   # find the reduced (full-rank) matrix and invert
   AP = A*P
+  #println("size(AP) = ",size(AP))
+  #println("rank(AP) = ",rank(AP))
   x[:] = P*(AP\b)
+  #x[:] = P*(pinv(AP)*b)
 end

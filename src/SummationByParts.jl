@@ -75,74 +75,14 @@ immutable TriSBP{T} <: AbstractSBP{T}
   Q::Array{T,3}
 
   # inner constructor
-  function TriSBP(degree::Int, cub::TriSymCub{T}, vtx::Array{T,2})
+  function TriSBP(degree::Int, cub::TriSymCub{T}, vtx::Array{T,2},
+                  w::Array{T,1}, Q::Array{T,3})
     @assert( degree >= 1 && degree <= 4)
     numnodes = cub.numnodes
-    Q = zeros(T, (numnodes, numnodes, 2))
-    w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+    @assert( size(Q,1) == size(Q,2) == size(w,1) == numnodes )
+    @assert( size(Q,3) == 2 )
     new(degree, numnodes, cub, vtx, w, Q)
   end
-end
-
-@doc """
-### SBP.TriSBP
-
-Outer constructor for backward compatibility
-
-**Inputs**
-
-* `degree`: maximum polynomial degree for which the derivatives are exact
-* `internal`: if true, all element nodes are strictly internal
-* `vertices`: if true, element vertices are included in the nodes
-
-**Returns**
-
-* `sbp`: an SBP type for triangular elements
-
-"""->
-function call{T}(::Type{TriSBP{T}}; degree::Int=1, internal::Bool=false,
-                 vertices::Bool=true) 
-  cub, vtx = tricubature(2*degree-1, T, internal=internal,
-                         vertices=vertices)
-  TriSBP{T}(degree, cub, vtx)
-end
-
-@doc """
-### SBP.getTriSBPGamma
-
-Returns SBP-Gamma type elements, that have nodes on the element boundary
-
-**Inputs**
-
-* `degree`: maximum polynomial degree for which the derivatives are exact
-* `Tsbp`: floating point type used for the operators
-
-**Returns**
-
-* `sbp`: an SBP-Gamma operator of the appropriate degree
-
-"""->
-function getTriSBPGamma(;degree::Int=1, Tsbp::Type=Float64)
-  return TriSBP{Tsbp}(degree=degree, internal=false, vertices=true)
-end
-
-@doc """
-### SBP.getTriSBPOmega
-
-Returns SBP-Omega type elements, that have no nodes on the element boundary
-
-**Inputs**
-
-* `degree`: maximum polynomial degree for which the derivatives are exact
-* `Tsbp`: floating point type used for the operators
-
-**Returns**
-
-* `sbp`: an SBP-Omega operator of the appropriate degree
-
-"""->
-function getTriSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
-  return TriSBP{Tsbp}(degree=degree, internal=true, vertices=false)
 end
 
 @doc """
@@ -204,74 +144,16 @@ immutable TetSBP{T} <: AbstractSBP{T}
   vtx::Array{T,2}
   w::Array{T,1}
   Q::Array{T,3}
-
+  
   # inner constructor
-  function TetSBP(degree::Int, cub::TetSymCub{T}, vtx::Array{T,2})
+  function TetSBP(degree::Int, cub::TetSymCub{T}, vtx::Array{T,2},
+                  w::Array{T,1}, Q::Array{T,3})
     @assert( degree >= 1 && degree <= 4)
     numnodes = cub.numnodes
-    Q = zeros(T, (numnodes, numnodes, 3))
-    w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+    @assert( size(Q,1) == size(Q,2) == size(w,1) == numnodes )
+    @assert( size(Q,3) == 3 )
     new(degree, numnodes, cub, vtx, w, Q)
   end
-end
-
-@doc """
-### SBP.TetSBP
-
-Outer constructor for backward compatibility
-
-**Inputs**
-
-* `degree`: maximum polynomial degree for which the derivatives are exact
-* `internal`: if true, all element nodes are strictly internal
-* `vertices`: if true, element vertices are included in the nodes
-
-**Returns**
-
-* `sbp`: an SBP type for tetrahedral elements
-
-"""->
-function call{T}(::Type{TetSBP{T}}; degree::Int=1, internal::Bool=false)
-  cub, vtx = tetcubature(2*degree-1, T, internal=internal)
-  TetSBP{T}(degree, cub, vtx)
-end
-
-@doc """
-### SBP.getTetSBPGamma
-
-Returns SBP-Gamma type elements, that have nodes on the element boundary
-
-**Inputs**
-
-* `degree`: maximum polynomial degree for which the derivatives are exact
-* `Tsbp`: floating point type used for the operators
-
-**Returns**
-
-* `sbp`: an SBP-Gamma operator of the appropriate degree
-
-"""->
-function getTetSBPGamma(;degree::Int=1, Tsbp::Type=Float64)
-  return TetSBP{Tsbp}(degree=degree, internal=false, vertices=true)
-end
-
-@doc """
-### SBP.getTetSBPOmega
-
-Returns SBP-Omega type elements, that have no nodes on the element boundary
-
-**Inputs**
-
-* `degree`: maximum polynomial degree for which the derivatives are exact
-* `Tsbp`: floating point type used for the operators
-
-**Returns**
-
-* `sbp`: an SBP-Omega operator of the appropriate degree
-
-"""->
-function getTetSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
-  return TetSBP{Tsbp}(degree=degree, internal=true, vertices=false)
 end
 
 @doc """
@@ -355,25 +237,21 @@ immutable TriFace{T} <: AbstractFace{T}
   deriv::Array{T,3}
   dperm::Array{Int,2}
   nbrperm::Array{Int,2}
-  function TriFace(degree::Int, volcub::TriSymCub{T}, vtx::Array{T,2};
-                   vertices::Bool=false)
+
+  # inner constructor
+  function TriFace(degree::Int, facecub::LineSymCub{T}, facevtx::Array{T,2},
+                   interp::Array{T,2}, perm::Array{Int,2},
+                   deriv::Array{T,3}, dperm::Array{Int,2})
     @assert( degree >= 1 && degree <= 5 )
-    if vertices
-      facecub, facevtx = quadrature(2*degree, T, internal=false)
-    else
-      facecub, facevtx = quadrature(2*degree, T, internal=true)
-    end
+    numnodes = facecub.numnodes
+    @assert( size(interp,2) == size(deriv,2) == numnodes )
     normal = T[0 -1; 1 1; -1 0].'
-    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
-                                                       degree)
-    D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
-                                                     degree)
     nbrperm = SymCubatures.getneighbourpermutation(facecub)
     wface = SymCubatures.calcweights(facecub)
-    stencilsize = size(R,2)
-    dstencilsize = size(D,1)
+    stencilsize = size(interp,1)
+    dstencilsize = size(deriv,1)
     new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, facevtx, 
-        wface, normal, R.', perm, D, Dperm, nbrperm)
+        wface, normal, interp, perm, deriv, dperm, nbrperm)
   end
 end
 
@@ -412,22 +290,19 @@ immutable TetFace{T} <: AbstractFace{T}
   #deriv::Array{T,3}
   #dperm::Array{Int,2}
   nbrperm::Array{Int,2}
-  function TetFace(degree::Int, volcub::TetSymCub{T}, vtx::Array{T,2})
+
+  # inner constructor
+  function TetFace(degree::Int, facecub::TriSymCub{T}, facevtx::Array{T,2},
+                   interp::Array{T,2}, perm::Array{Int,2})
     @assert( degree >= 1 && degree <= 4 )
-    facecub, facevtx = tricubature(2*degree, T, internal=true)
+    numnodes = facecub.numnodes
+    @assert( size(interp,2) == numnodes )
     normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'
-    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
-                                                       degree)
-    #D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
-    #                                                 degree)
     nbrperm = SymCubatures.getneighbourpermutation(facecub)
     wface = SymCubatures.calcweights(facecub)
-    stencilsize = size(R,2)
-    #dstencilsize = size(D,1)
-    #new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, wface,
-    #    normal, R.', perm, D, Dperm, nbrperm)
-    new(degree, facecub.numnodes, stencilsize, facecub, facevtx, wface, normal,
-        R.', perm, nbrperm)
+    stencilsize = size(interp,1)
+    new(degree, numnodes, stencilsize, facecub, facevtx, wface, normal, interp,
+        perm, nbrperm)
   end
 end
 
@@ -465,6 +340,7 @@ function call(update::Subtract, scalar)
   return -scalar
 end
 
+include("outerconstructors.jl") #<--- outer constructors and factories
 include("buildfaceoperators.jl") #<--- functions related to building face operators
 include("buildoperators.jl") #<--- functions related to building SBP operators
 include("weakdifferentiate.jl") #<--- functions for weak differentiation
