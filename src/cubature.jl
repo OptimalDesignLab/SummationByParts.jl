@@ -88,6 +88,7 @@ defined by `cub`, which is a parametric abstract type (see symcubatures.jl).
 **Inputs**
 
 * `q`: maximum (desired) degree for which the cubature is exact
+* `mask`: array of indicies of parameters and weights that are free
 * `tol`: tolerance with which to solve the accuracy conditions
 * `hist`: if true, print the residual-norm convergence history
 
@@ -97,9 +98,10 @@ defined by `cub`, which is a parametric abstract type (see symcubatures.jl).
   on exit, defines the nodes and weights that satisfy the desired accuracy.
 
 """->
-function solvecubature!{T}(cub::SymCub{T}, q::Int;
+function solvecubature!{T}(cub::SymCub{T}, q::Int, mask::AbstractArray{Int64,1};
                            tol=10*eps(typeof(real(one(T)))),
                            hist::Bool=false)
+  @assert( length(mask) <= cub.numparams + cub.numweights )
   Jac = SymCubatures.calcjacobian(cub)
 
   # compute accuracy for initial guess 
@@ -119,11 +121,16 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int;
   v = zeros(T, (cub.numparams + cub.numweights) )
   v[1:cub.numparams] = cub.params
   v[cub.numparams+1:end] = cub.weights
+  dv = zeros(v)
   for k = 1:maxiter
     JtJ = Jac.'*dF.'*dF*Jac
     H = JtJ + nu*diagm(diag(JtJ))
     g = -Jac.'*dF.'*F
-    dv = H\g
+
+    # solve only for those parameters and weights that are in mask
+    fill!(dv, zero(T))
+    Hred = H[mask,mask]
+    dv[mask] = Hred\g[mask]
 
     # update cubature definition and check for convergence
     v += dv
@@ -294,7 +301,6 @@ function quadrature(q::Int, T=Float64; internal::Bool=false)
   return quad, vtx
 end
 
-
 @doc """
 ### Cubature.tricubature{T}
 
@@ -320,7 +326,7 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
                      vertices::Bool=true, facequad::Bool=false,
                      tol=10*eps(typeof(real(one(T)))))
   cub_degree = q
-  weights_only = false
+  mask = zeros(Int64, (0))
   if facequad
     # face nodes coincide with a quadrature rule
     if q <= 1
@@ -330,14 +336,35 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
       #SymCubatures.setweights!(cub, T[1/3])
       #SymCubatures.setparams!(cub, T[0.5*(1 + 1/sqrt(3))])
       cub_degree = 1
-      weights_only = true
+      #weights_only = true
+      mask = SymCubatures.getInternalParamMask(cub)
+      append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
     elseif q <= 3
       cub = SymCubatures.TriSymCub{T}(vertices=true, numedge=1,
                                       centroid=true)
       SymCubatures.setweights!(cub, T[1/5; 1/5; 1/5])
       SymCubatures.setparams!(cub, T[0.5*(1 + 1/sqrt(5))])
-      cub_degree = 3
-      weights_only = true
+      cub_degree = 3 
+      mask = SymCubatures.getInternalParamMask(cub)
+      append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
+    elseif q <= 5
+      cub = SymCubatures.TriSymCub{T}(vertices=true, midedges=true, numedge=1,
+                                      numS21=1)
+      SymCubatures.setweights!(cub, T[2/15; 2/15; 2/15; 2/15])
+      SymCubatures.setparams!(cub, T[0.5; 0.5*(1 + sqrt(3/7))])
+      cub_degree = 5
+      mask = SymCubatures.getInternalParamMask(cub)
+      append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
+    elseif q <= 7
+      # this does not work yet
+      cub = SymCubatures.TriSymCub{T}(vertices=true, numedge=2, numS21=2)
+      SymCubatures.setweights!(cub, T[2/21; 2/21; 2/21; 2/21; 2/21])
+      SymCubatures.setparams!(cub, T[0.25; 0.75;
+                                     0.5*(1 + sqrt(1/3 + 2*sqrt(7)/21));
+                                     0.5*(1 + sqrt(1/3 - 2*sqrt(7)/21))])
+      cub_degree = 7
+      mask = SymCubatures.getInternalParamMask(cub)
+      append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))      
     end
   elseif internal
     # all nodes are internal
@@ -420,6 +447,7 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
     else
       error("polynomial degree must be <= 7 (presently)\n")
     end
+    mask = 1:(cub.numparams+cub.numweights)
   else
     if vertices
       # at least (q+1)/2+1 nodes along each edge
@@ -518,14 +546,11 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
       else
         error("polynomial degree must be <= 7 (presently)\n")
       end
-    end
+    end  
+    mask = 1:(cub.numparams+cub.numweights)
   end
   vtx = T[-1 -1; 1 -1; -1 1]
-  if weights_only
-    Cubature.solvecubatureweights!(cub, cub_degree, tol=tol)
-  else
-    Cubature.solvecubature!(cub, cub_degree, tol=tol)
-  end
+  Cubature.solvecubature!(cub, cub_degree, mask, tol=tol)
   return cub, vtx
 end
 
@@ -550,6 +575,7 @@ accuracy on the right tetrahedron.
 """->
 function tetcubature(q::Int, T=Float64; internal::Bool=false,
                      tol=10*eps(typeof(real(one(T)))))
+  mask = zeros(Int64, (0))
   if internal
     # all nodes are internal
     @assert( q >= 1 )
@@ -630,6 +656,7 @@ function tetcubature(q::Int, T=Float64; internal::Bool=false,
                                      0.4612405506278837;
                                      0.07057889678019784])
     end
+    mask = 1:(cub.numparams+cub.numweights)
   else
     # at least (q+1)/2+1 nodes along each edge
     @assert( q >= 1 && q <= 7 && mod(q,2) == 1)
@@ -660,9 +687,10 @@ function tetcubature(q::Int, T=Float64; internal::Bool=false,
     else
       error("polynomial degree must be 1, 3, 5, or 7 (presently)\n")
     end
+    mask = 1:(cub.numparams+cub.numweights)
   end
   vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
-  Cubature.solvecubature!(cub, q, tol=tol)
+  Cubature.solvecubature!(cub, q, mask, tol=tol)
   return cub, vtx
 end
 

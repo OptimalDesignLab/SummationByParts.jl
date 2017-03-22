@@ -24,14 +24,16 @@ facts("Testing Cubature Module...") do
     # recover cubature for centroid only rule
     cub = SymCubatures.TriSymCub{Float64}(vertices=false, centroid=true)
     SymCubatures.setweights!(cub, [0.5])
-    Cubature.solvecubature!(cub, 1, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 1, mask, tol=1e-14)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly([2], atol=1e-15)
 
     # recover P1 vertices-only rule
     cub = SymCubatures.TriSymCub{Float64}()
     SymCubatures.setweights!(cub, [0.5])
-    Cubature.solvecubature!(cub, 1, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 1, mask, tol=1e-14)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly([2/3, 2/3, 2/3], atol=1e-15)
 
@@ -39,14 +41,16 @@ facts("Testing Cubature Module...") do
     cub = SymCubatures.TriSymCub{Float64}(vertices=false, centroid=true, numS21=1)
     SymCubatures.setweights!(cub, [0.5, 0.5])
     SymCubatures.setparams!(cub, [0.25])
-    Cubature.solvecubature!(cub, 3, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 3, mask, tol=1e-14)
     w  = SymCubatures.calcweights(cub)
     @fact w --> roughly([50/48, 50/48, 50/48, -18/16], atol=1e-15)
 
     # create P2 element cubature with 1 bubble node at the centroid
     cub = SymCubatures.TriSymCub{Float64}(midedges=true, centroid=true)
     SymCubatures.setweights!(cub, [0.5, 0.5, 0.5])
-    Cubature.solvecubature!(cub, 3, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 3, mask, tol=1e-14)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly([1/10, 1/10, 1/10, 4/15, 4/15, 4/15, 18/20], atol=1e-15)
 
@@ -54,7 +58,8 @@ facts("Testing Cubature Module...") do
     cub = SymCubatures.TriSymCub{Float64}(numedge=1, numS21=1)
     SymCubatures.setweights!(cub, [0.5, 0.5, 0.5])
     SymCubatures.setparams!(cub, [0.25, 0.25])
-    Cubature.solvecubature!(cub, 5, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 5, mask, tol=1e-14)
     w  = SymCubatures.calcweights(cub)
     @fact w --> roughly([0.029745826049641155,0.029745826049641155,0.029745826049641155,0.44155411568082154,0.44155411568082154,0.44155411568082154,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102], atol=1e-15)
   end
@@ -63,14 +68,16 @@ facts("Testing Cubature Module...") do
     # recover P1 vertices-only rule
     cub = SymCubatures.TetSymCub{Float64}()
     SymCubatures.setweights!(cub, [0.5])
-    Cubature.solvecubature!(cub, 1, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 1, mask, tol=1e-14)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly([1/3, 1/3, 1/3, 1/3], atol=1e-15)
 
     # recover cubature for vertex+centroid (exact to degree 2)
     cub = SymCubatures.TetSymCub{Float64}(vertices=true, centroid=true)
     SymCubatures.setweights!(cub, [0.1 0.1])
-    Cubature.solvecubature!(cub, 2, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 2, mask, tol=1e-14)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly([4/60, 4/60, 4/60, 4/60, 16/15], atol=1e-14)
 
@@ -79,7 +86,8 @@ facts("Testing Cubature Module...") do
                                           numS31=1)
     SymCubatures.setweights!(cub, [0.1 0.1])
     SymCubatures.setparams!(cub, [0.1])
-    Cubature.solvecubature!(cub, 3, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 3, mask, tol=1e-14)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly([3/5, 3/5, 3/5, 3/5, -16/15], atol=1e-14)
 
@@ -87,7 +95,8 @@ facts("Testing Cubature Module...") do
     cub = SymCubatures.TetSymCub{Float64}(midedges=true, centroid=true) #numS31=1)
     wuni = 0.1 #(4.0/3.0)/orbits.numnodes
     SymCubatures.setweights!(cub, [wuni wuni wuni]) #[0.02 0.05 0.23])
-    Cubature.solvecubature!(cub, 3, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 3, mask, tol=1e-14)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly([1/45.*ones(4); 4/45.*ones(6); 32/45], atol=1e-14)
 
@@ -96,7 +105,8 @@ facts("Testing Cubature Module...") do
                                           numedge=1, numS31=1)
     SymCubatures.setweights!(cub, [0.1 0.1 0.1 0.1])
     SymCubatures.setparams!(cub, [1/6 1/5])
-    Cubature.solvecubature!(cub, 5, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 5, mask, tol=1e-14)
     w = SymCubatures.calcweights(cub)
     @fact w -->
     roughly([0.004421633248304814,0.004421633248304814,0.004421633248304814,0.004421633248304814,0.06935370366814599,0.06935370366814599,0.06935370366814599,0.06935370366814599,0.2065316361160523,0.2065316361160523,0.2065316361160523,0.2065316361160523,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603], atol=1e-14)
@@ -106,7 +116,8 @@ facts("Testing Cubature Module...") do
                                           numfaceS21=1, numS31=1, numS22=1)
     SymCubatures.setweights!(cub, [0.001 0.004 0.005 0.02 0.08 0.06 0.1])
     SymCubatures.setparams!(cub, [0.28 0.22 0.75 0.45])
-    Cubature.solvecubature!(cub, 7, tol=1e-14)
+    mask = 1:(cub.numparams+cub.numweights)
+    Cubature.solvecubature!(cub, 7, mask, tol=1e-14)
     w = SymCubatures.calcweights(cub)
     @fact w -->
     roughly([0.0015106273303336273,0.0015106273303336273,0.0015106273303336273,0.0015106273303336273,0.060490542374353584,0.060490542374353584,0.060490542374353584,0.060490542374353584,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.08113091859465722], atol=1e-14)

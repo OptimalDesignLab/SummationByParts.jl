@@ -355,9 +355,14 @@ immutable TriFace{T} <: AbstractFace{T}
   deriv::Array{T,3}
   dperm::Array{Int,2}
   nbrperm::Array{Int,2}
-  function TriFace(degree::Int, volcub::TriSymCub{T}, vtx::Array{T,2})
+  function TriFace(degree::Int, volcub::TriSymCub{T}, vtx::Array{T,2};
+                   vertices::Bool=false)
     @assert( degree >= 1 && degree <= 5 )
-    facecub, facevtx = quadrature(2*degree, T, internal=true)
+    if vertices
+      facecub, facevtx = quadrature(2*degree, T, internal=false)
+    else
+      facecub, facevtx = quadrature(2*degree, T, internal=true)
+    end
     normal = T[0 -1; 1 1; -1 0].'
     R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
                                                        degree)

@@ -280,8 +280,8 @@ end
 @doc """
 ### SummationByParts.basispursuit!
 
-Finds a solution to the underdetermined problem `Ax = b` that is sparse using
-the alternating direction method of multipliers (ADMM).
+Finds an approximate solution to the underdetermined problem `Ax = b` that is
+sparse using the alternating direction method of multipliers (ADMM).
 
 **Inputs**
 
@@ -369,3 +369,39 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
   end
 end
 
+@doc """
+### SummationByParts.calcSparseSolution!
+
+Finds a solution to the underdetermined problem `Ax = b` that is sparse.  Uses
+basispursit! to find an approximate solution, which is used to eliminate columns
+from `A`, from which an accurate solution is found.
+
+**Inputs**
+
+* `A`: matrix in the linear equation that must be satisfied
+* `b`: vector in the linear equation that must be satisfied
+
+**In/Outs**
+
+* `x`: sparse solution of the problem
+
+"""->
+function calcSparseSolution!(A::AbstractArray{Float64,2},
+                             b::AbstractVector{Float64},
+                             x::AbstractVector{Float64})
+  @assert( size(A,1) == size(b,1) )
+  @assert( size(A,2) == size(x,1) )
+  # find an approximate solution
+  basispursuit!(A, b, x, rho=1.5, alpha=1.0, hist=false, abstol=1e-6,
+                reltol=1e-6)
+  # use the approximate solution to identify the non-zero entries
+  rankA = rank(A)
+  P = zeros(size(A,2),rankA)
+  idx = sortperm(abs(x), rev=true)
+  for i = 1:rankA
+    P[idx[i],i] = 1.0
+  end
+  # find the reduced (full-rank) matrix and invert
+  AP = A*P
+  x[:] = P*(AP\b)
+end

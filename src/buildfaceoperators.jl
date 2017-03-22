@@ -48,6 +48,12 @@ function buildfacereconstruction{T}(facecub::LineSymCub{T}, cub::TriSymCub{T},
   end
   #R = Pf/Pv
   R = (pinv(Pv.')*Pf.').'
+  # notes on sparse solution:
+  # A = kron(eye(size(perm,1)),Pv)
+  # b = vec(Pf)
+  # use basis pursuit on A x = b
+  # find dominant entries and resolve for R
+  
   return R, perm
 end
 
