@@ -336,7 +336,6 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
       #SymCubatures.setweights!(cub, T[1/3])
       #SymCubatures.setparams!(cub, T[0.5*(1 + 1/sqrt(3))])
       cub_degree = 1
-      #weights_only = true
       mask = SymCubatures.getInternalParamMask(cub)
       append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
     elseif q <= 3
@@ -357,11 +356,18 @@ function tricubature(q::Int, T=Float64; internal::Bool=false,
       append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
     elseif q <= 7
       # this does not work yet
-      cub = SymCubatures.TriSymCub{T}(vertices=true, numedge=2, numS21=2)
-      SymCubatures.setweights!(cub, T[2/21; 2/21; 2/21; 2/21; 2/21])
-      SymCubatures.setparams!(cub, T[0.25; 0.75;
+      cub = SymCubatures.TriSymCub{Float64}(vertices=true, numedge=2, numS21=1,
+                                            numS111=1, centroid=false)
+      SymCubatures.setweights!(cub, T[0.007531613457795972;
+                                      0.30480530834110225;
+                                      0.021086271204014462;
+                                      0.04550452533939957;
+                                      0.11057407589012376])
+      SymCubatures.setparams!(cub, T[0.8461370386527763;
                                      0.5*(1 + sqrt(1/3 + 2*sqrt(7)/21));
-                                     0.5*(1 + sqrt(1/3 - 2*sqrt(7)/21))])
+                                     0.5*(1 + sqrt(1/3 - 2*sqrt(7)/21));
+                                     1.4628996561199232;
+                                     0.19830545894388216])      
       cub_degree = 7
       mask = SymCubatures.getInternalParamMask(cub)
       append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))      

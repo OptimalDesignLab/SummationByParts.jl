@@ -489,7 +489,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
 
   context("Testing SummationByParts.buildsparseoperators (TetSymCub method)") do
     #tol = [1e-12; 1e-12; 1e-12; 5e-8]
-    tol = [1e-13; 5e-13; 5e-13; 5e-13]
+    tol = [1e-12; 1e-12; 1e-12; 1e-12]
     for d = 1:3 # cannot do d=4 yet, since we do not have the cubature
       cub, vtx = tetcubature(2*d+1, Float64)
       w, Q = SummationByParts.buildsparseoperators(cub, vtx, d)

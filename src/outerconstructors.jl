@@ -63,6 +63,14 @@ function getTriSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
   return TriSBP{Tsbp}(degree=degree, internal=true, vertices=false)
 end
 
+function getTriSBPWithDiagE(;degree::Int=1, Tsbp::Type=Float64)
+  @assert( degree >= 1 && degree <= 4 )
+  cub, vtx = tricubature(2*degree-1, Tsbp, facequad=true)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+  w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)
+  return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
+end
+
 @doc """
 ### SBP.TetSBP
 
@@ -144,15 +152,17 @@ Outer constructor for backward compatibility
 function call{T}(::Type{TriFace{T}}, degree::Int, volcub::TriSymCub{T},
                  vtx::Array{T,2}; vertices::Bool=false)
   @assert( degree >= 1 && degree <= 5 )
+  R::Array{T,2}
+  perm::Array{Int,2}
   if vertices
     facecub, facevtx = quadrature(2*degree, T, internal=false)
+    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+                                                       degree+1)
   else
     facecub, facevtx = quadrature(2*degree, T, internal=true)
+    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+                                                       degree)    
   end
-  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
-                                                     degree)
-  #R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
-  #                                                   degree+1)
   D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
                                                    degree)
   nbrperm = SymCubatures.getneighbourpermutation(facecub)
@@ -160,6 +170,37 @@ function call{T}(::Type{TriFace{T}}, degree::Int, volcub::TriSymCub{T},
   stencilsize = size(R,2)
   dstencilsize = size(D,1)
   TriFace{T}(degree, facecub, facevtx, R.', perm, D, Dperm)
+end
+
+@doc """
+### SBP.getTriFaceForDiagE
+
+Returns a LGL-type quadrature that can be used to construct SBP operators with
+diagonal boundary operators, E.
+
+**Inputs**
+
+* `degree`: face integration is exact for polys of degree 2*`degree`
+* `Tsbp`: floating point type used for the operators
+
+**Returns**
+
+* `sbpface`: an SBP face type for triangle elements
+
+"""->
+function getTriFaceForDiagE{T}(degree::Int, volcub::TriSymCub{T},
+                               vtx::Array{T,2})
+  @assert( degree >= 1 && degree <= 4 )
+  facecub, facevtx = quadrature(2*degree, T, internal=false)  
+  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+                                                     degree+1)
+  D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
+                                                   degree)
+  nbrperm = SymCubatures.getneighbourpermutation(facecub)
+  wface = SymCubatures.calcweights(facecub)
+  stencilsize = size(R,2)
+  dstencilsize = size(D,1)
+  return TriFace{T}(degree, facecub, facevtx, R.', perm, D, Dperm)
 end
 
 @doc """

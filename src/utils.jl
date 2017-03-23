@@ -108,16 +108,17 @@ to an auxlliary set of nodes.
 
 * `sbp`: an SBP operator
 * `xinterp`: points to interpolate to in ref coords, size = [ndim,numpoints]
+* `d=sbp.degree`: (optional) interpolation is exact for degree d polys
 
 **Returns**
 
 * `R`: the interpolation operator, size = [numpoints, sbp.numnodes]
 
 """->
-function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2})
+function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2};
+                               d::Int=sbp.degree)
   # evaluate the basis at the SBP nodes and the interpolation points
   @assert size(xinterp, 1) == 2
-  d = sbp.degree
   N = convert(Int, (d+1)*(d+2)/2 )
   Psbp = zeros(T, (sbp.numnodes,N) )
   Pinterp = zeros(T, (size(xinterp,2),N) )
@@ -136,11 +137,10 @@ function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2})
   return R
 end
 
-function buildinterpolation{T}(sbp::TetSBP{T}, xinterp::AbstractArray{T,2})
+function buildinterpolation{T}(sbp::TetSBP{T}, xinterp::AbstractArray{T,2};
+                               d::Int=sbp.degree)
   # evaluate the basis at the SBP nodes and the interpolation points
   @assert size(xinterp, 1) == 3
-
-  d = sbp.degree
   N = convert(Int, (d+1)*(d+2)*(d+3)/6)
   Psbp = zeros(T, (sbp.numnodes,N) )
   Pinterp = zeros(T, (size(xinterp,2),N) )
@@ -405,6 +405,6 @@ function calcSparseSolution!(A::AbstractArray{Float64,2},
   AP = A*P
   #println("size(AP) = ",size(AP))
   #println("rank(AP) = ",rank(AP))
-  x[:] = P*(AP\b)
-  #x[:] = P*(pinv(AP)*b)
+  #x[:] = P*(AP\b)
+  x[:] = P*(pinv(AP)*b)
 end

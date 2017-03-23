@@ -782,42 +782,20 @@ zeros in the S matrices, but they are not returned as sparse matrices.
 """->
 function buildsparseoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
-  face = TriFace{T}(d, cub, vtx, vertices=true)
+  face = getTriFaceForDiagE(d, cub, vtx)
+  #face = TriFace{T}(d, cub, vtx, vertices=false) #vertices=true)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
   SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
   scale!(Q, 0.5)
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
-  # rankA = rank(A)
   # find a sparse solution for skew-symmetric Sx
   x = zeros(size(A,2))
   SummationByParts.calcSparseSolution!(A, bx, x)
-  
-  # s = zeros(size(A,2))
-  # SummationByParts.basispursuit!(A, bx, s, rho=1.5, alpha=1.0, hist=false,
-  #                                abstol=1e-6, reltol=1e-6)
-  # P = zeros(size(A,2),rankA)
-  # idx = sortperm(abs(s), rev=true)
-  # for i = 1:rankA
-  #   P[idx[i],i] = 1.0
-  # end
-  # AP = A*P
-  # x = P*(AP\bx)
-  
   # find a sparse solution for skew-symmetric Sy
   y = zeros(size(A,2))
   SummationByParts.calcSparseSolution!(A, by, y)
   
-  # SummationByParts.basispursuit!(A, by, s, rho=1.5, alpha=1.0, hist=false,
-  #                                abstol=1e-6, reltol=1e-6)
-  # fill!(P, 0.0)
-  # idx = sortperm(abs(s), rev=true)
-  # for i = 1:rankA
-  #   P[idx[i],i] = 1.0
-  # end
-  # AP = A*P
-  # y = P*(AP\by)
-
   @assert( norm(A*x - bx) < 1e-12)
   @assert( norm(A*y - by) < 1e-12)
 
