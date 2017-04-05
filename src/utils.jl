@@ -408,3 +408,64 @@ function calcSparseSolution!(A::AbstractArray{Float64,2},
   #x[:] = P*(AP\b)
   x[:] = P*(pinv(AP)*b)
 end
+
+@doc """
+### SummationByParts.calcMatrixEigs!
+
+Finds the eigenvalues of the given matrix in order of increasing modulus; that
+is, this works for symmetric and non-symmetric square matrices.  This method is
+basically a front end for `eigfact`.
+
+**Inputs**
+
+* `A`: matrix whose eigenvalues are desired
+
+**In/Outs**
+
+* `λ`: eigenvalues of `A` sorted in increasing modulus
+
+"""->
+function calcMatrixEigs!{T}(A::AbstractArray{T,2},
+                            λ::AbstractVector{T})
+  @assert( size(A,1) == size(A,2) )
+  @assert( length(λ) == size(A,1) )
+  n = size(A,1)  
+  fac = eigfact(A)
+  idx = zeros(Int,n)
+  sortperm!(idx, abs(fac[:values]))
+  for i = 1:n
+    λ[i] = fac[:values][idx[i]]
+  end
+end
+
+@doc """
+### SummationByParts.calcMatrixEigs_rev!
+
+The reverse-mode differentiated version of `calcMatrixEigs!`.
+
+**Inputs**
+
+* `A`: matrix whose eigenvalues are desired
+* `λ_bar`: ∂f/∂λ vector that multiplies derivatives from left
+
+**In/Outs**
+
+* `λ`: eigenvalues of `A` sorted in increasing modulus
+* `A_bar`: derivatives ∂f/∂A
+
+"""->
+function calcMatrixEigs_rev!{T}(A::AbstractArray{T,2},
+                                λ::AbstractVector{T},
+                                λ_bar::AbstractVector{T},
+                                A_bar::AbstractArray{T,2})
+  @assert( size(A,1) == size(A,2) == size(A_bar,1) == size(A_bar,2) )
+  @assert( length(λ) == length(λ_bar) == size(A,1) )
+  n = size(A,1)  
+  fac = eigfact(A)
+  idx = zeros(Int,n)
+  sortperm!(idx, abs(fac[:values]))
+  for i = 1:n
+    λ[i] = fac[:values][idx[i]]
+  end
+  A_bar[:,:] = (fac[:vectors][:,idx].')\(diagm(λ_bar)*fac[:vectors][:,idx].') 
+end

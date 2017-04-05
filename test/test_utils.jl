@@ -236,4 +236,33 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     @fact A*x --> roughly(b, atol=1e-13)
   end
 
+  for T = (Float64, Complex128)
+    @eval begin
+      context("Testing calcMatrixEigs! and calcMatrixEigs_rev! for DataType "string($T)) do
+        # construct a symmetric matrix whose eigenvalues are the parameters
+        n = 10
+        Q, R = qr(rand(n,n))
+        x = rand(($T), n)
+        idx = sortperm(abs(x))
+        x[:] = x[idx]
+        A = Q*diagm(x)*Q.'
+        λ = zeros(($T), n)
+        SummationByParts.calcMatrixEigs!(A, λ)
+        @fact λ --> roughly(x, rtol=1e-14)            
+        λ_bar = deepcopy(λ)
+        A_bar = zeros(A)
+        SummationByParts.calcMatrixEigs_rev!(A, λ, λ_bar, A_bar)
+        dfdx = zeros(($T), n)
+        for k = 1:n
+          for i = 1:n
+            for j = 1:n
+              dfdx[k] += A_bar[i,j]*Q[i,k]*Q[j,k]
+            end
+          end
+        end
+        @fact dfdx --> roughly(x, rtol=1e-13)
+      end
+    end
+  end
+
 end
