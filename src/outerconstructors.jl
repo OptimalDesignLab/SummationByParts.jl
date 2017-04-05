@@ -110,7 +110,7 @@ Returns SBP-Gamma type elements, that have nodes on the element boundary
 
 """->
 function getTetSBPGamma(;degree::Int=1, Tsbp::Type=Float64)
-  return TetSBP{Tsbp}(degree=degree, internal=false, vertices=true)
+  return TetSBP{Tsbp}(degree=degree, internal=false)
 end
 
 @doc """
@@ -129,7 +129,7 @@ Returns SBP-Omega type elements, that have no nodes on the element boundary
 
 """->
 function getTetSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
-  return TetSBP{Tsbp}(degree=degree, internal=true, vertices=false)
+  return TetSBP{Tsbp}(degree=degree, internal=true)
 end
 
 @doc """
