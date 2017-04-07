@@ -409,6 +409,29 @@ function calcSparseSolution!(A::AbstractArray{Float64,2},
   x[:] = P*(pinv(AP)*b)
 end
 
+function compareEigs(x::Float64, y::Float64)
+  if isless(x,y)
+    return true
+  else
+    return false
+  end
+end
+
+function compareEigs(x::Complex128, y::Complex128)
+  if abs(abs(x) - abs(y)) < 10*eps(Float64)
+    # moduli are close, sort by imaginary part
+    if imag(x) < imag(y)
+      return true
+    else
+      return false
+    end
+  elseif abs(x) < abs(y)
+    return true
+  else
+    return false
+  end
+end
+  
 @doc """
 ### SummationByParts.calcMatrixEigs!
 
@@ -432,7 +455,7 @@ function calcMatrixEigs!{T}(A::AbstractArray{T,2},
   n = size(A,1)  
   fac = eigfact(A)
   idx = zeros(Int,n)
-  sortperm!(idx, abs(fac[:values]))
+  sortperm!(idx, fac[:values], lt=compareEigs)
   for i = 1:n
     λ[i] = fac[:values][idx[i]]
   end
@@ -441,7 +464,9 @@ end
 @doc """
 ### SummationByParts.calcMatrixEigs_rev!
 
-The reverse-mode differentiated version of `calcMatrixEigs!`.
+The reverse-mode differentiated version of `calcMatrixEigs!`.  The math behind
+this is from Mike Giles report "An extended collection of matrix derivative
+results for forward and reverse mode algorithmic differentiation."
 
 **Inputs**
 
@@ -463,9 +488,161 @@ function calcMatrixEigs_rev!{T}(A::AbstractArray{T,2},
   n = size(A,1)  
   fac = eigfact(A)
   idx = zeros(Int,n)
-  sortperm!(idx, abs(fac[:values]))
+  sortperm!(idx, fac[:values], lt=compareEigs)
   for i = 1:n
     λ[i] = fac[:values][idx[i]]
   end
-  A_bar[:,:] = (fac[:vectors][:,idx].')\(diagm(λ_bar)*fac[:vectors][:,idx].') 
+  A_bar[:,:] = (fac[:vectors][:,idx]')\(diagm(λ_bar)*fac[:vectors][:,idx]') 
+end
+
+@doc """
+### SummationByParts.eigenvalueObj
+
+Let `x` = `Znull`*`xred` + `xperp` be the (unique) entries in a skew symmetric
+matrix `S`, and let `E` be a symmetric matrix.  This routine finds the
+eigenvalues of the matrix `A` = diagm(1./`w`)*(`S` + |`E`|), where |⋅| is the
+elementwise absolute value, and then returns the 2p-norm of the moduli of these
+eigenvalues.
+
+**Inputs**
+
+* `xred`: a reduced-space for the entries in the skew-symmetric matrix
+* `p`: defines the 2p-norm used for the moduli of the eigenvalues
+* `xperp`: a particular solution that satisfies the SBP accuracy conditions
+* `Znull`: matrix that defines the null-space of the SBP accuracy conditions
+* `w`: diagonal norm entries in an SBP operator
+* `E`: symmetric matrix, usually the boundary operator for an SBP matrix
+
+**Returns**
+
+* `obj`: the 2p-norm of the moduli of the eigenvalues of `A` as defined above.
+
+"""->
+function eigenvalueObj(xred::AbstractVector{Float64}, p::Int,
+                       xperp::AbstractVector{Float64},
+                       Znull::AbstractArray{Float64,2},
+                       w::AbstractVector{Float64},
+                       E::AbstractArray{Float64,2})
+  @assert( length(xperp) == size(Znull,1) )
+  @assert( length(xred) == size(Znull,2) )
+  @assert( size(E,1) == size(E,2) == length(w) )
+  @assert( p >= 1 )
+  n = size(E,1)
+  x = Znull*xred + xperp
+  # insert into H^-1(S + 1/2 |E|)
+  A = zeros(Complex128, (n,n))
+  for i = 1:n
+    for j = 1:n
+      A[i,j] = complex(abs(E[i,j]), 0.0)
+    end
+  end
+  for i = 2:n
+    offset = convert(Int, (i-1)*(i-2)/2)
+    for j = 1:i-1
+      A[i,j] += complex(x[offset+j], 0.0)
+      A[j,i] -= complex(x[offset+j], 0.0)
+    end
+  end
+  for i = 1:n
+    fac = 1./w[i]
+    for j = 1:n
+      A[i,j] *= fac
+    end
+  end
+  # compute the (sorted) eigenvalues of A, and the objective
+  λ = zeros(Complex128, n)
+  calcMatrixEigs!(A, λ)
+  obj = 0.0
+  for i = 1:n
+    obj += abs(λ[i])^(2*p)
+  end
+  return (obj)^(1/(2*p))
+end
+
+@doc """
+### SummationByParts.eigenvalueObjGrad!
+
+Computes the gradient of the function `eigenvalueObj` with respect to `xred`,
+and returns it in the array `g`.
+
+**Inputs**
+
+* `xred`: a reduced-space for the entries in the skew-symmetric matrix
+* `p`: defines the 2p-norm used for the moduli of the eigenvalues
+* `xperp`: a particular solution that satisfies the SBP accuracy conditions
+* `Znull`: matrix that defines the null-space of the SBP accuracy conditions
+* `w`: diagonal norm entries in an SBP operator
+* `E`: symmetric matrix, usually the boundary operator for an SBP matrix
+
+**In/Outs**
+
+* `g`: gradient of the objective `eigenvalueObj` with respect to `xred`
+
+"""->
+function eigenvalueObjGrad!(xred::AbstractVector{Float64}, p::Int,
+                            xperp::AbstractVector{Float64},
+                            Znull::AbstractArray{Float64,2},
+                            w::AbstractVector{Float64},
+                            E::AbstractArray{Float64,2},
+                            g::AbstractVector{Float64})
+  @assert( length(xperp) == size(Znull,1) )
+  @assert( length(xred) == size(Znull,2) )
+  @assert( size(E,1) == size(E,2) == length(w) )
+  @assert( length(g) == length(xred) )
+  @assert( p >= 1 )
+  n = size(E,1)
+  x = zeros(xperp)
+  x = Znull*xred + xperp
+  # insert into H^-1(S + 1/2 |E|)
+  A = zeros(Complex128, (n,n))
+  for i = 1:n
+    for j = 1:n
+      A[i,j] = complex(abs(E[i,j]), 0.0)
+    end
+  end
+  for i = 2:n
+    offset = convert(Int, (i-1)*(i-2)/2)
+    for j = 1:i-1
+      A[i,j] += complex(x[offset+j], 0.0)
+      A[j,i] -= complex(x[offset+j], 0.0)
+    end
+  end
+  for i = 1:n
+    fac = 1./w[i]
+    for j = 1:n
+      A[i,j] *= fac
+    end
+  end
+  # compute the (sorted) eigenvalues of A and the objective
+  λ = zeros(Complex128, n)
+  calcMatrixEigs!(A, λ)
+  obj = 0.0
+  for i = 1:n
+    obj += abs(λ[i])^(2*p)
+  end
+  # start the reverse sweep
+  λ_bar = zeros(Complex128, n)
+  for i = 1:n
+    λ_bar[i] = (obj^(1/(2*p)-1))*(abs(λ[i])^(2*p-2))*λ[i] #conj(λ[i])
+  end
+  A_bar = zeros(A)
+  calcMatrixEigs_rev!(A, λ, λ_bar, A_bar)
+  for i = 1:n
+    fac = 1./w[i]
+    for j = 1:n
+      A_bar[i,j] *= fac
+    end
+  end
+  # place A_bar into x_bar
+  x_bar = zeros(x)
+  for i = 2:n
+    offset = convert(Int, (i-1)*(i-2)/2)
+    for j = 1:i-1
+      # A[i,j] = +complex(x[offset+j], 0.0)
+      # A[j,i] = -complex(x[offset+j], 0.0)
+      x_bar[offset+j] += real(A_bar[i,j]) - real(A_bar[j,i])
+    end
+  end
+  # x = Znull*xred + xperp
+  g[:] = Znull.'*x_bar
 end

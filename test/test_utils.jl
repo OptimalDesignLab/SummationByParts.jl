@@ -1,5 +1,5 @@
 facts("Testing SummationByParts Module (utils.jl file)...") do
-
+  
   for TSBP = (TriSBP, SparseTriSBP, TetSBP)
     @eval begin
       context("Testing SummationByParts.getNumFaceNodes("string($TSBP)" method)") do
@@ -243,7 +243,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
         n = 10
         Q, R = qr(rand(n,n))
         x = rand(($T), n)
-        idx = sortperm(abs(x))
+        idx = sortperm(x, lt=SummationByParts.compareEigs)
         x[:] = x[idx]
         A = Q*diagm(x)*Q.'
         λ = zeros(($T), n)
@@ -262,6 +262,73 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
         end
         @fact dfdx --> roughly(x, rtol=1e-13)
       end
+    end
+  end
+
+  context("Testing calcMatrixEigs! and calcMatrixEigs_rev! (skewsymmetric matrix") do
+    # construct a skew symmetric matrix whose eigenvalues are the parameters
+    n = 10
+    A = rand(n,n)
+    A = 0.5*(A - A.')
+    x, V = eig(A)
+    idx = sortperm(x, lt=SummationByParts.compareEigs)
+    x[:] = x[idx]
+    Q = zeros(V)
+    Q[:,:] = V[:,idx]
+    @fact real(Q*diagm(x)*Q') --> roughly(A, rtol=1e-14)
+    
+    λ = zeros(Complex128, n)
+    Ac = complex(A)
+    SummationByParts.calcMatrixEigs!(Ac, λ)
+    #println(λ)
+    #println(x)
+    #println(abs(λ - x))
+    @fact λ --> roughly(x, rtol=1e-13)
+    
+    λ_bar = deepcopy(λ)
+    A_bar = zeros(Ac)
+    SummationByParts.calcMatrixEigs_rev!(Ac, λ, λ_bar, A_bar)
+    #println("norm(λ_bar) = ",norm(λ_bar))
+    #println("norm(A_bar) = ",norm(A_bar))
+    #println("norm(Q) = ",norm(Q))
+    dfdx = zeros(Complex128, n)
+    for k = 1:n
+      for i = 1:n
+        for j = 1:n
+          dfdx[k] += A_bar[i,j]*conj(Q[i,k])*Q[j,k]
+        end
+      end
+    end
+    @fact dfdx --> roughly(x, rtol=1e-13)
+  end
+
+  context("Testing eigenvalueObj and eigenvalueObjGrad!") do
+    # The full matrix is the set of design variables here (Z = I, yperp = 0),
+    # and we use a finite-difference approximation to test the gradient
+    # (complex-step is not an option due to the complex arithmetic)
+
+    numnodes = 10
+    n = div(numnodes*(numnodes-1),2)
+    p = 3
+    x = rand(n)
+    xperp = zeros(x)
+    Znull = eye(n)
+    w = rand(numnodes)
+    E = rand(numnodes,numnodes)
+    E = 0.5*(E + E.')
+    obj = SummationByParts.eigenvalueObj(x, p, xperp, Znull, w, E)
+    grad = zeros(n)
+    SummationByParts.eigenvalueObjGrad!(x, p, xperp, Znull, w, E, grad)
+    
+    # find the finite-difference gradient and compare it to the reverse-mode
+    # gradient
+    epsfd = 1e-6
+    for i = 1:n
+      x[i] += epsfd
+      grad_fd = SummationByParts.eigenvalueObj(x, p, xperp, Znull, w, E)
+      grad_fd = (grad_fd - obj)/epsfd
+      @fact grad_fd --> roughly(grad[i], rtol=1e-4)
+      x[i] -= epsfd
     end
   end
 

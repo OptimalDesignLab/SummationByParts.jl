@@ -883,6 +883,62 @@ function buildsparseoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
 end
 
 @doc """
+### SummationByParts.buildMinCFLOperators
+
+Construct and return SBP matrix operators that minimize the maximum modulus
+eigenvalue for a model advection problem.  These operators have diagonal mass
+and boundary operators.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+* `vtx`: vertices of the right simplex
+* `d`: maximum total degree for the Proriol polynomials
+
+**Outputs**
+
+* `w`: the diagonal norm stored as a 1D array
+* `Q`: the stiffness matrices
+
+"""->
+function buildMinCFLOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+  w = SymCubatures.calcweights(cub)
+  face = getTriFaceForDiagE(d, cub, vtx)
+  #face = TriFace{T}(d, cub, vtx, vertices=false) #vertices=true)
+  Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
+  SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
+  scale!(Q, 0.5)
+  A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
+
+  # find the minimum norm solutions
+  Ainv = pinv(A)
+  xperp = Ainv*bx; yperp = Ainv*by
+  Z = nullspace(Z)
+  
+  # find a sparse solution for skew-symmetric Sx
+  x = zeros(size(A,2))
+  SummationByParts.calcSparseSolution!(A, bx, x)
+  # find a sparse solution for skew-symmetric Sy
+  y = zeros(size(A,2))
+  SummationByParts.calcSparseSolution!(A, by, y)
+  
+  @assert( norm(A*x - bx) < 1e-12)
+  @assert( norm(A*y - by) < 1e-12)
+
+  for row = 2:cub.numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      Q[row,col,1] += x[offset+col]
+      Q[col,row,1] -= x[offset+col]
+      Q[row,col,2] += y[offset+col]
+      Q[col,row,2] -= y[offset+col]
+    end
+  end
+  return w, Q
+end
+
+@doc """
 ### SummationByParts.getnodepermutation
 
 The node ordering produced by SymCubature is not convenient for mapping local to
