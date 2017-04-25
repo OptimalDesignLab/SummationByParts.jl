@@ -35,8 +35,8 @@ define the metric invariants.  *They are not needed by the 2-dimensional code*,
 and so this array can be passed empty in that case.
 
 """->
-function calcMappingJacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int,
-                                         xref::AbstractArray{Tmsh,2},
+function calcMappingJacobian!{Tsbp,Tmsh, T2}(sbp::TriSBP{Tsbp}, mapdegree::Int,
+                                         xref::AbstractArray{T2, 2},
                                          xlag::AbstractArray{Tmsh,3},
                                          xsbp::AbstractArray{Tmsh,3},
                                          dξdx::AbstractArray{Tmsh,4},

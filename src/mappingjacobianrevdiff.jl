@@ -31,7 +31,7 @@ the 3D case, but Eone_r needs to be supplied in both 2D and 3D.
 
 """->
 function calcMappingJacobianRevDiff!{
-  Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
+  Tsbp,Tmsh, T2}(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{T2,2},
              xlag_r::AbstractArray{Tmsh,3}, xsbp_r::AbstractArray{Tmsh,3},
              dξdx::AbstractArray{Tmsh,4}, dξdx_r::AbstractArray{Tmsh,4},
              jac::AbstractArray{Tmsh,2}, jac_r::AbstractArray{Tmsh,2},
