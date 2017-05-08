@@ -680,39 +680,24 @@ function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
     differentiate!(sbp, di, x, sub(dxdξ,:,:,:,di)) 
   end
   fill!(dξdx, zero(Tmsh))
-  # calculate the metrics: the outer loop calculates the derivatives of
-  # coordinates-times-coordinate-derivatives, for example, d/deta( z * d(y)/d
-  # zeta), and this contribution is added to the relevant metric.
+  # calculate the metrics
   for di = 1:3
     it1 = mod(di,3)+1
     it2 = mod(di+1,3)+1
     for elem = 1:numelem
       for i = 1:sbp.numnodes
-        for j = 1:sbp.numnodes
-          # the 0.5 factor in the SBP entry accounts for the averaging over the
-          # two possible analytical formulations
-          coeff = 0.5*sbp.Q[i,j,di]
-          # this second set of indices (di2, it21, it22) denote the x-, y-,
-          # z-coordinate indices, while the first set (di, it1, it2) denotes the xi-,
-          # eta-, zeta-indices
-          for di2 = 1:3
-            it21 = mod(di2,3)+1
-            it22 = mod(di2+1,3)+1
-            dξdx[it1,di2,i,elem] += 
-            coeff*(x[it22,j,elem]*dxdξ[it21,j,elem,it2] -
-                   x[it21,j,elem]*dxdξ[it22,j,elem,it2])            
-            dξdx[it2,di2,i,elem] += 
-            coeff*(x[it21,j,elem]*dxdξ[it22,j,elem,it1] -
-                   x[it22,j,elem]*dxdξ[it21,j,elem,it1])
-          end
+        for di2 = 1:3
+          it21 = mod(di2,3)+1
+          it22 = mod(di2+1,3)+1
+          dξdx[it1,di2,i,elem] = (dxdξ[it22,i,elem,di]*dxdξ[it21,i,elem,it2] -
+                                  dxdξ[it21,i,elem,di]*dxdξ[it22,i,elem,it2])            
         end
       end
     end
-  end
-  # scale metrics by norm and calculate the determinant of the mapping
+  end    
+  # calculate the determinant of the mapping
   for elem = 1:numelem
     for i = 1:sbp.numnodes
-      dξdx[:,:,i,elem] /= sbp.w[i]
       jac[i,elem] = one(Tmsh)/(dxdξ[1,i,elem,1]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,3] +
                                dxdξ[1,i,elem,2]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,1] +
                                dxdξ[1,i,elem,3]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,2] -

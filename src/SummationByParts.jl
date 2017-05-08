@@ -2,6 +2,7 @@ __precompile__(false)
 module SummationByParts
 
 using ArrayViews
+using Optim
 using ODLCommonTools
 import ODLCommonTools.sview
 
@@ -29,7 +30,7 @@ export directionalDifferentiateElement!
 export volumeintegrate!, volumeIntegrateElement!
 export volumeintegrate_rev!, volumeIntegrateElement_rev!
 export calcMappingJacobian!, calcMappingJacobianElement!, mappingjacobian!
-export calcMappingJacobian_rev!
+export calcMappingJacobian_rev!, mappingjacobian_rev!
 export facenormal!, calcFaceNormals!
 export facenormal_rev!, calcFaceNormals_rev!
 export boundaryinterpolate!, boundaryFaceInterpolate!
