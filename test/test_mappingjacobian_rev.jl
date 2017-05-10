@@ -207,6 +207,41 @@ facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") d
     end
   end
 
+  context("Testing mappingjacobian_rev! (TriSBP method)") do
+    # build one element grid, and verify against randomly
+    # perturbed SBP nodes using complex step
+    for p = 1:4
+      sbp = TriSBP{Float64}(degree=p)
+      vtx = 2.0.*sbp.vtx
+      x = zeros(Float64, (2,sbp.numnodes,1))
+      x[:,:,1] = calcnodes(sbp, vtx)
+      x_bar = zeros(x)
+      dξdx_bar = randn(2,2,sbp.numnodes,1)
+      jac_bar = randn(sbp.numnodes,1)
+
+      x_bar_cs = zeros(x)
+      x_cmplx = complex(x, zeros(x))
+      dξdx_cmplx = zeros(Complex128, (2,2,sbp.numnodes,1))
+      jac_cmplx = zeros(Complex128, (sbp.numnodes,1))
+      ceps = 1e-60
+      for i = 1:sbp.numnodes
+        for di = 1:2
+          x_cmplx[di,i,1] += complex(0.0, ceps)
+          mappingjacobian!(sbp, x_cmplx, dξdx_cmplx, jac_cmplx)
+          x_cmplx[di,i,1] -= complex(0.0, ceps)
+          x_bar_cs[di,i,1] += (dot(vec(dξdx_bar),vec(imag(dξdx_cmplx))) +
+                               dot(vec(jac_bar),vec(imag(jac_cmplx))))
+        end
+      end
+      scale!(x_bar_cs, 1/ceps)
+
+      # this needs to come at the end, because dξdx_bar is modified
+      mappingjacobian_rev!(sbp, x, x_bar, dξdx_bar, jac_bar)
+      
+      @fact x_bar --> roughly(x_bar_cs, atol=1e-14)      
+    end
+  end
+
   context("Testing mappingjacobian_rev! (TetSBP method)") do
     # build one element grid, and verify against randomly
     # perturbed SBP nodes using complex step
@@ -218,7 +253,6 @@ facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") d
       x_bar = zeros(x)
       dξdx_bar = randn(3,3,sbp.numnodes,1)
       jac_bar = randn(sbp.numnodes,1)
-      mappingjacobian_rev!(sbp, x, x_bar, dξdx_bar, jac_bar)
 
       x_bar_cs = zeros(x)
       x_cmplx = complex(x, zeros(x))
@@ -236,6 +270,9 @@ facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") d
       end
       scale!(x_bar_cs, 1/ceps)
 
+      # this needs to come at the end, because dξdx_bar may be modified
+      mappingjacobian_rev!(sbp, x, x_bar, dξdx_bar, jac_bar)
+      
       @fact x_bar --> roughly(x_bar_cs, atol=1e-14)      
     end
   end
