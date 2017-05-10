@@ -83,6 +83,8 @@ immutable TriSBP{T} <: AbstractSBP{T}
   wface::Array{T,2}
   Q::Array{T,3}
   reorder::Bool
+  internal::Bool
+  vertices::Bool
 
   function TriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
                   bubble::Int=-1, reorder=false, internal=false, vertices=true)
@@ -118,7 +120,7 @@ immutable TriSBP{T} <: AbstractSBP{T}
     end
 
     new(degree, numnodes, numbndry, numfacenodes, facenodes, facenormal, cub,
-        vtx, w, wface, Q, reorder)
+        vtx, w, wface, Q, reorder, internal, vertices)
   end
 end
 
