@@ -26,7 +26,7 @@ export directionalDifferentiateElement!
 export volumeintegrate!, volumeIntegrateElement!
 export volumeintegrate_rev!, volumeIntegrateElement_rev!
 export calcMappingJacobian!, calcMappingJacobianElement!, mappingjacobian!
-export calcMappingJacobianRevDiff!
+export calcMappingJacobianRevDiff!, mappingjacobian_rev!
 export facenormal!, calcFaceNormals!
 export boundaryinterpolate!, boundaryFaceInterpolate!
 export boundaryinterpolate_rev!, boundaryFaceInterpolate_rev!
