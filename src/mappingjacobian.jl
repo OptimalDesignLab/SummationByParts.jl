@@ -710,6 +710,79 @@ function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
   # check for negative jac here?
 end
 
+@doc """
+### SummationByParts.mappingjacobian_rev!
+
+**Deprecated**:
+
+Forms the reverse-mode of algorithmic differentiation product for the method
+`mappingjacobian!`.  Specifically, it computes `x_bar` = `dξdx_bar`^T *
+∂`dξdx`/∂`x` + `jac_bar`^T * ∂`jac`/∂`x` where the various quantities are
+defined below (the `_bar` denotes the reverse mode).  Note that the input and
+output order of the arguments follows that used in `mappingjacobian!`.
+
+**Inputs**
+
+* `sbp`: an SBP operator type
+* `x`: the physical coordinates; 1st dim = coord, 2nd dim = node, 3rd dim = elem
+* `dξdx_bar`: gradient w.r.t. Jacobian; [ref coord, phys coord, sbp node, element]
+* `jac_bar`: gradient w.r.t. determinant of the Jacobian; [sbp node, element]
+
+**In/Outs**
+
+* `x_bar`: gradient w.r.t. SBP nodes; [coord, Lagrangian node, element]
+
+  """->
+function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
+                                         x::AbstractArray{Tmsh,3},
+                                         x_bar::AbstractArray{Tmsh,3},
+                                         dξdx_bar::AbstractArray{Tmsh,4},
+                                         jac_bar::AbstractArray{Tmsh,2})
+  @assert( sbp.numnodes == size(x,2) == size(x_bar,2) == size(dξdx_bar,3)
+           == size(jac_bar,1) )
+  @assert( size(x,3) == size(x_bar,3) == size(dξdx_bar,4) == size(jac_bar,2) )
+  @assert( size(x,1) == size(x_bar,1) == size(dξdx_bar,1) == size(dξdx_bar,2)
+           == 2 )
+  work = zeros(Tmsh, (2,sbp.numnodes,2))
+  dξdx = zeros(Tmsh, (2,2,sbp.numnodes))
+  for elem = 1:size(x,3)
+    # compute the coordinate derivatives
+    fill!(work, zero(Tmsh))
+    for di = 1:2
+      differentiateElement!(sbp, di, sub(x,:,:,elem), sub(work,:,:,di)) 
+    end
+    # compute the scaled metrics: could also pass these in to avoid recomputing
+    # them...
+    for i = 1:sbp.numnodes
+      dξdx[1,1,i] = work[2,i,2]
+      dξdx[1,2,i] = -work[1,i,2]
+      dξdx[2,1,i] = -work[2,i,1]
+      dξdx[2,2,i] = work[1,i,1]
+    end    
+    # start the reverse sweep
+    for i = 1:sbp.numnodes
+      jac = one(Tmsh)/(dξdx[1,1,i]*dξdx[2,2,i] - dξdx[1,2,i]*dξdx[2,1,i])
+      jac2 = jac_bar[i,elem]*jac*jac
+      dξdx_bar[1,1,i,elem] -= jac2*dξdx[2,2,i]
+      dξdx_bar[1,2,i,elem] += jac2*dξdx[2,1,i]
+      dξdx_bar[2,1,i,elem] += jac2*dξdx[1,2,i]
+      dξdx_bar[2,2,i,elem] -= jac2*dξdx[1,1,i]
+    end
+    fill!(work, zero(Tmsh))
+    for i = 1:sbp.numnodes
+      work[2,i,2] += dξdx_bar[1,1,i,elem]
+      work[1,i,2] -= dξdx_bar[1,2,i,elem]
+      work[2,i,1] -= dξdx_bar[2,1,i,elem]
+      work[1,i,1] += dξdx_bar[2,2,i,elem]
+    end
+    for di = 1:2
+      differentiateElement_rev!(sbp, di, sub(x_bar,:,:,elem), sub(work,:,:,di)) 
+    end
+  end
+end
+
+
+
 function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
                                          x::AbstractArray{Tmsh,3},
                                          x_bar::AbstractArray{Tmsh,3},
