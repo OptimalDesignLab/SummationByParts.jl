@@ -146,11 +146,11 @@ function weakDifferentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
                                                    di::Int,
                                                    flux::AbstractArray{Tflx,2},
                                                    res::AbstractArray{Tres,2},
-                                                   (±)::UnaryFunctor=Add();
+                                                   (±)::UnaryFunctor=Add(),
                                                    trans::Bool=false)
-  @assert( sbp.numnodes == size(flux,2) == size(res,2) )
-  @assert( length(flux) == length(res) )
-  @assert( di > 0 && di <= size(sbp.Q,3) )
+#  @assert( sbp.numnodes == size(flux,2) == size(res,2) )
+#  @assert( length(flux) == length(res) )
+#  @assert( di > 0 && di <= size(sbp.Q,3) )
   if trans # apply transposed Q
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
