@@ -8,5 +8,10 @@ if !haskey(pkg_dict, "ODLCommonTools")
   run(`./download.sh`)
   Pkg.build("ODLCommonTools")
 end
+cd(start_dir)
 
+# get the right commit of ArrayViews (before the aview change)
+dir = Pkg.dir("ArrayViews")
+cd(dir)
+run(`git checkout 93e80390aeedb1dbcd90281b6dff7f760f430bc8`)
 cd(start_dir)

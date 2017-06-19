@@ -276,11 +276,15 @@ function calcMappingJacobianElement!{
              xlag::AbstractArray{Tmsh,2}, xsbp::AbstractArray{Tmsh,2},
              dξdx::AbstractArray{Tmsh,3}, jac::AbstractArray{Tmsh},
              Eone::AbstractArray{Tmsh,2}=Array(Tmsh,0,0))
-  @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) )
-  @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
-           == size(dξdx,2) == 2 )
-  numdof = binomial(mapdegree+2,2)
-  @assert( size(xlag,2) == size(xref,2) == numdof )
+
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) )
+    @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
+             == size(dξdx,2) == 2 )
+    numdof = binomial(mapdegree+2,2)
+    @assert( size(xlag,2) == size(xref,2) == numdof )
+  end
+
   # Step 1: find the polynomial mapping using xlag
   V = zeros(Tmsh, (numdof,numdof) )
   ptr = 1
@@ -328,12 +332,15 @@ function calcMappingJacobianElement!{
              xlag::AbstractArray{Tmsh,2}, xsbp::AbstractArray{Tmsh,2},
              dξdx::AbstractArray{Tmsh,3}, jac::AbstractArray{Tmsh},
              Eone::AbstractArray{Tmsh,2})
-  @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) 
-           == size(Eone,1) )
-  @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
-           == size(dξdx,2) == size(Eone,2) == 3 )
+
   numdof = binomial(mapdegree+3,3)
-  @assert( size(xlag,2) == size(xref,2) == numdof )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) 
+             == size(Eone,1) )
+    @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
+             == size(dξdx,2) == size(Eone,2) == 3 )
+    @assert( size(xlag,2) == size(xref,2) == numdof )
+  end
   # Step 1: find the polynomial mapping using xlag
   V = zeros(Tmsh, (numdof,numdof) )
   ptr = 1

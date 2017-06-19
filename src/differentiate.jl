@@ -103,8 +103,11 @@ function differentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                                flux::AbstractArray{Tflx,1},
                                                res::AbstractArray{Tres,1},
                                                (±)::UnaryFunctor=Add())
-  @assert( sbp.numnodes == size(flux,1) == size(res,1) )
-  @assert( di > 0 && di <= size(sbp.Q,3) )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(flux,1) == size(res,1) )
+    @assert( di > 0 && di <= size(sbp.Q,3) )
+  end
+
   for i = 1:sbp.numnodes
     for j = 1:sbp.numnodes
       res[i] += ±(sbp.Q[i,j,di]*flux[j])
@@ -117,9 +120,12 @@ function differentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                                flux::AbstractArray{Tflx,2},
                                                res::AbstractArray{Tres,2},
                                                (±)::UnaryFunctor=Add())
-  @assert( sbp.numnodes == size(flux,2) == size(res,2) )
-  @assert( length(flux) == length(res) )
-  @assert( di > 0 && di <= size(sbp.Q,3) )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(flux,2) == size(res,2) )
+    @assert( length(flux) == length(res) )
+    @assert( di > 0 && di <= size(sbp.Q,3) )
+  end
+
   for i = 1:sbp.numnodes
     for j = 1:sbp.numnodes
       for field = 1:size(flux,1)

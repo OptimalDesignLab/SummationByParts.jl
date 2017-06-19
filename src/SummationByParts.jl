@@ -5,6 +5,7 @@ using ArrayViews
 using ODLCommonTools
 import ODLCommonTools.sview
 
+include("compile_time.jl")
 include("orthopoly.jl")
 include("symcubatures.jl")
 include("cubature.jl")

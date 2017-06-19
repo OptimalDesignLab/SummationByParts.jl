@@ -26,7 +26,10 @@ function directionalDifferentiateElement!{Tsbp,Tmsh,Tsol}(sbp::AbstractSBP{Tsbp}
                                                           dir::Array{Tmsh,1},
                                                           u::AbstractArray{Tsol,1},
                                                           i::Int)
-  @assert( size(sbp.Q, 3) == size(dir,1) )
+  @asserts_enabled begin
+    @assert( size(sbp.Q, 3) == size(dir,1) )
+  end
+
   Ddir = zero(Tmsh)*zero(Tsol)
   for di = 1:size(sbp.Q, 3)
     tmp = zero(Tmsh)*zero(Tsol)
@@ -43,7 +46,10 @@ function directionalDifferentiateElement!{Tsbp,Tmsh,Tsol,Tres}(sbp::AbstractSBP{
                                                                u::AbstractArray{Tsol,2},
                                                                i::Int,
                                                                Ddir::Array{Tres,1})
-  @assert( size(sbp.Q, 3) == size(dir,1) )
+  @asserts_enabled begin
+    @assert( size(sbp.Q, 3) == size(dir,1) )
+  end
+
   for di = 1:size(sbp.Q, 3)
     tmp = zeros(Ddir)
     for j = 1:sbp.numnodes

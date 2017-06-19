@@ -106,10 +106,13 @@ differentiated with respect to the primal version's `flux` variable.
 function weakDifferentiateElement_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                                        flux_bar::AbstractArray{Tflx,1},
                                                        res_bar::AbstractArray{Tres,1},
-                                                       (±)::UnaryFunctor=Add();
+                                                       (±)::UnaryFunctor=Add(),
                                                        trans::Bool=false)
-  @assert( sbp.numnodes == size(flux_bar,1) == size(res_bar,1) )
-  @assert( di > 0 && di <= size(sbp.Q,3) )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(flux_bar,1) == size(res_bar,1) )
+    @assert( di > 0 && di <= size(sbp.Q,3) )
+  end
+
   if trans # apply transposed Q
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
@@ -130,11 +133,14 @@ end
 function weakDifferentiateElement_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                                        flux_bar::AbstractArray{Tflx,2},
                                                        res_bar::AbstractArray{Tres,2},
-                                                       (±)::UnaryFunctor=Add();
+                                                       (±)::UnaryFunctor=Add(),
                                                        trans::Bool=false)
-  @assert( sbp.numnodes == size(flux_bar,2) == size(res_bar,2) )
-  @assert( length(flux_bar) == length(res_bar) )
-  @assert( di > 0 && di <= size(sbp.Q,3) )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(flux_bar,2) == size(res_bar,2) )
+    @assert( length(flux_bar) == length(res_bar) )
+    @assert( di > 0 && di <= size(sbp.Q,3) )
+  end
+
   if trans # apply transposed Q
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
