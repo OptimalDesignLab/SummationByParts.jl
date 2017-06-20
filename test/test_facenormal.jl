@@ -4,7 +4,7 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
       function mapping(ξ)
         x = 1 - (1 - 0.5*(ξ[1]+1))^(p+1)
@@ -42,7 +42,7 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, reorder=false)
+      sbp = TetSBP{Float64}(degree=p)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       function mapping(ξ)
         x = 1 - (1 - 0.5*(ξ[1]+1))^(p+1)
@@ -92,7 +92,7 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
       function mapping(ξ)
         x = 1 - (1 - 0.5*(ξ[1]+1))^(p+1)
@@ -131,7 +131,7 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, reorder=false)
+      sbp = TetSBP{Float64}(degree=p)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       function mapping(ξ)
         x = 1 - (1 - 0.5*(ξ[1]+1))^(p+1)

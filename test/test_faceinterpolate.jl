@@ -3,7 +3,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     context("Testing boundaryinterpolate! (TriSBP, scalar field method)") do
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,4))
@@ -37,7 +37,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing boundaryinterpolate! (TriSBP, vector field method)") do
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,4))
@@ -74,7 +74,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing boundaryinterpolate! (TetSBP, scalar field method)") do
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, reorder=false, internal=false)
+      sbp = TetSBP{Float64}(degree=p, internal=false)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
@@ -137,7 +137,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing boundaryinterpolate! (TetSBP, vector field method)") do
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, reorder=false, internal=false)
+      sbp = TetSBP{Float64}(degree=p, internal=false)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
@@ -204,7 +204,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing boundaryFaceInterpolate! (TriSBP, scalar field method)") do
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,4))
@@ -242,7 +242,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing boundaryFaceInterpolate! (TriSBP, vector field method)") do
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,4))
@@ -283,7 +283,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing boundaryFaceInterpolate! (TetSBP, scalar field method)") do
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, reorder=false, internal=false)
+      sbp = TetSBP{Float64}(degree=p, internal=false)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
@@ -350,7 +350,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing boundaryFaceInterpolate! (TetSBP, vector field method)") do
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, reorder=false, internal=false)
+      sbp = TetSBP{Float64}(degree=p, internal=false)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
@@ -422,7 +422,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,1))
@@ -456,7 +456,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,1))
@@ -489,7 +489,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, reorder=false, internal=false)
+      sbp = TetSBP{Float64}(degree=p, internal=false)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
@@ -546,7 +546,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, reorder=false, internal=false)
+      sbp = TetSBP{Float64}(degree=p, internal=false)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
@@ -610,7 +610,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,1))
@@ -649,7 +649,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p, reorder=false)
+      sbp = TriSBP{Float64}(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,1))
@@ -687,7 +687,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, reorder=false, internal=false)
+      sbp = TetSBP{Float64}(degree=p, internal=false)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
@@ -749,7 +749,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, reorder=false, internal=false)
+      sbp = TetSBP{Float64}(degree=p, internal=false)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))

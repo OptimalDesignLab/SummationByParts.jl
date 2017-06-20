@@ -753,4 +753,19 @@ facts("Testing SymCubatures Module...") do
     @fact Jac[3*numnodes+1:end,numparams+1:end] --> roughly(Jac_weights, atol=1e-15)
   end
 
+  context("Testing getInternalParamMask (TriSymCub method)") do
+    tricub = TriSymCub{Float64}(vertices=true, midedges=true, centroid=true, numedge=2,
+                                numS21=3, numS111=2)
+    mask = SymCubatures.getInternalParamMask(tricub)
+    @fact mask --> [1; 2; 3; 6; 7; 8; 9]    
+  end
+
+  context("Testing getInternalParamMask (TetSymCub method)") do    
+    tetcub = TetSymCub{Float64}(vertices=true, midedges=true, centroid=true,
+                                facecentroid=true, numedge=2, numfaceS21=3, numS31=1,
+                                numS22=2, numS211=1, numfaceS111=1, numS1111=1)
+    mask = SymCubatures.getInternalParamMask(tetcub)
+    @fact mask --> [1; 2; 3; 9; 10; 13; 14; 15]
+  end
+    
 end

@@ -1,5 +1,5 @@
 facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") do
-#=
+
   context("Testing calcMappingJacobian_rev! (TriSBP method)") do
     # build a curvilinear Lagrangian element, and verify against randomly
     # perturbed Lagrangian nodes using complex step
@@ -206,7 +206,7 @@ facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") d
       @fact dRdEone --> roughly(dRdEone_cmplx, atol=1e-14)
     end
   end
-=#
+
   context("Testing mappingjacobian_rev! (TriSBP method)") do
     # build one element grid, and verify against randomly
     # perturbed SBP nodes using complex step

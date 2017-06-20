@@ -23,11 +23,9 @@ include("test_directionaldifferentiate.jl")
 include("test_volumeintegrate.jl")
 include("test_volumeintegrate_rev.jl")
 include("test_facenormal.jl")
-
+include("test_facenormal_rev.jl")
 include("test_mappingjacobian.jl")
-#include("test_mappingjacobianrevdiff.jl")
 include("test_mappingjacobian_rev.jl")
-
 include("test_faceinterpolate.jl")
 include("test_faceinterpolate_rev.jl")
 include("test_faceintegrate.jl")
