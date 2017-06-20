@@ -1,8 +1,8 @@
 """
 Plot the SBP tri nodes
 """
-dump=True # set to True to write a png file
-facecub=True # include the face cubature points?
+dump=False # set to True to write a png file
+facecub=False #True # include the face cubature points?
 degree = 4
 
 import matplotlib
@@ -30,8 +30,8 @@ data = open("./nodes.dat")
 arrays = [np.array(map(float, line.split())) for line in data]
 x = arrays[0]
 y = arrays[1]
-xf = arrays[2]
-yf = arrays[3]
+#xf = arrays[2]
+#yf = arrays[3]
 #x, y, xf, yf = np.loadtxt(data)
 
 #tri, = ax.plot(np.append(x[0:3],x[0]), np.append(y[:3],y[0]), 'k-', lw=1)

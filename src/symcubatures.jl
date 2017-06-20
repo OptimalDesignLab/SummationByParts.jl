@@ -1861,6 +1861,35 @@ the mapping from the unique weights to the nodal weights.
 * `Jac`: Jacobian of the mapping from (unique) weights to nodal weights
 
 """->
+function calcjacobianofweights{T}(quad::LineSymCub{T})
+  @assert(quad.numweights >= 0)
+  @assert(quad.numnodes >= 1)
+
+  Jac = zeros(T, (quad.numnodes, quad.numweights) )
+  ptr = 0
+  wptr = 0
+  # set Jacobian for all nodes with 2-symmetries
+  # set Jacobian of vertex weights
+  if quad.vertices
+    Jac[1:2,wptr+1] = ones(T, (2,1))
+    ptr = 2
+    wptr += 1
+  end
+  # set Jacobian of edge weights
+  for i = 1:quad.numedge
+    Jac[ptr+1:ptr+2,wptr+1] = ones(T, (2,1))
+    ptr += 2
+    wptr += 1
+  end
+  # set Jacobian for all nodes with 1-symmetries
+  if quad.centroid
+    Jac[ptr+1,wptr+1] = one(T)
+    ptr += 1
+    wptr += 1
+  end
+  return Jac
+end
+
 function calcjacobianofweights{T}(cub::TriSymCub{T})
   @assert(cub.numweights >= 0)
   @assert(cub.numnodes >= 1)

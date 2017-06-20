@@ -309,7 +309,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
 
     numnodes = 10
     n = div(numnodes*(numnodes-1),2)
-    p = 3
+    p = 10
     x = rand(n)
     xperp = zeros(x)
     Znull = eye(n)
@@ -326,6 +326,36 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     for i = 1:n
       x[i] += epsfd
       grad_fd = SummationByParts.eigenvalueObj(x, p, xperp, Znull, w, E)
+      grad_fd = (grad_fd - obj)/epsfd
+      @fact grad_fd --> roughly(grad[i], rtol=1e-4)
+      x[i] -= epsfd
+    end
+  end
+
+  context("Testing conditionObj and conditionObjGrad!") do
+    # The full matrix is the set of design variables here (Z = I, yperp = 0),
+    # and we use a finite-difference approximation to test the gradient
+    # (complex-step is not an option due to the complex arithmetic)
+
+    numnodes = 10
+    n = div(numnodes*(numnodes-1),2)
+    p = 10
+    x = rand(n)
+    xperp = zeros(x)
+    Znull = eye(n)
+    w = rand(numnodes)
+    E = rand(numnodes,numnodes)
+    E = 0.5*(E + E.')
+    obj = SummationByParts.conditionObj(x, p, xperp, Znull, E)
+    grad = zeros(n)
+    SummationByParts.conditionObjGrad!(x, p, xperp, Znull, E, grad)
+    
+    # find the finite-difference gradient and compare it to the reverse-mode
+    # gradient
+    epsfd = 1e-6
+    for i = 1:n
+      x[i] += epsfd
+      grad_fd = SummationByParts.conditionObj(x, p, xperp, Znull, E)
       grad_fd = (grad_fd - obj)/epsfd
       @fact grad_fd --> roughly(grad[i], rtol=1e-4)
       x[i] -= epsfd

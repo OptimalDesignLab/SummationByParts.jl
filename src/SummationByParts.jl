@@ -16,9 +16,9 @@ using .Cubature
 
 export AbstractSBP, TriSBP, TetSBP, SparseTriSBP, SparseTetSBP
 export getTriSBPGamma, getTriSBPOmega, getTriSBPWithDiagE
-export getTetSBPGamma, getTetSBPOmega
+export getTetSBPGamma, getTetSBPOmega, getTetSBPWithDiagE
 export AbstractFace, TriFace, TetFace
-export getTriFaceForDiagE
+export getTriFaceForDiagE, getTetFaceForDiagE
 export Boundary, Interface
 
 export calcnodes, calcminnodedistance, getNumFaceNodes

@@ -25,10 +25,10 @@ fig = plt.figure(figsize=(2.0,2.0), facecolor='w', dpi=300)
 ax = fig.add_subplot(111, projection='3d', aspect='equal')
 
 #data = open("./p" + str(degree) + "_intr.dat", 'r')
-#data = open("./nodes.dat", 'r')
+data = open("./nodes.dat", 'r')
 #data = open("./nodes_variant7.dat", 'r')
 #data = open("./p2_nodes_variant2.dat", 'r')
-data = open("./p4_nodes_variant6.dat", 'r')
+#data = open("./p4_nodes_variant6.dat", 'r')
 arrays = [np.array(map(float, line.split())) for line in data]
 x = arrays[0]
 y = arrays[1]

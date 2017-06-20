@@ -63,11 +63,13 @@ function getTriSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
   return TriSBP{Tsbp}(degree=degree, internal=true, vertices=false)
 end
 
-function getTriSBPWithDiagE(;degree::Int=1, Tsbp::Type=Float64)
+function getTriSBPWithDiagE(;degree::Int=1, Tsbp::Type=Float64,
+                            vertices::Bool=true)
   @assert( degree >= 1 && degree <= 4 )
-  cub, vtx = tricubature(2*degree-1, Tsbp, facequad=true)
+  cub, vtx = tricubature(2*degree, Tsbp, facequad=true, vertices=vertices)
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
-  w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)
+  w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
+                                                     vertices=vertices)
   return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
@@ -132,6 +134,15 @@ function getTetSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
   return TetSBP{Tsbp}(degree=degree, internal=true)
 end
 
+function getTetSBPWithDiagE(;degree::Int=1, Tsbp::Type=Float64)
+  @assert( degree >= 1 && degree <= 1 )
+  cub, vtx = tetcubature(2*degree, Tsbp, facequad=true)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+  #w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)
+  w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree)
+  return TetSBP{Tsbp}(degree, cub, vtx, w, Q)
+end
+
 @doc """
 ### SBP.TriFace
 
@@ -175,13 +186,15 @@ end
 @doc """
 ### SBP.getTriFaceForDiagE
 
-Returns a LGL-type quadrature that can be used to construct SBP operators with
-diagonal boundary operators, E.
+Returns a quadrature that can be used to construct SBP operators with diagonal
+boundary operators, E.
 
 **Inputs**
 
 * `degree`: face integration is exact for polys of degree 2*`degree`
-* `Tsbp`: floating point type used for the operators
+* `volcub`: cubature rule for the associated volume
+* `vtx`: vertices of the triangle
+* `vertices`: (optional) if true, the face cubature includes the vertices
 
 **Returns**
 
@@ -189,11 +202,21 @@ diagonal boundary operators, E.
 
 """->
 function getTriFaceForDiagE{T}(degree::Int, volcub::TriSymCub{T},
-                               vtx::Array{T,2})
+                               vtx::Array{T,2}; vertices::Bool=true)
   @assert( degree >= 1 && degree <= 4 )
-  facecub, facevtx = quadrature(2*degree, T, internal=false)  
-  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
-                                                     degree+1)
+  if vertices
+    facecub, facevtx = quadrature(2*degree, T, internal=false)
+    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+                                                       degree+1)
+  else
+    facecub, facevtx = quadrature(2*degree, T, internal=true)
+    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+                                                       degree)
+  end
+  #println("TEMP change in getTriFaceForDiagE!!!!")
+  #facecub, facevtx = quadrature(2*degree, T, internal=true)
+  #R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+  #                                                   degree)
   D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
                                                    degree)
   nbrperm = SymCubatures.getneighbourpermutation(facecub)
@@ -235,4 +258,45 @@ function call{T}(::Type{TetFace{T}}, degree::Int, volcub::TetSymCub{T},
   #new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, wface,
   #    normal, R.', perm, D, Dperm, nbrperm)
   TetFace{T}(degree, facecub, facevtx, R.', perm)
+end
+
+@doc """
+### SBP.getTetFaceForDiagE
+
+Returns a quadrature that can be used to construct SBP operators with diagonal
+boundary operators, E.
+
+**Inputs**
+
+* `degree`: face integration is exact for polys of degree 2*`degree`+1
+* `volcub`: cubature rule for the associated volume
+* `vtx`: vertices of the triangle
+
+**Returns**
+
+* `sbpface`: an SBP face type for triangle elements
+
+"""->
+function getTetFaceForDiagE{T}(degree::Int, volcub::TetSymCub{T},
+                               vtx::Array{T,2})
+  @assert( degree >= 1 && degree <= 1 )
+  
+  #facecub, facevtx = tricubature(2*degree, T, facequad=true, vertices=false)
+  facecub, facevtx = tricubature(2*degree, T, facequad=false, vertices=false,
+                                 internal=true)
+  
+  #facecub = SymCubatures.TriSymCub{T}(vertices=true, numS21=1)
+  #SymCubatures.setparams!(facecub, T[0.9055050463303657])
+  #SymCubatures.setweights!(facecub, T[(1+sqrt(21))/60;(39+sqrt(21))/60])
+  #facevtx = T[-1 -1; 1 -1; -1 1]
+  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+                                                     degree+1)
+  #println("TEMP change in getTriFaceForDiagE!!!!")
+  #facecub, facevtx = quadrature(2*degree, T, internal=true)
+  #R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+  #                                                   degree)
+  nbrperm = SymCubatures.getneighbourpermutation(facecub)
+  wface = SymCubatures.calcweights(facecub)
+  stencilsize = size(R,2)
+  return TetFace{T}(degree, facecub, facevtx, R.', perm)
 end

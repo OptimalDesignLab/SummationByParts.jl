@@ -813,7 +813,8 @@ end
 
 function buildsparseoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
-  face = TetFace{T}(d+1, cub, vtx)
+  face = getTetFaceForDiagE(d, cub, vtx)
+  #face = TetFace{T}(d+1, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,3) )
   SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
@@ -821,6 +822,8 @@ function buildsparseoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   scale!(Q, 0.5)
   A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   #rankA = rank(A)
+
+  if true
   # find a sparse solution for skew-symmetric Sx
   x = zeros(size(A,2))
   SummationByParts.calcSparseSolution!(A, bx, x)
@@ -862,11 +865,21 @@ function buildsparseoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   #   P[idx[i],i] = 1.0
   # end
   # AP = A*P
-  # z = P*(AP\bz)
+    # z = P*(AP\bz)
+  end # if false
 
-  @assert( norm(A*x - bx) < 1e-12)
-  @assert( norm(A*y - by) < 1e-12)
-  @assert( norm(A*z - bz) < 1e-12)
+  #println(size(A))
+  #println(rank(A))
+  #Ainv = pinv(A)
+  #x = Ainv*bx; y = Ainv*by; z = Ainv*bz
+  
+  println(norm(A*x - bx))
+  println(norm(A*y - by))
+  println(norm(A*z - bz))
+  
+  #@assert( norm(A*x - bx) < 1e-12)
+  #@assert( norm(A*y - by) < 1e-12)
+  #@assert( norm(A*z - bz) < 1e-12)
 
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
@@ -883,17 +896,19 @@ function buildsparseoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
 end
 
 @doc """
-### SummationByParts.buildMinCFLOperators
+### SummationByParts.buildMinConditionOperators
 
-Construct and return SBP matrix operators that minimize the maximum modulus
-eigenvalue for a model advection problem.  These operators have diagonal mass
-and boundary operators.
+Construct and return SBP matrix operators that minimize the condition number of
+a model advection problem.  These operators have diagonal mass and boundary
+operators.
 
 **Inputs**
 
 * `cub`: symmetric cubature rule
 * `vtx`: vertices of the right simplex
 * `d`: maximum total degree for the Proriol polynomials
+* `vertices`: (optional) if true, include vertices in the operator
+* `opthist`: (optional) if true, show the optimization history
 
 **Outputs**
 
@@ -901,28 +916,82 @@ and boundary operators.
 * `Q`: the stiffness matrices
 
 """->
-function buildMinCFLOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
+function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
+                                       d::Int; vertices::Bool=true,
+                                       opthist::Bool=false)
   w = SymCubatures.calcweights(cub)
-  face = getTriFaceForDiagE(d, cub, vtx)
-  #face = TriFace{T}(d, cub, vtx, vertices=false) #vertices=true)
+  face = getTriFaceForDiagE(d, cub, vtx, vertices=vertices)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
   SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
   scale!(Q, 0.5)
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
-
-  # find the minimum norm solutions
   Ainv = pinv(A)
-  xperp = Ainv*bx; yperp = Ainv*by
-  Z = nullspace(Z)
+  Znull = nullspace(A)
+  rho = 5.0 # <-- the KS penalty paramter
+
+  #--------------------------------------
+  # the x-direction operator
   
-  # find a sparse solution for skew-symmetric Sx
-  x = zeros(size(A,2))
-  SummationByParts.calcSparseSolution!(A, bx, x)
-  # find a sparse solution for skew-symmetric Sy
-  y = zeros(size(A,2))
-  SummationByParts.calcSparseSolution!(A, by, y)
+  # find the minimum norm solution (a particular solution)
+  xperp = Ainv*bx
+  # define the objective and its gradient
+  function objX(xred)
+    return SummationByParts.conditionObj(xred, rho, xperp, Znull, sview(Q,:,:,1))
+  end
+  function objXGrad!(xred, g)
+    SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, sview(Q,:,:,1), g)
+  end
+  # find the solution
+  results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
+                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           Optim.Options(g_tol = 1e-12, x_tol = 1e-60,
+                                         f_tol = 1e-60, iterations = 500,
+                                         store_trace=false, show_trace=opthist))
+  # check that the optimization converged and then set solution
+  @assert( Optim.converged(results) )
+  xred = Optim.minimizer(results)
+  x = xperp + Znull*xred
+
+  #spect = SummationByParts.eigenvalueObj(xred, 1, xperp, Znull, w, sview(Q,:,:,1))
+  #println("spectral radius of x operator = ",spect)
+    
+  # gather slice of objective function
+  # N = 201
+  # obj_slice = zeros(N)
+  # xred[1] += 1.0
+  # for i = 1:N
+  #   obj_slice[i] = objX(xred)
+  #   xred[1] -= 2/(N-1)
+  # end
+  # println(obj_slice)
+
+  #--------------------------------------
+  # the y-direction operator
   
+  # find the minimum norm solution (a particular solution)
+  yperp = Ainv*by
+  # define the objective and its gradient
+  function objY(yred)
+    return SummationByParts.conditionObj(yred, rho, yperp, Znull, sview(Q,:,:,2))
+  end
+  function objYGrad!(yred, g)
+    SummationByParts.conditionObjGrad!(yred, rho, yperp, Znull, sview(Q,:,:,2), g)
+  end
+  # find the solution
+  results = Optim.optimize(objY, objYGrad!, ones(size(Znull,2)),
+                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           Optim.Options(g_tol = 1e-12, x_tol = 1e-60,
+                                         f_tol = 1e-60, iterations = 500,
+                                         store_trace=false, show_trace=opthist))
+  # check that the optimization converged and then set solution
+  @assert( Optim.converged(results) )
+  yred = Optim.minimizer(results)
+  y = yperp + Znull*yred
+
+  #spect = SummationByParts.eigenvalueObj(yred, 1, yperp, Znull, w, sview(Q,:,:,2))
+  #println("spectral radius of y operator = ",spect)
+    
   @assert( norm(A*x - bx) < 1e-12)
   @assert( norm(A*y - by) < 1e-12)
 
@@ -933,6 +1002,126 @@ function buildMinCFLOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
       Q[col,row,1] -= x[offset+col]
       Q[row,col,2] += y[offset+col]
       Q[col,row,2] -= y[offset+col]
+    end
+  end
+  return w, Q
+end
+
+function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
+                                       d::Int; opthist::Bool=false)
+  w = SymCubatures.calcweights(cub)
+  face = getTetFaceForDiagE(d, cub, vtx)
+  Q = zeros(T, (cub.numnodes,cub.numnodes,3) )
+  SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
+  SummationByParts.boundaryoperator!(face, 3, sview(Q,:,:,3))
+  scale!(Q, 0.5)
+  A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
+  Ainv = pinv(A)
+  Znull = nullspace(A)
+  rho = 5.0 # <-- the KS penalty paramter
+
+  #--------------------------------------
+  # the x-direction operator
+  
+  # find the minimum norm solution (a particular solution)
+  xperp = Ainv*bx
+  # define the objective and its gradient
+  function objX(xred)
+    return SummationByParts.conditionObj(xred, rho, xperp, Znull, sview(Q,:,:,1))
+  end
+  function objXGrad!(xred, g)
+    SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, sview(Q,:,:,1), g)
+  end
+  # find the solution
+  results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)), 
+                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           Optim.Options(g_tol = 1e-12, x_tol = 1e-60,
+                                         f_tol = 1e-60, iterations = 1000,
+                                         store_trace=false, show_trace=opthist))
+  # check that the optimization converged and then set solution
+  #@assert( Optim.converged(results) )
+  xred = Optim.minimizer(results)
+  x = xperp + Znull*xred
+
+  #spect = SummationByParts.eigenvalueObj(xred, 1, xperp, Znull, w, sview(Q,:,:,1))
+  #println("spectral radius of x operator = ",spect)
+    
+  # gather slice of objective function
+  # N = 201
+  # obj_slice = zeros(N)
+  # xred[1] += 1.0
+  # for i = 1:N
+  #   obj_slice[i] = objX(xred)
+  #   xred[1] -= 2/(N-1)
+  # end
+  # println(obj_slice)
+
+  #--------------------------------------
+  # the y-direction operator
+  
+  # find the minimum norm solution (a particular solution)
+  yperp = Ainv*by
+  # define the objective and its gradient
+  function objY(yred)
+    return SummationByParts.conditionObj(yred, rho, yperp, Znull, sview(Q,:,:,2))
+  end
+  function objYGrad!(yred, g)
+    SummationByParts.conditionObjGrad!(yred, rho, yperp, Znull, sview(Q,:,:,2), g)
+  end
+  # find the solution
+  results = Optim.optimize(objY, objYGrad!, ones(size(Znull,2)),
+                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           Optim.Options(g_tol = 1e-12, x_tol = 1e-60,
+                                         f_tol = 1e-60, iterations = 1000,
+                                         store_trace=false, show_trace=opthist))
+  # check that the optimization converged and then set solution
+  @assert( Optim.converged(results) )
+  yred = Optim.minimizer(results)
+  y = yperp + Znull*yred
+
+  #spect = SummationByParts.eigenvalueObj(yred, 1, yperp, Znull, w, sview(Q,:,:,2))
+  #println("spectral radius of y operator = ",spect)
+
+  #--------------------------------------
+  # the z-direction operator
+  
+  # find the minimum norm solution (a particular solution)
+  zperp = Ainv*bz
+  # define the objective and its gradient
+  function objZ(zred)
+    return SummationByParts.conditionObj(zred, rho, zperp, Znull, sview(Q,:,:,3))
+  end
+  function objZGrad!(zred, g)
+    SummationByParts.conditionObjGrad!(zred, rho, zperp, Znull, sview(Q,:,:,3), g)
+  end
+  # find the solution
+  results = Optim.optimize(objZ, objZGrad!, ones(size(Znull,2)),
+                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           Optim.Options(g_tol = 1e-12, x_tol = 1e-60,
+                                         f_tol = 1e-60, iterations = 1000,
+                                         store_trace=false, show_trace=opthist))
+  # check that the optimization converged and then set solution
+  @assert( Optim.converged(results) )
+  zred = Optim.minimizer(results)
+  z = zperp + Znull*zred
+
+  #spect = SummationByParts.eigenvalueObj(zred, 1, zperp, Znull, w, sview(Q,:,:,3))
+  #println("spectral radius of z operator = ",spect)
+
+  @assert( norm(A*x - bx) < 1e-12)
+  @assert( norm(A*y - by) < 1e-12)
+  @assert( norm(A*z - bz) < 1e-12)
+
+  for row = 2:cub.numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      Q[row,col,1] += x[offset+col]
+      Q[col,row,1] -= x[offset+col]
+      Q[row,col,2] += y[offset+col]
+      Q[col,row,2] -= y[offset+col]
+      Q[row,col,3] += z[offset+col]
+      Q[col,row,3] -= z[offset+col]
     end
   end
   return w, Q
