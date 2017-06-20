@@ -685,7 +685,7 @@ function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
   # calculate the derivative of the coordinates with respect to (xi,eta,zeta)
   # using the SBP operator
   for di = 1:3
-    differentiate!(sbp, di, x, sub(dxdξ,:,:,:,di)) 
+    differentiate!(sbp, di, x, sview(dxdξ,:,:,:,di)) 
   end
   fill!(dξdx, zero(Tmsh))
   # calculate the metrics
@@ -756,7 +756,7 @@ function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
     # compute the coordinate derivatives
     fill!(work, zero(Tmsh))
     for di = 1:2
-      differentiateElement!(sbp, di, sub(x,:,:,elem), sub(work,:,:,di)) 
+      differentiateElement!(sbp, di, sview(x,:,:,elem), sview(work,:,:,di)) 
     end
     # compute the scaled metrics: could also pass these in to avoid recomputing
     # them...
@@ -783,7 +783,7 @@ function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
       work[1,i,1] += dξdx_bar[2,2,i,elem]
     end
     for di = 1:2
-      differentiateElement_rev!(sbp, di, sub(x_bar,:,:,elem), sub(work,:,:,di)) 
+      differentiateElement_rev!(sbp, di, sview(x_bar,:,:,elem), sview(work,:,:,di)) 
     end
   end
 end
@@ -807,7 +807,7 @@ function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
     # compute the coordinate derivatives
     fill!(work, zero(Tmsh))
     for di = 1:3
-      differentiateElement!(sbp, di, sub(x,:,:,elem), sub(work,:,:,di)) 
+      differentiateElement!(sbp, di, sview(x,:,:,elem), sview(work,:,:,di)) 
     end
     permutedims!(dxdξ, work, [1,3,2]) # probably slow
 
@@ -863,9 +863,9 @@ function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
 
     permutedims!(work, dxdξ_bar, [1,3,2]) # probably slow    
     for di = 1:3
-      #differentiate!(sbp, di, x, sub(dxdξ,:,:,:,di))
-      differentiateElement_rev!(sbp, di, sub(x_bar,:,:,elem),
-                                sub(work,:,:,di))
+      #differentiate!(sbp, di, x, sview(dxdξ,:,:,:,di))
+      differentiateElement_rev!(sbp, di, sview(x_bar,:,:,elem),
+                                sview(work,:,:,di))
     end
   end # loop over elements
 end
@@ -884,7 +884,7 @@ function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
   # calculate the derivative of the coordinates with respect to (xi,eta,zeta)
   # using the SBP operator
   for di = 1:3
-    differentiate!(sbp, di, x, sub(dxdξ,:,:,:,di)) 
+    differentiate!(sbp, di, x, sview(dxdξ,:,:,:,di)) 
   end
   fill!(dξdx, zero(Tmsh))
   # calculate the metrics: the outer loop calculates the derivatives of
