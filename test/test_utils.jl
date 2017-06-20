@@ -339,7 +339,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
 
     numnodes = 10
     n = div(numnodes*(numnodes-1),2)
-    p = 10
+    p = 1
     x = rand(n)
     xperp = zeros(x)
     Znull = eye(n)
