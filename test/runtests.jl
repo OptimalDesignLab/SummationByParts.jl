@@ -9,6 +9,7 @@ import ODLCommonTools.sview
 
 view = ArrayViews.view
 
+
 include("test_orthopoly.jl")
 include("test_symcubatures.jl")
 include("test_cubature.jl")

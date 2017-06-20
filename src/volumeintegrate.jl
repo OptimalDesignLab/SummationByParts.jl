@@ -91,7 +91,10 @@ function volumeIntegrateElement!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                                  u::AbstractArray{Tsol,1},
                                                  res::AbstractArray{Tres,1},
                                                  (±)::UnaryFunctor=Add())
-  @assert( sbp.numnodes == size(u,1) == size(res,1) )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(u,1) == size(res,1) )
+  end
+
   for i = 1:sbp.numnodes
     res[i] += ±(sbp.w[i]*u[i])
   end
@@ -101,8 +104,11 @@ function volumeIntegrateElement!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                                  u::AbstractArray{Tsol,2},
                                                  res::AbstractArray{Tres,2},
                                                  (±)::UnaryFunctor=Add())
-  @assert( sbp.numnodes == size(u,2) == size(res,2) )
-  @assert( length(u) == length(res) )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(u,2) == size(res,2) )
+    @assert( length(u) == length(res) )
+  end
+
   for i = 1:sbp.numnodes
     for field = 1:size(u,1)
       res[field,i] += ±(sbp.w[i]*u[field,i])

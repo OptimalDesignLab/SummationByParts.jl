@@ -1175,7 +1175,7 @@ dimension as the cubature; for example, a line quadrature can be over a line in
 * `x`: cubature's nodal coordinates (potentially in a subspace)
 
 """->
-function calcnodes{T}(cub::LineSymCub{T}, vtx::Array{T,2})
+function calcnodes{T}(cub::LineSymCub, vtx::Array{T,2})
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
   @assert(size(vtx,1) == 2)
@@ -1206,7 +1206,7 @@ function calcnodes{T}(cub::LineSymCub{T}, vtx::Array{T,2})
   return x
 end
 
-function calcnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
+function calcnodes{T}(cub::TriSymCub, vtx::Array{T,2})
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
   @assert(size(vtx,1) == 3 && size(vtx,2) >= 2)
@@ -1274,7 +1274,7 @@ function calcnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
   return x
 end
 
-function calcnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
+function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
   @assert(size(vtx,1) == 4 && size(vtx,2) >= 3)

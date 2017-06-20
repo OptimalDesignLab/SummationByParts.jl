@@ -23,9 +23,12 @@ function differentiate_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                             flux_bar::AbstractArray{Tflx,2},
                                             res_bar::AbstractArray{Tres,2},
                                             (±)::UnaryFunctor=Add())
-  @assert( sbp.numnodes == size(flux_bar,1) && sbp.numnodes == size(res_bar,1) )
-  @assert( length(flux_bar) == length(res_bar) )
-  @assert( di > 0 && di <= size(sbp.Q,3) )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(flux_bar,1) && sbp.numnodes == size(res_bar,1) )
+    @assert( length(flux_bar) == length(res_bar) )
+    @assert( di > 0 && di <= size(sbp.Q,3) )
+  end
+
   tmp_bar = zero(Tres)
   for elem = 1:size(flux_bar,2)
     for i = 1:sbp.numnodes
@@ -43,9 +46,12 @@ function differentiate_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux_bar::AbstractArray{Tflx,3},
                                         res_bar::AbstractArray{Tres,3},
                                         (±)::UnaryFunctor=Add())
-  @assert( sbp.numnodes == size(flux_bar,2) && sbp.numnodes == size(res_bar,2) )
-  @assert( length(flux_bar) == length(res_bar) )
-  @assert( di > 0 && di <= size(sbp.Q,3) )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(flux_bar,2) && sbp.numnodes == size(res_bar,2) )
+    @assert( length(flux_bar) == length(res_bar) )
+    @assert( di > 0 && di <= size(sbp.Q,3) )
+  end
+
   Hinv = zero(Tsbp)
   tmp_bar = zeros(Tres, size(flux_bar,1))
   for elem = 1:size(flux_bar,3)
@@ -87,8 +93,11 @@ function differentiateElement_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::I
                                                flux_bar::AbstractArray{Tflx,1},
                                                res_bar::AbstractArray{Tres,1},
                                                (±)::UnaryFunctor=Add())
-  @assert( sbp.numnodes == size(flux_bar,1) == size(res_bar,1) )
-  @assert( di > 0 && di <= size(sbp.Q,3) )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(flux_bar,1) == size(res_bar,1) )
+    @assert( di > 0 && di <= size(sbp.Q,3) )
+  end
+
   tmp_bar = zero(Tres)
   for i = 1:sbp.numnodes
     # res[i] /= sbp.w[i]    
@@ -104,9 +113,12 @@ function differentiateElement_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::I
                                                flux_bar::AbstractArray{Tflx,2},
                                                res_bar::AbstractArray{Tres,2},
                                                (±)::UnaryFunctor=Add())
-  @assert( sbp.numnodes == size(flux_bar,2) == size(res_bar,2) )
-  @assert( length(flux_bar) == length(res_bar) )
-  @assert( di > 0 && di <= size(sbp.Q,3) )
+  @asserts_enabled begin
+    @assert( sbp.numnodes == size(flux_bar,2) == size(res_bar,2) )
+    @assert( length(flux_bar) == length(res_bar) )
+    @assert( di > 0 && di <= size(sbp.Q,3) )
+  end
+
   Hinv = zero(Tsbp)
   tmp_bar = zeros(Tres, size(flux_bar,1))
   for i = 1:sbp.numnodes

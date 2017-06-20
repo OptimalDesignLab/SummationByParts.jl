@@ -252,7 +252,7 @@ function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   @assert( size(sbpface.interp,2) == size(ufaceL,2) == size(ufaceR,2) )
   for i = 1:sbpface.numnodes
     iR = sbpface.nbrperm[i,iface.orient]
-    for field=1:size(uL,1)
+    @simd for field=1:size(uL,1)
       ufaceL[field,i] = zero(Tsol)
       ufaceR[field,i] = zero(Tsol)
     end

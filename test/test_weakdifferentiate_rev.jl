@@ -56,12 +56,12 @@ facts("Testing SummationByParts Module (reverse-diff of weak differentiate metho
           vQ = zeros(v)
           for di = 1:2            
             # verify that v^T Q = (Q^T v)^T
-            weakDifferentiateElement!(sbp, di, v, Qv, trans=true)
-            weakDifferentiateElement_rev!(sbp, di, vQ, v, trans=false)
+            weakDifferentiateElement!(sbp, di, v, Qv, SummationByParts.Add(), true)
+            weakDifferentiateElement_rev!(sbp, di, vQ, v, SummationByParts.Add(), false)
             @fact Qv --> roughly(vQ, atol=1e-15)
             # verify that v^T Q^T = (Qv)^T
-            weakDifferentiateElement!(sbp, di, v, Qv, trans=false)
-            weakDifferentiateElement_rev!(sbp, di, vQ, v, trans=true)
+            weakDifferentiateElement!(sbp, di, v, Qv, SummationByParts.Add(), false)
+            weakDifferentiateElement_rev!(sbp, di, vQ, v, SummationByParts.Add(), true)
             @fact Qv --> roughly(vQ, atol=1e-15)
           end
         end
@@ -79,12 +79,12 @@ facts("Testing SummationByParts Module (reverse-diff of weak differentiate metho
           vQ = zeros(v)
           for di = 1:2            
             # verify that v^T Q = (Q^T v)^T
-            weakDifferentiateElement!(sbp, di, v, Qv, trans=true)
-            weakDifferentiateElement_rev!(sbp, di, vQ, v, trans=false)
+            weakDifferentiateElement!(sbp, di, v, Qv, SummationByParts.Add(), true)
+            weakDifferentiateElement_rev!(sbp, di, vQ, v, SummationByParts.Add(), false)
             @fact Qv --> roughly(vQ, atol=1e-15)
             # verify that v^T Q^T = (Qv)^T
-            weakDifferentiateElement!(sbp, di, v, Qv, trans=false)
-            weakDifferentiateElement_rev!(sbp, di, vQ, v, trans=true)
+            weakDifferentiateElement!(sbp, di, v, Qv, SummationByParts.Add(), false)
+            weakDifferentiateElement_rev!(sbp, di, vQ, v, SummationByParts.Add(), true)
             @fact Qv --> roughly(vQ, atol=1e-15)
           end
         end

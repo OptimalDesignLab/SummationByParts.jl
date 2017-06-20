@@ -522,8 +522,12 @@ function commuteerror{T,T2}(w::Array{T}, Qxpart::AbstractArray{T,2},
                             Qypart::AbstractArray{T,2},
                             Z::Array{T,2}, reducedsol::Array{T2})
   # build Qx and Qy
-  Qx = convert(Array{T2,2}, Qxpart)
-  Qy = convert(Array{T2,2}, Qypart)
+#  Qx = convert(Array{T2,2}, Qxpart)
+#  Qy = convert(Array{T2,2}, Qypart)
+  Qx = zeros(T2, size(Qxpart)...)
+  copy!(Qx, Qxpart)
+  Qy = zeros(T2, size(Qypart)...)
+  copy!(Qy, Qypart)
   numnodes = length(w)
   Qxnull = Z*reducedsol[1:size(Z,2)]
   Qynull = Z*reducedsol[size(Z,2)+1:end]
