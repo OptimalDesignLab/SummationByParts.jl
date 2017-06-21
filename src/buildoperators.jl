@@ -1040,8 +1040,8 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)), 
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-12, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 1000,
+                           Optim.Options(g_tol = 1e-2, x_tol = 1e-60,
+                                         f_tol = 1e-60, iterations = 2000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   #@assert( Optim.converged(results) )
@@ -1076,8 +1076,8 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objY, objYGrad!, ones(size(Znull,2)),
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-12, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 1000,
+                           Optim.Options(g_tol = 1e-2, x_tol = 1e-60,
+                                         f_tol = 1e-60, iterations = 2000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
@@ -1102,8 +1102,8 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objZ, objZGrad!, ones(size(Znull,2)),
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-12, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 1000,
+                           Optim.Options(g_tol = 1e-2, x_tol = 1e-60,
+                                         f_tol = 1e-60, iterations = 2000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )

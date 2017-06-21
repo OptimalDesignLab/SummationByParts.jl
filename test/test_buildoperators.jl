@@ -512,7 +512,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.buildMinConditionOperators (TetSymCub method)") do
     #tol = [1e-12; 1e-12; 1e-12; 5e-8]
     tol = [1e-12; 1e-12; 1e-12; 1e-12]
-    for d = 1:1 # cannot do d=2:4 yet, since we do not have the cubature
+    for d = 1:2 # cannot do d=3:4 yet, since we do not have the cubature
       cub, vtx = tetcubature(2*d, Float64, facequad=true)
       w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]

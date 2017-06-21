@@ -818,8 +818,21 @@ function tetcubature(q::Int, T=Float64; internal::Bool=false,
       
       mask = SymCubatures.getInternalParamMask(cub)
       append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
+    elseif q <= 4
+      # 36 nodes
+      # the boundary nodes are strictly internal to the face
+      cub = SymCubatures.TetSymCub{T}(vertices=false, numfaceS21=2, numS211=1)
+      SymCubatures.setparams!(cub, T[0.8918969818319298;
+                                     0.18315242701954149;
+                                     0.40398819659496876;
+                                     0.18710499145686446])
+      SymCubatures.setweights!(cub, T[0.02922867858673424;
+                                      0.012914918864852366;
+                                      0.06896751365952453])
+      cub_degree = 4
+      tol = 1e-14
     else
-      error("polynomial degree must be <= 2 (presently)\n")
+      error("polynomial degree must be <= 4 (presently)\n")
     end
   elseif internal
     # all nodes are internal

@@ -555,7 +555,7 @@ function conditionObj(xred::AbstractVector{Float64}, p,
 end
 
 @doc """
-### SummationByParts.eigenvalueObjGrad!
+### SummationByParts.conditionObjGrad!
 
 Computes the gradient of the function `conditionObj` with respect to `xred`,
 and returns it in the array `g`.
@@ -639,6 +639,106 @@ function conditionObjGrad!(xred::AbstractVector{Float64}, p,
   # x = Znull*xred + xperp
   g[:] = Znull.'*x_bar
 end
+
+# @doc """
+# ### SummationByParts.conditionObjHess!
+
+# Computes the Hessian of the function `conditionObj` with respect to `xred`,
+# and returns it in the array `Hess`.
+
+# **Inputs**
+
+# * `xred`: a reduced-space for the entries in the skew-symmetric matrix
+# * `p`: defines the KS parameter; as p tends to infinity, we get obj = kappa(A)
+# * `xperp`: a particular solution that satisfies the SBP accuracy conditions
+# * `Znull`: matrix that defines the null-space of the SBP accuracy conditions
+# * `E`: symmetric matrix, usually the boundary operator for an SBP matrix
+
+# **In/Outs**
+
+# * `Hess`: Hessian of the objective `conditionObj` with respect to `xred`
+
+# """->
+# function conditionObjHess!(xred::AbstractVector{Float64}, p,
+#                            xperp::AbstractVector{Float64},
+#                            Znull::AbstractArray{Float64,2},
+#                            E::AbstractArray{Float64,2},
+#                            H::AbstractArray{Float64,2})
+#   @assert( length(xperp) == size(Znull,1) )
+#   @assert( length(xred) == size(Znull,2) )
+#   @assert( size(E,1) == size(E,2) )
+#   @assert( size(Hess,1) == size(Hess,2) == length(xred) )
+#   @assert( p >= 1.0 )
+#   n = size(E,1)
+#   x = zeros(xperp)
+#   x = Znull*xred + xperp
+#   insert into (S + 1/2 |E|)
+#   A = zeros(n,n)
+#   for i = 1:n
+#     for j = 1:n
+#       A[i,j] = abs(E[i,j])
+#     end
+#   end
+#   for i = 2:n
+#     offset = convert(Int, (i-1)*(i-2)/2)
+#     for j = 1:i-1
+#       A[i,j] += x[offset+j]
+#       A[j,i] -= x[offset+j]
+#     end
+#   end
+
+#   partial forward sweep; get the SVD of A and some intermediate vars
+#   U, S, V = svd(A)
+#   maxKS = 0.0
+#   minKS = 0.0
+#   for i = 1:n
+#     maxKS += exp(p*(S[i] - S[1]))
+#     minKS += exp(p*(1/S[i] - 1/S[end]))
+#   end
+
+#   get the sensitivity of the singular values to the matrix A
+#   dSdA = zeros(n,n,n)
+#   for i = 1:n
+#     dSdA[:,:,i] = U[:,i]*V[:,i].'
+#   end
+
+#   get the Hessian of the objective w.r.t. the singular values
+#   dSbar = zeros(n,n)
+#   maxKS_bar = (1/S[end] + (1/p)*log(minKS/n))/(p*maxKS)
+#   minKS_bar = (S[1] + (1/p)*log(maxKS/n))/(p*minKS)
+#   S_bar[1] = (1/S[end] + (1/p)*log(minKS/n))
+#   S_bar[end] = -(S[1] + (1/p)*log(maxKS/n))/(S[end]^2)
+  
+  
+#   start reverse sweep
+#   S_bar = zeros(S)
+#   return (S[1] + (1/p)*log(maxKS/n))*(1/S[end] + (1/p)*log(minKS/n))
+#   maxKS_bar = (1/S[end] + (1/p)*log(minKS/n))/(p*maxKS)
+#   minKS_bar = (S[1] + (1/p)*log(maxKS/n))/(p*minKS)
+#   S_bar[1] = (1/S[end] + (1/p)*log(minKS/n))
+#   S_bar[end] = -(S[1] + (1/p)*log(maxKS/n))/(S[end]^2)
+#   for i = 1:n
+#     maxKS += exp(p*(S[i] - S[1]))
+#     S_bar[i] += maxKS_bar*exp(p*(S[i] - S[1]))*p
+#     S_bar[1] -= maxKS_bar*exp(p*(S[i] - S[1]))*p
+#     minKS += exp(p*(1/S[i] - 1/S[end]))
+#     S_bar[i] -= minKS_bar*exp(p*(1/S[i] - 1/S[end]))*p/(S[i]^2)
+#     S_bar[end] += minKS_bar*exp(p*(1/S[i] - 1/S[end]))*p/(S[end]^2)
+#   end
+#   A_bar = U*diagm(S_bar)*V'
+
+#   x_bar = zeros(x)
+#   for i = 2:n
+#     offset = convert(Int, (i-1)*(i-2)/2)
+#     for j = 1:i-1
+#       A[i,j] = +complex(x[offset+j], 0.0)
+#       A[j,i] = -complex(x[offset+j], 0.0)
+#       x_bar[offset+j] += A_bar[i,j] - A_bar[j,i]
+#     end
+#   end
+#   x = Znull*xred + xperp
+#   g[:] = Znull.'*x_bar
+# end
 
 @doc """
 ### SummationByParts.eigenvalueObj

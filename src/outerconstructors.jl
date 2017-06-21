@@ -135,7 +135,7 @@ function getTetSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
 end
 
 function getTetSBPWithDiagE(;degree::Int=1, Tsbp::Type=Float64)
-  @assert( degree >= 1 && degree <= 1 )
+  @assert( degree >= 1 && degree <= 2 )
   cub, vtx = tetcubature(2*degree, Tsbp, facequad=true)
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
   #w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)
@@ -279,7 +279,7 @@ boundary operators, E.
 """->
 function getTetFaceForDiagE{T}(degree::Int, volcub::TetSymCub{T},
                                vtx::Array{T,2})
-  @assert( degree >= 1 && degree <= 1 )
+  @assert( degree >= 1 && degree <= 2 )
   
   #facecub, facevtx = tricubature(2*degree, T, facequad=true, vertices=false)
   facecub, facevtx = tricubature(2*degree, T, facequad=false, vertices=false,
