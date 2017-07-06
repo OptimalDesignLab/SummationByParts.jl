@@ -240,9 +240,9 @@ function calcMappingJacobian_rev!{
       fill!(sol_bar, zero(Tmsh))
       for di2 = 1:3
         for i = 1:sbp.numnodes
-          #dξdx[di2,di,i] = dξdx_targ[di2,di,i] - sol[i + (di2-1)*sbp.numnodes]
-          dξdx_targ_bar[di2,di,i] += dξdx_bar[di2,di,i]
-          sol_bar[i + (di2-1)*sbp.numnodes] -= dξdx_bar[di2,di,i]
+          #dξdx[di2,di,i,e] = dξdx_targ[di2,di,i] - sol[i + (di2-1)*sbp.numnodes]
+          dξdx_targ_bar[di2,di,i] += dξdx_bar[di2,di,i,e]
+          sol_bar[i + (di2-1)*sbp.numnodes] -= dξdx_bar[di2,di,i,e]
         end
       end
       # sol = Qtinv*b
@@ -267,7 +267,7 @@ function calcMappingJacobian_rev!{
                        dxdξ[1,1,i]*dxdξ[2,3,i]*dxdξ[3,2,i] -
                        dxdξ[1,2,i]*dxdξ[2,1,i]*dxdξ[3,3,i] -
                        dxdξ[1,3,i]*dxdξ[2,2,i]*dxdξ[3,1,i])
-      jac2 = jac_bar[i]*jac*jac
+      jac2 = jac_bar[i,e]*jac*jac
       dxdξ_bar[1,1,i] -= jac2*(dxdξ[2,2,i]*dxdξ[3,3,i] -
                                dxdξ[2,3,i]*dxdξ[3,2,i])
       dxdξ_bar[2,2,i] -= jac2*(dxdξ[1,1,i]*dxdξ[3,3,i] -
