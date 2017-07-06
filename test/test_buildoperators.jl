@@ -467,7 +467,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.buildMinConditionOperators (TriSymCub method, vertices=true)") do
-    for d = 1:4
+    for d = 1:3
+      println("d = ", d)
       cub, vtx = tricubature(2*d, Float64, facequad=true, vertices=true)
       w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
