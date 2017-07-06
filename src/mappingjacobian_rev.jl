@@ -249,7 +249,7 @@ function calcMappingJacobian_rev!{
       b_bar = Qtinv'*sol_bar
       # b = Qt*targ - Eone[:,di]
       targ_bar += Qt'*b_bar
-      Eone_bar[:,di] -=  b_bar
+      Eone_bar[:,di,e] -=  b_bar
       for di2 = 1:3
         for i = 1:sbp.numnodes
           #targ[i + (di2-1)*sbp.numnodes] = dξdx_targ[di2,di,i]
