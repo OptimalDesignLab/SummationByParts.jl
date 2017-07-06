@@ -955,6 +955,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
   xred = Optim.minimizer(results)
+  println("xred = ", xred)
   x = xperp + Znull*xred
 
   #spect = SummationByParts.eigenvalueObj(xred, 1, xperp, Znull, w, sview(Q,:,:,1))
