@@ -164,6 +164,116 @@ function buildinterpolation{T}(sbp::TetSBP{T}, xinterp::AbstractArray{T,2};
   return R
 end
 
+"""
+### SummationByParts.calcvandermondproriol
+
+This function calculates the Vandermond matrix of the Proriol polynomials.
+
+**Inputs**
+
+  * coords: a matrix containing 2 or 3 columns holding the x, y, (and possibly
+            z) coordinates of the points
+  * maxdegree: total degree of the highest degree polynomial
+
+**Outputs**
+  * V: size(coords, 1) x binomial(maxdegree + size(coords, 2), size(coords, 2))
+       Vandermond matrix
+"""
+function calcvandermondproriol{T}(coords::AbstractMatrix{T}, maxdegree::Int)
+
+
+  npts, dim = size(coords)
+  npoly = binomial(maxdegree + dim, dim)
+  V = zeros(T, npts, npoly)
+
+  if dim == 2
+    calcvandermondproriol2(coords, maxdegree, V)
+  elseif dim == 3
+    calcvandermondproriol3(coords, maxdegree, V)
+  else
+    throw(ErrorException("Cannot evaluate Vandermond matrix for dimension $dim > 3 polynomials"))
+  end
+
+  return V
+end
+
+"""
+### SummationByParts.calcvandeermondproriol2
+
+  2D function used by calcvandermondproriol()
+"""
+function calcvandermondproriol2{T}(coords::AbstractMatrix{T}, maxdegree::Int,
+                                V::AbstractMatrix{T})
+  ptr = 1
+  for r = 0:maxdegree
+    for j = 0:r
+      i = r-j
+      V[:,ptr] = OrthoPoly.proriolpoly(coords[:, 1], coords[:, 2], i, j)
+      ptr += 1
+    end
+  end
+
+  return nothing
+end
+
+"""
+### SummationByParts.calcvandeermondproriol3
+
+  3D function used by calcvandermondproriol()
+"""
+function calcvandermondproriol3{T}(coords::AbstractMatrix{T}, maxdegree::Int,
+                                V::AbstractMatrix{T})
+  ptr = 1
+  for r = 0:maxdegree
+    for k = 0:r
+      for j = 0:r-k
+        i = r-j-k
+        V[:,ptr] = OrthoPoly.proriolpoly(coords[:, 1], coords[:, 2],
+                                         coords[:, 3], i, j, k)
+        ptr += 1
+      end
+    end
+  end
+
+  return nothing
+end
+
+
+"""
+### SummationByParts.buildinterpolation
+
+Constructs the interpolation operator required for staggered grids.
+Currently, this function does not check that the sbp_s cubature is degree 2p.
+
+**Inputs**
+
+* sbp_s: the SBP operator on the solution grid
+* sbp_f: the SBP operator on the flux grid
+
+**Outputs**
+
+* I_s2f: interpolation operator from solution grid to flux grid,
+         sbp_f.numnodes x sbp_s.numnodes
+* I_f2s: interpolation operator from flux grid to solution grid,
+         sbp_s.numnodes x sbp_f.numnodes
+"""
+function buildinterpolation{T}(sbp_s::TriSBP{T}, sbp_f::TriSBP{T})
+
+  degree = sbp_s.degree
+
+  # get vandermond matrix of sbp_s 
+  # get Vandermond matrix of sbp_s up to degree sbp_s.degree
+
+  # construct W
+
+  # construct IS2F
+  # construct IF2S
+
+
+  return nothing
+end
+
+
 @doc """
 ### SummationByParts.permuteinterface!
 

@@ -28,7 +28,36 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
       @fact calcminnodedistance(sbp, vtx) --> roughly(mindist[p], atol=1e-13)
     end
   end
-      
+
+  context("Testing SummationByParts.calcvandermondproriol") do
+    # test that the Vandermond matrix is differentiated accuracly
+    degree = 4
+    for dim = 2:3
+      if dim == 2
+        sbp = TriSBP{Float64}(degree=degree)
+      else
+        sbp = TetSBP{Float64}(degree=degree)
+      end
+
+      npoly = binomial(degree -1 + dim, dim)
+      nodes = calcnodes(sbp).'
+      # use degree - 1 so the inner product of any two columns is
+      # 2p - 2 or less
+      V = SummationByParts.calcvandermondproriol(nodes, degree - 1)
+
+      # verify orthogonality under the sbp quadrature rule
+      for i=1:npoly
+        for j=1:npoly
+          if i == j
+            continue
+          end
+          @fact sum(sbp.w.*V[:, i].*V[:, j]) --> roughly(0.0, atol=1e-12)
+        end
+      end
+    end  # end dim loop
+
+  end # end do
+
   context("Testing SummationByParts.buildinterpolation (TriSBP method)") do
     # this checks that polynomials of total degree d are reconstructed accurately
     numpoints = 3
