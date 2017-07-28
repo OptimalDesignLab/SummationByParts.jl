@@ -259,18 +259,49 @@ Currently, this function does not check that the sbp_s cubature is degree 2p.
 """
 function buildinterpolation{T}(sbp_s::TriSBP{T}, sbp_f::TriSBP{T})
 
+  dim = 2
   degree = sbp_s.degree
+  nmin = binomial(degree + dim, dim)
+  nnodes_s = sbp_s.numnodes
+  nnodes_f = sbp_f.numnodes
+  nodes_s = calcnodes(sbp_s).'
+  nodes_f = calcnodes(sbp_f).'
+  nulldim_s = size(nodes_s, 1) - nmin  # dimension of nullspace
+  nulldim_f = size(nodes_f, 1) - nmin  # dimension of nullspace
+
+  H_s = diagm(sbp_s.w)
+  H_f = diagm(sbp_f.w)
 
   # get vandermond matrix of sbp_s 
   # get Vandermond matrix of sbp_s up to degree sbp_s.degree
+  V_s = calcvandermondproriol(nodes_s, degree)
+  V_f = calcvandermondproriol(nodes_f, degree)
 
-  # construct W
+  if size(V_s, 1) == size(V_s, 2)
+    I_s2f = V_f*inv(V_s)
+  else
+    # construct W, W_tilde
+    # thick QR with pivoting
+    Q, R = qr(V_s, Val{true}, thin=false)
+    W_s = Q[:, (nmin+1):end]
 
-  # construct IS2F
+#    println("W_s = \n", W_s)
+    @assert size(W_s, 2) == nulldim_s
+
+    W_f = (W_s.'*H_s*V_s*inv(V_f.'*V_f)*V_f.'*inv(H_f)).'
+
+    @assert size(W_f, 1) == nnodes_f
+    @assert size(W_f, 2) == nulldim_f
+
+    # construct IS2F
+    I_s2f = hcat(V_f, W_f)*inv(hcat(V_s, W_s))
+  end
+
   # construct IF2S
+  I_f2s = inv(H_s)*I_s2f.'*H_f
 
 
-  return nothing
+  return return I_s2f, I_f2s
 end
 
 

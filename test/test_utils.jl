@@ -146,6 +146,123 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     end
   end
 
+  context("Testing SummationByParts.buildinterpolation (Staggered grid)") do
+
+    # check that it is the identity if the two operators are the same
+    degree = 1
+    sbp_s = TriSBP{Float64}(degree=degree)
+    sbp_f = TriSBP{Float64}(degree=degree)
+
+    I_s2f, I_f2s = SummationByParts.buildinterpolation(sbp_s, sbp_f)
+
+    @fact size(I_s2f, 1) --> sbp_s.numnodes
+    @fact size(I_s2f, 2) --> sbp_s.numnodes
+    @fact size(I_s2f) --> size(I_f2s)
+    @fact I_s2f --> roughly(eye(sbp_s.numnodes), atol=1e-13)
+    @fact I_f2s --> roughly(eye(sbp_s.numnodes), atol=1e-13)
+
+    # test different SBP operators
+    degree_s = 2
+    degree_f = 3
+    sbp_s = getTriSBPOmega(degree=degree_s)
+    nodes_s = calcnodes(sbp_s).'
+    sbp_f = getTriSBPGamma(degree=degree_f)
+    nodes_f = calcnodes(sbp_f).'
+
+    I_s2f, I_f2s = SummationByParts.buildinterpolation(sbp_s, sbp_f)
+
+    @fact size(I_s2f) --> (sbp_f.numnodes, sbp_s.numnodes)
+    @fact size(I_f2s) --> (sbp_s.numnodes, sbp_f.numnodes)
+
+    # check identity property
+    @fact I_f2s*I_s2f --> roughly(eye(sbp_s.numnodes), atol=1e-13)
+
+    # check the accuracy conditions
+    V_s = SummationByParts.calcvandermondproriol(nodes_s, degree_s)
+    V_f = SummationByParts.calcvandermondproriol(nodes_f, degree_s)
+
+    @fact I_s2f*V_s --> roughly(V_f, atol=1e-13)
+    @fact I_f2s*V_f --> roughly(V_s, atol=1e-13)
+
+    # check stability property
+    H_s = diagm(sbp_s.w)
+    H_f = diagm(sbp_f.w)
+
+    @fact H_s*I_f2s*inv(H_f) --> roughly(I_s2f.', atol=1e-13)
+
+    # check a solution operator with non-minimal number of nodes
+    println("checking nullspace calculation")
+    degree_s = 2
+    degree_f = 3
+    sbp_s = getTriSBPWithDiagE(degree=degree_s)
+    nodes_s = calcnodes(sbp_s).'
+    sbp_f = getTriSBPGamma(degree=degree_f)
+    nodes_f = calcnodes(sbp_f).'
+
+    I_s2f, I_f2s = SummationByParts.buildinterpolation(sbp_s, sbp_f)
+
+    println("checking sizes")
+    @fact size(I_s2f) --> (sbp_f.numnodes, sbp_s.numnodes)
+    @fact size(I_f2s) --> (sbp_s.numnodes, sbp_f.numnodes)
+
+    # check identity property
+    println("checking identity property")
+    @fact I_f2s*I_s2f --> roughly(eye(sbp_s.numnodes), atol=1e-13)
+
+    # check the accuracy conditions
+    println("checking accuracy condition")
+    V_s = SummationByParts.calcvandermondproriol(nodes_s, degree_s)
+    V_f = SummationByParts.calcvandermondproriol(nodes_f, degree_s)
+
+    @fact I_s2f*V_s --> roughly(V_f, atol=1e-13)
+    @fact I_f2s*V_f --> roughly(V_s, atol=1e-13)
+
+    # check stability property
+    println("checking stability property")
+    H_s = diagm(sbp_s.w)
+    H_f = diagm(sbp_f.w)
+
+    @fact H_s*I_f2s*inv(H_f) --> roughly(I_s2f.', atol=1e-13)
+
+    # check the configuration we actually want to use
+    # SBP Omega on solution grid and diagonal E on flux grid
+    println("checking optimal configuration")
+    degree_s = 2
+    degree_f = 3
+    sbp_s = getTriSBPOmega(degree=degree_s)
+    nodes_s = calcnodes(sbp_s).'
+    sbp_f = getTriSBPWithDiagE(degree=degree_f)
+    nodes_f = calcnodes(sbp_f).'
+    I_s2f, I_f2s = SummationByParts.buildinterpolation(sbp_s, sbp_f)
+
+    println("checking sizes")
+    @fact size(I_s2f) --> (sbp_f.numnodes, sbp_s.numnodes)
+    @fact size(I_f2s) --> (sbp_s.numnodes, sbp_f.numnodes)
+
+    # check identity property
+    println("checking identity property")
+    @fact I_f2s*I_s2f --> roughly(eye(sbp_s.numnodes), atol=1e-13)
+
+    # check the accuracy conditions
+    println("checking accuracy condition")
+    V_s = SummationByParts.calcvandermondproriol(nodes_s, degree_s)
+    V_f = SummationByParts.calcvandermondproriol(nodes_f, degree_s)
+
+    @fact I_s2f*V_s --> roughly(V_f, atol=1e-13)
+    @fact I_f2s*V_f --> roughly(V_s, atol=1e-13)
+
+    # check stability property
+    println("checking stability property")
+    H_s = diagm(sbp_s.w)
+    H_f = diagm(sbp_f.w)
+
+    @fact H_s*I_f2s*inv(H_f) --> roughly(I_s2f.', atol=1e-13)
+
+
+
+
+
+  end
   context("Testing SummationByParts.permuteface!") do
     # test 2D version
     permvec = [2, 1, 3, 4]
