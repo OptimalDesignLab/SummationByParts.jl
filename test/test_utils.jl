@@ -1,3 +1,14 @@
+function filter_mat(A::AbstractMatrix)
+
+  for i=1:length(A)
+    if abs(A[i]) < 1e-13
+      A[i] = 0
+    end
+  end
+
+  return A
+end
+
 facts("Testing SummationByParts Module (utils.jl file)...") do
   
   for TSBP = (TriSBP, SparseTriSBP, TetSBP)
@@ -149,7 +160,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
   context("Testing SummationByParts.buildinterpolation (Staggered grid)") do
 
     # check that it is the identity if the two operators are the same
-    degree = 1
+    degree = 2
     sbp_s = TriSBP{Float64}(degree=degree)
     sbp_f = TriSBP{Float64}(degree=degree)
 
@@ -190,6 +201,20 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
 
     @fact H_s*I_f2s*inv(H_f) --> roughly(I_s2f.', atol=1e-13)
 
+    #=
+    println("checking intermediate results for identity property")
+
+    # check full expression
+    t1 = inv(H_s)*inv(V_s).'*V_f.'*H_f*V_f*inv(V_s)
+    println("full expression = ", filter_mat(t1))
+
+    # check reduced expression
+    println("H_s = ", H_s)
+    println("inv(H_s) = ", inv(H_s))
+    t2 = inv(H_s)*inv(V_s).'*inv(V_s)
+    println("reduced expresssion = ", filter_mat(t2))
+    =#
+
     # check a solution operator with non-minimal number of nodes
     println("checking nullspace calculation")
     degree_s = 2
@@ -205,9 +230,9 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     @fact size(I_s2f) --> (sbp_f.numnodes, sbp_s.numnodes)
     @fact size(I_f2s) --> (sbp_s.numnodes, sbp_f.numnodes)
 
-    # check identity property
-    println("checking identity property")
-    @fact I_f2s*I_s2f --> roughly(eye(sbp_s.numnodes), atol=1e-13)
+    # not checking identity property - it doesn't hold in this case
+#    println("checking identity property")
+#    @fact I_f2s*I_s2f --> roughly(eye(sbp_s.numnodes), atol=1e-13)
 
     # check the accuracy conditions
     println("checking accuracy condition")
@@ -223,6 +248,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     H_f = diagm(sbp_f.w)
 
     @fact H_s*I_f2s*inv(H_f) --> roughly(I_s2f.', atol=1e-13)
+
 
     # check the configuration we actually want to use
     # SBP Omega on solution grid and diagonal E on flux grid

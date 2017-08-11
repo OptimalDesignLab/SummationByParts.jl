@@ -44,7 +44,7 @@ export boundaryintegrate!, boundaryFaceIntegrate!
 export boundaryintegrate_rev!, boundaryFaceIntegrate_rev!
 export interiorfaceintegrate!, interiorFaceIntegrate!
 export interiorfaceintegrate_rev!, interiorFaceIntegrate_rev!
-export edgestabilize!, permuteinterface!
+export edgestabilize!, permuteinterface!, buildinterpolation
 
 @doc """
 ### SBP.AbstractSBP
