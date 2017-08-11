@@ -291,7 +291,7 @@ function buildinterpolation{T}(sbp_s::TriSBP{T}, sbp_f::TriSBP{T})
     W_f = (W_s.'*H_s*V_s*inv(V_f.'*V_f)*V_f.'*inv(H_f)).'
 
     @assert size(W_f, 1) == nnodes_f
-    @assert size(W_f, 2) == nulldim_f
+    @assert size(W_f, 2) == nulldim_s
 
     # construct IS2F
     I_s2f = hcat(V_f, W_f)*inv(hcat(V_s, W_s))
