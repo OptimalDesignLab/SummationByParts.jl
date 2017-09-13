@@ -60,7 +60,12 @@ Returns SBP-Omega type elements, that have no nodes on the element boundary
 
 """->
 function getTriSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
-  return TriSBP{Tsbp}(degree=degree, internal=true, vertices=false)
+  #return TriSBP{Tsbp}(degree=degree, internal=true, vertices=false)
+  cub, vtx = tricubature(2*degree, Tsbp, internal=true,
+                         vertices=false)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  TriSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
 function getTriSBPWithDiagE(;degree::Int=1, Tsbp::Type=Float64,
