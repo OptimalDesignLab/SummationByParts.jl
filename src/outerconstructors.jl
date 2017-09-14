@@ -63,6 +63,33 @@ function getTriSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
   return TriSBP{Tsbp}(degree=degree, internal=true, vertices=false)
 end
 
+"""
+### SBP.getTriSBPOmega2
+
+Like getTRISBPomega, but ensures the operator has a degree 2p cubature
+rule
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `Tsbp`: floating point type used for the operators
+
+**Returns**
+
+* `sbp`: an SBP-Omega type operator of the appropriate degree
+
+"""
+function getTriSBPOmega2(;degree::Int=1, Tsbp::Type=Float64)
+
+  cub, vtx = tricubature(2*degree, Tsbp, internal=true,
+                         vertices=false)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+
+  return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
+end
+
+
 function getTriSBPWithDiagE(;degree::Int=1, Tsbp::Type=Float64,
                             vertices::Bool=true)
   @assert( degree >= 1 && degree <= 4 )

@@ -93,7 +93,7 @@ if 1 == 0:
     #ax.axhline(linewidth=axis_lw)
     #ax.axvline(linewidth=axis_lw)
 else:
-    ax.axis([-0.1, 1.1, -0.1, np.sqrt(3)*0.5+0.1])  # axes ranges
+    #ax.axis([-0.1, 1.1, -0.1, np.sqrt(3)*0.5+0.1])  # axes ranges
     #ax.set_position([0.01, 0.01, 0.99, 0.99]) # position relative to figure edges
     ax.set_position([0.0, 0.0, 1., 1.]) # position relative to figure edges
     plt.axis("off")
