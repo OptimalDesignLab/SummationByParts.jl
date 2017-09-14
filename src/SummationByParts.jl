@@ -16,7 +16,7 @@ using .SymCubatures
 using .Cubature
 
 export AbstractSBP, TriSBP, TetSBP, SparseTriSBP, SparseTetSBP
-export getTriSBPGamma, getTriSBPOmega, getTriSBPWithDiagE
+export getTriSBPGamma, getTriSBPOmega, getTriSBPOmega2, getTriSBPWithDiagE
 export getTetSBPGamma, getTetSBPOmega, getTetSBPWithDiagE
 export AbstractFace, TriFace, TetFace
 export getTriFaceForDiagE, getTetFaceForDiagE
