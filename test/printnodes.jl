@@ -39,7 +39,7 @@ end
 function printTriOmegaNodes(degree::Int,
                             filename::AbstractString="nodes.dat")
   @assert( degree >= 1 && degree <= 4)
-  sbp = getTriSBPOmega(degree=degree)
+  sbp = getTriSBPOmega2(degree=degree)
   sbpface = TriFace{Float64}(degree, sbp.cub, [-1. -1; 1 -1; -1 1])
   # compute the volume nodes
   vtx = [0.0 0.0; 1 0.0; 0.5 sqrt(3)*0.5]
