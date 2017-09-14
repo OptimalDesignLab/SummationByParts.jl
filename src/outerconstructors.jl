@@ -84,7 +84,8 @@ function getTriSBPOmega2(;degree::Int=1, Tsbp::Type=Float64)
   cub, vtx = tricubature(2*degree, Tsbp, internal=true,
                          vertices=false)
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
-  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  w, Q = buildMinConditionOperators(cub, vtx, degree, vertices=false)
+#  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
 
   return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
