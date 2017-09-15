@@ -640,18 +640,30 @@ end
       #                                0.624003943088726])
     elseif q <= 8
       # P4; 9th order cubature
-      cub = SymCubatures.TriSymCub{T}(vertices=false, numS21=4, numS111=1)
-      SymCubatures.setweights!(cub, T[0.05415768359243055;
-                                      0.11606844251884181;
-                                      0.16305903205856434;
-                                      0.18042409969012593;
-                                      0.07647870440335205])
-      SymCubatures.setparams!(cub, T[0.09199464041197784;
-                                     0.9547402313677645;
-                                     0.353676230440559;
-                                     0.8037465193903021;
-                                     0.4612850345245523;
-                                     0.06105167151116454])
+      cub = SymCubatures.TriSymCub{T}(vertices=false, centroid=true,
+                                      numS21=3, numS111=1)
+      SymCubatures.setweights!(cub, T[0.20643474106943666;
+                                      0.19018326853457126;
+                                      0.06491699524639659;
+                                      0.05446062834886685;
+                                      0.2886312153555818])
+      SymCubatures.setparams!(cub, T[0.3411386155035168;
+                                     0.9185851765854467;
+                                     0.10109445663405793;
+                                     0.5262256592692812;
+                                     0.016789554819910586])      
+      # cub = SymCubatures.TriSymCub{T}(vertices=false, numS21=4, numS111=1)
+      # SymCubatures.setweights!(cub, T[0.05415768359243055;
+      #                                 0.11606844251884181;
+      #                                 0.16305903205856434;
+      #                                 0.18042409969012593;
+      #                                 0.07647870440335205])
+      # SymCubatures.setparams!(cub, T[0.09199464041197784;
+      #                                0.9547402313677645;
+      #                                0.353676230440559;
+      #                                0.8037465193903021;
+      #                                0.4612850345245523;
+      #                                0.06105167151116454])
       cub_degree = 8
     else
       error("polynomial degree must be <= 7 (presently)\n")
