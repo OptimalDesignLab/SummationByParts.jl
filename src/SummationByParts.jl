@@ -16,8 +16,8 @@ using .SymCubatures
 using .Cubature
 
 export AbstractSBP, TriSBP, TetSBP, SparseTriSBP, SparseTetSBP
-export getTriSBPGamma, getTriSBPOmega, getTriSBPWithDiagE
-export getTetSBPGamma, getTetSBPOmega, getTetSBPWithDiagE
+export getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE
+export getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE
 export AbstractFace, TriFace, TetFace
 export getTriFaceForDiagE, getTetFaceForDiagE
 export Boundary, Interface
@@ -116,10 +116,13 @@ immutable SparseTriSBP{T} <: AbstractSBP{T}
   Q::Array{T,3}
 
   function SparseTriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
-                        internal=false, vertices=true,
-                        cubdegree::Int=2*degree+1)
+                        internal=false, cubdegree::Int=2*degree+1)
     @assert( degree >= 1 && degree <= 4 )
-    cub, vtx = tricubature(cubdegree, T, internal=internal, vertices=vertices)
+    if internal
+      cub, vtx = getTriCubatureOmega(cubdegree, T)
+    else
+      cub, vtx = getTriCubatureGamma(cubdegree, T)
+    end
     numnodes = cub.numnodes
     Q = zeros(T, (numnodes, numnodes, 2))
     w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)
@@ -189,7 +192,11 @@ immutable SparseTetSBP{T} <: AbstractSBP{T}
   function SparseTetSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4],
                         internal=false, cubdegree::Int=2*degree-1)
     @assert( degree >= 1 && degree <= 3 )
-    cub, vtx = tetcubature(cubdegree, T, internal=internal)
+    if internal
+      cub, vtx = getTetCubatureOmega(cubdegree, T)
+    else
+      cub, vtx = getTetCubatureGamma(cubdegree, T)
+    end
     numnodes = cub.numnodes
     Q = zeros(T, (numnodes, numnodes, 3))
     w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)

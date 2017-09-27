@@ -3,7 +3,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
   context("Testing SummationByParts.buildfacereconstruction (TriSymCub method, faceonly=true)") do
     # this checks that polynomials of total degree d are reconstructed accurately
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64, internal=false)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       facecub, tmp = quadrature(2*d, Float64, internal=true)
       R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
                                                          faceonly=true)
@@ -27,7 +27,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
   context("Testing SummationByParts.buildfacereconstruction (TriSymCub method, faceonly=false, internal=false)") do
     # this checks that polynomials of total degree d are reconstructed accurately
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64, internal=false)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       facecub, tmp = quadrature(2*d, Float64, internal=false)
       R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
                                                          faceonly=false)
@@ -51,7 +51,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
   context("Testing SummationByParts.buildfacereconstruction (TriSymCub method, faceonly=false)") do
     # this checks that polynomials of total degree d are reconstructed accurately
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64, internal=true)
+      cub, vtx = getTriCubatureOmega(2*d, Float64)
       facecub, tmp = quadrature(2*d, Float64, internal=true)
       R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
                                                          faceonly=false)
@@ -75,8 +75,8 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
   context("Testing SummationByParts.buildfacereconstruction (TetSymCub method, faceonly=true)") do
     # this checks that polynomials of total degree d are reconstructed accurately
     for d = 1:4
-      cub, vtx = tetcubature(2*d-1, Float64, internal=false)
-      facecub, tmp = tricubature(2*d, Float64, internal=true)
+      cub, vtx = getTetCubatureGamma(2*d-1, Float64)
+      facecub, tmp = getTriCubatureOmega(2*d, Float64)
       R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
                                                          faceonly=true)
       vtxface = [1 2 3; 1 4 2; 2 4 3; 1 3 4].'
@@ -102,8 +102,8 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
   context("Testing SummationByParts.buildfacereconstruction (TetSymCub method, faceonly=false, internal=true)") do
     # this checks that polynomials of total degree d are reconstructed accurately
     for d = 1:2
-      cub, vtx = tetcubature(2*d-1, Float64, internal=true)
-      facecub, tmp = tricubature(2*d, Float64, internal=true)
+      cub, vtx = getTetCubatureOmega(2*d-1, Float64)
+      facecub, tmp = getTriCubatureOmega(2*d, Float64)
       R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
                                                          faceonly=false)
       vtxface = [1 2 3; 1 4 2; 2 4 3; 1 3 4].'
@@ -129,7 +129,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
   context("Testing SummationByParts.buildfacederivative (TriSymCub method)") do
     # this checks that polynomials of total degree d are differentiated
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64, internal=false)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       facecub, tmp = quadrature(2*d, Float64, internal=true)
       D, perm = SummationByParts.buildfacederivatives(facecub, cub, vtx, d)
       xy = SymCubatures.calcnodes(cub, vtx)
@@ -165,7 +165,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
 
   context("Testing SummationByParts.TriFace constructor (internal=false)") do
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64, internal=false)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       xy = SymCubatures.calcnodes(cub, vtx)
       face = TriFace{Float64}(d, cub, vtx)
       # loop over monomials of degree <= d
@@ -198,7 +198,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
 
   context("Testing SummationByParts.TriFace constructor (internal=false, vertices=true)") do
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64, internal=false, vertices=true)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       xy = SymCubatures.calcnodes(cub, vtx)
       face = TriFace{Float64}(d, cub, vtx)
       # loop over monomials of degree <= d
@@ -231,7 +231,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
 
   context("Testing SummationByParts.TriFace constructor (internal=true)") do
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64, internal=true)
+      cub, vtx = getTriCubatureOmega(2*d, Float64)
       xy = SymCubatures.calcnodes(cub, vtx)
       face = TriFace{Float64}(d, cub, vtx)
       # loop over monomials of degree <= d
@@ -277,7 +277,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
       end
     end
     for d = 1:4
-      cub, vtx = tetcubature(2*d-1, Float64, internal=false)
+      cub, vtx = getTetCubatureGamma(2*d-1, Float64)
       xyz = SymCubatures.calcnodes(cub, vtx)
       face = TetFace{Float64}(d, cub, vtx)
       # i and j are coordinate indices, and a and b are powers that determine

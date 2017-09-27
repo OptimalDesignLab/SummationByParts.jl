@@ -1,11 +1,12 @@
 facts("Testing SummationByParts Module (reverse-diff of volume integrate methods)...") do
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
+              getTetSBPGamma, getTetSBPOmega)
     @eval begin
       context("Testing volumeintegrate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
           # verify that H*u = (u^T*H)^T
-          sbp = ($TSBP){Float64}(degree=p)
+          sbp = ($TSBP)(degree=p)
           u = rand(Float64, (sbp.numnodes,2))
           Hu = zeros(u)
           utH = zeros(u)
@@ -17,12 +18,13 @@ facts("Testing SummationByParts Module (reverse-diff of volume integrate methods
     end
   end
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
+              getTetSBPGamma, getTetSBPOmega)
     @eval begin
       context("Testing volumeintegrate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4
           # verify that H*u = (u^T*H)^T
-          sbp = ($TSBP){Float64}(degree=p)
+          sbp = ($TSBP)(degree=p)
           u = rand(Float64, (4,sbp.numnodes,2))
           Hu = zeros(u)
           utH = zeros(u)
@@ -34,12 +36,13 @@ facts("Testing SummationByParts Module (reverse-diff of volume integrate methods
     end
   end
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
+              getTetSBPGamma, getTetSBPOmega)
     @eval begin
       context("Testing volumeIntegrateElement_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
           # verify that H*u = (u^T*H)^T
-          sbp = ($TSBP){Float64}(degree=p)
+          sbp = ($TSBP)(degree=p)
           u = rand(Float64, (sbp.numnodes))
           Hu = zeros(u)
           utH = zeros(u)
@@ -51,12 +54,13 @@ facts("Testing SummationByParts Module (reverse-diff of volume integrate methods
     end
   end
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
+              getTetSBPGamma, getTetSBPOmega)
     @eval begin
       context("Testing volumeIntegrateElement_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4
           # verify that H*u = (u^T*H)^T
-          sbp = ($TSBP){Float64}(degree=p)
+          sbp = ($TSBP)(degree=p)
           u = rand(Float64, (4,sbp.numnodes))
           Hu = zeros(u)
           utH = zeros(u)

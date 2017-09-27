@@ -145,18 +145,18 @@ facts("Testing Cubature Module...") do
     end
   end
 
-  context("Testing Cubature.tricubature (internal=false)") do
+  context("Testing Cubature.getTriCubatureGamma") do
     # test using Float32, because this has not been done above
-    cub, vtx = tricubature(1, Float32)
+    cub, vtx = getTriCubatureGamma(1, Float64)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly(Float32[2/3, 2/3, 2/3], atol=1e-7)
     @fact SymCubatures.getnumboundarynodes(cub) --> 3
-    cub, vtx = tricubature(3, Float32)
+    cub, vtx = getTriCubatureGamma(3, Float64)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly(Float32[1/10, 1/10, 1/10, 4/15, 4/15, 4/15, 18/20],
                        atol=1e-7)
     @fact SymCubatures.getnumboundarynodes(cub) --> 6
-    cub, vtx = tricubature(5, Float32)
+    cub, vtx = getTriCubatureGamma(5, Float64)
     w = SymCubatures.calcweights(cub)
     @fact w -->
     roughly(Float32[0.029745826049641155,0.029745826049641155,0.029745826049641155,0.44155411568082154,0.44155411568082154,0.44155411568082154,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102],
@@ -164,18 +164,18 @@ facts("Testing Cubature Module...") do
     @fact SymCubatures.getnumboundarynodes(cub) --> 9
   end
 
-  context("Testing Cubature.tricubature (internal=true)") do
-    cub, vtx = tricubature(2, Float64, internal=true)
+  context("Testing Cubature.getTriCubatureOmega") do
+    cub, vtx = getTriCubatureOmega(2, Float64)
     @fact cub.weights --> roughly([2/3], atol=1e-14)
     @fact cub.params --> roughly([1/3], atol=1e-14)
 
-    cub, vtx = tricubature(4, Float64, internal=true)
+    cub, vtx = getTriCubatureOmega(4, Float64)
     @fact cub.weights --> roughly([0.44676317935602283;
                                    0.2199034873106437], atol=1e-14)
     @fact cub.params --> roughly([0.8918969818319298;
                                   0.18315242701954149], atol=1e-14)
 
-    cub, vtx = tricubature(5, Float64, internal=true)
+    cub, vtx = getTriCubatureOmega(5, Float64)
     @fact cub.weights --> roughly([0.11550472674301035;
                                    0.20924480696331949;
                                    0.39801697799105223], atol=1e-14)
@@ -183,7 +183,7 @@ facts("Testing Cubature Module...") do
                                   0.14215944055500324;
                                   0.6226442585632832], atol=1e-14)
 
-    cub, vtx = tricubature(7, Float64, internal=true)
+    cub, vtx = getTriCubatureOmega(7, Float64)
     @fact cub.weights --> roughly([0.045386157905236965;
                                    0.1458284149509071;
                                    0.2543369199180239;
@@ -195,49 +195,36 @@ facts("Testing Cubature Module...") do
                                   0.0959626827429292], atol=1e-14)
   end
 
-  context("Testing Cubature.tricubature (internal=false, vertices=false)") do
+  context("Testing Cubature.getTetCubatureGamma") do
     # test using Float32, because this has not been done above
-    cub, vtx = tricubature(2, Float32, vertices=false)
-    w = SymCubatures.calcweights(cub)
-    @fact w --> roughly(Float32[2/3, 2/3, 2/3], atol=1e-7)
-    @fact SymCubatures.getnumboundarynodes(cub) --> 3
-    cub, vtx = tricubature(3, Float32, vertices=false)
-    w = SymCubatures.calcweights(cub)
-    @fact w --> roughly(Float32[11/60, 11/60, 11/60, 11/60, 11/60, 11/60, 9/10],
-                        atol=1e-7)
-    @fact SymCubatures.getnumboundarynodes(cub) --> 6
-  end
-
-  context("Testing Cubature.tetcubature (internal=false)") do
-    # test using Float32, because this has not been done above
-    cub, vtx = tetcubature(1, Float32)
+    cub, vtx = getTetCubatureGamma(1, Float32)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly(Float32[1/3, 1/3, 1/3, 1/3], atol=1e-7)
     @fact SymCubatures.getnumboundarynodes(cub) --> 4
-    cub, vtx = tetcubature(3, Float32)
+    cub, vtx = getTetCubatureGamma(3, Float32)
     w = SymCubatures.calcweights(cub)
     @fact w --> roughly([Float32(2/90).*ones(Float32, 4);
                          Float32(8/90).*ones(Float32, 6);
                          Float32[32/45]], atol=1e-7)
     @fact SymCubatures.getnumboundarynodes(cub) --> 10
-    cub, vtx = tetcubature(5, Float64)
+    cub, vtx = getTetCubatureGamma(5, Float64)
     w = SymCubatures.calcweights(cub)
     @fact w -->
     roughly([0.004421633248304814,0.004421633248304814,0.004421633248304814,0.004421633248304814,0.06935370366814599,0.06935370366814599,0.06935370366814599,0.06935370366814599,0.2065316361160523,0.2065316361160523,0.2065316361160523,0.2065316361160523,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603,0.017675453433610603], atol=1e-14)
     @fact SymCubatures.getnumboundarynodes(cub) --> 20
-    cub, vtx = tetcubature(7, Float64)
+    cub, vtx = getTetCubatureGamma(7, Float64)
     w = SymCubatures.calcweights(cub)
     @fact w -->
     roughly([0.0015106273303336273,0.0015106273303336273,0.0015106273303336273,0.0015106273303336273,0.060490542374353584,0.060490542374353584,0.060490542374353584,0.060490542374353584,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.004038881996228382,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.10344930834722398,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.005696088152131421,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.02424296133613638,0.08113091859465722], atol=1e-14)
     @fact SymCubatures.getnumboundarynodes(cub) --> 34    
   end
 
-  context("Testing Cubature.tetcubature (internal=true)") do
-    cub, vtx = tetcubature(2, Float64, internal=true)
+  context("Testing Cubature.getTetCubatureOmega") do
+    cub, vtx = getTetCubatureOmega(2, Float64)
     @fact cub.weights --> roughly([1/3], atol=1e-14)
     @fact cub.params --> roughly([(1 - sqrt(5)/5)*3/4], atol=1e-14)
 
-    cub, vtx = tetcubature(3, Float64, internal=true)
+    cub, vtx = getTetCubatureOmega(3, Float64)
     @fact cub.weights --> roughly([0.06483158243276162;
                                    0.17900116726703835], atol=1e-14)
     @fact cub.params --> roughly([0.22511815489558668;
@@ -247,7 +234,7 @@ facts("Testing Cubature Module...") do
   context("Testing Cubature.equivalenceconstant (tricubature method)") do
     λ = [4.0; 6.165789254884331; 7.136363791526314; 8.644675072049024]
     for p = 1:4
-      cub, vtx = tricubature(2*p-1, Float64, internal=false)
+      cub, vtx = getTriCubatureGamma(2*p-1, Float64)
       @fact Cubature.equivalenceconstant(cub, vtx, 2*p-1) -->
       roughly(λ[p], atol=1e-13)
     end
@@ -256,7 +243,7 @@ facts("Testing Cubature Module...") do
   context("Testing Cubature.equivalenceconstant (tetcubature method)") do
     λ = [5.0; 10.5; 11.77599246416848; 16.61463996715285]
     for p = 1:4
-      cub, vtx = tetcubature(2*p-1, Float64, internal=false)
+      cub, vtx = getTetCubatureGamma(2*p-1, Float64)
       @fact Cubature.equivalenceconstant(cub, vtx, 2*p-1) -->
       roughly(λ[p], atol=1e-13)
     end

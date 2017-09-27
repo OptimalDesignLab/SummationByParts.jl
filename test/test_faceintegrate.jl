@@ -3,7 +3,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing integratefunctional! (TriSBP, scalar field method)") do
     # build a two element grid and verify the accuracy of boundary integration
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
+      sbp = getTriSBPGamma(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,4))
@@ -37,7 +37,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing integratefunctional! (TriSBP, vector field method)") do
     # build a two element grid and verify the accuracy of boundary integration
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
+      sbp = getTriSBPGamma(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,4))
@@ -75,7 +75,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing integratefunctional! (TetSBP, scalar field method)") do
     # build a four element grid and verify the accuracy of boundary integration
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, internal=false)
+      sbp = getTetSBPGamma(degree=p)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
@@ -135,7 +135,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing integratefunctional! (TetSBP, vector field method)") do
     # build a four element grid and verify the accuracy of boundary integration
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, internal=false)
+      sbp = getTetSBPGamma(degree=p)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
@@ -199,7 +199,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing integrateBoundaryFunctional! (TriSBP, scalar field method)") do
     # build a two element grid and verify the accuracy of boundary integration
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
+      sbp = getTriSBPGamma(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,4))
@@ -237,7 +237,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing integrateBoundaryFunctional! (TriSBP, vector field method)") do
     # build a two element grid and verify the accuracy of boundary integration
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
+      sbp = getTriSBPGamma(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (2,sbp.numnodes,2))
       xf = zeros(Float64, (2,sbpface.numnodes,4))
@@ -278,7 +278,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing integrateBoundaryFunctional! (TetSBP, scalar field method)") do
     # build a four element grid and verify the accuracy of boundary integration
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, internal=false)
+      sbp = getTetSBPGamma(degree=p)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
@@ -342,7 +342,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing integrateBoundaryFunctional! (TetSBP, vector field method)") do
     # build a four element grid and verify the accuracy of boundary integration
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p, internal=false)
+      sbp = getTetSBPGamma(degree=p)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
@@ -410,7 +410,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
     # build a two element grid and verify that a constant integrated over all
     # faces is zero
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
+      sbp = getTriSBPGamma(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       ifaces = Array(Interface, 1)
       ifaces[1] = Interface(1,2,2,3,1)
@@ -434,7 +434,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
     # build a two element grid and verify that a constant integrated over all
     # faces is zero
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
+      sbp = getTriSBPGamma(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       ifaces = Array(Interface, 1)
       ifaces[1] = Interface(1,2,2,3,1)
@@ -458,7 +458,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
     # build a five element grid and verify that a constant integrated over all
     # faces is zero
     for p = 1:4      
-      sbp = TetSBP{Float64}(degree=p, internal=false)
+      sbp = getTetSBPGamma(degree=p)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       ifaces = Array(Interface, 4)
       ifaces[1] = Interface(1,5,3,2,1)
@@ -498,7 +498,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
     # build a five element grid and verify that a constant integrated over all
     # faces is zero
     for p = 1:4      
-      sbp = TetSBP{Float64}(degree=p, internal=false)
+      sbp = getTetSBPGamma(degree=p)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       ifaces = Array(Interface, 4)
       ifaces[1] = Interface(1,5,3,2,1)
@@ -534,13 +534,11 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
     end
   end
 
-# HERE
-
   context("Testing boundaryFaceIntegrate! and interiorFaceIntegrate! (TriSBP scalar field method)") do
     # build a two element grid and verify that a constant integrated over all
     # faces is zero
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
+      sbp = getTriSBPGamma(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       ifaces = Array(Interface, 1)
       ifaces[1] = Interface(1,2,2,3,1)
@@ -569,7 +567,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
     # build a two element grid and verify that a constant integrated over all
     # faces is zero
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
+      sbp = getTriSBPGamma(degree=p)
       sbpface = TriFace{Float64}(p, sbp.cub, [-1. -1.; 1. -1.; -1. 1.])
       ifaces = Array(Interface, 1)
       ifaces[1] = Interface(1,2,2,3,1)
@@ -598,7 +596,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
     # build a five element grid and verify that a constant integrated over all
     # faces is zero
     for p = 1:4      
-      sbp = TetSBP{Float64}(degree=p, internal=false)
+      sbp = getTetSBPGamma(degree=p)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       ifaces = Array(Interface, 4)
       ifaces[1] = Interface(1,5,3,2,1)
@@ -645,7 +643,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
     # build a five element grid and verify that a constant integrated over all
     # faces is zero
     for p = 1:4      
-      sbp = TetSBP{Float64}(degree=p, internal=false)
+      sbp = getTetSBPGamma(degree=p)
       sbpface = TetFace{Float64}(p, sbp.cub, sbp.vtx)
       ifaces = Array(Interface, 4)
       ifaces[1] = Interface(1,5,3,2,1)
