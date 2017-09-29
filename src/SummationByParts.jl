@@ -19,6 +19,7 @@ export AbstractSBP, TriSBP, TetSBP, SparseTriSBP, SparseTetSBP
 export getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE
 export getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE
 export AbstractFace, TriFace, TetFace
+export SparseFace, TriSparseFace, TetSparseFace
 export getTriFaceForDiagE, getTetFaceForDiagE
 export Boundary, Interface
 
