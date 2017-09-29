@@ -37,6 +37,23 @@ function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::AbstractFace{Tsbp},
   end
 end
 
+function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::SparseFace{Tsbp},
+                                                  bndryfaces::Array{Boundary},
+                                                  flux_bar::AbstractArray{Tflx,3},
+                                                  fun_bar::AbstractArray{Tfun,1},
+                                                  (±)::UnaryFunctor=Add())
+  @assert( size(flux_bar,1) == size(fun_bar,1) )
+  @assert( size(bndryfaces,1) == size(flux_bar,3) )
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      for field = 1:size(fun_bar,1)
+        #fun[field] += ±(sbpface.wface[i]*flux[field,i,bindex])
+        flux_bar[field,i,bindex] += ±(sbpface.wface[i])*fun_bar[field]
+      end
+    end
+  end
+end
+
 @doc """
 ### SummationByParts.integrateBoundaryFunctional_rev!
 
@@ -61,6 +78,19 @@ function integrateBoundaryFunctional_rev!{
                   flux_bar::AbstractArray{Tflx,2}, fun_bar::AbstractArray{Tfun,1},
                   (±)::UnaryFunctor=Add())
   @assert( size(sbpface.interp,2) == size(flux_bar,2) )
+  @assert( size(flux_bar,1) == size(fun_bar,1) )
+  for i = 1:sbpface.numnodes
+    for field = 1:size(fun_bar,1)
+      # fun[field] += ±(sbpface.wface[i]*flux[field,i])
+      flux_bar[field,i] += ±(sbpface.wface[i]*fun_bar[field])
+    end
+  end
+end
+
+function integrateBoundaryFunctional_rev!{
+  Tsbp,Tflx,Tfun}(sbpface::SparseFace{Tsbp}, face::Integer,
+                  flux_bar::AbstractArray{Tflx,2}, fun_bar::AbstractArray{Tfun,1},
+                  (±)::UnaryFunctor=Add())
   @assert( size(flux_bar,1) == size(fun_bar,1) )
   for i = 1:sbpface.numnodes
     for field = 1:size(fun_bar,1)
@@ -141,6 +171,41 @@ function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
+function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+                                                bndryfaces::Array{Boundary},
+                                                flux_bar::AbstractArray{Tflx,2},
+                                                res_bar::AbstractArray{Tres,2},
+                                                (±)::UnaryFunctor=Add())
+  @assert( size(bndryfaces,1) == size(flux_bar,2) )
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      # res[sbpface.perm[i,bndry.face],bndry.element] +=
+      #   ±(sbpface.wface[i]*flux[i,bindex])
+      flux_bar[i,bindex] +=
+        ±(sbpface.wface[i]*res_bar[sbpface.perm[i,bndry.face],bndry.element])
+    end
+  end
+end
+
+function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+                                            bndryfaces::Array{Boundary},
+                                            flux_bar::AbstractArray{Tflx,3},
+                                            res_bar::AbstractArray{Tres,3},
+                                            (±)::UnaryFunctor=Add())
+  @assert( size(bndryfaces,1) == size(flux_bar,3) )
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      for field = 1:size(res_bar,1)
+        # res[field,sbpface.perm[i,bndry.face],bndry.element] +=
+        #   ±(sbpface.wface[i]*flux[field,i,bindex])
+        flux_bar[field,i,bindex] +=
+          ±(sbpface.wface[i]*
+            res_bar[field,sbpface.perm[i,bndry.face],bndry.element])
+      end
+    end
+  end
+end
+
 @doc """
 ### SummationByParts.boundaryFaceIntegrate_rev!
 
@@ -199,6 +264,32 @@ function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
     for field = 1:size(res_bar,1)
       # wflux[field] = sbpface.wface[i]*flux[field,i]
       flux_bar[field,i] += sbpface.wface[i]*wflux_bar[field]
+    end
+  end
+end
+
+function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+                                                    face::Integer,
+                                                    flux_bar::AbstractArray{Tflx,1},
+                                                    res_bar::AbstractArray{Tres,1},
+                                                    (±)::UnaryFunctor=Add())
+  for i = 1:sbpface.numnodes
+    # res[sbpface.perm[i,face]] += ±(sbpface.wface[i]*flux[i])
+    flux_bar[i] += ±(sbpface.wface[i]*res_bar[sbpface.perm[i,face]])
+  end
+end
+
+function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+                                                    face::Integer,
+                                                    flux_bar::AbstractArray{Tflx,2},
+                                                    res_bar::AbstractArray{Tres,2},
+                                                    (±)::UnaryFunctor=Add())
+  @assert( size(flux_bar,1) == size(res_bar,1) )
+  for i = 1:sbpface.numnodes
+    for field = 1:size(res_bar,1)
+      # res[field,sbpface.perm[i,face]] += ±(sbpface.wface[i]*flux[field,i])
+      flux_bar[field,i] += ±(sbpface.wface[i]*
+                             res_bar[field,sbpface.perm[i,face]])
     end
   end
 end
@@ -277,6 +368,53 @@ function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
+function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+                                                    ifaces::Array{Interface},
+                                                    flux_bar::AbstractArray{Tflx,2},
+                                                    res_bar::AbstractArray{Tres,2},
+                                                    (±)::UnaryFunctor=Add())
+  @assert( size(ifaces,1) == size(flux_bar,2) )
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbpface.numnodes
+      iR = sbpface.nbrperm[i,face.orient]
+      # res[sbpface.perm[i,face.faceL],face.elementL] +=
+      #   ±(sbpface.wface[i]*flux[i,findex])
+      flux_bar[i,findex] += ±(sbpface.wface[i]*
+                              res_bar[sbpface.perm[i,face.faceL],face.elementL])
+      # res[sbpface.perm[iR,face.faceR],face.elementR] -=
+      #   ±(sbpface.wface[iR]*flux[i,findex])
+      flux_bar[i,findex] -= ±(sbpface.wface[i]*
+                              res_bar[sbpface.perm[iR,face.faceR],face.elementR])
+    end
+  end
+end
+
+function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+                                                    ifaces::Array{Interface},
+                                                    flux_bar::AbstractArray{Tflx,3},
+                                                    res_bar::AbstractArray{Tres,3},
+                                                    (±)::UnaryFunctor=Add())
+  @assert( size(res_bar,1) == size(flux_bar,1) )  
+  @assert( size(ifaces,1) == size(flux_bar,3) )
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbpface.numnodes
+      iR = sbpface.nbrperm[i,face.orient]
+      for field = 1:size(res_bar,1)
+        # res[field,sbpface.perm[i,face.faceL],face.elementL] +=
+        #   ±(sbpface.wface[i]*flux[field,i,findex])
+        flux_bar[field,i,findex] +=
+          ±(sbpface.wface[i]*
+            res_bar[field,sbpface.perm[i,face.faceL],face.elementL])
+        # res[field,sbpface.perm[iR,face.faceR],face.elementR] -=
+        #   ±(sbpface.wface[iR]*flux[field,i,findex])
+        flux_bar[field,i,findex] -=
+          ±(sbpface.wface[i]*
+            res_bar[field,sbpface.perm[iR,face.faceR],face.elementR])
+      end
+    end
+  end
+end
+
 @doc """
 ### SummationByParts.interiorFaceIntegrate_rev!
 
@@ -344,6 +482,43 @@ function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
         flux_bar[field,i] -= ±(sbpface.interp[j,iR]*sbpface.wface[iR]*
                                resR_bar[field,sbpface.perm[j,iface.faceR]])
       end
+    end
+  end
+end
+
+function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+                                                    iface::Interface,
+                                                    flux_bar::AbstractArray{Tflx,1},
+                                                    resL_bar::AbstractArray{Tres,1},
+                                                    resR_bar::AbstractArray{Tres,1},
+                                                    (±)::UnaryFunctor=Add())
+  for i = 1:sbpface.numnodes
+    iR = sbpface.nbrperm[i,iface.orient]
+    # resL[sbpface.perm[i,iface.faceL]] += ±(sbpface.wface[i]*flux[i])
+    flux_bar[i] += ±(sbpface.wface[i]*resL_bar[sbpface.perm[i,iface.faceL]])
+    # resR[sbpface.perm[iR,iface.faceR]] -= ±(sbpface.wface[i]*flux[i])
+    flux_bar[i] -= ±(sbpface.wface[i]*resR_bar[sbpface.perm[iR,iface.faceR]])
+  end
+end
+
+function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+                                                    iface::Interface,
+                                                    flux_bar::AbstractArray{Tflx,2},
+                                                    resL_bar::AbstractArray{Tres,2},
+                                                    resR_bar::AbstractArray{Tres,2},
+                                                    (±)::UnaryFunctor=Add())
+  @assert( size(resL_bar,1) == size(resR_bar,1) == size(flux_bar,1) )  
+  for i = 1:sbpface.numnodes
+    iR = sbpface.nbrperm[i,iface.orient]
+    for field = 1:size(flux_bar,1)
+      # resL[field,sbpface.perm[i,iface.faceL]] +=
+      #   ±(sbpface.wface[i]*flux[field,i])
+      flux_bar[field,i] += ±(sbpface.wface[i]*
+                             resL_bar[field,sbpface.perm[i,iface.faceL]])
+      # resR[field,sbpface.perm[iR,iface.faceR]] -=
+      #   ±(sbpface.wface[i]*flux[field,i])
+      flux_bar[field,i] -= ±(sbpface.wface[i]*
+                             resR_bar[field,sbpface.perm[iR,iface.faceR]])
     end
   end
 end

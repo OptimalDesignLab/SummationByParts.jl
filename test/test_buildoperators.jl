@@ -446,8 +446,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.buildsparseoperators (TriSymCub method)") do
-    for d = 1:3 # cannot do d=4 yet, since we do not have the cubature
-      cub, vtx = getTriCubatureGamma(2*d+1, Float64)
+    for d = 1:4 
+      cub, vtx = getTriCubatureDiagE(2*d, Float64)
       w, Q = SummationByParts.buildsparseoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]

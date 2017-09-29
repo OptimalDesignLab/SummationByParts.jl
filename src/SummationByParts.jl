@@ -319,6 +319,112 @@ immutable TetFace{T} <: AbstractFace{T}
 end
 
 @doc """
+### SBP.SparseFace
+
+`SparseFace` is a parametric abstract type that defines face-based data and
+operations (e.g. volume-to-face reconstruction, face integration, etc) for
+summation-by-parts finite-difference operators in the case where the
+face-cubature nodes and volume nodes coincide (i.e. diagonal E operators).
+
+"""->
+abstract SparseFace{T<:Number}
+
+@doc """
+### SBP.TriSparseFace
+
+Defines a face between two TriSBP operators with the same cubature nodes, in
+which the face-cubature nodes and volume nodes coincide (i.e. diagonal E
+operators).
+
+**Fields**
+
+* `degree` : face integration is exact for polys of degree 2*`degree`
+* `numnodes` : number of cubature nodes
+* `dstencilsize` : number of nodes in the derivative operator stencils
+* `cub` : a symmetric cubature type for triangle faces (i.e. edges)
+* `vtx` : the vertices of the face in reference space, [-1,1]
+* `wface` : mass matrix (quadrature) for the face
+* `perm[:,:]` : maps volume nodes to face nodes on each side
+* `deriv[:,:]` : derivative operators for face-based coordinate system
+* `dperm[:,:]` : permutation for volume nodes so `deriv` can be used on all sides
+* `nbrperm[:,:]` : permutation for face nodes on neighbour element
+
+"""->
+immutable TriSparseFace{T} <: SparseFace{T}
+  degree::Int
+  numnodes::Int
+  dstencilsize::Int
+  cub::LineSymCub{T}
+  vtx::Array{T,2}
+  wface::Array{T,1}
+  normal::Array{T,2}
+  perm::Array{Int,2}
+  deriv::Array{T,3}
+  dperm::Array{Int,2}
+  nbrperm::Array{Int,2}
+
+  # inner constructor
+  function TriSparseFace(degree::Int, facecub::LineSymCub{T}, facevtx::Array{T,2},
+                         perm::Array{Int,2}, deriv::Array{T,3}, dperm::Array{Int,2})
+    @assert( degree >= 1 && degree <= 5 )
+    numnodes = facecub.numnodes
+    @assert( size(deriv,2) == numnodes )
+    normal = T[0 -1; 1 1; -1 0].'
+    nbrperm = SymCubatures.getneighbourpermutation(facecub)
+    wface = SymCubatures.calcweights(facecub)
+    dstencilsize = size(deriv,1)
+    new(degree, facecub.numnodes, dstencilsize, facecub, facevtx, wface, normal,
+        perm, deriv, dperm, nbrperm)
+  end
+end
+
+@doc """
+### SBP.TetFace
+
+Defines a face between two TetSBP operators with the same cubature nodes, in
+which the face-cubature nodes and volume nodes coincide (i.e. diagonal E
+operators).
+
+**Fields**
+
+* `degree` : face integration is exact for polys of degree 2*`degree`
+* `numnodes` : number of cubature nodes
+* `dstencilsize` : number of nodes in the derivative operator stencils
+* `cub` : a symmetric cubature type for tetrahedral faces (i.e. triangles)
+* `vtx` : the vertices of the face in the reference space of the face
+* `wface` : mass matrix (quadrature) for the face
+* `perm[:,:]` : permutation for volume nodes to face nodes on each side
+* `deriv[:,:]` : derivative operators for face-based coordinate system
+* `dperm[:,:]` : permutation for volume nodes so `deriv` can be used on all sides
+* `nbrperm[:,:]` : permutation for face nodes on neighbour element
+
+"""->
+immutable TetSparseFace{T} <: SparseFace{T}
+  degree::Int
+  numnodes::Int
+  #dstencilsize::Int
+  cub::TriSymCub{T}
+  vtx::Array{T,2}
+  wface::Array{T,1}
+  normal::Array{T,2}
+  perm::Array{Int,2}
+  #deriv::Array{T,3}
+  #dperm::Array{Int,2}
+  nbrperm::Array{Int,2}
+
+  # inner constructor
+  function TetSparseFace(degree::Int, facecub::TriSymCub{T}, facevtx::Array{T,2},
+                         perm::Array{Int,2})
+    @assert( degree >= 1 && degree <= 4 )
+    numnodes = facecub.numnodes
+    normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'
+    nbrperm = SymCubatures.getneighbourpermutation(facecub)
+    wface = SymCubatures.calcweights(facecub)
+    new(degree, numnodes, facecub, facevtx, wface, normal, perm, nbrperm)
+  end
+end
+
+@doc """
 ### SBP.UnaryFunctor
 
 `UnaryFunctor` is abstract type that is used to specify different types of

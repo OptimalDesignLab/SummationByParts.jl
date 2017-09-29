@@ -337,6 +337,21 @@ function boundaryoperator!{T}(face::AbstractFace{T}, di::Int,
   return E
 end
 
+function boundaryoperator!{T}(face::SparseFace{T}, di::Int,
+                              E::AbstractArray{T,2})
+  @assert( size(E,1) == size(E,2) )
+  @assert( di >= 1 && di <= 3)
+  fill!(E, zero(T))
+  # loop over faces of the element
+  for findex = 1:size(face.perm,2)
+    for i = 1:size(face.perm,1)
+      E[face.perm[i,findex],face.perm[i,findex]] +=
+        face.wface[i]*face.normal[di,findex]
+    end
+  end
+  return E
+end
+
 @doc """
 ### SummationByParts.boundarymassmatrix
 
@@ -924,7 +939,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
                                        d::Int; vertices::Bool=true,
                                        opthist::Bool=false)
   w = SymCubatures.calcweights(cub)
-  face = getTriFaceForDiagE(d, cub, vtx)
+  face = getTriFaceForDiagE(d, cub, vtx, vertices=vertices)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
   SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
@@ -949,7 +964,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-12, x_tol = 1e-60,
+                           Optim.Options(g_tol = 1e-13, x_tol = 1e-60,
                                          f_tol = 1e-60, iterations = 1000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
@@ -985,7 +1000,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objY, objYGrad!, ones(size(Znull,2)),
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-12, x_tol = 1e-60,
+                           Optim.Options(g_tol = 1e-13, x_tol = 1e-60,
                                          f_tol = 1e-60, iterations = 1000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution

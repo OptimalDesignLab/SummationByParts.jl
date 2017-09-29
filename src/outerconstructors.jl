@@ -1,5 +1,8 @@
 # This file gathers together outer constructors for the SBP operators
 
+include("tet_diage_p1.jl") #<-- file containing function that defines DiagE tet
+include("tet_diage_p2.jl")
+
 @doc """
 ### SBP.getTriSBPGamma
 
@@ -139,9 +142,9 @@ function getTetSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
   #w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
   #                                                   vertices=vertices)
   if degree == 1
-    include("tet_diage_p1.jl")
+    w, Q = getTetDiagEp1(w, Q)
   elseif degree == 2
-    include("tet_diage_p2.jl")
+    w, Q = getTetDiagEp2(w, Q)
   end
   return TetSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
@@ -216,17 +219,16 @@ function getTriFaceForDiagE{T}(degree::Int, volcub::TriSymCub{T},
     R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
                                                        degree)
   end
-  #println("TEMP change in getTriFaceForDiagE!!!!")
-  #facecub, facevtx = quadrature(2*degree, T, internal=true)
-  #R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
-  #                                                   degree)
+  perm_red = zeros(Int, (facecub.numnodes,3))
+  for i = 1:facecub.numnodes
+    node = indmax(R[i,:])
+    perm_red[i,:] = perm[node,:]
+  end  
   D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
                                                    degree)
   nbrperm = SymCubatures.getneighbourpermutation(facecub)
   wface = SymCubatures.calcweights(facecub)
-  stencilsize = size(R,2)
-  dstencilsize = size(D,1)
-  return TriFace{T}(degree, facecub, facevtx, R.', perm, D, Dperm)
+  return TriSparseFace{T}(degree, facecub, facevtx, perm_red, D, Dperm)
 end
 
 @doc """
@@ -296,8 +298,13 @@ function getTetFaceForDiagE{T}(degree::Int, volcub::TetSymCub{T},
   #facecub, facevtx = quadrature(2*degree, T, internal=true)
   #R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
   #                                                   degree)
+
+  perm_red = zeros(Int, (facecub.numnodes,4))
+  for i = 1:facecub.numnodes
+    node = indmax(R[i,:])
+    perm_red[i,:] = perm[node,:]
+  end    
   nbrperm = SymCubatures.getneighbourpermutation(facecub)
   wface = SymCubatures.calcweights(facecub)
-  stencilsize = size(R,2)
-  return TetFace{T}(degree, facecub, facevtx, R.', perm)
+  return TetSparseFace{T}(degree, facecub, facevtx, perm_red)
 end
