@@ -1,29 +1,7 @@
 # This file gathers together outer constructors for the SBP operators
 
-@doc """
-### SBP.TriSBP
-
-Outer constructor for backward compatibility
-
-**Inputs**
-
-* `degree`: maximum polynomial degree for which the derivatives are exact
-* `internal`: if true, all element nodes are strictly internal
-* `vertices`: if true, element vertices are included in the nodes
-
-**Returns**
-
-* `sbp`: an SBP type for triangular elements
-
-"""->
-function call{T}(::Type{TriSBP{T}}; degree::Int=1, internal::Bool=false,
-                 vertices::Bool=true)
-  cub, vtx = tricubature(2*degree-1, T, internal=internal,
-                         vertices=vertices)
-  Q = zeros(T, (cub.numnodes, cub.numnodes, 2))
-  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
-  TriSBP{T}(degree, cub, vtx, w, Q)
-end
+include("tet_diage_p1.jl") #<-- file containing function that defines DiagE tet
+include("tet_diage_p2.jl")
 
 @doc """
 ### SBP.getTriSBPGamma
@@ -41,8 +19,26 @@ Returns SBP-Gamma type elements, that have nodes on the element boundary
 
 """->
 function getTriSBPGamma(;degree::Int=1, Tsbp::Type=Float64)
-  return TriSBP{Tsbp}(degree=degree, internal=false, vertices=true)
+  cub, vtx = getTriCubatureGamma(2*degree-1, Tsbp)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
+
+function getTriSBPOmega0(;degree::Int=1, Tsbp::Type=Float64)
+
+  if degree <= 2
+    cubdegree = 2*degree
+  else
+    cubdegree = 2*degree - 1
+  end
+
+  cub, vtx = getTriCubatureOmega(cubdegree, Tsbp)
+  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
+end
+
+
 
 @doc """
 ### SBP.getTriSBPOmega
@@ -60,7 +56,9 @@ Returns SBP-Omega type elements, that have no nodes on the element boundary
 
 """->
 function getTriSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
-  return TriSBP{Tsbp}(degree=degree, internal=true, vertices=false)
+  cub, vtx = getTriCubatureOmega(2*degree, Tsbp)
+  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
 """
@@ -81,47 +79,38 @@ rule
 """
 function getTriSBPOmega2(;degree::Int=1, Tsbp::Type=Float64)
 
-  cub, vtx = tricubature(2*degree, Tsbp, internal=true,
-                         vertices=false)
+  cub, vtx = getTriCubatureOmega(2*degree, Tsbp)
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
-  w, Q = buildMinConditionOperators(cub, vtx, degree, vertices=false)
 #  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  w, Q = buildMinConditionOperators(cub, vtx, degree, vertices=false)
 
   return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
-
-function getTriSBPWithDiagE(;degree::Int=1, Tsbp::Type=Float64,
-                            vertices::Bool=true)
-  @assert( degree >= 1 && degree <= 4 )
-  cub, vtx = tricubature(2*degree, Tsbp, facequad=true, vertices=vertices)
-  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
-  w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
-                                                     vertices=vertices)
-  return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
-end
 
 @doc """
-### SBP.TetSBP
+### SBP.getTriSBPDiagE
 
-Outer constructor for backward compatibility
+Returns SBP-DiagE type elements, whose boundary nodes are positioned at cubature
+points
 
 **Inputs**
 
 * `degree`: maximum polynomial degree for which the derivatives are exact
-* `internal`: if true, all element nodes are strictly internal
-* `vertices`: if true, element vertices are included in the nodes
+* `Tsbp`: floating point type used for the operators
 
 **Returns**
 
-* `sbp`: an SBP type for tetrahedral elements
+* `sbp`: an SBP-DiagE operator of the appropriate degree
 
 """->
-function call{T}(::Type{TetSBP{T}}; degree::Int=1, internal::Bool=false)
-  cub, vtx = tetcubature(2*degree-1, T, internal=internal)
-  Q = zeros(T, (cub.numnodes, cub.numnodes, 3))
-  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
-  TetSBP{T}(degree, cub, vtx, w, Q)
+function getTriSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
+                        vertices::Bool=true)
+  cub, vtx = getTriCubatureDiagE(2*degree, Tsbp, vertices=vertices)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+  w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
+                                                     vertices=vertices)
+  return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
 @doc """
@@ -140,7 +129,11 @@ Returns SBP-Gamma type elements, that have nodes on the element boundary
 
 """->
 function getTetSBPGamma(;degree::Int=1, Tsbp::Type=Float64)
-  return TetSBP{Tsbp}(degree=degree, internal=false)
+  
+  cub, vtx = getTetCubatureGamma(2*degree-1, Tsbp)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 3))
+  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  return TetSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
 @doc """
@@ -159,15 +152,41 @@ Returns SBP-Omega type elements, that have no nodes on the element boundary
 
 """->
 function getTetSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
-  return TetSBP{Tsbp}(degree=degree, internal=true)
+  cub, vtx = getTetCubatureOmega(2*degree-1, Tsbp)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 3))
+  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  return TetSBP{Tsbp}(degree, cub, vtx, w, Q)  
 end
 
-function getTetSBPWithDiagE(;degree::Int=1, Tsbp::Type=Float64)
+@doc """
+### SBP.getTetSBPDiagE
+
+Returns SBP-DiagE type elements, whose boundary nodes are positioned at cubature
+points
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `Tsbp`: floating point type used for the operators
+
+**Returns**
+
+* `sbp`: an SBP-DiagE operator of the appropriate degree
+
+"""->
+function getTetSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
+                        edges::Bool=false, vertices::Bool=false)
   @assert( degree >= 1 && degree <= 2 )
-  cub, vtx = tetcubature(2*degree, Tsbp, facequad=true)
-  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
-  #w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)
-  w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree)
+  cub, vtx = getTetCubatureDiagE(2*degree, Tsbp, vertices=vertices)
+  w = zeros(Tsbp, (cub.numnodes))
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 3))
+  #w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
+  #                                                   vertices=vertices)
+  if degree == 1
+    w, Q = getTetDiagEp1(w, Q)
+  elseif degree == 2
+    w, Q = getTetDiagEp2(w, Q)
+  end
   return TetSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
@@ -241,17 +260,16 @@ function getTriFaceForDiagE{T}(degree::Int, volcub::TriSymCub{T},
     R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
                                                        degree)
   end
-  #println("TEMP change in getTriFaceForDiagE!!!!")
-  #facecub, facevtx = quadrature(2*degree, T, internal=true)
-  #R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
-  #                                                   degree)
+  perm_red = zeros(Int, (facecub.numnodes,3))
+  for i = 1:facecub.numnodes
+    node = indmax(R[i,:])
+    perm_red[i,:] = perm[node,:]
+  end  
   D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
                                                    degree)
   nbrperm = SymCubatures.getneighbourpermutation(facecub)
   wface = SymCubatures.calcweights(facecub)
-  stencilsize = size(R,2)
-  dstencilsize = size(D,1)
-  return TriFace{T}(degree, facecub, facevtx, R.', perm, D, Dperm)
+  return TriSparseFace{T}(degree, facecub, facevtx, perm_red, D, Dperm)
 end
 
 @doc """
@@ -273,7 +291,7 @@ Outer constructor for backward compatibility
 function call{T}(::Type{TetFace{T}}, degree::Int, volcub::TetSymCub{T},
                  vtx::Array{T,2})
   @assert( degree >= 1 && degree <= 4 )
-  facecub, facevtx = tricubature(2*degree, T, internal=true)
+  facecub, facevtx = getTriCubatureOmega(2*degree, T)
   normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'
   R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
                                                      degree)
@@ -307,11 +325,9 @@ boundary operators, E.
 """->
 function getTetFaceForDiagE{T}(degree::Int, volcub::TetSymCub{T},
                                vtx::Array{T,2})
-  @assert( degree >= 1 && degree <= 2 )
+  @assert( degree >= 1 && degree <= 4 )
   
-  #facecub, facevtx = tricubature(2*degree, T, facequad=true, vertices=false)
-  facecub, facevtx = tricubature(2*degree, T, facequad=false, vertices=false,
-                                 internal=true)
+  facecub, facevtx = getTriCubatureOmega(2*degree, T)
   
   #facecub = SymCubatures.TriSymCub{T}(vertices=true, numS21=1)
   #SymCubatures.setparams!(facecub, T[0.9055050463303657])
@@ -323,8 +339,13 @@ function getTetFaceForDiagE{T}(degree::Int, volcub::TetSymCub{T},
   #facecub, facevtx = quadrature(2*degree, T, internal=true)
   #R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
   #                                                   degree)
+
+  perm_red = zeros(Int, (facecub.numnodes,4))
+  for i = 1:facecub.numnodes
+    node = indmax(R[i,:])
+    perm_red[i,:] = perm[node,:]
+  end    
   nbrperm = SymCubatures.getneighbourpermutation(facecub)
   wface = SymCubatures.calcweights(facecub)
-  stencilsize = size(R,2)
-  return TetFace{T}(degree, facecub, facevtx, R.', perm)
+  return TetSparseFace{T}(degree, facecub, facevtx, perm_red)
 end

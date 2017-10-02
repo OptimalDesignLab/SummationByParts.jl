@@ -3,7 +3,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.bndrynodalexpansion (TriSymCub method)") do
     # check that P*E produces the identity matrix on the boundary
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       E = SummationByParts.bndrynodalexpansion(cub, vtx, d)
       xy = SymCubatures.calcnodes(cub, vtx)
       x = vec(xy[1,:]); y = vec(xy[2,:])
@@ -27,7 +27,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.bndrynodalexpansion (TetSymCub method)") do
     # check that P*E produces the identity matrix on the boundary
     for d = 1:4
-      cub, vtx = tetcubature(2*d-1, Float64)
+      cub, vtx = getTetCubatureGamma(2*d-1, Float64)
       E = SummationByParts.bndrynodalexpansion(cub, vtx, d)
       xyz = SymCubatures.calcnodes(cub, vtx)
       x = vec(xyz[1,:]); y = vec(xyz[2,:]); z = vec(xyz[3,:])
@@ -54,7 +54,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     # check that P*E produces the identity matrix at the nodes
     e = [1;3;4;5]
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       #@fact_throws SummationByParts.nodalexpansion(cub, vtx, d, e[d])
       C = SummationByParts.nodalexpansion(cub, vtx, d, e[d])
       xy = SymCubatures.calcnodes(cub, vtx)
@@ -76,7 +76,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.boundaryoperators (TriSymCub method)") do
     # check Ex, Ey by comparing with appropriate integral of divergence
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       w = SymCubatures.calcweights(cub)
       Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
       H = diagm(w)
@@ -117,7 +117,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.boundaryoperators (TetSymCub method)") do
     # check Ex, Ey, Ez by comparing with appropriate integral of divergence
     for d = 1:4
-      cub, vtx = tetcubature(2*d-1, Float64)
+      cub, vtx = getTetCubatureGamma(2*d-1, Float64)
       w = SymCubatures.calcweights(cub)
       Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
       H = diagm(w)
@@ -197,7 +197,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.boundaryoperator! (TriFace method)") do
     # check by comparing with Ex, Ey produced by boundaryoperators
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       w = SymCubatures.calcweights(cub)
       Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
       face = TriFace{Float64}(d, cub, vtx)
@@ -212,7 +212,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.boundaryoperator! (TetFace method)") do
     # check by comparing with Ex, Ey produced by boundaryoperators
     for d = 1:4
-      cub, vtx = tetcubature(2*d-1, Float64)
+      cub, vtx = getTetCubatureGamma(2*d-1, Float64)
       w = SymCubatures.calcweights(cub)
       Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
       face = TetFace{Float64}(d, cub, vtx)
@@ -229,7 +229,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.boundarymassmatrix (TriSymCub method)") do
     # check that mass matrix can be assembled into Ex and Ey
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
       Hbndry, bndindx = SummationByParts.boundarymassmatrix(cub, vtx, d)
       Ex_inject = zeros(Ex)
@@ -246,7 +246,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.boundarymassmatrix (TetSymCub method)") do
     # check that mass matrix can be assembled into Ex and Ey
     for d = 1:3
-      cub, vtx = tetcubature(2*d-1, Float64)
+      cub, vtx = getTetCubatureGamma(2*d-1, Float64)
       Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
       Hbndry, bndindx = SummationByParts.boundarymassmatrix(cub, vtx, d)
       Ex_inject = zeros(Ex)
@@ -269,7 +269,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     # this is not an adequate unit test.
     sizenull = [0, 0, 1, 3]
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       face = TriFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,2)
       SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
@@ -285,7 +285,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     # this is not an adequate unit test.
     sizenull = [0, 0, 6, 45]
     for d = 1:4
-      cub, vtx = tetcubature(2*d-1, Float64)
+      cub, vtx = getTetCubatureGamma(2*d-1, Float64)
       face = TetFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,3)
       SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
@@ -301,7 +301,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     reducedsol = (Float64[], Float64[], Float64[0, 0])
     error = [0, 0, 0.5*2.324812265031167] # error based on particular Q
     for d = 1:3
-      cub, vtx = tricubature(2*d-1, Float64)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       face = TriFace{Float64}(d, cub, vtx)
       Q = zeros(cub.numnodes,cub.numnodes,2)
       SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
@@ -329,7 +329,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
 
   context("Testing SummationByParts.buildoperators (TriSymCub method)") do
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       w, Q = SummationByParts.buildoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
@@ -350,7 +350,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
 
   context("Testing SummationByParts.buildoperators (TriSymCub method, internal nodes)") do
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64, internal=true)
+      cub, vtx = getTriCubatureOmega(2*d, Float64)
       w, Q = SummationByParts.buildoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
@@ -372,7 +372,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.buildoperators (TetSymCub method)") do
     tol = [1e-12; 1e-12; 1e-12; 5e-8]
     for d = 1:4
-      cub, vtx = tetcubature(2*d-1, Float64)
+      cub, vtx = getTetCubatureGamma(2*d-1, Float64)
       w, Q = SummationByParts.buildoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
@@ -399,7 +399,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.buildoperators (TetSymCub method, internal nodes)") do
     tol = [1e-12; 1e-12; 1e-12; 1e-12] #5e-8]
     for d = 1:4
-      cub, vtx = tetcubature(2*d-1, Float64, internal=true)
+      cub, vtx = getTetCubatureOmega(2*d-1, Float64)
       w, Q = SummationByParts.buildoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
@@ -426,7 +426,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.buildoperators (spectral-element method)") do
     e = [1;3;4;5]
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       w, Q = SummationByParts.buildoperators(cub, vtx, d, e[d])
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
@@ -446,8 +446,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.buildsparseoperators (TriSymCub method)") do
-    for d = 1:3 # cannot do d=4 yet, since we do not have the cubature
-      cub, vtx = tricubature(2*d+1, Float64)
+    for d = 1:4 
+      cub, vtx = getTriCubatureDiagE(2*d, Float64)
       w, Q = SummationByParts.buildsparseoperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
@@ -467,9 +467,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.buildMinConditionOperators (TriSymCub method, vertices=true)") do
-    for d = 1:3
-      println("d = ", d)
-      cub, vtx = tricubature(2*d, Float64, facequad=true, vertices=true)
+    for d = 1:4  # was 3
+      cub, vtx = getTriCubatureDiagE(2*d, Float64)
       w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
@@ -490,7 +489,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
 
   context("Testing SummationByParts.buildMinConditionOperators (TriSymCub method, vertices=false)") do
     for d = 1:4
-      cub, vtx = tricubature(2*d, Float64, facequad=true, vertices=false)
+      cub, vtx = getTriCubatureDiagE(2*d, Float64, vertices=false)
       w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d,
                                                          vertices=false)
       Dx = diagm(1./w)*Q[:,:,1]
@@ -513,8 +512,8 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.buildMinConditionOperators (TetSymCub method)") do
     #tol = [1e-12; 1e-12; 1e-12; 5e-8]
     tol = [1e-12; 1e-12; 1e-12; 1e-12]
-    for d = 1:2 # cannot do d=3:4 yet, since we do not have the cubature
-      cub, vtx = tetcubature(2*d, Float64, facequad=true)
+    for d = 1:2 # cannot do d=3:4 yet, since optimization does not converge
+      cub, vtx = getTetCubatureDiagE(2*d, Float64, vertices=false)
       w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
@@ -568,7 +567,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.getnodepermutation (TriSymCub method)") do
     # check that vertices are first and edge nodes are ordered correctly
     for d = 1:4
-      cub, vtx = tricubature(2*d-1, Float64)
+      cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       perm, faceperm = SummationByParts.getnodepermutation(cub, d)
       xy = SymCubatures.calcnodes(cub, vtx)
       x = vec(xy[1,perm])
@@ -595,7 +594,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     # check that vertices are first, edge nodes are ordered correctly, and face
     # nodes lie on the expected faces
     for d = 1:4
-      cub, vtx = tetcubature(2*d-1, Float64)
+      cub, vtx = getTetCubatureGamma(2*d-1, Float64)
       perm, faceperm = SummationByParts.getnodepermutation(cub, d)
       xyz = SymCubatures.calcnodes(cub, vtx)
       x = vec(xyz[1,perm])

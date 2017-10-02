@@ -1,11 +1,16 @@
 facts("Testing SummationByParts Module (reverse-diff of face-data interpolation methods)...") do
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+              (getTriSBPOmega,TriFace{Float64},4),
+              (getTriSBPDiagE,getTriFaceForDiagE,4),
+              (getTetSBPGamma,TetFace{Float64},4),
+              (getTetSBPOmega,TetFace{Float64},4),
+              (getTetSBPDiagE,getTetFaceForDiagE,2))
     @eval begin
       context("Testing boundaryinterpolate_rev! ("string($TSBP)" scalar field method)") do
-        for p = 1:4
-          sbp = TriSBP{Float64}(degree=p)
-          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+        for p = 1:($TSBP[3])
+          sbp = ($TSBP[1])(degree=p)
+          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           uvol = rand(Float64, (sbp.numnodes,2))
           vvol = zeros(uvol)
           vface = rand(Float64, (sbpface.numnodes,4))
@@ -25,12 +30,17 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+              (getTriSBPOmega,TriFace{Float64},4),
+              (getTriSBPDiagE,getTriFaceForDiagE,4),
+              (getTetSBPGamma,TetFace{Float64},4),
+              (getTetSBPOmega,TetFace{Float64},4),
+              (getTetSBPDiagE,getTetFaceForDiagE,2))
     @eval begin
       context("Testing boundaryinterpolate_rev! ("string($TSBP)" vector field method)") do
-        for p = 1:4
-          sbp = TriSBP{Float64}(degree=p)
-          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+        for p = 1:($TSBP[3])
+          sbp = ($TSBP[1])(degree=p)
+          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           uvol = rand(Float64, (4,sbp.numnodes,2))
           vvol = zeros(uvol)
           vface = rand(Float64, (4,sbpface.numnodes,4))
@@ -50,12 +60,17 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+              (getTriSBPOmega,TriFace{Float64},4),
+              (getTriSBPDiagE,getTriFaceForDiagE,4),
+              (getTetSBPGamma,TetFace{Float64},4),
+              (getTetSBPOmega,TetFace{Float64},4),
+              (getTetSBPDiagE,getTetFaceForDiagE,2))
     @eval begin
       context("Testing boundaryFaceInterpolate_rev! ("string($TSBP)" scalar field method)") do
-        for p = 1:4
-          sbp = TriSBP{Float64}(degree=p)
-          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+        for p = 1:($TSBP[3])
+          sbp = ($TSBP[1])(degree=p)
+          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           uvol = rand(Float64, (sbp.numnodes))
           vvol = zeros(uvol)
           vface = rand(Float64, (sbpface.numnodes))
@@ -73,13 +88,18 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
       end
     end
   end
-  
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+
+  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+              (getTriSBPOmega,TriFace{Float64},4),
+              (getTriSBPDiagE,getTriFaceForDiagE,4),
+              (getTetSBPGamma,TetFace{Float64},4),
+              (getTetSBPOmega,TetFace{Float64},4),
+              (getTetSBPDiagE,getTetFaceForDiagE,2))
     @eval begin
       context("Testing boundaryFaceInterpolate_rev! ("string($TSBP)" vector field method)") do
-        for p = 1:4
-          sbp = TriSBP{Float64}(degree=p)
-          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+        for p = 1:($TSBP[3])
+          sbp = ($TSBP[1])(degree=p)
+          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           uvol = rand(Float64, (4,sbp.numnodes))
           vvol = zeros(uvol)
           vface = rand(Float64, (4,sbpface.numnodes))
@@ -98,12 +118,17 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+              (getTriSBPOmega,TriFace{Float64},4),
+              (getTriSBPDiagE,getTriFaceForDiagE,4),
+              (getTetSBPGamma,TetFace{Float64},4),
+              (getTetSBPOmega,TetFace{Float64},4),
+              (getTetSBPDiagE,getTetFaceForDiagE,2))
     @eval begin
       context("Testing interiorfaceinterpolate_rev! ("string($TSBP)" scalar field method)") do
-        for p = 1:4
-          sbp = TriSBP{Float64}(degree=p)
-          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+        for p = 1:($TSBP[3])
+          sbp = ($TSBP[1])(degree=p)
+          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           ifaces = Array(Interface, 1)
           ifaces[1] = Interface(1,2,2,3,1)
           uvol = rand(sbp.numnodes,2)
@@ -120,12 +145,17 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+              (getTriSBPOmega,TriFace{Float64},4),
+              (getTriSBPDiagE,getTriFaceForDiagE,4),
+              (getTetSBPGamma,TetFace{Float64},4),
+              (getTetSBPOmega,TetFace{Float64},4),
+              (getTetSBPDiagE,getTetFaceForDiagE,2))
     @eval begin
       context("Testing interiorfaceinterpolate_rev! ("string($TSBP)" vector field method)") do
-        for p = 1:4
-          sbp = TriSBP{Float64}(degree=p)
-          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+        for p = 1:($TSBP[3])
+          sbp = ($TSBP[1])(degree=p)
+          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           ifaces = Array(Interface, 1)
           ifaces[1] = Interface(1,2,2,3,1)
           uvol = rand(4,sbp.numnodes,2)
@@ -142,12 +172,17 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+              (getTriSBPOmega,TriFace{Float64},4),
+              (getTriSBPDiagE,getTriFaceForDiagE,4),
+              (getTetSBPGamma,TetFace{Float64},4),
+              (getTetSBPOmega,TetFace{Float64},4),
+              (getTetSBPDiagE,getTetFaceForDiagE,2))
     @eval begin
       context("Testing interiorFaceInterpolate_rev! ("string($TSBP)" scalar field method)") do
-        for p = 1:4
-          sbp = TriSBP{Float64}(degree=p)
-          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+        for p = 1:($TSBP[3])
+          sbp = ($TSBP[1])(degree=p)
+          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           uL = rand(Float64, (sbp.numnodes))
           uR = rand(Float64, (sbp.numnodes))
           vL = zeros(uL)
@@ -170,12 +205,17 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+              (getTriSBPOmega,TriFace{Float64},4),
+              (getTriSBPDiagE,getTriFaceForDiagE,4),
+              (getTetSBPGamma,TetFace{Float64},4),
+              (getTetSBPOmega,TetFace{Float64},4),
+              (getTetSBPDiagE,getTetFaceForDiagE,2))
     @eval begin
       context("Testing interiorFaceInterpolate_rev! ("string($TSBP)" vector field method)") do
-        for p = 1:4
-          sbp = TriSBP{Float64}(degree=p)
-          sbpface = TriFace{Float64}(p, sbp.cub, sbp.vtx)
+        for p = 1:($TSBP[3])
+          sbp = ($TSBP[1])(degree=p)
+          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           uL = rand(Float64, (4,sbp.numnodes))
           uR = rand(Float64, (4,sbp.numnodes))
           vL = zeros(uL)

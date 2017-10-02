@@ -10,12 +10,13 @@ function filter_mat(A::AbstractMatrix)
 end
 
 facts("Testing SummationByParts Module (utils.jl file)...") do
-  
-  for TSBP = (TriSBP, SparseTriSBP, TetSBP)
+
+  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
+              getTetSBPGamma, getTetSBPOmega)
     @eval begin
-      context("Testing SummationByParts.getNumFaceNodes("string($TSBP)" method)") do
+      context("Testing SummationByParts.getNumFaceNodes ("string($TSBP)" method)") do
         for p = 1:4
-          sbp = ($TSBP){Float64}(degree=p)
+          sbp = ($TSBP)(degree=p)
           @fact getNumFaceNodes(sbp) --> SymCubatures.getnumfacenodes(sbp.cub)
         end
       end
@@ -25,7 +26,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
   context("Testing SummationByParts.calcminnodedistance (TriSBP method)") do
     mindist = [1.0; 0.2357022603955159; 0.1487006728783353; 0.09492895652255572]
     for p = 1:4
-      sbp = TriSBP{Float64}(degree=p)
+      sbp = getTriSBPGamma(degree=p)
       vtx = [0. 0.; 1. 0.; 0. 1.]
       @fact calcminnodedistance(sbp, vtx) --> roughly(mindist[p], atol=1e-13)
     end
@@ -34,7 +35,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
   context("Testing SummationByParts.calcminnodedistance (TetSBP method)") do
     mindist = [1.0; 0.4330127018922193; 0.2639696512367827; 0.1366241982649621]
     for p = 1:4
-      sbp = TetSBP{Float64}(degree=p)
+      sbp = getTetSBPGamma(degree=p)
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       @fact calcminnodedistance(sbp, vtx) --> roughly(mindist[p], atol=1e-13)
     end
@@ -45,9 +46,11 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     degree = 4
     for dim = 2:3
       if dim == 2
-        sbp = TriSBP{Float64}(degree=degree)
+        sbp = getTriSBPGamma(degree=degree)
+#        sbp = TriSBP{Float64}(degree=degree)
       else
-        sbp = TetSBP{Float64}(degree=degree)
+        sbp = getTetSBPGamma(degree=degree)
+#        sbp = TetSBP{Float64}(degree=degree)
       end
 
       npoly = binomial(degree -1 + dim, dim)
@@ -73,7 +76,8 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     # this checks that polynomials of total degree d are reconstructed accurately
     numpoints = 3
     for d = 1:4
-      sbp = TriSBP{Float64}(degree=d)
+      sbp = getTriSBPGamma(degree=d)
+#      sbp = TriSBP{Float64}(degree=d)
       x = 2.*rand(2,numpoints) - 1.0
       R = SummationByParts.buildinterpolation(sbp, x)
       xsbp = calcnodes(sbp)
@@ -90,67 +94,52 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildinterpolation (TriSBP method, internal=true)") do
-    # this checks that polynomials of total degree d are reconstructed accurately
-    numpoints = 3
-    for d = 1:4
-      sbp = TriSBP{Float64}(degree=d, internal=true)
-      x = 2.*rand(2,numpoints) - 1.0
-      R = SummationByParts.buildinterpolation(sbp, x)
-      xsbp = calcnodes(sbp)
-      # loop over all monomials
-      for r = 0:d
-        for j = 0:r
-          i = r-j
-          u = vec((x[1,:].^i).*(x[2,:].^j))
-          usbp = vec((xsbp[1,:].^i).*(xsbp[2,:].^j))
-          uinterp = R*usbp
-          @fact uinterp --> roughly(u, atol=1e-14)
-        end
-      end
-    end
-  end
-
-  context("Testing SummationByParts.buildinterpolation (TetSBP method)") do
-    # this checks that polynomials of total degree d are reconstructed accurately
-    numpoints = 10
-    for d = 1:4
-      sbp = TetSBP{Float64}(degree=d)
-      x = 2.*rand(3,numpoints) - 1.0
-      R = SummationByParts.buildinterpolation(sbp, x)
-      xsbp = calcnodes(sbp)
-      # loop over all monomials
-      for r = 0:d
-        for k = 0:r
-          for j = 0:r-k
-            i = r-j-k
-            u = vec((x[1,:].^i).*(x[2,:].^j).*(x[3,:].^k))
-            usbp = vec((xsbp[1,:].^i).*(xsbp[2,:].^j).*(xsbp[3,:].^k))
-            uinterp = R*usbp
-            @fact uinterp --> roughly(u, atol=1e-14)
+  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE)
+    @eval begin
+      context("Testing buildinterpolation ("string($TSBP)" method)") do
+        # this checks that polynomials of total degree d are reconstructed accurately
+        numpoints = 3
+        for d = 1:4
+          sbp = ($TSBP)(degree=d)
+          x = 2.*rand(2,numpoints) - 1.0
+          R = SummationByParts.buildinterpolation(sbp, x)
+          xsbp = calcnodes(sbp)
+          # loop over all monomials
+          for r = 0:d
+            for j = 0:r
+              i = r-j
+              u = vec((x[1,:].^i).*(x[2,:].^j))
+              usbp = vec((xsbp[1,:].^i).*(xsbp[2,:].^j))
+              uinterp = R*usbp
+              @fact uinterp --> roughly(u, atol=1e-14)
+            end
           end
         end
       end
     end
   end
 
-  context("Testing SummationByParts.buildinterpolation (TetSBP method, internal=true)") do
-    # this checks that polynomials of total degree d are reconstructed accurately
-    numpoints = 10
-    for d = 1:2
-      sbp = TetSBP{Float64}(degree=d, internal=true)
-      x = 2.*rand(3,numpoints) - 1.0
-      R = SummationByParts.buildinterpolation(sbp, x)
-      xsbp = calcnodes(sbp)
-      # loop over all monomials
-      for r = 0:d
-        for k = 0:r
-          for j = 0:r-k
-            i = r-j-k
-            u = vec((x[1,:].^i).*(x[2,:].^j).*(x[3,:].^k))
-            usbp = vec((xsbp[1,:].^i).*(xsbp[2,:].^j).*(xsbp[3,:].^k))
-            uinterp = R*usbp
-            @fact uinterp --> roughly(u, atol=1e-14)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+    @eval begin
+      context("Testing buildinterpolation ("string($TSBP)" method)") do
+        # this checks that polynomials of total degree d are reconstructed accurately
+        numpoints = 10
+        for d = 1:4
+          sbp = ($TSBP)(degree=d)
+          x = 2.*rand(3,numpoints) - 1.0
+          R = SummationByParts.buildinterpolation(sbp, x)
+          xsbp = calcnodes(sbp)
+          # loop over all monomials
+          for r = 0:d
+            for k = 0:r
+              for j = 0:r-k
+                i = r-j-k
+                u = vec((x[1,:].^i).*(x[2,:].^j).*(x[3,:].^k))
+                usbp = vec((xsbp[1,:].^i).*(xsbp[2,:].^j).*(xsbp[3,:].^k))
+                uinterp = R*usbp
+                @fact uinterp --> roughly(u, atol=1e-14)
+              end
+            end
           end
         end
       end
@@ -162,8 +151,10 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     # check that it is the identity if the two operators are the same
     println("checking same configuration")
     degree = 2
-    sbp_s = TriSBP{Float64}(degree=degree)
-    sbp_f = TriSBP{Float64}(degree=degree)
+    sbp_s = getTriSBPGamma(degree=degree)
+    sbp_f = getTriSBPGamma(degree=degree)
+#    sbp_s = TriSBP{Float64}(degree=degree)
+#    sbp_f = TriSBP{Float64}(degree=degree)
 
     I_s2f, I_f2s = SummationByParts.buildinterpolation(sbp_s, sbp_f)
 
@@ -220,7 +211,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     println("checking nullspace calculation")
     degree_s = 2
     degree_f = 3
-    sbp_s = getTriSBPWithDiagE(degree=degree_s)
+    sbp_s = getTriSBPDiagE(degree=degree_s)
     nodes_s = calcnodes(sbp_s).'
     sbp_f = getTriSBPGamma(degree=degree_f)
     nodes_f = calcnodes(sbp_f).'
@@ -258,7 +249,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     degree_f = 3
     sbp_s = getTriSBPOmega(degree=degree_s)
     nodes_s = calcnodes(sbp_s).'
-    sbp_f = getTriSBPWithDiagE(degree=degree_f)
+    sbp_f = getTriSBPDiagE(degree=degree_f)
     nodes_f = calcnodes(sbp_f).'
     I_s2f, I_f2s = SummationByParts.buildinterpolation(sbp_s, sbp_f)
 
@@ -285,11 +276,8 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
 
     @fact H_s*I_f2s*inv(H_f) --> roughly(I_s2f.', atol=1e-13)
 
-
-
-
-
   end
+
   context("Testing SummationByParts.permuteface!") do
     # test 2D version
     permvec = [2, 1, 3, 4]
@@ -324,7 +312,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     ndofpernode = 5
 
     # create an SBP with non-trivial number of face nodes
-    sbp = TriSBP{Float64}(degree = 3, internal=true)
+    sbp = getTriSBPOmega(degree=3)
     ref_verts = [-1. 1 -1; -1 -1 1]
     sbpface = TriFace{Float64}(sbp.degree, sbp.cub, ref_verts.')
 
@@ -500,7 +488,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
       x[i] += epsfd
       grad_fd = SummationByParts.eigenvalueObj(x, p, xperp, Znull, w, E)
       grad_fd = (grad_fd - obj)/epsfd
-      @fact grad_fd --> roughly(grad[i], rtol=1e-4)
+      @fact grad_fd --> roughly(grad[i], rtol=1e-3)
       x[i] -= epsfd
     end
   end

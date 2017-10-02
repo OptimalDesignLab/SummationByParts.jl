@@ -64,6 +64,32 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   end
 end
 
+function boundaryinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+                                         bndryfaces::Array{Boundary},
+                                         uvol::AbstractArray{Tsol,2},
+                                         uface::AbstractArray{Tsol,2})
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      uface[i,bindex] = uvol[sbpface.perm[i,bndry.face],bndry.element]
+    end
+  end
+end
+
+function boundaryinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+                                         bndryfaces::Array{Boundary},
+                                         uvol::AbstractArray{Tsol,3},
+                                         uface::AbstractArray{Tsol,3})
+  @assert( size(uvol,1) == size(uface,1) )
+  for (bindex, bndry) in enumerate(bndryfaces)
+    for i = 1:sbpface.numnodes
+      for field=1:size(uvol, 1)
+        uface[field,i,bindex] = uvol[field,sbpface.perm[i,bndry.face],
+                                     bndry.element]
+      end
+    end
+  end
+end
+
 @doc """
 ### SummationByParts.boundaryFaceInterpolate!
 
@@ -120,6 +146,27 @@ function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   end
 end
 
+function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+                                             face::Integer,
+                                             uvol::AbstractArray{Tsol,1},
+                                             uface::AbstractArray{Tsol,1})
+  for i = 1:sbpface.numnodes
+    uface[i] = uvol[sbpface.perm[i,face]]
+  end
+end
+
+function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+                                             face::Integer,
+                                             uvol::AbstractArray{Tsol,2},
+                                             uface::AbstractArray{Tsol,2})
+  @assert( size(uvol,1) == size(uface,1) )
+  for i = 1:sbpface.numnodes
+    for field=1:size(uvol, 1)
+      uface[field,i] = uvol[field,sbpface.perm[i,face]]
+    end
+  end
+end
+
 @doc """
 ### SummationByParts.interiorfaceinterpolate!
 
@@ -172,7 +219,6 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   @assert( size(uvol,1) == size(uface,1) )
   @assert( size(sbpface.interp,1) <= size(uvol,2) )
   @assert( size(sbpface.interp,2) == size(uface,3) )
-
   for (findex, face) in enumerate(ifaces)
     for i = 1:sbpface.numnodes
       iR = sbpface.nbrperm[i,face.orient]
@@ -187,6 +233,37 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
           uface[field,2,i,findex] += sbpface.interp[j,iR]*
           uvol[field,sbpface.perm[j,face.faceR],face.elementR]
         end
+      end
+    end
+  end
+end
+
+function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+                                             ifaces::Array{Interface},
+                                             uvol::AbstractArray{Tsol,2},
+                                             uface::AbstractArray{Tsol,3})
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbpface.numnodes
+      iR = sbpface.nbrperm[i,face.orient]     
+      uface[1,i,findex] = uvol[sbpface.perm[i,face.faceL],face.elementL]
+      uface[2,i,findex] = uvol[sbpface.perm[iR,face.faceR],face.elementR]
+    end
+  end
+end
+
+function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+                                             ifaces::Array{Interface},
+                                             uvol::AbstractArray{Tsol,3},
+                                             uface::AbstractArray{Tsol,4})
+  @assert( size(uvol,1) == size(uface,1) )
+  for (findex, face) in enumerate(ifaces)
+    for i = 1:sbpface.numnodes
+      iR = sbpface.nbrperm[i,face.orient]
+      for field=1:size(uvol, 1)
+        uface[field,1,i,findex] =
+          uvol[field,sbpface.perm[i,face.faceL],face.elementL]
+        uface[field,2,i,findex] =
+          uvol[field,sbpface.perm[iR,face.faceR],face.elementR]
       end
     end
   end
@@ -263,6 +340,37 @@ function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
         ufaceR[field,i] += sbpface.interp[j,iR]*
         uR[field,sbpface.perm[j,iface.faceR]]
       end
+    end
+  end
+end
+
+function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+                                             iface::Interface,
+                                             uL::AbstractArray{Tsol,1},
+                                             uR::AbstractArray{Tsol,1},
+                                             ufaceL::AbstractArray{Tsol,1},
+                                             ufaceR::AbstractArray{Tsol,1})
+  @assert( size(ufaceL,1) == size(ufaceR,1) )
+  for i = 1:sbpface.numnodes
+    iR = sbpface.nbrperm[i,iface.orient]
+    ufaceL[i] = uL[sbpface.perm[i,iface.faceL]]
+    ufaceR[i] = uR[sbpface.perm[iR,iface.faceR]]
+  end
+end
+
+function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+                                             iface::Interface,
+                                             uL::AbstractArray{Tsol,2},
+                                             uR::AbstractArray{Tsol,2},
+                                             ufaceL::AbstractArray{Tsol,2},
+                                             ufaceR::AbstractArray{Tsol,2})
+  @assert( size(uL,1) == size(ufaceL,1) == size(uR,1) == size(ufaceR,1) )
+  @assert( size(ufaceL,2) == size(ufaceR,2) )
+  for i = 1:sbpface.numnodes
+    iR = sbpface.nbrperm[i,iface.orient]
+    @simd for field=1:size(uL,1)
+      ufaceL[field,i] = uL[field,sbpface.perm[i,iface.faceL]]
+      ufaceR[field,i] = uR[field,sbpface.perm[iR,iface.faceR]]
     end
   end
 end
