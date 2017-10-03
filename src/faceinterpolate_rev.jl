@@ -19,7 +19,7 @@ differentiated with respect to the primal version's `uvol` variable.
 * `uvol_bar`: the result of the vector matrix product between R and `uface_bar`
 
 """->
-function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              bndryfaces::Array{Boundary},
                                              uvol_bar::AbstractArray{Tsol,2},
                                              uface_bar::AbstractArray{Tsol,2})
@@ -37,7 +37,7 @@ function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              bndryfaces::Array{Boundary},
                                              uvol_bar::AbstractArray{Tsol,3},
                                              uface_bar::AbstractArray{Tsol,3})
@@ -105,7 +105,7 @@ differentiated with respect to the primal version's `uvol` variable.
 * `uvol_bar`: the result of the vector-matrix product between R and `uface_bar`
   
 """->
-function boundaryFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function boundaryFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                                  face::Integer,
                                                  uvol_bar::AbstractArray{Tsol,1},
                                                  uface_bar::AbstractArray{Tsol,1})
@@ -119,7 +119,7 @@ function boundaryFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function boundaryFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function boundaryFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                                  face::Integer,
                                                  uvol_bar::AbstractArray{Tsol,2},
                                                  uface_bar::AbstractArray{Tsol,2})
@@ -178,7 +178,7 @@ differentiated with respect to the primal version's `uvol` variable.
 * `uvol_bar`: the result of the vector-matrix product between R and `uface_bar`
 
 """->
-function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              ifaces::Array{Interface},
                                              uvol_bar::AbstractArray{Tsol,2},
                                              uface_bar::AbstractArray{Tsol,3})
@@ -201,7 +201,7 @@ function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              ifaces::Array{Interface},
                                              uvol_bar::AbstractArray{Tsol,3},
                                              uface_bar::AbstractArray{Tsol,4})
@@ -284,7 +284,7 @@ differentiated with respect to the primal version's `uL` and `uR` variables.
 * `uR_bar`: the result of the vector-matrix product between R and `ufaceR_bar`
 
 """->
-function interiorFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function interiorFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              iface::Interface,
                                              uL_bar::AbstractArray{Tsol,1},
                                              uR_bar::AbstractArray{Tsol,1},
@@ -304,7 +304,7 @@ function interiorFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function interiorFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function interiorFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              iface::Interface,
                                              uL_bar::AbstractArray{Tsol,2},
                                              uR_bar::AbstractArray{Tsol,2},

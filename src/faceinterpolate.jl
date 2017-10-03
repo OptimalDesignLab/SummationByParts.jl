@@ -25,7 +25,7 @@ the third dimension for the element index (boundary index).
 * `uface`: field data interpolated to the faces
 
 """->
-function boundaryinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                          bndryfaces::Array{Boundary},
                                          uvol::AbstractArray{Tsol,2},
                                          uface::AbstractArray{Tsol,2})
@@ -42,7 +42,7 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function boundaryinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                          bndryfaces::Array{Boundary},
                                          uvol::AbstractArray{Tsol,3},
                                          uface::AbstractArray{Tsol,3})
@@ -113,7 +113,7 @@ node index.
   * `uface`: field data interpolated to the faces
   
 """->
-function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              face::Integer,
                                              uvol::AbstractArray{Tsol,1},
                                              uface::AbstractArray{Tsol,1})
@@ -127,7 +127,7 @@ function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              face::Integer,
                                              uvol::AbstractArray{Tsol,2},
                                              uface::AbstractArray{Tsol,2})
@@ -191,7 +191,7 @@ set of faces.  Different methods are available depending on the rank of `uvol`:
 * `uface`: field data interpolated to the faces
 
 """->
-function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              ifaces::Array{Interface},
                                              uvol::AbstractArray{Tsol,2},
                                              uface::AbstractArray{Tsol,3})
@@ -212,7 +212,7 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              ifaces::Array{Interface},
                                              uvol::AbstractArray{Tsol,3},
                                              uface::AbstractArray{Tsol,4})
@@ -297,7 +297,7 @@ left.  Different methods are available depending on the rank of `uvol`:
 * `ufaceR`: field data from `uR` interpolated to the face
 
 """->
-function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              iface::Interface,
                                              uL::AbstractArray{Tsol,1},
                                              uR::AbstractArray{Tsol,1},
@@ -317,7 +317,7 @@ function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::AbstractFace{Tsbp},
+function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              iface::Interface,
                                              uL::AbstractArray{Tsol,2},
                                              uR::AbstractArray{Tsol,2},

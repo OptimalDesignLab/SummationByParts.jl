@@ -250,7 +250,7 @@ boundary operators, E.
 """->
 function getTriFaceForDiagE{T}(degree::Int, volcub::TriSymCub{T},
                                vtx::Array{T,2}; vertices::Bool=true)
-  @assert( degree >= 1 && degree <= 4 )
+  #@assert( degree >= 1 && degree <= 4 )
   if vertices
     facecub, facevtx = quadrature(2*degree, T, internal=false)
     R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,

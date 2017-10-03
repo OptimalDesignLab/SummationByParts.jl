@@ -28,7 +28,7 @@ Integrates a given scalar (or vector) field over the boundary faces.
 * `fun`: in the case of the scalar version, the functional value is returned
 
 """->
-function integratefunctional!{Tsbp,Tflx}(sbpface::AbstractFace{Tsbp},
+function integratefunctional!{Tsbp,Tflx}(sbpface::DenseFace{Tsbp},
                                          bndryfaces::Array{Boundary},
                                          flux::AbstractArray{Tflx,2},
                                          (±)::UnaryFunctor=Add())
@@ -43,7 +43,7 @@ function integratefunctional!{Tsbp,Tflx}(sbpface::AbstractFace{Tsbp},
   return fun
 end
 
-function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::AbstractFace{Tsbp},
+function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
                                               bndryfaces::Array{Boundary},
                                               flux::AbstractArray{Tflx,3},
                                               fun::AbstractArray{Tfun,1},
@@ -118,7 +118,7 @@ scalar (or vector) field over the boundary faces.
 * `fun`: in the case of the scalar version, the functional value is returned
 
 """->
-function integrateBoundaryFunctional!{Tsbp,Tflx}(sbpface::AbstractFace{Tsbp},
+function integrateBoundaryFunctional!{Tsbp,Tflx}(sbpface::DenseFace{Tsbp},
                                                  face::Integer, 
                                                  flux::AbstractArray{Tflx,1},
                                                  (±)::UnaryFunctor=Add())
@@ -131,7 +131,7 @@ function integrateBoundaryFunctional!{Tsbp,Tflx}(sbpface::AbstractFace{Tsbp},
 end
 
 function integrateBoundaryFunctional!{
-  Tsbp,Tflx,Tfun}(sbpface::AbstractFace{Tsbp}, face::Integer,
+  Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp}, face::Integer,
                   flux::AbstractArray{Tflx,2}, fun::AbstractArray{Tfun,1},
                   (±)::UnaryFunctor=Add())
   @assert( size(sbpface.interp,2) == size(flux,2) )
@@ -199,7 +199,7 @@ index.
   consistent.
 
 """->
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                             bndryfaces::Array{Boundary},
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2},
@@ -218,7 +218,7 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                             bndryfaces::Array{Boundary},
                                             flux::AbstractArray{Tflx,3},
                                             res::AbstractArray{Tres,3},
@@ -300,7 +300,7 @@ scalar case, the only dimension) is for the element-local node index.
 * `res`: where the result of the integration is stored
 
 """->
-function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 face::Integer,
                                                 flux::AbstractArray{Tflx,1},
                                                 res::AbstractArray{Tres,1},
@@ -315,7 +315,7 @@ function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 face::Integer,
                                                 flux::AbstractArray{Tflx,2},
                                                 res::AbstractArray{Tres,2},
@@ -392,7 +392,7 @@ index.
   consistent.
 
 """->
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 ifaces::Array{Interface},
                                                 flux::AbstractArray{Tflx,2},
                                                 res::AbstractArray{Tres,2},
@@ -413,7 +413,7 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 ifaces::Array{Interface},
                                                 flux::AbstractArray{Tflx,3},
                                                 res::AbstractArray{Tres,3},
@@ -507,7 +507,7 @@ index.
   consistent.
 
 """->
-function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 iface::Interface,
                                                 flux::AbstractArray{Tflx,1},
                                                 resL::AbstractArray{Tres,1},
@@ -527,7 +527,7 @@ function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 iface::Interface,
                                                 flux::AbstractArray{Tflx,2},
                                                 resL::AbstractArray{Tres,2},

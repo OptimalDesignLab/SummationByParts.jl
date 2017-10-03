@@ -19,7 +19,7 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: result of the vector-Jacobian product.
 
 """->
-function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::AbstractFace{Tsbp},
+function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
                                                   bndryfaces::Array{Boundary},
                                                   flux_bar::AbstractArray{Tflx,3},
                                                   fun_bar::AbstractArray{Tfun,1},
@@ -74,7 +74,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 """->
 function integrateBoundaryFunctional_rev!{
-  Tsbp,Tflx,Tfun}(sbpface::AbstractFace{Tsbp}, face::Integer,
+  Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp}, face::Integer,
                   flux_bar::AbstractArray{Tflx,2}, fun_bar::AbstractArray{Tfun,1},
                   (±)::UnaryFunctor=Add())
   @assert( size(sbpface.interp,2) == size(flux_bar,2) )
@@ -119,7 +119,7 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: result of the vector matrix product between (R^T*B) and `res_bar`
 
 """->
-function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 bndryfaces::Array{Boundary},
                                                 flux_bar::AbstractArray{Tflx,2},
                                                 res_bar::AbstractArray{Tres,2},
@@ -142,7 +142,7 @@ function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                             bndryfaces::Array{Boundary},
                                             flux_bar::AbstractArray{Tflx,3},
                                             res_bar::AbstractArray{Tres,3},
@@ -243,7 +243,7 @@ function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                     face::Integer,
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     res_bar::AbstractArray{Tres,2},
@@ -313,7 +313,7 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: result of the vector matrix product between (R^T*B) and `res_bar`
 
 """->
-function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                     ifaces::Array{Interface},
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     res_bar::AbstractArray{Tres,2},
@@ -338,7 +338,7 @@ function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 ifaces::Array{Interface},
                                                 flux_bar::AbstractArray{Tflx,3},
                                                 res_bar::AbstractArray{Tres,3},
@@ -435,7 +435,7 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: result of the vector-matrix product
 
 """->
-function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                     iface::Interface,
                                                     flux_bar::AbstractArray{Tflx,1},
                                                     resL_bar::AbstractArray{Tres,1},
@@ -459,7 +459,7 @@ function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                     iface::Interface,
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     resL_bar::AbstractArray{Tres,2},
