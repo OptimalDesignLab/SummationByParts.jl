@@ -434,6 +434,33 @@ Q_32 = -Q_23 is the number 3 variable.
 * `bx`,`by` (`bz`): the right-hand-sides of the accuracy constraints
 
 """->
+function accuracyconstraints{T}(cub::LineSymCub{T}, vtx::Array{T,2}, d::Int,
+                                E::Array{T,3}; dl::Int=0)
+  x = SymCubatures.calcnodes(cub, vtx)
+  w = SymCubatures.calcweights(cub)
+  numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
+  numeqns = convert(Int, cub.numnodes*(d+1 - dl))
+  A = zeros(T, (numeqns, numQvars))
+  bx = zeros(T, numeqns)
+  # loop over ortho polys up to degree d
+  ptr = 0
+  for r = dl:d
+    P = OrthoPoly.jacobipoly(vec(x[1,:]), 0.0, 0.0, r)
+    dPdx = OrthoPoly.diffjacobipoly(vec(x[1,:]), 0.0, 0.0, r)
+    # loop over the lower part of the skew-symmetric matrices
+    for row = 2:cub.numnodes
+      offset = convert(Int, (row-1)*(row-2)/2)
+      for col = 1:row-1
+        A[ptr+row, offset+col] += P[col]
+        A[ptr+col, offset+col] -= P[row]
+      end
+    end
+    bx[ptr+1:ptr+cub.numnodes] = diagm(w)*dPdx - E[:,:,1]*P
+    ptr += cub.numnodes
+  end
+  return A, bx
+end
+  
 function accuracyconstraints{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int,
                                 E::Array{T,3}; dl::Int=0)
   x = SymCubatures.calcnodes(cub, vtx)
@@ -935,6 +962,50 @@ operators.
 * `Q`: the stiffness matrices
 
 """->
+function buildMinConditionOperators{T}(cub::LineSymCub{T}, vtx::Array{T,2},
+                                       d::Int; vertices::Bool=true,
+                                       opthist::Bool=false)
+  w = SymCubatures.calcweights(cub)
+  Q = zeros(T, (cub.numnodes,cub.numnodes,1))
+  idx = SymCubatures.getfacevertexindices(cub)
+  Q[idx[1],idx[1],1] = -1.0
+  Q[idx[2],idx[2],1] =  1.0
+  scale!(Q, 0.5)
+  A, bx = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
+  Ainv = pinv(A)
+  Znull = nullspace(A)
+  rho = 5.0 # <-- the KS penalty paramter
+  # find the minimum norm solution (a particular solution)
+  xperp = Ainv*bx
+  # define the objective and its gradient
+  function objX(xred)
+    return SummationByParts.conditionObj(xred, rho, xperp, Znull, sview(Q,:,:,1))
+  end
+  function objXGrad!(xred, g)
+    SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, sview(Q,:,:,1), g)
+  end
+  # find the solution
+  results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
+                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           Optim.Options(g_tol = 1e-13, x_tol = 1e-60,
+                                         f_tol = 1e-60, iterations = 1000,
+                                         store_trace=false, show_trace=opthist))
+  # check that the optimization converged and then set solution
+  @assert( Optim.converged(results) )
+  xred = Optim.minimizer(results)
+  x = xperp + Znull*xred
+  @assert( norm(A*x - bx) < 1e-12)
+  
+  for row = 2:cub.numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      Q[row,col,1] += x[offset+col]
+      Q[col,row,1] -= x[offset+col]
+    end
+  end
+  return w, Q
+end
+
 function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
                                        d::Int; vertices::Bool=true,
                                        opthist::Bool=false)

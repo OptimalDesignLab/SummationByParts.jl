@@ -73,7 +73,7 @@ end
 function printTetNodes(degree::Int, internal::Bool=false,
                        filename::AbstractString="nodes.dat")
   @assert( degree >= 1 && degree <= 4)
-  sbp = TetSBP{Float64}(degree=degree, reorder=false, internal=internal)
+  sbp = getTetSBPGamma(degree=degree) #, reorder=false, internal=internal)
   sbpface = TetFace{Float64}(degree, sbp.cub, sbp.vtx)
   # compute the volume nodes
   vtx = [0.0 0.0 0.0;

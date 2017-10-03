@@ -18,7 +18,8 @@ using .Cubature
 export AbstractSBP, TriSBP, TetSBP, SparseTriSBP, SparseTetSBP
 export getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE
 export getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE
-export AbstractFace, TriFace, TetFace
+export AbstractFace
+export DenseFace, TriFace, TetFace
 export SparseFace, TriSparseFace, TetSparseFace
 export getTriFaceForDiagE, getTetFaceForDiagE
 export Boundary, Interface
@@ -216,6 +217,17 @@ summation-by-parts finite-difference operators.
 abstract AbstractFace{T<:Number}
 
 @doc """
+### SBP.DenseFace
+
+`DenseFace` is a parametric abstract type that defines face-based data and
+operations (e.g. volume-to-face reconstruction, face integration, etc) for
+summation-by-parts finite-difference operators.  This is a subtype for which
+interpolation is a dense matrix.
+
+"""->
+abstract DenseFace{T} <: AbstractFace{T} 
+
+@doc """
 ### SBP.TriFace
 
 Defines a face between two TriSBP operators with the same cubature nodes
@@ -236,7 +248,7 @@ Defines a face between two TriSBP operators with the same cubature nodes
 * `nbrperm[:,:]` : permutation for face nodes on neighbour element
 
 """->
-immutable TriFace{T} <: AbstractFace{T}
+immutable TriFace{T} <: DenseFace{T}
   degree::Int
   numnodes::Int
   stencilsize::Int
@@ -289,7 +301,7 @@ Defines a face between two TetSBP operators with the same cubature nodes
 * `nbrperm[:,:]` : permutation for face nodes on neighbour element
 
 """->
-immutable TetFace{T} <: AbstractFace{T}
+immutable TetFace{T} <: DenseFace{T}
   degree::Int
   numnodes::Int
   stencilsize::Int
@@ -328,7 +340,7 @@ summation-by-parts finite-difference operators in the case where the
 face-cubature nodes and volume nodes coincide (i.e. diagonal E operators).
 
 """->
-abstract SparseFace{T<:Number}
+abstract SparseFace{T} <: AbstractFace{T}
 
 @doc """
 ### SBP.TriSparseFace
@@ -367,7 +379,7 @@ immutable TriSparseFace{T} <: SparseFace{T}
   # inner constructor
   function TriSparseFace(degree::Int, facecub::LineSymCub{T}, facevtx::Array{T,2},
                          perm::Array{Int,2}, deriv::Array{T,3}, dperm::Array{Int,2})
-    @assert( degree >= 1 && degree <= 5 )
+    # @assert( degree >= 1 && degree <= 5 )
     numnodes = facecub.numnodes
     @assert( size(deriv,2) == numnodes )
     normal = T[0 -1; 1 1; -1 0].'
@@ -380,7 +392,7 @@ immutable TriSparseFace{T} <: SparseFace{T}
 end
 
 @doc """
-### SBP.TetFace
+### SBP.TetSparseFace
 
 Defines a face between two TetSBP operators with the same cubature nodes, in
 which the face-cubature nodes and volume nodes coincide (i.e. diagonal E
