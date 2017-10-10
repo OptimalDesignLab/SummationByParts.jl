@@ -154,9 +154,11 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int, mask::AbstractArray{Int64,1};
     fill!(dv, zero(T))
     Hred = H[mask,mask]
     dv[mask] = Hred\g[mask]
-
+    #dv[mask] = pinv(Hred,1e-6)*g[mask]
+    
     # update cubature definition and check for convergence
     v += dv
+
     SymCubatures.setparams!(cub, v[1:cub.numparams])
     SymCubatures.setweights!(cub, v[cub.numparams+1:end])
     F, dF = Cubature.cubatureresidual(cub, q)
@@ -177,6 +179,7 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int, mask::AbstractArray{Int64,1};
       nu *= 4.0
     else
       nu /= 2.0
+      #nu *= 0.25
       res_old = res
     end
 
@@ -736,9 +739,9 @@ function getTriCubatureDiagE(q::Int, T=Float64; vertices::Bool=true,
                                       0.10555291032094156])
       cub_degree = 6
     elseif q <= 8
-      cub = SymCubatures.TriSymCub{Float64}(vertices=false, numedge=2,
-                                            midedges=true,
-                                            numS21=0, numS111=2, centroid=true)
+      cub = SymCubatures.TriSymCub{T}(vertices=false, numedge=2,
+                                      midedges=true,
+                                      numS21=0, numS111=2, centroid=true)
       SymCubatures.setparams!(cub, T[0.5*(1 +(1/3)*sqrt(5 - 2*sqrt(10/7)));
                                      0.5*(1 +(1/3)*sqrt(5 + 2*sqrt(10/7)));
                                      0.22099843842186342;
@@ -760,6 +763,102 @@ function getTriCubatureDiagE(q::Int, T=Float64; vertices::Bool=true,
   append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
   vtx = T[-1 -1; 1 -1; -1 1]
   Cubature.solvecubature!(cub, cub_degree, mask, tol=tol)
+  return cub, vtx
+end
+
+function getTriCubatureSparse(q::Int, T=Float64;
+                              tol=10*eps(typeof(real(one(T)))))
+  @assert( mod(q,4) == 0)
+  function getGuess(ξ,η)
+    return (ξ - ξ*η/3 -1), (η - ξ*η/3 - 1)
+  end  
+  cub_degree = q
+  mask = zeros(Int64, (0))
+  # get the underlying LGL nodes
+  xlgl, wlgl = OrthoPoly.lglnodes(div(q+2,2), T)
+  xlgl[:] += 1.0
+  xlgl[:] *= 0.5
+  # figure out how many edge, S21, and S111 nodes
+  numedge = div(q,4)
+  numS21 = numedge
+  numS111 = div((numedge-1)*numedge,2)
+  params = zeros(T, (numedge+numS21+2*numS111))
+  weights = zeros(T, (1+numedge+numS21+numS111))
+  ptr = 1
+  wptr = 1
+  weights[wptr] = wlgl[1]*wlgl[1]
+  wptr += 1
+  # S21 parameter guesses
+  for i = 1:numS21
+    x, y = getGuess(2*xlgl[i+1],2*xlgl[i+1])
+    params[ptr] = (x + 1)
+    weights[wptr] = wlgl[i+1]*wlgl[i+1]
+    ptr += 1
+    wptr += 1
+  end
+  # edge parameters
+  for i = 1:numedge
+    params[ptr] = xlgl[i+1]
+    weights[wptr] = wlgl[i+1]*wlgl[1]
+    ptr += 1
+    wptr += 1
+  end
+  # S111 parameters
+  for i = 2:numedge
+    for j = i:numedge
+      x, y = getGuess(2*xlgl[i+1],2*xlgl[j+1])
+      params[ptr] = (x + 1)
+      params[ptr+1] = (y + 1)
+      weights[wptr] = wlgl[i+1]*wlgl[j+1]
+      ptr += 2
+      wptr += 1
+    end
+  end
+  cub = SymCubatures.TriSymCub{T}(vertices=true, numedge=numedge,
+                                  numS21=numS21, numS111=numS111)
+  #weights[:] = 2./cub.numnodes
+  SymCubatures.setweights!(cub, weights)
+
+  wts = SymCubatures.calcweights(cub)
+  weights[:] *= 2./sum(wts)
+
+  weights[:] = 0.1/cub.numnodes
+  
+  SymCubatures.setweights!(cub, weights)
+  println("sum wts = ",sum(SymCubatures.calcweights(cub)))
+
+  SymCubatures.setparams!(cub, params)
+  mask = zeros(Int64, (0))
+  mask = SymCubatures.getInternalParamMask(cub)
+  param_mask = zeros(Int64, (size(mask)))
+  param_mask[:] = mask[:]
+  append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
+  vtx = T[-1 -1; 1 -1; -1 1]
+  success = false
+  count = 0
+  while success == false
+    count += 1
+    if count > 20
+      break
+    end
+    SymCubatures.setweights!(cub, 0.05*rand(cub.numweights)/cub.numnodes)
+    rand_params = params
+    rand_params[param_mask] .*= (1.0 + 0.1*randn(size(param_mask)))
+    SymCubatures.setparams!(cub, rand_params)
+    try Cubature.solvecubature!(cub, cub_degree, mask, tol=tol, hist=true)
+    catch
+      success = false
+    end
+    if success
+      if minimum(cub.weights) < 0.0
+        success = false
+        continue
+      end
+      break
+    end
+  end
+    
+  #Cubature.solvecubatureweights!(cub, cub_degree, tol=tol, hist=true)
   return cub, vtx
 end
 

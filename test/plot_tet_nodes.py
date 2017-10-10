@@ -84,6 +84,7 @@ print ax.can_pan()
 ax.view_init(elev=20, azim=-50)
 ax.dist=6 # distance from camera to origin?
 
+
 for o in fig.findobj():
     o.set_clip_on(False)
 
