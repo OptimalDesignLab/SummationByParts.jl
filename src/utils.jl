@@ -881,3 +881,227 @@ function eigenvalueObjGrad!(xred::AbstractVector{Float64}, p::Int,
   # x = Znull*xred + xperp
   g[:] = Znull.'*x_bar
 end
+
+"""
+  This function writes a Julia source file to retrieve the w and Q arrays for a
+  given set of SBP operators.  The SBP operators should all be in the same family of
+  operators but have different degrees.  Attempting to load a SBP operator not
+  saved in the file causes an exception to be thrown
+
+  **Input**
+
+   * sbpname: the name of the SBP operator family.  It is recommended to include
+              the dimensionality of the operator in the file name (ie. Tri for Tet)
+   * sbps: a Vector of SBP objects.  All the objects will be written to the file
+
+  **Outputs**
+
+   None
+
+  **Notes:**
+
+    The resulting file will be named sbpname.jl.  The file will contain a single
+    function with signature
+
+      getsbpname{T}(degree::Integer, w::Array{T,1}, Q::Array{T, 3})
+
+    where sbname is the the name of the SBP operator described above.
+
+"""
+function writeSBPs(sbpname::AbstractString, sbps::AbstractVector{AbstractSBP})
+# sbpname is also the filename
+  fname = string(sbpname, ".jl")
+  f = open( fname, "w")
+
+  funcname = string("get", sbpname)
+
+  println(f, "# This function retrieves the $sbpname operator")
+
+  # write the function def
+  println(f, "function $funcname{T}(degree::Integer, w::Array{T,1}, Q::Array{T,3})")
+  indent = "  "
+  
+  for i=1:length(sbps)  # write all SBPs to the file
+    sbp_i = sbps[i]
+    di = sbp_i.degree
+    numnodes = sbp_i.numnodes
+    if i == 1
+      println(f, indent, "if degree == $di")
+    else
+      println(f, indent, "elseif degree == $di")
+    end
+    indent *= "  "
+    println(f, indent, "@assert length(w) == $numnodes")
+    println(f, indent, "w[:] = ", sbp_i.w)
+    print(f, "\n")
+
+    for i=1:size(sbp_i.Q, 3)  # write all Q matrices
+      println(f, indent, "Q[:, :, $i] = ", sbp_i.Q[:, :, i])
+      print(f, "\n")
+    end
+
+    # decrease indent
+    indent = indent[1:end-2]
+  end
+
+  # throw exception for unregonized degree
+  println(f, indent, "else")
+  indent *= "  "
+  println(f, indent, "throw(ErrorException(\"degree \$degree $sbpname not supported\"))")
+  indent = indent[1:end-2]
+  println(f, indent, "end")
+
+  # print return
+  print(f, "\n")
+  println(f, indent, "return w, Q")
+  println(f, "end")
+
+  close(f)
+
+  println("finished writing $sbpname operators to file, please add include(\"$fname\") to the SummationByParts module")
+end
+
+"""
+  Writes the original SBP Omega operators to a file
+"""
+function writeTriSBPOmega()
+
+  # build the operators
+  Tsbp = Float64
+  sbps = Array(AbstractSBP, 4)
+  for degree = 1:4
+    if degree <= 2
+      cubdegree = 2*degree
+    else
+      cubdegree = 2*degree - 1
+    end
+    cub, vtx = getTriCubatureOmega(cubdegree, Tsbp)
+    Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+    w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+    sbp = TriSBP{Tsbp}(degree, cub, vtx, w, Q)
+    sbps[degree] = sbp
+  end
+
+  # write them to files
+  writeSBPs("TriSBPOmega", sbps)
+
+  return nothing
+end
+
+
+"""
+  Writes the 2p SBP Omega operators to a file
+"""
+function writeTriSBPOmega2()
+
+  # build the operators
+  Tsbp = Float64
+  sbps = Array(AbstractSBP, 4)
+  for degree = 1:4
+    cubdegree = 2*degree
+    cub, vtx = getTriCubatureOmega(cubdegree, Tsbp)
+    Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+    w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+    sbp = TriSBP{Tsbp}(degree, cub, vtx, w, Q)
+    sbps[degree] = sbp
+  end
+
+  # write them to files
+  writeSBPs("TriSBPOmega2", sbps)
+
+  return nothing
+end
+
+
+"""
+  Writes the 2p SBP Omega operators with minimized condition number to a file,
+  using the p=4 cubature with fewer nodes
+"""
+function writeTriSBPOmega4()
+
+  # build the operators
+  Tsbp = Float64
+  sbps = Array(AbstractSBP, 4)
+  for degree = 1:4
+    cubdegree = 2*degree
+    cub, vtx = getTriCubatureOmega(cubdegree, Tsbp)
+    Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+    w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree, vertices=false)
+    sbp = TriSBP{Tsbp}(degree, cub, vtx, w, Q)
+    sbps[degree] = sbp
+  end
+
+  # write them to files
+  writeSBPs("TriSBPOmega4", sbps)
+
+  return nothing
+end
+
+"""
+  Writes TriDiagE operators with vertex nodes to file
+"""
+function writeTriDiagE1()
+  # build the operators
+  Tsbp = Float64
+  vertices = true
+  sbps = Array(AbstractSBP, 4)
+  for degree = 1:4
+    cub, vtx = getTriCubatureDiagE(2*degree, Tsbp, vertices=vertices)
+    Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+    w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
+                                                       vertices=vertices)
+    sbp = TriSBP{Tsbp}(degree, cub, vtx, w, Q)
+    sbps[degree] = sbp
+  end
+
+  # write them to files
+  writeSBPs("TriSBPDiagE1", sbps)
+
+  return nothing
+end
+
+"""
+  Writes TriDiagE operators without vertex nodes to file
+"""
+function writeTriDiagE2()
+  # build the operators
+  Tsbp = Float64
+  vertices = false
+  sbps = Array(AbstractSBP, 4)
+  for degree = 1:4
+    cub, vtx = getTriCubatureDiagE(2*degree, Tsbp, vertices=vertices)
+    Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+    w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
+                                                       vertices=vertices)
+    sbp = TriSBP{Tsbp}(degree, cub, vtx, w, Q)
+    sbps[degree] = sbp
+  end
+
+  # write them to files
+  writeSBPs("TriSBPDiagE1", sbps)
+
+  return nothing
+end
+
+"""
+  Write the 3D diagonal E operators to a file (p <= 2 for now)
+"""
+function writeTetDiagE()
+  # build the operators
+  Tsbp = Float64
+  vertices = false
+  sbps = Array(AbstractSBP, 2)
+  for degree = 1:2
+    cub, vtx = getTetCubatureDiagE(2*degree, Tsbp, vertices=vertices)
+    w = zeros(Tsbp, (cub.numnodes))
+    Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 3))
+    w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree)
+    sbp = TriSBP{Tsbp}(degree, cub, vtx, w, Q)
+    sbps[degree] = sbp
+  end
+
+  # write them to files
+  writeSBPs("TetSBPDiagE", sbps)
+
+  return nothing
+end
