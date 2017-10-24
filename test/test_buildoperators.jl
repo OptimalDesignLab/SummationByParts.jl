@@ -511,10 +511,10 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
 
   context("Testing SummationByParts.buildMinConditionOperators (TetSymCub method)") do
     #tol = [1e-12; 1e-12; 1e-12; 5e-8]
-    tol = [1e-12; 1e-12; 1e-12; 1e-12]
-    for d = 1:2 # cannot do d=3:4 yet, since optimization does not converge
+    tol = [1e-12; 1e-12] #; 1e-12; 1e-12]
+    for d = 1:2
       cub, vtx = getTetCubatureDiagE(2*d, Float64, vertices=false)
-      w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d)
+      w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d, tol=1e-2)
       Dx = diagm(1./w)*Q[:,:,1]
       Dy = diagm(1./w)*Q[:,:,2]
       Dz = diagm(1./w)*Q[:,:,3]

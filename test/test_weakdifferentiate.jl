@@ -17,7 +17,7 @@ facts("Testing SummationByParts Module (weak differentiate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega) #, getTetSBPDiagE)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing weakdifferentiate! ("string($TSBP)" scalar field method)") do
         # build a single element grid, and verify that Qxi * 1 = 0
@@ -27,7 +27,7 @@ facts("Testing SummationByParts Module (weak differentiate methods)...") do
           di = 1
           res = zeros(u)
           weakdifferentiate!(sbp, di, u, res)
-          @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=1e-13)
+          @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=1e-12)
         end
       end
     end
@@ -57,7 +57,7 @@ facts("Testing SummationByParts Module (weak differentiate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega) #, getTetSBPDiagE)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing weakdifferentiate! ("string($TSBP)" vector field method)") do
         # build a single element grid, and verify that \int (D * x) d\Omega = 2/3
@@ -71,9 +71,9 @@ facts("Testing SummationByParts Module (weak differentiate methods)...") do
             x[:,:,1] = calcnodes(sbp, vtx)
             res = zeros(x)
             weakdifferentiate!(sbp, di, x, res)
-            @fact sum(res[1,:,1]) --> roughly(Id[di,1], atol=1e-14)
-            @fact sum(res[2,:,1]) --> roughly(Id[di,2], atol=1e-14)
-            @fact sum(res[3,:,1]) --> roughly(Id[di,3], atol=1e-14)
+            @fact sum(res[1,:,1]) --> roughly(Id[di,1], atol=1e-13)
+            @fact sum(res[2,:,1]) --> roughly(Id[di,2], atol=1e-13)
+            @fact sum(res[3,:,1]) --> roughly(Id[di,3], atol=1e-13)
           end
         end
       end
@@ -96,7 +96,7 @@ facts("Testing SummationByParts Module (weak differentiate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega) #, getTetSBPDiagE)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing weakDifferentiateElement! ("string($TSBP)" scalar field method)") do
         # build a single element, and verify that Qxi * 1 = 0
@@ -137,7 +137,7 @@ facts("Testing SummationByParts Module (weak differentiate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega) #, getTetSBPDiagE)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing weakDifferentiateElement! ("string($TSBP)" vector field method)") do
         # build a single element grid, and verify that \int (D * x) d\Omega = 2/3

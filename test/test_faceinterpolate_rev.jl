@@ -5,7 +5,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing boundaryinterpolate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:($TSBP[3])
@@ -35,7 +35,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing boundaryinterpolate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:($TSBP[3])
@@ -65,7 +65,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing boundaryFaceInterpolate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:($TSBP[3])
@@ -94,7 +94,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing boundaryFaceInterpolate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:($TSBP[3])
@@ -123,7 +123,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing interiorfaceinterpolate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:($TSBP[3])
@@ -150,7 +150,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing interiorfaceinterpolate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:($TSBP[3])
@@ -177,7 +177,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing interiorFaceInterpolate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:($TSBP[3])
@@ -210,7 +210,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing interiorFaceInterpolate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:($TSBP[3])

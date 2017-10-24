@@ -26,7 +26,7 @@ facts("Testing SummationByParts Module (reverse-diff of differentiate methods)..
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing differentiate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
@@ -78,7 +78,7 @@ facts("Testing SummationByParts Module (reverse-diff of differentiate methods)..
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing differentiate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4
@@ -130,7 +130,7 @@ facts("Testing SummationByParts Module (reverse-diff of differentiate methods)..
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing differentiateElement_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
@@ -182,7 +182,7 @@ facts("Testing SummationByParts Module (reverse-diff of differentiate methods)..
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing differentiateElement_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4

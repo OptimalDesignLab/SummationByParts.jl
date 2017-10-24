@@ -274,7 +274,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   context("Testing boundaryinterpolate! (TetSparseFace, scalar field method)") do
     # build a four element grid and verify that interpolation is exact for degree p
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,4))
@@ -337,7 +337,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   context("Testing boundaryinterpolate! (TetSparseFace, vector field method)") do
     # build a four element grid and verify that interpolation is exact for degree p
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,4))
@@ -700,7 +700,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   context("Testing boundaryFaceInterpolate! (TetSparseFace, scalar field method)") do
     # build a four element grid and verify that interpolation is exact for degree p
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,4))
@@ -767,7 +767,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   context("Testing boundaryFaceInterpolate! (TetSparseFace, vector field method)") do
     # build a four element grid and verify that interpolation is exact for degree p
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,4))
@@ -1094,7 +1094,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing interiorfaceinterpolate! (TetSparseFace scalar field method)") do
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,5))
@@ -1151,7 +1151,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing interiorfaceinterpolate! (TetSparseFace vector field method)") do
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,5))
@@ -1500,7 +1500,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing interiorFaceInterpolate! (TetSparseFace scalar field method)") do
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,5))
@@ -1562,7 +1562,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
   context("Testing interiorFaceInterpolate! (TetSparseFace vector field method)") do
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       x = zeros(Float64, (3,sbp.numnodes,5))

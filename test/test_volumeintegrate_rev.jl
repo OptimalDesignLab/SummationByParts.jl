@@ -1,7 +1,7 @@
 facts("Testing SummationByParts Module (reverse-diff of volume integrate methods)...") do
 
   for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
-              getTetSBPGamma, getTetSBPOmega)
+              getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeintegrate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
@@ -19,7 +19,7 @@ facts("Testing SummationByParts Module (reverse-diff of volume integrate methods
   end
 
   for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
-              getTetSBPGamma, getTetSBPOmega)
+              getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeintegrate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4
@@ -37,7 +37,7 @@ facts("Testing SummationByParts Module (reverse-diff of volume integrate methods
   end
 
   for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
-              getTetSBPGamma, getTetSBPOmega)
+              getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeIntegrateElement_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
@@ -55,7 +55,7 @@ facts("Testing SummationByParts Module (reverse-diff of volume integrate methods
   end
 
   for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
-              getTetSBPGamma, getTetSBPOmega)
+              getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeIntegrateElement_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4

@@ -2,6 +2,8 @@
 
 include("tet_diage_p1.jl") #<-- file containing function that defines DiagE tet
 include("tet_diage_p2.jl")
+include("tet_diage_p3.jl")
+include("tet_diage_p4.jl")
 
 @doc """
 ### SBP.getTriSBPGamma
@@ -135,16 +137,18 @@ points
 """->
 function getTetSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
                         edges::Bool=false, vertices::Bool=false)
-  @assert( degree >= 1 && degree <= 2 )
+  @assert( degree >= 1 && degree <= 4 )
   cub, vtx = getTetCubatureDiagE(2*degree, Tsbp, vertices=vertices)
   w = zeros(Tsbp, (cub.numnodes))
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 3))
-  #w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
-  #                                                   vertices=vertices)
   if degree == 1
     w, Q = getTetDiagEp1(w, Q)
   elseif degree == 2
     w, Q = getTetDiagEp2(w, Q)
+  elseif degree == 3
+    w, Q = getTetDiagEp3(w, Q)
+  elseif degree == 4
+    w, Q = getTetDiagEp4(w, Q)
   end
   return TetSBP{Tsbp}(degree, cub, vtx, w, Q)
 end

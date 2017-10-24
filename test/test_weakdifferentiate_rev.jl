@@ -23,7 +23,7 @@ facts("Testing SummationByParts Module (reverse-diff of weak differentiate metho
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing weakdifferentiate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
@@ -69,7 +69,7 @@ facts("Testing SummationByParts Module (reverse-diff of weak differentiate metho
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing weakdifferentiate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4
@@ -115,7 +115,7 @@ facts("Testing SummationByParts Module (reverse-diff of weak differentiate metho
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing weakDifferentiateElement_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:4
@@ -161,7 +161,7 @@ facts("Testing SummationByParts Module (reverse-diff of weak differentiate metho
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing weakDifferentiateElement_rev! ("string($TSBP)" vector field method)") do
         for p = 1:4

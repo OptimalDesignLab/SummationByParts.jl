@@ -21,7 +21,7 @@ facts("Testing SummationByParts Module (directional differentiate methods)...") 
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing directionalDifferentiateElement! ("string($TSBP)" scalar field method)") do
         # build a single element grid, define u = x+y+z, and verify that Ddir = 3.0
@@ -67,7 +67,7 @@ facts("Testing SummationByParts Module (directional differentiate methods)...") 
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing directionalDifferentiateElement! ("string($TSBP)" vector field method)") do
         # build a single element grid, define u = x+y+z, and verify that Ddir = 3.0

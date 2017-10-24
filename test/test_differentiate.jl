@@ -30,7 +30,7 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing differentiate! ("string($TSBP)" scalar field method)") do
         # verify the accuracy of the differentiation operators
@@ -91,7 +91,7 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing differentiate! ("string($TSBP)" vector field method)") do
         # build a single element grid, and verify that Dxi * x = 0.5 or 0, depending
@@ -142,7 +142,7 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing differentiateElement! ("string($TSBP)" scalar field method)") do
         # verify the accuracy of the differentiation operators
@@ -204,7 +204,7 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing differentiateElement! ("string($TSBP)" vector field method)") do
         # build a single element grid, and verify that Dxi * x = 0.5 or 0, depending

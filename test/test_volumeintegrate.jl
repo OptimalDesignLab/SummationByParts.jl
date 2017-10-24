@@ -16,7 +16,7 @@ facts("Testing SummationByParts Module (volume integrate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeintegrate! ("string($TSBP)" scalar field method)") do
         # build a single element grid, and verify that ones*H*ones = vol
@@ -50,7 +50,7 @@ facts("Testing SummationByParts Module (volume integrate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeintegrate! ("string($TSBP)" vector field method)") do
         # build a single element grid, and verify that ones*H*ones = (1,2)
@@ -85,7 +85,7 @@ facts("Testing SummationByParts Module (volume integrate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeIntegrateElement! ("string($TSBP)" scalar field method)") do
         # build a single element grid, and verify that ones*H*ones = vol
@@ -120,7 +120,7 @@ facts("Testing SummationByParts Module (volume integrate methods)...") do
     end
   end
 
-  for TSBP = (getTetSBPGamma, getTetSBPOmega)
+  for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeIntegrateElement! ("string($TSBP)" vector field method)") do
         # build a single element grid, and verify that ones*H*ones = (1,2)

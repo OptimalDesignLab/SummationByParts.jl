@@ -270,7 +270,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
 
   context("Testing integratefunctional! (TetSparseFace, scalar field method)") do
     # build a four element grid and verify the accuracy of boundary integration
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       xf = zeros(Float64, (3,sbpface.numnodes,12))
@@ -330,7 +330,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
 
   context("Testing integratefunctional! (TetSparseFace, vector field method)") do
     # build a four element grid and verify the accuracy of boundary integration
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       xf = zeros(Float64, (3,sbpface.numnodes,12))
@@ -683,7 +683,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
 
   context("Testing integrateBoundaryFunctional! (TetSparseFace, scalar field method)") do
     # build a four element grid and verify the accuracy of boundary integration
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       xf = zeros(Float64, (3,sbpface.numnodes,12))
@@ -747,7 +747,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
 
   context("Testing integrateBoundaryFunctional! (TetSparseFace, vector field method)") do
     # build a four element grid and verify the accuracy of boundary integration
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       xf = zeros(Float64, (3,sbpface.numnodes,12))
@@ -991,7 +991,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing boundaryintegrate! and interiorfaceintegrate! (TetSparseFace scalar field method)") do
     # build a five element grid and verify that a constant integrated over all
     # faces is zero
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       ifaces = Array(Interface, 4)
@@ -1031,7 +1031,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing boundaryintegrate! and interiorfaceintegrate! (TetSparseFace vector field method)") do
     # build a five element grid and verify that a constant integrated over all
     # faces is zero
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       ifaces = Array(Interface, 4)
@@ -1281,7 +1281,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing boundaryFaceIntegrate! and interiorFaceIntegrate! (TetSparseFace scalar field method)") do
     # build a five element grid and verify that a constant integrated over all
     # faces is zero
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       ifaces = Array(Interface, 4)
@@ -1328,7 +1328,7 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
   context("Testing boundaryFaceIntegrate! and interiorFaceIntegrate! (TetSparseFace vector field method)") do
     # build a five element grid and verify that a constant integrated over all
     # faces is zero
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       ifaces = Array(Interface, 4)

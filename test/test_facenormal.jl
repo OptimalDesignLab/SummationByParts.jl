@@ -129,7 +129,7 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
   context("Testing SummationByParts.calcFaceNormals! (TetSparseFace method)") do
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       function mapping(ξ)
@@ -308,7 +308,7 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
   context("Testing SummationByParts.facenormal! (TetSparseFace method)") do
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       function mapping(ξ)
