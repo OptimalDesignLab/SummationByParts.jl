@@ -562,6 +562,7 @@ function getTriCubatureOmega(q::Int, T=Float64;
     #                                0.624003943088726])
   elseif q <= 8
     # P4; 9th order cubature
+    # Omega 4 cubature (fewer nodes)
     cub = SymCubatures.TriSymCub{T}(vertices=false, centroid=true,
                                     numS21=3, numS111=1)
     SymCubatures.setweights!(cub, T[0.20643474106943666;
@@ -574,6 +575,7 @@ function getTriCubatureOmega(q::Int, T=Float64;
                                    0.10109445663405793;
                                    0.5262256592692812;
                                    0.016789554819910586])      
+    # Omeaga2/3 cubature
     # cub = SymCubatures.TriSymCub{T}(vertices=false, numS21=4, numS111=1)
     # SymCubatures.setweights!(cub, T[0.05415768359243055;
     #                                 0.11606844251884181;

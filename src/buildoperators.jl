@@ -1082,7 +1082,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
 
   #spect = SummationByParts.eigenvalueObj(yred, 1, yperp, Znull, w, sview(Q,:,:,2))
   #println("spectral radius of y operator = ",spect)
-    
+  println("norm(A*x - bx) = ", norm(A*x - bx)) 
   @assert( norm(A*x - bx) < 1e-12)
   @assert( norm(A*y - by) < 1e-12)
 
