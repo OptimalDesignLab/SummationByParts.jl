@@ -52,13 +52,13 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
                 dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
                 res = zeros(u)
                 differentiate!(sbp, 1, u, res)
-                @fact res --> roughly(dudx, atol=5e-13)
+                @fact res --> roughly(dudx, atol=5e-12)
                 res = zeros(u)
                 differentiate!(sbp, 2, u, res)
-                @fact res --> roughly(dudy, atol=5e-13)
+                @fact res --> roughly(dudy, atol=5e-12)
                 res = zeros(u)
                 differentiate!(sbp, 3, u, res)
-                @fact res --> roughly(dudz, atol=5e-13)
+                @fact res --> roughly(dudz, atol=5e-12)
               end
             end
           end
@@ -104,9 +104,9 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
           di = 1
           res = zeros(x)
           differentiate!(sbp, di, x, res)
-          @fact vec(res[1,:,1]) --> roughly(0.5.*ones(sbp.numnodes), atol=5e-13)
-          @fact vec(res[2,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-13)
-          @fact vec(res[3,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-13)
+          @fact vec(res[1,:,1]) --> roughly(0.5.*ones(sbp.numnodes), atol=5e-12)
+          @fact vec(res[2,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
+          @fact vec(res[3,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
         end
       end
     end
@@ -164,13 +164,13 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
                 dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
                 res = zeros(u)
                 differentiateElement!(sbp, 1, view(u,:,1), view(res,:,1))
-                @fact res --> roughly(dudx, atol=5e-13)
+                @fact res --> roughly(dudx, atol=5e-12)
                 res = zeros(u)
                 differentiateElement!(sbp, 2, view(u,:,1), view(res,:,1))
-                @fact res --> roughly(dudy, atol=5e-13)
+                @fact res --> roughly(dudy, atol=5e-12)
                 res = zeros(u)
                 differentiateElement!(sbp, 3, view(u,:,1), view(res,:,1))
-                @fact res --> roughly(dudz, atol=5e-13)
+                @fact res --> roughly(dudz, atol=5e-12)
               end
             end
           end
@@ -217,9 +217,9 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
           di = 1
           res = zeros(x)
           differentiateElement!(sbp, di, view(x,:,:,1), view(res,:,:,1))
-          @fact vec(res[1,:,1]) --> roughly(0.5.*ones(sbp.numnodes), atol=5e-13)
-          @fact vec(res[2,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-13)
-          @fact vec(res[3,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-13)
+          @fact vec(res[1,:,1]) --> roughly(0.5.*ones(sbp.numnodes), atol=5e-12)
+          @fact vec(res[2,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
+          @fact vec(res[3,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
         end
       end
     end

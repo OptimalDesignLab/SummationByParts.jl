@@ -140,15 +140,20 @@ function getTetSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
   @assert( degree >= 1 && degree <= 4 )
   cub, vtx = getTetCubatureDiagE(2*degree, Tsbp, vertices=vertices)
   w = zeros(Tsbp, (cub.numnodes))
+  w = SymCubatures.calcweights(cub)
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 3))
   if degree == 1
-    w, Q = getTetDiagEp1(w, Q)
+    Q = reshape(readdlm(dirname(@__FILE__)"/tet_diage_p1.dat", '\t', Tsbp),
+                size(Q))
   elseif degree == 2
-    w, Q = getTetDiagEp2(w, Q)
+    Q = reshape(readdlm(dirname(@__FILE__)"/tet_diage_p2.dat", '\t', Tsbp),
+                size(Q))
   elseif degree == 3
-    w, Q = getTetDiagEp3(w, Q)
+    Q = reshape(readdlm(dirname(@__FILE__)"/tet_diage_p3.dat", '\t', Tsbp),
+                size(Q))
   elseif degree == 4
-    w, Q = getTetDiagEp4(w, Q)
+    Q = reshape(readdlm(dirname(@__FILE__)"/tet_diage_p4.dat", '\t', Tsbp),
+                size(Q))
   end
   return TetSBP{Tsbp}(degree, cub, vtx, w, Q)
 end

@@ -11,18 +11,6 @@ function getOptTetDiagE(degree::Int=1, Tsbp::Type=Float64;
                                                      tol=opt_tol,
                                                      vertices=vertices,
                                                      opthist=true)
-  f = open("tet_diage_p$degree.jl", "w")
-  print(f, "w[:] = ")
-  println(f, w)
-  println(f)
-  print(f, "Q[:,:,1] = ")
-  println(f, Q[:,:,1])
-  println(f)
-  print(f, "Q[:,:,2] = ")
-  println(f, Q[:,:,2])
-  println(f)
-  print(f, "Q[:,:,3] = ")
-  println(f, Q[:,:,3])
-  close(f)
+  writedlm("tet_diage_p$degree.dat", Q)
 end
 
