@@ -65,7 +65,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
 
   for TSBP = ((getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing integratefunctional_rev! ("string($TSBP)" vector field method)") do
         # build a four element grid and verify the accuracy of boundary integration
@@ -182,7 +182,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing boundaryintegrate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:($TSBP[3])
@@ -212,7 +212,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing boundaryintegrate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:($TSBP[3])
@@ -242,7 +242,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing boundaryFaceIntegrate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:($TSBP[3])
@@ -271,7 +271,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing boundaryFaceIntegrate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:($TSBP[3])
@@ -300,7 +300,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing interiorfaceintegrate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:($TSBP[3])
@@ -327,7 +327,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing interiorfaceintegrate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:($TSBP[3])
@@ -354,7 +354,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing interiorFaceIntegrate_rev! ("string($TSBP)" scalar field method)") do
         for p = 1:($TSBP[3])
@@ -382,7 +382,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
-              (getTetSBPDiagE,getTetFaceForDiagE,2))
+              (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
       context("Testing interiorFaceIntegrate_rev! ("string($TSBP)" vector field method)") do
         for p = 1:($TSBP[3])

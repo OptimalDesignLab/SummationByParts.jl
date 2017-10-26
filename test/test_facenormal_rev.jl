@@ -184,7 +184,7 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
   context("Testing SummationByParts.calcFaceNormals_rev! (TetSparseFace method)") do
     # build a curvilinear element, differentiate xsbp and nrm with using complex
     # step, and then compare with reverse mode
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       function mapping(ξ)
@@ -458,7 +458,7 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
   context("Testing SummationByParts.facenormal_rev! (TetSparseFace method)") do
     # build a curvilinear element, differentiate xsbp and nrm with using complex
     # step, and then compare with reverse mode
-    for p = 1:2
+    for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
       sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
       function mapping(ξ)

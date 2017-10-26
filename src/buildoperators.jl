@@ -953,6 +953,7 @@ operators.
 * `cub`: symmetric cubature rule
 * `vtx`: vertices of the right simplex
 * `d`: maximum total degree for the Proriol polynomials
+* `tol`: (optional) gradient norm tolerance for the optimization problem
 * `vertices`: (optional) if true, include vertices in the operator
 * `opthist`: (optional) if true, show the optimization history
 
@@ -963,7 +964,8 @@ operators.
 
 """->
 function buildMinConditionOperators{T}(cub::LineSymCub{T}, vtx::Array{T,2},
-                                       d::Int; vertices::Bool=true,
+                                       d::Int; tol::Float64=1e-13,
+                                       vertices::Bool=true,
                                        opthist::Bool=false)
   w = SymCubatures.calcweights(cub)
   Q = zeros(T, (cub.numnodes,cub.numnodes,1))
@@ -987,7 +989,7 @@ function buildMinConditionOperators{T}(cub::LineSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-13, x_tol = 1e-60,
+                           Optim.Options(g_tol = tol, x_tol = 1e-60,
                                          f_tol = 1e-60, iterations = 1000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
@@ -1007,7 +1009,8 @@ function buildMinConditionOperators{T}(cub::LineSymCub{T}, vtx::Array{T,2},
 end
 
 function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
-                                       d::Int; vertices::Bool=true,
+                                       d::Int; tol::Float64=1e-13,
+                                       vertices::Bool=true,
                                        opthist::Bool=false)
   w = SymCubatures.calcweights(cub)
   face = getTriFaceForDiagE(d, cub, vtx, vertices=vertices)
@@ -1099,7 +1102,8 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
 end
 
 function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
-                                       d::Int; vertices::Bool=false,
+                                       d::Int; tol::Float64=1e-2,
+                                       vertices::Bool=false,
                                        opthist::Bool=false)
   w = SymCubatures.calcweights(cub)
   face = getTetFaceForDiagE(d, cub, vtx)
@@ -1126,10 +1130,10 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
     SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, sview(Q,:,:,1), g)
   end
   # find the solution
-  results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)), 
+  results = Optim.optimize(objX, objXGrad!, randn(size(Znull,2)), 
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-2, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 2000,
+                           Optim.Options(g_tol = tol, x_tol = 1e-100,
+                                         f_tol = 1e-100, iterations = 100000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   #@assert( Optim.converged(results) )
@@ -1162,10 +1166,10 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
     SummationByParts.conditionObjGrad!(yred, rho, yperp, Znull, sview(Q,:,:,2), g)
   end
   # find the solution
-  results = Optim.optimize(objY, objYGrad!, ones(size(Znull,2)),
+  results = Optim.optimize(objY, objYGrad!, randn(size(Znull,2)),
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-2, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 2000,
+                           Optim.Options(g_tol = tol, x_tol = 1e-100,
+                                         f_tol = 1e-100, iterations = 100000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
@@ -1188,10 +1192,10 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
     SummationByParts.conditionObjGrad!(zred, rho, zperp, Znull, sview(Q,:,:,3), g)
   end
   # find the solution
-  results = Optim.optimize(objZ, objZGrad!, ones(size(Znull,2)),
+  results = Optim.optimize(objZ, objZGrad!, randn(size(Znull,2)),
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-2, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 2000,
+                           Optim.Options(g_tol = tol, x_tol = 1e-100,
+                                         f_tol = 1e-100, iterations = 100000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
