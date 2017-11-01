@@ -1,10 +1,5 @@
 # This file gathers together outer constructors for the SBP operators
 
-include("tet_diage_p1.jl") #<-- file containing function that defines DiagE tet
-include("tet_diage_p2.jl")
-include("tet_diage_p3.jl")
-include("tet_diage_p4.jl")
-
 @doc """
 ### SBP.getTriSBPGamma
 

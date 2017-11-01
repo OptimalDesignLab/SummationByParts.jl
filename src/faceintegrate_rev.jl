@@ -20,7 +20,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 """->
 function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
-                                                  bndryfaces::Array{Boundary},
+                                                  bndryfaces::AbstractArray{Boundary},
                                                   flux_bar::AbstractArray{Tflx,3},
                                                   fun_bar::AbstractArray{Tfun,1},
                                                   (±)::UnaryFunctor=Add())
@@ -38,7 +38,7 @@ function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
 end
 
 function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::SparseFace{Tsbp},
-                                                  bndryfaces::Array{Boundary},
+                                                  bndryfaces::AbstractArray{Boundary},
                                                   flux_bar::AbstractArray{Tflx,3},
                                                   fun_bar::AbstractArray{Tfun,1},
                                                   (±)::UnaryFunctor=Add())
@@ -120,7 +120,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 """->
 function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
-                                                bndryfaces::Array{Boundary},
+                                                bndryfaces::AbstractArray{Boundary},
                                                 flux_bar::AbstractArray{Tflx,2},
                                                 res_bar::AbstractArray{Tres,2},
                                                 (±)::UnaryFunctor=Add())
@@ -143,7 +143,7 @@ function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
 end
 
 function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
-                                            bndryfaces::Array{Boundary},
+                                            bndryfaces::AbstractArray{Boundary},
                                             flux_bar::AbstractArray{Tflx,3},
                                             res_bar::AbstractArray{Tres,3},
                                             (±)::UnaryFunctor=Add())
@@ -172,7 +172,7 @@ function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
 end
 
 function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
-                                                bndryfaces::Array{Boundary},
+                                                bndryfaces::AbstractArray{Boundary},
                                                 flux_bar::AbstractArray{Tflx,2},
                                                 res_bar::AbstractArray{Tres,2},
                                                 (±)::UnaryFunctor=Add())
@@ -188,7 +188,7 @@ function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
 end
 
 function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
-                                            bndryfaces::Array{Boundary},
+                                            bndryfaces::AbstractArray{Boundary},
                                             flux_bar::AbstractArray{Tflx,3},
                                             res_bar::AbstractArray{Tres,3},
                                             (±)::UnaryFunctor=Add())
@@ -314,7 +314,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 """->
 function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
-                                                    ifaces::Array{Interface},
+                                                    ifaces::AbstractArray{Interface},
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     res_bar::AbstractArray{Tres,2},
                                                     (±)::UnaryFunctor=Add())
@@ -339,7 +339,7 @@ function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
 end
 
 function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
-                                                ifaces::Array{Interface},
+                                                ifaces::AbstractArray{Interface},
                                                 flux_bar::AbstractArray{Tflx,3},
                                                 res_bar::AbstractArray{Tres,3},
                                                 (±)::UnaryFunctor=Add())
@@ -369,7 +369,7 @@ function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
 end
 
 function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
-                                                    ifaces::Array{Interface},
+                                                    ifaces::AbstractArray{Interface},
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     res_bar::AbstractArray{Tres,2},
                                                     (±)::UnaryFunctor=Add())
@@ -390,7 +390,7 @@ function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
 end
 
 function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
-                                                    ifaces::Array{Interface},
+                                                    ifaces::AbstractArray{Interface},
                                                     flux_bar::AbstractArray{Tflx,3},
                                                     res_bar::AbstractArray{Tres,3},
                                                     (±)::UnaryFunctor=Add())
