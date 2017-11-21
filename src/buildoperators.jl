@@ -1033,6 +1033,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
                                        d::Int; tol::Float64=1e-13,
                                        vertices::Bool=true,
                                        opthist::Bool=false)
+  println("building min condition TriSBP")
   w = SymCubatures.calcweights(cub)
   face = getTriFaceForDiagE(d, cub, vtx, vertices=vertices)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
@@ -1047,7 +1048,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
 
   #--------------------------------------
   # the x-direction operator
-  
+  println("building x direction operator") 
   # find the minimum norm solution (a particular solution)
   xperp = Ainv*bx
   # define the objective and its gradient
@@ -1059,10 +1060,10 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
     SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, E, g)
   end
   # find the solution
-  results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
+  results = Optim.optimize(objX, objXGrad!, randn(size(Znull,2)),
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-13, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 1000,
+                           Optim.Options(g_tol = tol, x_tol = 1e-100,
+                                         f_tol = 1e-100, iterations = 1000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
@@ -1084,7 +1085,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
 
   #--------------------------------------
   # the y-direction operator
-  
+  println("building y direction operator")
   # find the minimum norm solution (a particular solution)
   yperp = Ainv*by
   # define the objective and its gradient
@@ -1096,10 +1097,10 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
     SummationByParts.conditionObjGrad!(yred, rho, yperp, Znull, E, g)
   end
   # find the solution
-  results = Optim.optimize(objY, objYGrad!, ones(size(Znull,2)),
+  results = Optim.optimize(objY, objYGrad!, randn(size(Znull,2)),
                            BFGS(linesearch = Optim.LineSearches.bt3!),
-                           Optim.Options(g_tol = 1e-13, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 1000,
+                           Optim.Options(g_tol = tol, x_tol = 1e-100,
+                                         f_tol = 1e-100, iterations = 1000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
@@ -1108,7 +1109,8 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
 
   #spect = SummationByParts.eigenvalueObj(yred, 1, yperp, Znull, w, sview(Q,:,:,2))
   #println("spectral radius of y operator = ",spect)
-    
+   
+  println("norm(A*x - bx) = ", norm(A*x - bx))
   @assert( norm(A*x - bx) < 1e-12)
   @assert( norm(A*y - by) < 1e-12)
 
