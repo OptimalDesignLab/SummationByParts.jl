@@ -201,6 +201,18 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     @fact A*x --> roughly(b, atol=1e-13)
   end
 
+  context("Testing absMatrix!") do
+    # construct a symmetric matrix
+    n = 10
+    Q, R = qr(rand(n,n))
+    λ = randn(n)
+    A = Q*diagm(λ)*Q'
+    Acheck = Q*diagm(abs(λ))*Q'
+    Aabs = zeros(A)
+    SummationByParts.absMatrix!(A, Aabs)
+    @fact Aabs --> roughly(Acheck, rtol=1e-13)        
+  end
+
   for T = (Float64, Complex128)
     @eval begin
       context("Testing calcMatrixEigs! and calcMatrixEigs_rev! for DataType "string($T)) do

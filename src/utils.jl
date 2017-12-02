@@ -409,6 +409,38 @@ function calcSparseSolution!(A::AbstractArray{Float64,2},
   x[:] = P*(pinv(AP)*b)
 end
 
+
+@doc """
+### SummationByParts.absMatrix!
+
+Computes the absolulte value of a symmetric matrix `A`; that is, using the
+eigenvalue factorization `A` = E*Λ*E^T, this function returns `Aabs` =
+E*|Λ|*E^T, where |Λ| is the elementwise absolute value applied to the diagonal
+eigenvalue matrix.
+
+**Inputs**
+
+* `A`: symmetric matrix whose absolute value is sought
+
+**In/Outs**
+
+* `Aabs`: matrix where the absolute value is stored
+
+"""->
+function absMatrix!{T}(A::AbstractArray{T,2}, Aabs::AbstractArray{T,2})
+  @assert( size(A) == size(Aabs) )
+  n = size(A,1)
+  fill!(Aabs, zero(T))
+  F = eigfact(A)
+  for i = 1:n
+    for j = 1:n
+      for k = 1:n
+        Aabs[i,j] += F[:vectors][i,k]*abs(F[:values][k])*F[:vectors][j,k]
+      end
+    end
+  end
+end
+
 function compareEigs(x::Float64, y::Float64)
   if isless(x,y)
     return true
@@ -499,11 +531,11 @@ end
 ### SummationByParts.conditionObj
 
 Let `x` = `Znull`*`xred` + `xperp` be the (unique) entries in a skew symmetric
-matrix `S`, and let `E` be a symmetric matrix.  This routine computes an
-approximation of the condition number of the matrix `A` = (`S` + |`E`|), where
-|⋅| is the elementwise absolute value.  The matrix `A` corresponds to a
-weak-form discretization of linear advection.  The condition number is
-approximated using KS aggregation to ensure the objective is differentiable.
+matrix `S`, and let `E` be a symmetric positive-definite matrix.  This routine
+computes an approximation of the condition number of the matrix `A` = (`S` +
+`E`).  The matrix `A` corresponds to a weak-form discretization of linear
+advection.  The condition number is approximated using KS aggregation to ensure
+the objective is differentiable.
 
 **Inputs**
 
@@ -511,7 +543,7 @@ approximated using KS aggregation to ensure the objective is differentiable.
 * `p`: defines the KS parameter; as p tends to infinity, we get obj = kappa(A)
 * `xperp`: a particular solution that satisfies the SBP accuracy conditions
 * `Znull`: matrix that defines the null-space of the SBP accuracy conditions
-* `E`: symmetric matrix, usually the boundary operator for an SBP matrix
+* `E`: symmetric positive-definite matrix (boundary operator for an SBP matrix)
 
 **Returns**
 
@@ -532,7 +564,7 @@ function conditionObj(xred::AbstractVector{Float64}, p,
   A = zeros(n,n)
   for i = 1:n
     for j = 1:n
-      A[i,j] = abs(E[i,j])
+      A[i,j] = E[i,j]
     end
   end
   for i = 2:n
@@ -566,7 +598,7 @@ and returns it in the array `g`.
 * `p`: defines the KS parameter; as p tends to infinity, we get obj = kappa(A)
 * `xperp`: a particular solution that satisfies the SBP accuracy conditions
 * `Znull`: matrix that defines the null-space of the SBP accuracy conditions
-* `E`: symmetric matrix, usually the boundary operator for an SBP matrix
+* `E`: symmetric positive-definite matrix (boundary operator for an SBP matrix)
 
 **In/Outs**
 
@@ -590,7 +622,7 @@ function conditionObjGrad!(xred::AbstractVector{Float64}, p,
   A = zeros(n,n)
   for i = 1:n
     for j = 1:n
-      A[i,j] = abs(E[i,j])
+      A[i,j] = E[i,j]
     end
   end
   for i = 2:n
