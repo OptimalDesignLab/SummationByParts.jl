@@ -632,6 +632,25 @@ matrix and the stiffness matrices.
 * `Q`: the stiffness matrices
 
 """->
+function buildoperators{T}(cub::LineSymCub{T}, vtx::Array{T,2}, d::Int)
+  w = SymCubatures.calcweights(cub)
+  face = getLineSegFace(d, cub, vtx)
+  Q = zeros(T, (cub.numnodes,cub.numnodes,1) )
+  SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
+  scale!(Q, 0.5)
+  A, bx = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
+  Ainv = pinv(A)
+  x = Ainv*bx
+  for row = 2:cub.numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      Q[row,col,1] += x[offset+col]
+      Q[col,row,1] -= x[offset+col]
+    end
+  end
+  return w, Q
+end
+
 function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
   face = TriFace{T}(d, cub, vtx)
@@ -969,6 +988,7 @@ function buildMinConditionOperators{T}(cub::LineSymCub{T}, vtx::Array{T,2},
                                        opthist::Bool=false)
   w = SymCubatures.calcweights(cub)
   Q = zeros(T, (cub.numnodes,cub.numnodes,1))
+  E = zeros(T, (cub.numnodes,cub.numnodes))
   idx = SymCubatures.getfacevertexindices(cub)
   Q[idx[1],idx[1],1] = -1.0
   Q[idx[2],idx[2],1] =  1.0
@@ -980,11 +1000,12 @@ function buildMinConditionOperators{T}(cub::LineSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   xperp = Ainv*bx
   # define the objective and its gradient
+  absMatrix!(sview(Q,:,:,1), E)
   function objX(xred)
-    return SummationByParts.conditionObj(xred, rho, xperp, Znull, sview(Q,:,:,1))
+    return SummationByParts.conditionObj(xred, rho, xperp, Znull, E)
   end
   function objXGrad!(xred, g)
-    SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, sview(Q,:,:,1), g)
+    SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
@@ -1015,6 +1036,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   w = SymCubatures.calcweights(cub)
   face = getTriFaceForDiagE(d, cub, vtx, vertices=vertices)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
+  E = zeros(T, (cub.numnodes,cub.numnodes) )
   SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
   scale!(Q, 0.5)
@@ -1029,11 +1051,12 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   xperp = Ainv*bx
   # define the objective and its gradient
+  absMatrix!(sview(Q,:,:,1), E)
   function objX(xred)
-    return SummationByParts.conditionObj(xred, rho, xperp, Znull, sview(Q,:,:,1))
+    return SummationByParts.conditionObj(xred, rho, xperp, Znull, E)
   end
   function objXGrad!(xred, g)
-    SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, sview(Q,:,:,1), g)
+    SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
@@ -1066,11 +1089,12 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   yperp = Ainv*by
   # define the objective and its gradient
+  absMatrix!(sview(Q,:,:,2), E)
   function objY(yred)
-    return SummationByParts.conditionObj(yred, rho, yperp, Znull, sview(Q,:,:,2))
+    return SummationByParts.conditionObj(yred, rho, yperp, Znull, E)
   end
   function objYGrad!(yred, g)
-    SummationByParts.conditionObjGrad!(yred, rho, yperp, Znull, sview(Q,:,:,2), g)
+    SummationByParts.conditionObjGrad!(yred, rho, yperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objY, objYGrad!, ones(size(Znull,2)),
@@ -1108,6 +1132,7 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   w = SymCubatures.calcweights(cub)
   face = getTetFaceForDiagE(d, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,3) )
+  E = zeros(T, (cub.numnodes,cub.numnodes) )
   SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
   SummationByParts.boundaryoperator!(face, 3, sview(Q,:,:,3))
@@ -1123,11 +1148,12 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   xperp = Ainv*bx
   # define the objective and its gradient
+  absMatrix!(sview(Q,:,:,1), E)
   function objX(xred)
-    return SummationByParts.conditionObj(xred, rho, xperp, Znull, sview(Q,:,:,1))
+    return SummationByParts.conditionObj(xred, rho, xperp, Znull, E)
   end
   function objXGrad!(xred, g)
-    SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, sview(Q,:,:,1), g)
+    SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objX, objXGrad!, randn(size(Znull,2)), 
@@ -1159,11 +1185,12 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   yperp = Ainv*by
   # define the objective and its gradient
+  absMatrix!(sview(Q,:,:,2), E)
   function objY(yred)
-    return SummationByParts.conditionObj(yred, rho, yperp, Znull, sview(Q,:,:,2))
+    return SummationByParts.conditionObj(yred, rho, yperp, Znull, E)
   end
   function objYGrad!(yred, g)
-    SummationByParts.conditionObjGrad!(yred, rho, yperp, Znull, sview(Q,:,:,2), g)
+    SummationByParts.conditionObjGrad!(yred, rho, yperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objY, objYGrad!, randn(size(Znull,2)),
@@ -1185,11 +1212,12 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   zperp = Ainv*bz
   # define the objective and its gradient
+  absMatrix!(sview(Q,:,:,3), E)
   function objZ(zred)
-    return SummationByParts.conditionObj(zred, rho, zperp, Znull, sview(Q,:,:,3))
+    return SummationByParts.conditionObj(zred, rho, zperp, Znull, E)
   end
   function objZGrad!(zred, g)
-    SummationByParts.conditionObjGrad!(zred, rho, zperp, Znull, sview(Q,:,:,3), g)
+    SummationByParts.conditionObjGrad!(zred, rho, zperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objZ, objZGrad!, randn(size(Znull,2)),

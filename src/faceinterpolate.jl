@@ -26,7 +26,7 @@ the third dimension for the element index (boundary index).
 
 """->
 function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
-                                         bndryfaces::Array{Boundary},
+                                         bndryfaces::AbstractArray{Boundary},
                                          uvol::AbstractArray{Tsol,2},
                                          uface::AbstractArray{Tsol,2})
   @assert( size(sbpface.interp,1) <= size(uvol,1) )
@@ -43,7 +43,7 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
 end
 
 function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
-                                         bndryfaces::Array{Boundary},
+                                         bndryfaces::AbstractArray{Boundary},
                                          uvol::AbstractArray{Tsol,3},
                                          uface::AbstractArray{Tsol,3})
   @assert( size(uvol,1) == size(uface,1) )
@@ -65,7 +65,7 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
 end
 
 function boundaryinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
-                                         bndryfaces::Array{Boundary},
+                                         bndryfaces::AbstractArray{Boundary},
                                          uvol::AbstractArray{Tsol,2},
                                          uface::AbstractArray{Tsol,2})
   for (bindex, bndry) in enumerate(bndryfaces)
@@ -76,7 +76,7 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
 end
 
 function boundaryinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
-                                         bndryfaces::Array{Boundary},
+                                         bndryfaces::AbstractArray{Boundary},
                                          uvol::AbstractArray{Tsol,3},
                                          uface::AbstractArray{Tsol,3})
   @assert( size(uvol,1) == size(uface,1) )
@@ -192,7 +192,7 @@ set of faces.  Different methods are available depending on the rank of `uvol`:
 
 """->
 function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
-                                             ifaces::Array{Interface},
+                                             ifaces::AbstractArray{Interface},
                                              uvol::AbstractArray{Tsol,2},
                                              uface::AbstractArray{Tsol,3})
   @assert( size(sbpface.interp,1) <= size(uvol,1) )
@@ -213,7 +213,7 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
 end
 
 function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
-                                             ifaces::Array{Interface},
+                                             ifaces::AbstractArray{Interface},
                                              uvol::AbstractArray{Tsol,3},
                                              uface::AbstractArray{Tsol,4})
   @assert( size(uvol,1) == size(uface,1) )
@@ -239,7 +239,7 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
 end
 
 function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
-                                             ifaces::Array{Interface},
+                                             ifaces::AbstractArray{Interface},
                                              uvol::AbstractArray{Tsol,2},
                                              uface::AbstractArray{Tsol,3})
   for (findex, face) in enumerate(ifaces)
@@ -252,7 +252,7 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
 end
 
 function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
-                                             ifaces::Array{Interface},
+                                             ifaces::AbstractArray{Interface},
                                              uvol::AbstractArray{Tsol,3},
                                              uface::AbstractArray{Tsol,4})
   @assert( size(uvol,1) == size(uface,1) )

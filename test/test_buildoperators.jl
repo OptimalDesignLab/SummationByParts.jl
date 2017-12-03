@@ -467,7 +467,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.buildMinConditionOperators (TriSymCub method, vertices=true)") do
-    for d = 1:4  # was 3
+    for d = 1:4 
       cub, vtx = getTriCubatureDiagE(2*d, Float64)
       w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d)
       Dx = diagm(1./w)*Q[:,:,1]
@@ -488,7 +488,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   end
 
   context("Testing SummationByParts.buildMinConditionOperators (TriSymCub method, vertices=false)") do
-    for d = 1:4
+    for d = 1:4 
       cub, vtx = getTriCubatureDiagE(2*d, Float64, vertices=false)
       w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d,
                                                          vertices=false)
@@ -512,7 +512,7 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
   context("Testing SummationByParts.buildMinConditionOperators (TetSymCub method)") do
     #tol = [1e-12; 1e-12; 1e-12; 5e-8]
     tol = [1e-12; 1e-12] #; 1e-12; 1e-12]
-    for d = 1:2
+    for d = 1:2 # d=3,4 are too slow for tests
       cub, vtx = getTetCubatureDiagE(2*d, Float64, vertices=false)
       w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d, tol=1e-2)
       Dx = diagm(1./w)*Q[:,:,1]

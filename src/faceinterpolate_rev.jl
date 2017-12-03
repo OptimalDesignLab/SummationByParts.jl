@@ -20,7 +20,7 @@ differentiated with respect to the primal version's `uvol` variable.
 
 """->
 function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
-                                             bndryfaces::Array{Boundary},
+                                             bndryfaces::AbstractArray{Boundary},
                                              uvol_bar::AbstractArray{Tsol,2},
                                              uface_bar::AbstractArray{Tsol,2})
   @assert( size(sbpface.interp,1) <= size(uvol_bar,1) )
@@ -38,7 +38,7 @@ function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
 end
 
 function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
-                                             bndryfaces::Array{Boundary},
+                                             bndryfaces::AbstractArray{Boundary},
                                              uvol_bar::AbstractArray{Tsol,3},
                                              uface_bar::AbstractArray{Tsol,3})
   @assert( size(uvol_bar,1) == size(uface_bar,1) )
@@ -59,7 +59,7 @@ function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
 end
 
 function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
-                                             bndryfaces::Array{Boundary},
+                                             bndryfaces::AbstractArray{Boundary},
                                              uvol_bar::AbstractArray{Tsol,2},
                                              uface_bar::AbstractArray{Tsol,2})
   for (bindex, bndry) in enumerate(bndryfaces)
@@ -71,7 +71,7 @@ function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
 end
 
 function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
-                                             bndryfaces::Array{Boundary},
+                                             bndryfaces::AbstractArray{Boundary},
                                              uvol_bar::AbstractArray{Tsol,3},
                                              uface_bar::AbstractArray{Tsol,3})
   @assert( size(uvol_bar,1) == size(uface_bar,1) )
@@ -179,7 +179,7 @@ differentiated with respect to the primal version's `uvol` variable.
 
 """->
 function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
-                                             ifaces::Array{Interface},
+                                             ifaces::AbstractArray{Interface},
                                              uvol_bar::AbstractArray{Tsol,2},
                                              uface_bar::AbstractArray{Tsol,3})
   @assert( size(sbpface.interp,1) <= size(uvol_bar,1) )
@@ -202,7 +202,7 @@ function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
 end
 
 function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
-                                             ifaces::Array{Interface},
+                                             ifaces::AbstractArray{Interface},
                                              uvol_bar::AbstractArray{Tsol,3},
                                              uface_bar::AbstractArray{Tsol,4})
   @assert( size(uvol_bar,1) == size(uface_bar,1) )
@@ -228,7 +228,7 @@ function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
 end
 
 function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
-                                                 ifaces::Array{Interface},
+                                                 ifaces::AbstractArray{Interface},
                                                  uvol_bar::AbstractArray{Tsol,2},
                                                  uface_bar::AbstractArray{Tsol,3})
   for (findex, face) in enumerate(ifaces)
@@ -243,7 +243,7 @@ function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
 end
 
 function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
-                                                 ifaces::Array{Interface},
+                                                 ifaces::AbstractArray{Interface},
                                                  uvol_bar::AbstractArray{Tsol,3},
                                                  uface_bar::AbstractArray{Tsol,4})
   @assert( size(uvol_bar,1) == size(uface_bar,1) )

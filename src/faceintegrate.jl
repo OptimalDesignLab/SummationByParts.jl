@@ -29,7 +29,7 @@ Integrates a given scalar (or vector) field over the boundary faces.
 
 """->
 function integratefunctional!{Tsbp,Tflx}(sbpface::DenseFace{Tsbp},
-                                         bndryfaces::Array{Boundary},
+                                         bndryfaces::AbstractArray{Boundary},
                                          flux::AbstractArray{Tflx,2},
                                          (±)::UnaryFunctor=Add())
   @assert( size(sbpface.interp,2) == size(flux,1) )
@@ -44,7 +44,7 @@ function integratefunctional!{Tsbp,Tflx}(sbpface::DenseFace{Tsbp},
 end
 
 function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
-                                              bndryfaces::Array{Boundary},
+                                              bndryfaces::AbstractArray{Boundary},
                                               flux::AbstractArray{Tflx,3},
                                               fun::AbstractArray{Tfun,1},
                                               (±)::UnaryFunctor=Add())
@@ -61,7 +61,7 @@ function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
 end
 
 function integratefunctional!{Tsbp,Tflx}(sbpface::SparseFace{Tsbp},
-                                         bndryfaces::Array{Boundary},
+                                         bndryfaces::AbstractArray{Boundary},
                                          flux::AbstractArray{Tflx,2},
                                          (±)::UnaryFunctor=Add())
   @assert( size(bndryfaces,1) == size(flux,2) )
@@ -75,7 +75,7 @@ function integratefunctional!{Tsbp,Tflx}(sbpface::SparseFace{Tsbp},
 end
 
 function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::SparseFace{Tsbp},
-                                              bndryfaces::Array{Boundary},
+                                              bndryfaces::AbstractArray{Boundary},
                                               flux::AbstractArray{Tflx,3},
                                               fun::AbstractArray{Tfun,1},
                                               (±)::UnaryFunctor=Add())
@@ -200,7 +200,7 @@ index.
 
 """->
 function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
-                                            bndryfaces::Array{Boundary},
+                                            bndryfaces::AbstractArray{Boundary},
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2},
                                             (±)::UnaryFunctor=Add())
@@ -219,7 +219,7 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
 end
 
 function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
-                                            bndryfaces::Array{Boundary},
+                                            bndryfaces::AbstractArray{Boundary},
                                             flux::AbstractArray{Tflx,3},
                                             res::AbstractArray{Tres,3},
                                             (±)::UnaryFunctor=Add())
@@ -243,7 +243,7 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
 end
 
 function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
-                                            bndryfaces::Array{Boundary},
+                                            bndryfaces::AbstractArray{Boundary},
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2},
                                             (±)::UnaryFunctor=Add())
@@ -257,7 +257,7 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
 end
 
 function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
-                                            bndryfaces::Array{Boundary},
+                                            bndryfaces::AbstractArray{Boundary},
                                             flux::AbstractArray{Tflx,3},
                                             res::AbstractArray{Tres,3},
                                             (±)::UnaryFunctor=Add())
@@ -393,7 +393,7 @@ index.
 
 """->
 function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
-                                                ifaces::Array{Interface},
+                                                ifaces::AbstractArray{Interface},
                                                 flux::AbstractArray{Tflx,2},
                                                 res::AbstractArray{Tres,2},
                                                 (±)::UnaryFunctor=Add())
@@ -414,7 +414,7 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
 end
 
 function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
-                                                ifaces::Array{Interface},
+                                                ifaces::AbstractArray{Interface},
                                                 flux::AbstractArray{Tflx,3},
                                                 res::AbstractArray{Tres,3},
                                                 (±)::UnaryFunctor=Add())
@@ -438,7 +438,7 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
 end
 
 function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
-                                                ifaces::Array{Interface},
+                                                ifaces::AbstractArray{Interface},
                                                 flux::AbstractArray{Tflx,2},
                                                 res::AbstractArray{Tres,2},
                                                 (±)::UnaryFunctor=Add())
@@ -455,7 +455,7 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
 end
 
 function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
-                                                ifaces::Array{Interface},
+                                                ifaces::AbstractArray{Interface},
                                                 flux::AbstractArray{Tflx,3},
                                                 res::AbstractArray{Tres,3},
                                                 (±)::UnaryFunctor=Add())
