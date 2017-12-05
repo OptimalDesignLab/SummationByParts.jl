@@ -1,6 +1,23 @@
 facts("Testing SummationByParts Module (weak differentiate methods)...") do
 
-    for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE)
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing weakdifferentiate! ("string($TSBP)" scalar field method)") do
+        # build a two element grid, and verify that Qxi * 1 = 0
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          u = ones(Float64, (sbp.numnodes,2))
+          di = 1
+          res = zeros(u)
+          weakdifferentiate!(sbp, di, u, res)
+          @fact res[:,1] --> roughly(zeros(sbp.numnodes), atol=5e-13)
+          @fact res[:,2] --> roughly(zeros(sbp.numnodes), atol=5e-13)
+        end
+      end 
+    end
+  end
+
+  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE)
     @eval begin
       context("Testing weakdifferentiate! ("string($TSBP)" scalar field method)") do
         # build a two element grid, and verify that Qxi * 1 = 0
@@ -33,6 +50,30 @@ facts("Testing SummationByParts Module (weak differentiate methods)...") do
     end
   end
 
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing weakdifferentiate! ("string($TSBP)" vector field method)") do
+        # build a two element grid, and verify that \int (Dxi * u) d\Omega = 0
+        # or 1 if u = 1 or x, respectively
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          vtx = reshape([0.0; 1.0], (2,1))
+          x = ones(Float64, (2,sbp.numnodes,2))
+          x[2,:,1] = calcnodes(sbp, vtx)          
+          vtx = reshape([1.0; 2.0], (2,1))
+          x[2,:,2] = calcnodes(sbp, vtx)
+          di = 1
+          res = zeros(x)
+          weakdifferentiate!(sbp, di, x, res)
+          @fact sum(res[1,:,1]) --> roughly(0.0, atol=1e-14)
+          @fact sum(res[2,:,1]) --> roughly(1.0, atol=1e-14)
+          @fact sum(res[1,:,2]) --> roughly(0.0, atol=1e-14)
+          @fact sum(res[2,:,2]) --> roughly(1.0, atol=1e-14)
+        end
+      end
+    end
+  end
+  
   for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE)
     @eval begin
       context("Testing weakdifferentiate! ("string($TSBP)" vector field method)") do
@@ -80,6 +121,22 @@ facts("Testing SummationByParts Module (weak differentiate methods)...") do
     end
   end
 
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing weakdifferentiateElement! ("string($TSBP)" scalar field method)") do
+        # verify that Qxi * 1 = 0
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          u = ones(Float64, (sbp.numnodes))
+          di = 1
+          res = zeros(u)
+          weakDifferentiateElement!(sbp, di, u, res)
+          @fact res[:] --> roughly(zeros(sbp.numnodes), atol=5e-13)
+        end
+      end 
+    end
+  end
+  
   for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE)
     @eval begin
       context("Testing weakdifferentiateElement! ("string($TSBP)" scalar field method)") do
@@ -107,6 +164,31 @@ facts("Testing SummationByParts Module (weak differentiate methods)...") do
           res = zeros(u)
           weakDifferentiateElement!(sbp, di, u, res)
           @fact res[:] --> roughly(zeros(sbp.numnodes), atol=1e-13)
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing weakdifferentiateElement! ("string($TSBP)" vector field method)") do
+        # build a two element grid, and verify that \int (Dxi * u) d\Omega = 0
+        # or 1 if u = 1 or x, respectively
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          vtx = reshape([0.0; 1.0], (2,1))
+          x = ones(Float64, (2,sbp.numnodes,2))
+          x[2,:,1] = calcnodes(sbp, vtx)          
+          vtx = reshape([1.0; 2.0], (2,1))
+          x[2,:,2] = calcnodes(sbp, vtx)
+          di = 1
+          res = zeros(x)
+          weakDifferentiateElement!(sbp, di, view(x,:,:,1), view(res,:,:,1))
+          weakDifferentiateElement!(sbp, di, view(x,:,:,2), view(res,:,:,2))
+          @fact sum(res[1,:,1]) --> roughly(0.0, atol=1e-14)
+          @fact sum(res[2,:,1]) --> roughly(1.0, atol=1e-14)
+          @fact sum(res[1,:,2]) --> roughly(0.0, atol=1e-14)
+          @fact sum(res[2,:,2]) --> roughly(1.0, atol=1e-14)
         end
       end
     end

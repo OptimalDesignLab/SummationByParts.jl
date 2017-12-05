@@ -4,6 +4,7 @@ module Cubature
 using ..OrthoPoly
 using ..SymCubatures
 
+export pointCubature
 export quadrature, quadratureUniform
 export getTriCubatureGamma, getTriCubatureOmega, getTriCubatureDiagE
 export getTetCubatureGamma, getTetCubatureOmega, getTetCubatureDiagE
@@ -259,6 +260,28 @@ function solvecubatureweights!{T}(cub::SymCub{T}, q::Int;
 
   end
   error("solvecubatureweights failed to find solution in ",maxiter," iterations")
+end
+
+@doc """
+### Cubature.pointCubature
+
+This returns a (trivial) point cubature and default vertex -1
+
+**Inputs**
+
+* `T`: the data type used to represent the cubature
+
+**Outputs**
+
+* `cub`: a symmetric cubature for point
+* `vtx`: vertex, [-1]
+
+"""->
+function pointCubature(T::Type=Float64)
+  pt = PointSymCub{T}()
+  SymCubatures.setweights!(pt, T[1;])
+  vtx = reshape(T[-1;], (1,1))
+  return pt, vtx
 end
 
 @doc """

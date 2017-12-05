@@ -15,13 +15,17 @@ using .OrthoPoly
 using .SymCubatures
 using .Cubature
 
-export AbstractSBP, TriSBP, TetSBP, SparseTriSBP, SparseTetSBP
+export AbstractSBP
+export LineSegSBP
+export TriSBP, SparseTriSBP
+export TetSBP, SparseTetSBP
+export getLineSegSBPLobbato, getLineSegSBPLegendre
 export getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE
 export getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE
 export AbstractFace
-export DenseFace, TriFace, TetFace
+export DenseFace, LineSegFace, TriFace, TetFace
 export SparseFace, TriSparseFace, TetSparseFace
-export getTriFaceForDiagE, getTetFaceForDiagE
+export getLineSegFace, getTriFaceForDiagE, getTetFaceForDiagE
 export Boundary, Interface
 
 export calcnodes, calcminnodedistance, getNumFaceNodes
@@ -57,6 +61,39 @@ finite-difference operators.
 """->
 abstract AbstractSBP{T<:Number}
 #abstract AbstractSBP{T<:AbstractFloat}
+
+@doc """
+### SBP.TriSBP
+
+Defines diagonal-norm SBP first-derivative operators on a line segment.
+
+**Fields**
+
+* `degree` : maximum polynomial degree for which the derivatives are exact
+* `numnodes` : number of nodes on line segment required for these operators
+* `cub` : a symmetric cubature type for line segments (usually LG or LGL)
+* `vtx` : vertices of the reference element in computational space
+* `w` : cubature weights, i.e. the diagonal SBP norm, stored as an array
+* `Q[:,:,1]` : discrete stiffness matrix operator
+  """->
+immutable LineSegSBP{T} <: AbstractSBP{T}
+  degree::Int
+  numnodes::Int
+  cub::LineSymCub{T}
+  vtx::Array{T,2}
+  w::Array{T,1}
+  Q::Array{T,3}
+
+  # inner constructor
+  function LineSegSBP(degree::Int, cub::LineSymCub{T}, vtx::Array{T,2},
+                      w::Array{T,1}, Q::Array{T,3})
+    numnodes = cub.numnodes
+    @assert( size(Q,1) == size(Q,2) == size(w,1) == numnodes )
+    @assert( size(Q,3) == 1 )
+    new(degree, numnodes, cub, vtx, w, Q)
+  end
+end
+
 
 @doc """
 ### SBP.TriSBP
@@ -226,6 +263,59 @@ interpolation is a dense matrix.
 
 """->
 abstract DenseFace{T} <: AbstractFace{T} 
+
+@doc """
+### SBP.LineSegFace
+
+Defines a "face" between two LineSegSBP operators with the same cubature nodes.
+
+**Fields**
+
+* `degree` : face integration is exact for polys of degree 2*`degree`
+* `numnodes` : number of cubature nodes (always 1)
+* `stencilsize` : number of nodes in the reconstruction stencil
+* `dstencilsize` : number of nodes in the derivative operator stencils
+* `cub` : a symmetric cubature type for line-segment faces (i.e. points)
+* `vtx` : the vertices of the face in reference space, [-1]
+* `wface` : mass matrix (quadrature) for the face (always 1.0)
+* `interp[:,:]` : volume-to-face-nodes reconstruction operator
+* `perm[:,:]` : permutation for volume nodes so `interp` can be used on both sides
+* `deriv[:,:]` : derivative operators for face-based coordinate system
+* `dperm[:,:]` : permutation for volume nodes so `deriv` can be used on both sides
+* `nbrperm[:,:]` : permutation for face nodes on neighbour element
+
+"""->
+immutable LineSegFace{T} <: DenseFace{T}
+  degree::Int
+  numnodes::Int
+  stencilsize::Int
+  dstencilsize::Int
+  cub::PointSymCub{T}
+  vtx::Array{T,2}
+  wface::Array{T,1}
+  normal::Array{T,2}
+  interp::Array{T,2}
+  perm::Array{Int,2}
+  deriv::Array{T,3}
+  dperm::Array{Int,2}
+  nbrperm::Array{Int,2}
+
+  # inner constructor
+  function LineSegFace(degree::Int, facecub::PointSymCub{T}, facevtx::Array{T,2},
+                       interp::Array{T,2}, perm::Array{Int,2},
+                       deriv::Array{T,3}, dperm::Array{Int,2})
+    @assert( degree >= 1 )
+    numnodes = facecub.numnodes
+    @assert( size(interp,2) == size(deriv,2) == numnodes )
+    normal = T[-1; 1].'
+    nbrperm = SymCubatures.getneighbourpermutation(facecub)
+    wface = SymCubatures.calcweights(facecub)
+    stencilsize = size(interp,1)
+    dstencilsize = size(deriv,1)
+    new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, facevtx, 
+        wface, normal, interp, perm, deriv, dperm, nbrperm)
+  end
+end
 
 @doc """
 ### SBP.TriFace

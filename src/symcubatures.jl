@@ -5,7 +5,7 @@ module SymCubatures
 using ODLCommonTools
 import ODLCommonTools.sview
 
-export SymCub, LineSymCub, TriSymCub, TetSymCub
+export SymCub, PointSymCub, LineSymCub, TriSymCub, TetSymCub
 
 @doc """
 ### SymCubatures.SymCub
@@ -16,6 +16,52 @@ implementations of arbitrary precision types.  The parameterization also permits
 the use of the complex-step method for verification.
 
 """-> abstract SymCub{T<:Number}
+
+@doc """
+### SymCubatures.PointSymCub
+
+Defines the trivial point cubature for uniformity across methods.
+
+**Fields**
+
+* `numparams` : total number of nodal degrees of freedom
+* `numweights` : total number of unique weights
+* `numnodes` : total number of nodes
+* `vertices` : if true, vertices (ends of interval) are in the set of nodes
+* `centroid` : if true, centroid is present in set of nodes
+* `numedge` : number of unique edge parameters
+* `numsym` : number of node sets in each symmetry group (0 for [1])
+* `params` : the actual values of the orbit nodal parameters
+* `weights` : values of the unique weights
+
+"""->
+type PointSymCub{T} <: SymCub{T}
+  numparams::Int
+  numweights::Int
+  numnodes::Int
+  vertices::Bool
+  centroid::Bool
+  numedge::Int
+  numsym::Array{Int,1}
+  params::Array{T,1}
+  weights::Array{T,1}
+
+  function PointSymCub()
+    numparams = 0
+    numweights = 1
+    numnodes = 1
+    vertices = true
+    centroid = false
+    numedge = 0
+    numsym = [1;]
+    # initialize parameter arrays
+    @assert(numweights == sum(numsym))
+    params = zeros(T, numparams)
+    weights = zeros(T, numweights)
+    new(numparams, numweights, numnodes, vertices, centroid, numedge, numsym,
+        params, weights)
+  end
+end
 
 @doc """
 ### SymCubatures.LineSymCub
@@ -302,6 +348,10 @@ boundary-node count returned.
 * `numboundary`: number of boundary nodes
 
 """->
+function getnumboundarynodes{T}(cub::PointSymCub{T})
+  return 1
+end
+
 function getnumboundarynodes{T}(cub::LineSymCub{T})
   cub.vertices ? (return 2) : (return 0)
 end
@@ -339,6 +389,10 @@ Returns the number of nodes on an individual face of the element.
 * `numfacenodes`: number of nodes on a face
 
 """->
+function getnumfacenodes{T}(cub::PointSymCub{T})
+  return 1
+end
+
 function getnumfacenodes{T}(cub::LineSymCub{T})
   cub.vertices ? (return 1) : (return 0)
 end
@@ -377,6 +431,12 @@ order.  See getfacenodeindices for a method returns node indices for each face.
 * `bndryindices`: indicies of nodes that lie on boundary
 
 """->
+function getbndrynodeindices{T}(cub::PointSymCub{T})
+  bndryindices = zeros(Int, getnumboundarynodes(cub))
+  bndryindices[:] = [1;]
+  return bndryindices
+end
+
 function getbndrynodeindices{T}(cub::LineSymCub{T})
   bndryindices = zeros(Int, getnumboundarynodes(cub))
   # add vertices to the indices
@@ -484,6 +544,13 @@ Returns the indices of the nodes that are strictly interior.
 * `indices`: indicies of nodes that are strictly interior.
 
 """->
+function getinteriornodeindices{T}(cub::PointSymCub{T})
+  numinterior = cub.numnodes - getnumboundarynodes(cub)
+  @assert( numinterior == 0)
+  indices = zeros(Int, numinterior)
+  return indices
+end
+
 function getinteriornodeindices{T}(cub::LineSymCub{T})
   numinterior = cub.numnodes - getnumboundarynodes(cub)
   indices = zeros(Int, numinterior)
@@ -602,6 +669,10 @@ building nodes on a given face using Barycentric coordinates
 * `facevtx`: subarray `facevtx[:,f]` lists the vertices of face `f` 
 
 """->
+function getfacevertexindices{T}(cub::PointSymCub{T})
+  return [1]
+end
+
 function getfacevertexindices{T}(cub::LineSymCub{T})
   return [1 2]
 end
@@ -630,6 +701,13 @@ for a method that returns a single array of boundary nodes.
   column of indices for each edge/face.
 
 """->
+function getfacenodeindices{T}(cub::PointSymCub{T})
+  numedge = getnumfacenodes(cub)
+  bndryindices = zeros(Int, (numedge,1) )
+  bndryindices[:,:] = 1
+  return bndryindices
+end
+
 function getfacenodeindices{T}(cub::LineSymCub{T})
   numedge = getnumfacenodes(cub)
   bndryindices = zeros(Int, (numedge,2) )
@@ -795,6 +873,13 @@ such that the new nodes have the same order as the old nodes, but relative to
 * `perm`: permutation of the cubature nodes
 
 """->
+function getpermutation{T}(cub::PointSymCub{T}, vtxperm::Array{Int,1})
+  @assert( length(vtxperm) == 1 )
+  perm = zeros(Int, (cub.numnodes))
+  perm[1] = 1
+  return perm
+end
+
 function getpermutation{T}(cub::LineSymCub{T}, vtxperm::Array{Int,1})
   @assert( length(vtxperm) == 2 )
   perm = zeros(Int, (cub.numnodes))
@@ -1041,6 +1126,12 @@ for volume-to-face interpolation or differentiation.
 * `perm`: permutation of the volume nodes for each face
 
 """->
+function getfacebasedpermutation{T}(cub::PointSymCub{T}; faceonly::Bool=false)
+  perm = zeros(Int, (cub.numnodes, 1))
+  perm[1,1] = 1
+  return perm
+end
+
 function getfacebasedpermutation{T}(cub::LineSymCub{T}; faceonly::Bool=false)
   if faceonly
     @assert(cub.vertices) # vertices must be active
@@ -1089,6 +1180,7 @@ natural ordering is provided.  This routine produces the permutation that makes
 the 'right' element's nodes match the 'left' element's nodes.  The permutation
 depends on the face dimension:
 
+* For line segment faces, i.e. points, a trival permutation is returned
 * For triangle faces, i.e. line segments, there is only one possible orientation.
 * For tetrahedral faces, i.e. triangles, there are three orientations:
 
@@ -1105,6 +1197,12 @@ depends on the face dimension:
 * `perm`: permutation of the interface nodes for each possible orientation
 
 """->
+function getneighbourpermutation{T}(cub::PointSymCub{T})
+  perm = zeros(Int, (1,1))
+  perm[1,1] = 1
+  return perm
+end
+
 function getneighbourpermutation{T}(cub::LineSymCub{T})
   perm = zeros(Int, (cub.numnodes, 1))
   perm[:,1] = getpermutation(cub, [2;1])
@@ -1175,6 +1273,15 @@ dimension as the cubature; for example, a line quadrature can be over a line in
 * `x`: cubature's nodal coordinates (potentially in a subspace)
 
 """->
+function calcnodes{T}(cub::PointSymCub, vtx::Array{T,2})
+  @assert(cub.numparams == 0)
+  @assert(cub.numnodes == 1)
+  @assert(size(vtx,1) == 1)
+  x = zeros(T, (size(vtx,2),cub.numnodes))
+  x[:,1] = vtx[:,:].'
+  return x
+end
+
 function calcnodes{T}(cub::LineSymCub, vtx::Array{T,2})
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
@@ -1452,6 +1559,10 @@ Returns the Jacobian of the nodes with respect to the orbit parameters.
 * `Jac`: Jacobian of the mapping from node parameters to nodes
 
 """->
+function calcjacobianofnodes{T}(cub::PointSymCub{T}, vtx::Array{T,2})
+  error("SymCubatures.calcjacobianofnodes called with PointSymCub")
+end
+
 function calcjacobianofnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
@@ -1688,6 +1799,14 @@ Map the unique cubature weights to the weights of all nodes.
 * `w`: cubature's weights at all nodes
 
 """->
+function calcweights{T}(cub::PointSymCub{T})
+  @assert(cub.numweights == 1)
+  @assert(cub.numnodes == 1)
+  w = zeros(T, (cub.numnodes))
+  w[1] = cub.weights[1]
+  return w
+end
+
 function calcweights{T}(cub::LineSymCub{T})
   @assert(cub.numweights >= 0)
   @assert(cub.numnodes >= 1)
@@ -1861,6 +1980,10 @@ the mapping from the unique weights to the nodal weights.
 * `Jac`: Jacobian of the mapping from (unique) weights to nodal weights
 
 """->
+function calcjacobianofweights{T}(cub::PointSymCub{T})
+  error("SymCubatures.calcjacobianofweights called for PointSymCub")
+end
+
 function calcjacobianofweights{T}(quad::LineSymCub{T})
   @assert(quad.numweights >= 0)
   @assert(quad.numnodes >= 1)

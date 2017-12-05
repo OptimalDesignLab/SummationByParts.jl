@@ -1,12 +1,51 @@
 facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
+  
+  context("Testing SummationByParts.buildfacereconstruction (LineSymCub method, faceonly=true)") do
+    # this checks that polynomials of total degree d are reconstructed accurately
+    for d = 1:4
+      cub, vtx = quadrature(2*d-1, Float64, internal=false)
+      facecub, tmp = pointCubature()
+      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d)
+      x = SymCubatures.calcnodes(cub, vtx)
+      # loop over all monomials
+      for i = 0:d
+        u = vec(x[1,:].^i)
+        # loop over each face
+        for f = 1:2
+          xface = SymCubatures.calcnodes(facecub, vtx[f,:])
+          uface = vec(xface[1,:].^i)
+          @fact R*u[perm[:,f]] --> roughly(uface, atol=1e-15)
+        end
+      end
+    end
+  end
 
+  context("Testing SummationByParts.buildfacereconstruction (LineSymCub method, faceonly=false)") do
+    # this checks that polynomials of total degree d are reconstructed accurately
+    for d = 1:4
+      cub, vtx = quadrature(2*d, Float64, internal=false)
+      facecub, tmp = pointCubature()
+      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d)
+      x = SymCubatures.calcnodes(cub, vtx)
+      # loop over all monomials
+      for i = 0:d
+        u = vec(x[1,:].^i)
+        # loop over each face
+        for f = 1:2
+          xface = SymCubatures.calcnodes(facecub, vtx[f,:])
+          uface = vec(xface[1,:].^i)
+          @fact R*u[perm[:,f]] --> roughly(uface, atol=1e-15)
+        end
+      end
+    end
+  end
+  
   context("Testing SummationByParts.buildfacereconstruction (TriSymCub method, faceonly=true)") do
     # this checks that polynomials of total degree d are reconstructed accurately
     for d = 1:4
       cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       facecub, tmp = quadrature(2*d, Float64, internal=true)
-      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
-                                                         faceonly=true)
+      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d)
       xy = SymCubatures.calcnodes(cub, vtx)
       # loop over all monomials
       for r = 0:d
@@ -29,8 +68,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
     for d = 1:4
       cub, vtx = getTriCubatureGamma(2*d-1, Float64)
       facecub, tmp = quadrature(2*d, Float64, internal=false)
-      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
-                                                         faceonly=false)
+      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d)
       xy = SymCubatures.calcnodes(cub, vtx)
       # loop over all monomials
       for r = 0:d
@@ -53,8 +91,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
     for d = 1:4
       cub, vtx = getTriCubatureOmega(2*d, Float64)
       facecub, tmp = quadrature(2*d, Float64, internal=true)
-      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
-                                                         faceonly=false)
+      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d)
       xy = SymCubatures.calcnodes(cub, vtx)
       # loop over all monomials
       for r = 0:d
@@ -77,8 +114,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
     for d = 1:4
       cub, vtx = getTetCubatureGamma(2*d-1, Float64)
       facecub, tmp = getTriCubatureOmega(2*d, Float64)
-      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
-                                                         faceonly=true)
+      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d)
       vtxface = [1 2 3; 1 4 2; 2 4 3; 1 3 4].'
       xyz = SymCubatures.calcnodes(cub, vtx)
       # loop over all monomials
@@ -104,8 +140,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
     for d = 1:2
       cub, vtx = getTetCubatureOmega(2*d-1, Float64)
       facecub, tmp = getTriCubatureOmega(2*d, Float64)
-      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d,
-                                                         faceonly=false)
+      R, perm = SummationByParts.buildfacereconstruction(facecub, cub, vtx, d)
       vtxface = [1 2 3; 1 4 2; 2 4 3; 1 3 4].'
       xyz = SymCubatures.calcnodes(cub, vtx)
       # loop over all monomials
@@ -122,6 +157,28 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
             end
           end
         end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.buildfacederivative (LineSymCub method)") do
+    # this checks that polynomials of total degree d are differentiated
+    for d = 1:4
+      cub, vtx = quadrature(2*d-1, Float64, internal=false)
+      facecub, tmp = pointCubature()
+      D, perm = SummationByParts.buildfacederivatives(facecub, cub, vtx, d)
+      x = SymCubatures.calcnodes(cub, vtx)
+      # loop over all monomials
+      for i = 0:d
+        u = vec(x[1,:].^i)
+        # consider face 1
+        xface = SymCubatures.calcnodes(facecub, vtx[1,:])
+        dudn = vec(i.*xface[1,:].^max(i-1,0))
+        @fact D[:,:,1].'*u[perm[:,1]] --> roughly(dudn, atol=1e-13)
+        # consider face 2
+        xface = SymCubatures.calcnodes(facecub, vtx[2,:])
+        dudn = -vec(i.*xface[1,:].^max(i-1,0))
+        @fact D[:,:,1].'*u[perm[:,2]] --> roughly(dudn, atol=1e-13)
       end
     end
   end
@@ -158,6 +215,52 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
           dudn = vec(i.*(xyface[1,:].^max(i-1,0)).*xyface[2,:].^j) -
           vec(j.*(xyface[1,:].^i).*(xyface[2,:].^max(j-1,0)))
           @fact D[:,:,2].'*u[perm[:,3]] --> roughly(dudn, atol=1e-13)
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.getLineSegFace constructor (internal=false)") do
+    for d = 1:4
+      cub, vtx = quadrature(2*d-1, Float64, internal=false)
+      x = SymCubatures.calcnodes(cub, vtx)
+      face = getLineSegFace(d, cub, vtx)
+      # loop over monomials of degree <= d
+      for i = 0:d
+        u = vec(x[1,:].^i)
+        for j = 0:d
+          v = vec(x[1,:].^j)
+          # compute the boundary integral of u*v*nx
+          bndryintegral = 0.0
+          for f = 1:2
+            bndryintegral += face.normal[1,f]*
+            dot(face.interp.'*v[face.perm[:,f]],
+                diagm(face.wface)*face.interp.'u[face.perm[:,f]])
+          end
+          @fact bndryintegral --> roughly(1.0 - (-1)^(i+j), atol=1e-15)
+        end
+      end
+    end
+  end
+
+  context("Testing SummationByParts.getLineSegFace constructor (internal=true)") do
+    for d = 1:4
+      cub, vtx = quadrature(2*d, Float64, internal=true)
+      x = SymCubatures.calcnodes(cub, vtx)
+      face = getLineSegFace(d, cub, vtx)
+      # loop over monomials of degree <= d
+      for i = 0:d
+        u = vec(x[1,:].^i)
+        for j = 0:d
+          v = vec(x[1,:].^j)
+          # compute the boundary integral of u*v*nx
+          bndryintegral = 0.0
+          for f = 1:2
+            bndryintegral += face.normal[1,f]*
+            dot(face.interp.'*v[face.perm[:,f]],
+                diagm(face.wface)*face.interp.'u[face.perm[:,f]])
+          end
+          @fact bndryintegral --> roughly(1.0 - (-1)^(i+j), atol=1e-15)
         end
       end
     end
