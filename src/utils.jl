@@ -115,6 +115,24 @@ to an auxlliary set of nodes.
 * `R`: the interpolation operator, size = [numpoints, sbp.numnodes]
 
 """->
+function buildinterpolation{T}(sbp::LineSegSBP{T}, xinterp::AbstractArray{T,2};
+                               d::Int=sbp.degree)
+  # evaluate the basis at the SBP nodes and the interpolation points
+  @assert size(xinterp, 1) == 1
+  N = convert(Int, d+1 )
+  Psbp = zeros(T, (sbp.numnodes,N) )
+  Pinterp = zeros(T, (size(xinterp,2),N) )
+  xsbp = calcnodes(sbp, sbp.vtx)
+  ptr = 1
+  for i = 0:d
+    Psbp[:,ptr] = OrthoPoly.jacobipoly(vec(xsbp[1,:]), 0.0, 0.0, i)
+    Pinterp[:,ptr] = OrthoPoly.jacobipoly(vec(xinterp[1,:]), 0.0, 0.0, i)
+    ptr += 1
+  end
+  R = (pinv(Psbp.')*Pinterp.').'
+  return R
+end
+
 function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2};
                                d::Int=sbp.degree)
   # evaluate the basis at the SBP nodes and the interpolation points
@@ -430,8 +448,8 @@ eigenvalue matrix.
 function absMatrix!{T}(A::AbstractArray{T,2}, Aabs::AbstractArray{T,2})
   @assert( size(A) == size(Aabs) )
   n = size(A,1)
-  fill!(Aabs, zero(T))
-  F = eigfact(A)
+  Aabs[:,:] = A[:,:]
+  F = eigfact(Symmetric(Aabs))
   for i = 1:n
     for j = 1:n
       for k = 1:n
