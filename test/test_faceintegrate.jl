@@ -1,5 +1,65 @@
 facts("Testing SummationByParts Module (face-data integration methods)...") do
 
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing integratefunctional! ("string($TSBP)" scalar field method)") do
+        # build single element grid and verify the accuracy of boundary integration
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,1))
+          xf = zeros(Float64, (1,sbpface.numnodes,2))
+          vtx = reshape([-1.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,2] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          bndryfaces = Array(Boundary, 2)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(1,2)
+          uface = zeros(Float64, (sbpface.numnodes, 2))
+          for i = 0:p
+            uface[:,:] = xf[1,:,:].^i
+            fun = integratefunctional!(sbpface, bndryfaces, uface)            
+            funexact = (1.0^(i) + (-1.0)^(i)) # sign normal is not accounted for
+            @fact fun --> roughly(funexact, atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing integratefunctional! ("string($TSBP)" vector field method)") do
+        # build single element grid and verify the accuracy of boundary integration
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,1))
+          xf = zeros(Float64, (1,sbpface.numnodes,2))
+          vtx = reshape([-1.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,2] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          bndryfaces = Array(Boundary, 2)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(1,2)
+          uface = zeros(Float64, (2, sbpface.numnodes, 2))
+          fun = zeros(2)
+          for i = 0:p
+            uface[1,:,:] = xf[1,:,:].^i
+            uface[2,:,:] = 1.0
+            fill!(fun, 0.0)
+            integratefunctional!(sbpface, bndryfaces, uface, fun)
+            funexact = (1.0^(i) + (-1.0)^(i)) # sign normal is not accounted for
+            @fact fun[1] --> roughly(funexact, atol=1e-14)
+            @fact fun[2] --> roughly(2.0, atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+      
   context("Testing integratefunctional! (TriSBP, scalar field method)") do
     # build a two element grid and verify the accuracy of boundary integration
     for p = 1:4
@@ -386,6 +446,73 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
             (2^(i+1)-1)*(2^(j+1)-1)*(1 + 2^k)/((i+1)*(j+1))
             @fact fun[1] --> roughly(funexact, atol=1e-14)
             @fact fun[2] --> roughly(6.0, atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing integrateBoundaryFunctional! ("string($TSBP)" scalar field method)") do
+        # build single element grid and verify the accuracy of boundary integration
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,1))
+          xf = zeros(Float64, (1,sbpface.numnodes,2))
+          vtx = reshape([-1.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,2] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          bndryfaces = Array(Boundary, 2)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(1,2)
+          uface = zeros(Float64, (sbpface.numnodes, 2))
+          for i = 0:p
+            uface[:,:] = xf[1,:,:].^i
+            fun = 0.0
+            for (bindex, bndry) in enumerate(bndryfaces)
+              fun += integrateBoundaryFunctional!(sbpface, bndry.face,
+                                                  view(uface,:,bindex))
+            end
+            funexact = (1.0^(i) + (-1.0)^(i)) # sign normal is not accounted for
+            @fact fun --> roughly(funexact, atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing integrateBoundaryFunctional! ("string($TSBP)" vector field method)") do
+        # build single element grid and verify the accuracy of boundary integration
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,1))
+          xf = zeros(Float64, (1,sbpface.numnodes,2))
+          vtx = reshape([-1.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,2] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          bndryfaces = Array(Boundary, 2)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(1,2)
+          uface = zeros(Float64, (2, sbpface.numnodes, 2))
+          fun = zeros(2)
+          for i = 0:p
+            uface[1,:,:] = xf[1,:,:].^i
+            uface[2,:,:] = 1.0
+            fill!(fun, 0.0)
+            for (bindex, bndry) in enumerate(bndryfaces)          
+              integrateBoundaryFunctional!(sbpface, bndry.face,
+                                           view(uface,:,:,bindex), fun)
+            end
+            funexact = (1.0^(i) + (-1.0)^(i)) # sign normal is not accounted for
+            @fact fun[1] --> roughly(funexact, atol=1e-14)
+            @fact fun[2] --> roughly(2.0, atol=1e-14)
           end
         end
       end
@@ -812,6 +939,56 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
     end
   end
 
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing boundaryintegrate! and interiorfaceintegrate! ("string($TSBP)" scalar field method)") do
+        # build a two element grid and verify that a constant integrated over all
+        # faces is zero
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          ifaces = Array(Interface, 1)
+          ifaces[1] = Interface(1,2,2,2,1)
+          bndryfaces = Array(Boundary, 2)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(2,1)
+          uface = ones(Float64, (sbpface.numnodes, 1))
+          ubndry = ones(Float64, (sbpface.numnodes, 2))
+          ubndry[:,1] *= -1.0
+          res = zeros(Float64, (sbp.numnodes, 2))
+          boundaryintegrate!(sbpface, bndryfaces, ubndry, res)
+          interiorfaceintegrate!(sbpface, ifaces, uface, res)
+          @fact sum(res) --> roughly(0.0, atol=1e-13)
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing boundaryintegrate! and interiorfaceintegrate! ("string($TSBP)" vector field method)") do
+        # build a two element grid and verify that a constant integrated over all
+        # faces is zero
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          ifaces = Array(Interface, 1)
+          ifaces[1] = Interface(1,2,2,2,1)
+          bndryfaces = Array(Boundary, 2)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(2,1)
+          uface = ones(Float64, (2, sbpface.numnodes, 1))
+          ubndry = ones(Float64, (2, sbpface.numnodes, 2))
+          ubndry[:,:,1] *= -1.0
+          res = zeros(Float64, (2, sbp.numnodes, 2))
+          boundaryintegrate!(sbpface, bndryfaces, ubndry, res)
+          interiorfaceintegrate!(sbpface, ifaces, uface, res)
+          @fact sum(res) --> roughly(0.0, atol=1e-13)
+        end        
+      end
+    end
+  end
+
   context("Testing boundaryintegrate! and interiorfaceintegrate! (TriSBP scalar field method)") do
     # build a two element grid and verify that a constant integrated over all
     # faces is zero
@@ -1065,6 +1242,66 @@ facts("Testing SummationByParts Module (face-data integration methods)...") do
       boundaryintegrate!(sbpface, bndryfaces, ubndry, res)
       interiorfaceintegrate!(sbpface, ifaces, uface, res)
       @fact sum(res) --> roughly(0.0, atol=1e-13)
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing boundaryFaceIntegrate! and interiorFaceIntegrate! ("string($TSBP)" scalar field method)") do
+        # build a two element grid and verify that a constant integrated over all
+        # faces is zero
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          ifaces = Array(Interface, 1)
+          ifaces[1] = Interface(1,2,2,2,1)
+          bndryfaces = Array(Boundary, 2)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(2,1)
+          uface = ones(Float64, (sbpface.numnodes, 1))
+          ubndry = ones(Float64, (sbpface.numnodes, 2))
+          ubndry[:,1] *= -1.0
+          res = zeros(Float64, (sbp.numnodes, 2))
+          for (bindex, bndry) in enumerate(bndryfaces)      
+            boundaryFaceIntegrate!(sbpface, bndry.face, view(ubndry,:,bindex),
+                                   view(res,:,bndry.element))
+          end      
+          interiorFaceIntegrate!(sbpface, ifaces[1], view(uface,:,1),
+                                 view(res,:,ifaces[1].elementL),
+                                 view(res,:,ifaces[1].elementR))
+          @fact sum(res) --> roughly(0.0, atol=1e-13)
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing boundaryFaceIntegrate! and interiorFaceIntegrate! ("string($TSBP)" vector field method)") do
+        # build a two element grid and verify that a constant integrated over all
+        # faces is zero
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          ifaces = Array(Interface, 1)
+          ifaces[1] = Interface(1,2,2,2,1)
+          bndryfaces = Array(Boundary, 2)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(2,1)
+          uface = ones(Float64, (2, sbpface.numnodes, 1))
+          ubndry = ones(Float64, (2, sbpface.numnodes, 2))
+          ubndry[:,:,1] *= -1.0
+          res = zeros(Float64, (2, sbp.numnodes, 2))
+          for (bindex, bndry) in enumerate(bndryfaces)
+            boundaryFaceIntegrate!(sbpface, bndry.face, view(ubndry,:,:,bindex),
+                                   view(res,:,:,bndry.element))
+          end
+          interiorFaceIntegrate!(sbpface, ifaces[1], view(uface,:,:,1),
+                                 view(res,:,:,ifaces[1].elementL),
+                                 view(res,:,:,ifaces[1].elementR))
+          @fact sum(res) --> roughly(0.0, atol=1e-13)
+        end        
+      end
     end
   end
 

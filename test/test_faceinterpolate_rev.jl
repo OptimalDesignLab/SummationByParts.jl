@@ -1,13 +1,15 @@
 facts("Testing SummationByParts Module (reverse-diff of face-data interpolation methods)...") do
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
               (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
-      context("Testing boundaryinterpolate_rev! ("string($TSBP)" scalar field method)") do
+      context("Testing boundaryinterpolate_rev! ("string($TSBP[1])" scalar field method)") do
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
@@ -17,7 +19,11 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
           uface = zeros(vface)
           bndryfaces = Array(Boundary, 4)
           bndryfaces[1] = Boundary(1,1)
-          bndryfaces[2] = Boundary(1,3)
+          if size(sbp.Q,3) < 2
+            bndryfaces[2] = Boundary(1,2)
+          else
+            bndryfaces[2] = Boundary(1,3)
+          end
           bndryfaces[3] = Boundary(2,1)
           bndryfaces[4] = Boundary(2,2)
           boundaryinterpolate!(sbpface, bndryfaces, uvol, uface)
@@ -30,14 +36,16 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
               (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
-      context("Testing boundaryinterpolate_rev! ("string($TSBP)" vector field method)") do
+      context("Testing boundaryinterpolate_rev! ("string($TSBP[1])" vector field method)") do
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
@@ -47,7 +55,11 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
           uface = zeros(vface)
           bndryfaces = Array(Boundary, 4)
           bndryfaces[1] = Boundary(1,1)
-          bndryfaces[2] = Boundary(1,3)
+          if size(sbp.Q,3) < 2
+            bndryfaces[2] = Boundary(1,2)
+          else
+            bndryfaces[2] = Boundary(1,3)
+          end
           bndryfaces[3] = Boundary(2,1)
           bndryfaces[4] = Boundary(2,2)
           boundaryinterpolate!(sbpface, bndryfaces, uvol, uface)
@@ -60,14 +72,16 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
               (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
-      context("Testing boundaryFaceInterpolate_rev! ("string($TSBP)" scalar field method)") do
+      context("Testing boundaryFaceInterpolate_rev! ("string($TSBP[1])" scalar field method)") do
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
@@ -89,14 +103,16 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
               (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
-      context("Testing boundaryFaceInterpolate_rev! ("string($TSBP)" vector field method)") do
+      context("Testing boundaryFaceInterpolate_rev! ("string($TSBP[1])" vector field method)") do
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
@@ -118,19 +134,25 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
               (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
-      context("Testing interiorfaceinterpolate_rev! ("string($TSBP)" scalar field method)") do
+      context("Testing interiorfaceinterpolate_rev! ("string($TSBP[1])" scalar field method)") do
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           ifaces = Array(Interface, 1)
-          ifaces[1] = Interface(1,2,2,3,1)
+          if size(sbp.Q,3) < 2
+            ifaces[1] = Interface(1,2,2,1,1)
+          else
+            ifaces[1] = Interface(1,2,2,3,1)            
+          end
           uvol = rand(sbp.numnodes,2)
           vvol = zeros(uvol)
           vface = rand(2, sbpface.numnodes, 1)
@@ -145,19 +167,25 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
               (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
-      context("Testing interiorfaceinterpolate_rev! ("string($TSBP)" vector field method)") do
+      context("Testing interiorfaceinterpolate_rev! ("string($TSBP[1])" vector field method)") do
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           ifaces = Array(Interface, 1)
-          ifaces[1] = Interface(1,2,2,3,1)
+          if size(sbp.Q,3) < 2
+            ifaces[1] = Interface(1,2,2,1,1)
+          else
+            ifaces[1] = Interface(1,2,2,3,1)            
+          end
           uvol = rand(4,sbp.numnodes,2)
           vvol = zeros(uvol)
           vface = rand(4,2, sbpface.numnodes, 1)
@@ -172,14 +200,16 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
               (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
-      context("Testing interiorFaceInterpolate_rev! ("string($TSBP)" scalar field method)") do
+      context("Testing interiorFaceInterpolate_rev! ("string($TSBP[1])" scalar field method)") do
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
@@ -191,7 +221,11 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
           vfaceR = rand(Float64, (sbpface.numnodes))
           ufaceL = zeros(vfaceL)
           ufaceR = zeros(vfaceR)
-          face = Interface(1,2,2,3,1)
+          if size(sbp.Q,3) < 2
+            face = Interface(1,2,2,1,1)
+          else
+            face = Interface(1,2,2,3,1)            
+          end
           interiorFaceInterpolate!(sbpface, face, uL, uR, ufaceL, ufaceR)
           vtRu_left = sum(vfaceL.*ufaceL)
           vtRu_right = sum(vfaceR.*ufaceR)
@@ -205,14 +239,16 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
               (getTetSBPOmega,TetFace{Float64},4),
               (getTetSBPDiagE,getTetFaceForDiagE,4))
     @eval begin
-      context("Testing interiorFaceInterpolate_rev! ("string($TSBP)" vector field method)") do
+      context("Testing interiorFaceInterpolate_rev! ("string($TSBP[1])" vector field method)") do
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
@@ -224,7 +260,11 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
           vfaceR = rand(Float64, (4,sbpface.numnodes))
           ufaceL = zeros(vfaceL)
           ufaceR = zeros(vfaceR)
-          face = Interface(1,2,2,3,1)
+          if size(sbp.Q,3) < 2
+            face = Interface(1,2,2,1,1)
+          else
+            face = Interface(1,2,2,3,1)            
+          end
           interiorFaceInterpolate!(sbpface, face, uL, uR, ufaceL, ufaceR)
           vtRu_left = sum(vfaceL.*ufaceL)
           vtRu_right = sum(vfaceR.*ufaceR)

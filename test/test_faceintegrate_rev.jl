@@ -1,5 +1,5 @@
 facts("Testing SummationByParts Module (reverse-diff of face-data integration methods)...") do
-
+  
   for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4))
@@ -177,7 +177,9 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
@@ -194,7 +196,11 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
           uvol = zeros(vvol)
           bndryfaces = Array(Boundary, 4)
           bndryfaces[1] = Boundary(1,1)
-          bndryfaces[2] = Boundary(1,3)
+          if size(sbp.Q,3) < 2
+            bndryfaces[2] = Boundary(1,2)
+          else
+            bndryfaces[2] = Boundary(1,3)
+          end
           bndryfaces[3] = Boundary(2,1)
           bndryfaces[4] = Boundary(2,2)
           boundaryintegrate!(sbpface, bndryfaces, uface, uvol)
@@ -207,7 +213,9 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
@@ -224,7 +232,11 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
           uvol = zeros(vvol)
           bndryfaces = Array(Boundary, 4)
           bndryfaces[1] = Boundary(1,1)
-          bndryfaces[2] = Boundary(1,3)
+          if size(sbp.Q,3) < 2
+            bndryfaces[2] = Boundary(1,2)
+          else
+            bndryfaces[2] = Boundary(1,3)
+          end        
           bndryfaces[3] = Boundary(2,1)
           bndryfaces[4] = Boundary(2,2)
           boundaryintegrate!(sbpface, bndryfaces, uface, uvol)
@@ -237,7 +249,9 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
@@ -266,7 +280,9 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
@@ -295,7 +311,9 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
@@ -307,7 +325,11 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           ifaces = Array(Interface, 1)
-          ifaces[1] = Interface(1,2,2,3,1)
+          if size(sbp.Q,3) < 2
+            ifaces[1] = Interface(1,2,2,1,1)
+          else
+            ifaces[1] = Interface(1,2,2,3,1)            
+          end
           uface = rand(sbpface.numnodes, 1)
           vface = zeros(uface)
           vvol = rand(sbp.numnodes,2)
@@ -322,7 +344,9 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
@@ -334,7 +358,11 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           ifaces = Array(Interface, 1)
-          ifaces[1] = Interface(1,2,2,3,1)
+          if size(sbp.Q,3) < 2
+            ifaces[1] = Interface(1,2,2,1,1)
+          else
+            ifaces[1] = Interface(1,2,2,3,1)            
+          end          
           uface = rand(4,sbpface.numnodes, 1)
           vface = zeros(uface)
           vvol = rand(4,sbp.numnodes,2)
@@ -349,7 +377,9 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
@@ -366,7 +396,11 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
           vR = rand(Float64, (sbp.numnodes))
           uL = zeros(vL)
           uR = zeros(vR)
-          face = Interface(1,2,2,3,1)
+          if size(sbp.Q,3) < 2
+            face = Interface(1,2,2,1,1)
+          else
+            face = Interface(1,2,2,3,1)            
+          end
           interiorFaceIntegrate!(sbpface, face, uface, uL, uR)
           vtRtBu = sum(vL.*uL) + sum(vR.*uR)
           interiorFaceIntegrate_rev!(sbpface, face, vface, vL, vR)
@@ -377,7 +411,9 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
     end
   end
 
-  for TSBP = ((getTriSBPGamma,TriFace{Float64},4),
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,4),
+              (getLineSegSBPLegendre,getLineSegFace,4),
+              (getTriSBPGamma,TriFace{Float64},4),
               (getTriSBPOmega,TriFace{Float64},4),
               (getTriSBPDiagE,getTriFaceForDiagE,4),
               (getTetSBPGamma,TetFace{Float64},4),
@@ -394,7 +430,11 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
           vR = rand(Float64, (4,sbp.numnodes))
           uL = zeros(vL)
           uR = zeros(vR)
-          face = Interface(1,2,2,3,1)
+          if size(sbp.Q,3) < 2
+            face = Interface(1,2,2,1,1)
+          else
+            face = Interface(1,2,2,3,1)            
+          end
           interiorFaceIntegrate!(sbpface, face, uface, uL, uR)
           vtRtBu = sum(vL.*uL) + sum(vR.*uR)
           interiorFaceIntegrate_rev!(sbpface, face, vface, vL, vR)

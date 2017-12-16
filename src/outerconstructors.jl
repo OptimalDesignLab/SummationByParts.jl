@@ -1,6 +1,51 @@
 # This file gathers together outer constructors for the SBP operators
 
 @doc """
+### SBP.getLineSegSBPLobbato
+
+Returns Gauss-Lobbato type elements, that have nodes on the element boundary
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `Tsbp`: floating point type used for the operators
+
+**Returns**
+
+* `sbp`: a Gauss-Lobbato operator of the appropriate degree
+
+"""->
+function getLineSegSBPLobbato(;degree::Int=1, Tsbp::Type=Float64)
+  cub, vtx = quadrature(2*degree-1, Tsbp, internal=false)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  return LineSegSBP{Tsbp}(degree, cub, vtx, w, Q)
+end
+
+@doc """
+### SBP.getLineSegSBPLegendre
+
+Returns Gauss-Legendre type elements, that do not have nodes on the element
+boundary
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `Tsbp`: floating point type used for the operators
+
+**Returns**
+
+* `sbp`: a Legendre-Gauss operator of the appropriate degree
+
+"""->
+function getLineSegSBPLegendre(;degree::Int=1, Tsbp::Type=Float64)
+  cub, vtx = quadrature(2*degree, Tsbp, internal=true)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  return LineSegSBP{Tsbp}(degree, cub, vtx, w, Q)
+end
+
+@doc """
 ### SBP.getTriSBPGamma
 
 Returns SBP-Gamma type elements, that have nodes on the element boundary
@@ -192,6 +237,33 @@ function getTetSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
                 size(Q))
   end
   return TetSBP{Tsbp}(degree, cub, vtx, w, Q)
+end
+
+@doc """
+### SBP.getLineSegFace
+
+Returns a trival face for line-segment elements.
+
+**Inputs**
+
+* `degree`: face integration is exact for polys of degree 2*`degree`
+* `volcub`: cubature rule for the associated "volume"
+* `vtx`: vertices of the line-segment
+
+**Returns**
+
+* `sbpface`: an SBP face type for line-segment elements
+
+"""->
+function getLineSegFace{T}(degree::Int, volcub::LineSymCub{T}, vtx::Array{T,2})
+  facecub, facevtx = pointCubature()
+  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
+                                                     degree)
+  D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx, degree)
+  wface = SymCubatures.calcweights(facecub)
+  stencilsize = size(R,2)
+  dstencilsize = size(D,1)
+  return LineSegFace{T}(degree, facecub, facevtx, R.', perm, D, Dperm)
 end
 
 @doc """

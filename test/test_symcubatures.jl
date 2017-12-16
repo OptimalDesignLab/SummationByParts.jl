@@ -1,4 +1,15 @@
 facts("Testing SymCubatures Module...") do
+
+  for T = (Float32, Float64, Complex64, Complex128)
+    @eval begin
+      context("Testing PointSymCub Inner Constructor for DataType "string($T)) do
+        quad = PointSymCub{($T)}()
+        @fact quad.numparams --> 0
+        @fact quad.numweights --> 1
+        @fact quad.numnodes --> 1
+      end
+    end
+  end
   
   for T = (Float32, Float64, Complex64, Complex128)
     @eval begin
@@ -73,6 +84,11 @@ facts("Testing SymCubatures Module...") do
       end
     end
   end
+
+  context("Testing getnumboundarynodes (PointSymCub method)") do
+    point = PointSymCub{Float64}()
+    @fact SymCubatures.getnumboundarynodes(point) --> 1
+  end
   
   context("Testing getnumboundarynodes (LineSymCub method)") do
     quad = LineSymCub{Float64}() # vertex only rule
@@ -98,6 +114,11 @@ facts("Testing SymCubatures Module...") do
     @fact SymCubatures.getnumboundarynodes(tetcub) --> 4+2*4*6
   end
 
+  context("Testing getnumfacenodes (PointSymCub method)") do
+    point = PointSymCub{Float64}()
+    @fact SymCubatures.getnumfacenodes(point) --> 1
+  end
+  
   context("Testing getnumfacenodes (LineSymCub method)") do
     quad = LineSymCub{Float64}() # vertex only rule
     @fact SymCubatures.getnumfacenodes(quad) --> 1
@@ -118,6 +139,12 @@ facts("Testing SymCubatures Module...") do
     tetcub = TetSymCub{Float64}(numedge=2, midedges=true, numfaceS21=3,
                                 numS31 = 4, numfaceS111=1)
     @fact SymCubatures.getnumfacenodes(tetcub) --> 3+3+2*6+3*3+6
+  end
+
+  context("Testing getbndrynodeindices (PointSymCub method)") do
+    point = PointSymCub{Float64}()
+    bndryindices = SymCubatures.getbndrynodeindices(point)
+    @fact bndryindices --> [1;]
   end
 
   context("Testing getbndrynodeindices (LineSymCub method)") do
@@ -147,6 +174,12 @@ facts("Testing SymCubatures Module...") do
                             73; 74; 75; 76; 77; 78; 79; 80; 81; 82; 83; 84]
   end
 
+  context("Testing getinteriornodeindices (PointSymCub method)") do
+    point = PointSymCub{Float64}()
+    indices = SymCubatures.getinteriornodeindices(point)
+    @fact indices --> Int[]
+  end
+
   context("Testing getinteriornodeindices (LineSymCub method)") do
     quad = LineSymCub{Float64}(numedge=1, centroid=true)
     indices = SymCubatures.getinteriornodeindices(quad)
@@ -168,6 +201,12 @@ facts("Testing SymCubatures Module...") do
                                 centroid=true)
     indices = SymCubatures.getinteriornodeindices(tetcub)
     @fact indices --> [9:12; 19:24; 61:84; 109:132; 133]
+  end
+
+  context("Testing getfacevertexindices (PointSymCub method)") do
+    point = PointSymCub{Float64}()
+    facevtx = SymCubatures.getfacevertexindices(point)
+    @fact facevtx[1,1] --> 1
   end
 
   context("Testing getfacevertexindices (LineSymCub method)") do
@@ -194,6 +233,12 @@ facts("Testing SymCubatures Module...") do
     @fact facevtx[:,2] --> [1; 4; 2]
     @fact facevtx[:,3] --> [2; 4; 3]
     @fact facevtx[:,4] --> [1; 3; 4]
+  end
+
+  context("Testing getfacenodeindices (PointSymCub method)") do
+    point = PointSymCub{Float64}()
+    bndryindices = SymCubatures.getfacenodeindices(point)
+    @fact bndryindices --> reshape([1;],(1,1))
   end
 
   context("Testing getfacenodeindices (LineSymCub method)") do
@@ -273,6 +318,18 @@ facts("Testing SymCubatures Module...") do
     @fact success --> false
   end
 
+  context("Test getpermutation (PointSymCub method)") do
+    point = PointSymCub{Float64}()
+    SymCubatures.setparams!(point, rand(point.numparams))
+    vtxperm = [1;]
+    perm = SymCubatures.getpermutation(point, vtxperm)
+    vtx = Float64[1 1;]
+    x = SymCubatures.calcnodes(point, vtx)
+    vtx = Float64[1 1;]
+    xr = SymCubatures.calcnodes(point, vtx)
+    @fact x[:,perm] --> roughly(xr, atol=eps())
+  end
+
   context("Test getpermutation (LineSymCub method)") do
     quad = LineSymCub{Float64}(vertices=true, numedge=2, centroid=true)
     SymCubatures.setparams!(quad, rand(quad.numparams))
@@ -312,6 +369,12 @@ facts("Testing SymCubatures Module...") do
     xr = SymCubatures.calcnodes(tetcub, vtx)
     @fact x[:,perm] --> roughly(xr, atol=eps())
   end  
+
+  context("Test getfacebasedpermutation (PointSymCub method)") do
+    point = PointSymCub{Float64}()
+    perm = SymCubatures.getfacebasedpermutation(point)
+    @fact perm[:,1] --> [1;]
+  end
 
   context("Test getfacebasedpermutation (LineSymCub method)") do
     quad = LineSymCub{Float64}(numedge=1, centroid=true)
@@ -370,6 +433,12 @@ facts("Testing SymCubatures Module...") do
     @fact xf1[:,perm[:,4]] --> roughly(xf4, atol=eps())
   end
 
+  context("Test getneighbourpermutation (PointSymCub method)") do
+    point = PointSymCub{Float64}()
+    perm = SymCubatures.getneighbourpermutation(point)
+    @fact perm[1,1] --> 1
+  end
+
   context("Test getneighbourpermutation (LineSymCub method)") do
     quad = LineSymCub{Float64}(numedge=1, centroid=true)
     perm = SymCubatures.getneighbourpermutation(quad)
@@ -399,6 +468,16 @@ facts("Testing SymCubatures Module...") do
     @fact x[:,perm[:,1]] --> roughly(x1, atol=eps())
     @fact x[:,perm[:,2]] --> roughly(x2, atol=eps())
     @fact x[:,perm[:,3]] --> roughly(x3, atol=eps())
+  end
+
+  for T = (Float32, Float64, Complex64, Complex128)
+    @eval begin
+      context("Testing calcnodes (PointSymCub method) for DataType "string($T)) do
+        vtx = ($T)[-1 1 0]
+        point = PointSymCub{($T)}()
+        @fact SymCubatures.calcnodes(point, vtx) --> vtx.'
+      end
+    end
   end
 
   for T = (Float32, Float64, Complex64, Complex128)
@@ -537,6 +616,17 @@ facts("Testing SymCubatures Module...") do
         @fact vec(x[1,:]) --> roughly([vtx[:,1]; A*vtx[:,1]]) 
         @fact vec(x[2,:]) --> roughly([vtx[:,2]; A*vtx[:,2]])
         @fact vec(x[3,:]) --> roughly([vtx[:,3]; A*vtx[:,3]])
+      end
+    end
+  end
+
+  for T = (Float32, Float64, Complex64, Complex128)
+    @eval begin
+      context("Testing calcweights (PointSymCub method) for DataType "string($T)) do
+        point = PointSymCub{($T)}()
+        wgt = ($T)(1)
+        SymCubatures.setweights!(point, [wgt])
+        @fact SymCubatures.calcweights(point) --> roughly(($T)[1])
       end
     end
   end

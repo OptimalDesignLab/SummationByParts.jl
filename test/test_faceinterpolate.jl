@@ -1,5 +1,73 @@
 facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing boundaryinterpolate! ("string($TSBP)" scalar field method)") do
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,2))
+          xf = zeros(Float64, (1,sbpface.numnodes,4))
+          vtx = reshape([0.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,2] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
+          x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          bndryfaces = Array(Boundary, 4)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(1,2)
+          bndryfaces[3] = Boundary(2,1)
+          bndryfaces[4] = Boundary(2,2)
+          u = zeros(Float64, (sbp.numnodes, 2))
+          uface = zeros(Float64, (sbpface.numnodes, 4))
+          for i = 0:p
+            u[:,:] = x[1,:,:].^i
+            boundaryinterpolate!(sbpface, bndryfaces, u, uface)
+            @fact vec(uface[:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing boundaryinterpolate! ("string($TSBP)" vector field method)") do
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,2))
+          xf = zeros(Float64, (1,sbpface.numnodes,4))
+          vtx = reshape([0.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,2] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
+          x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          bndryfaces = Array(Boundary, 4)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(1,2)
+          bndryfaces[3] = Boundary(2,1)
+          bndryfaces[4] = Boundary(2,2)
+          u = zeros(Float64, (2,sbp.numnodes, 2))
+          uface = zeros(Float64, (2,sbpface.numnodes, 4))
+          for i = 0:p
+            u[1,:,:] = x[1,:,:].^i
+            u[2,:,:] = 2.0.*u[1,:,:]
+            boundaryinterpolate!(sbpface, bndryfaces, u, uface)
+            @fact vec(uface[1,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @fact vec(uface[2,:,:]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+        
   context("Testing boundaryinterpolate! (TriSBP, scalar field method)") do
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
@@ -396,6 +464,83 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             @fact vec(uface[2,:,:]) -->
             roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
                     atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing boundaryFaceInterpolate! ("string($TSBP)" scalar field method)") do
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,2))
+          xf = zeros(Float64, (1,sbpface.numnodes,4))
+          vtx = reshape([0.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,2] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
+          x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          bndryfaces = Array(Boundary, 4)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(1,2)
+          bndryfaces[3] = Boundary(2,1)
+          bndryfaces[4] = Boundary(2,2)
+          u = zeros(Float64, (sbp.numnodes, 2))
+          uface = zeros(Float64, (sbpface.numnodes, 4))
+          for i = 0:p
+            u[:,:] = x[1,:,:].^i
+            for (bindex, bndry) in enumerate(bndryfaces)          
+              boundaryFaceInterpolate!(sbpface, bndry.face,
+                                       view(u,:,bndry.element),
+                                       view(uface,:,bindex))
+            end
+            @fact vec(uface[:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing boundaryFaceInterpolate! ("string($TSBP)" vector field method)") do
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,2))
+          xf = zeros(Float64, (1,sbpface.numnodes,4))
+          vtx = reshape([0.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,2] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
+          x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
+          xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          bndryfaces = Array(Boundary, 4)
+          bndryfaces[1] = Boundary(1,1)
+          bndryfaces[2] = Boundary(1,2)
+          bndryfaces[3] = Boundary(2,1)
+          bndryfaces[4] = Boundary(2,2)
+          u = zeros(Float64, (2,sbp.numnodes, 2))
+          uface = zeros(Float64, (2,sbpface.numnodes, 4))
+          for i = 0:p
+            u[1,:,:] = x[1,:,:].^i
+            u[2,:,:] = 2.0.*u[1,:,:]
+            for (bindex, bndry) in enumerate(bndryfaces)
+              boundaryFaceInterpolate!(sbpface, bndry.face,
+                                       view(u,:,:,bndry.element),
+                                       view(uface,:,:,bindex))
+            end
+            @fact vec(uface[1,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @fact vec(uface[2,:,:]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
           end
         end
       end
@@ -836,6 +981,65 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     end
   end
 
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing interiorfaceinterpolate! ("string($TSBP)" scalar field method)") do
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,2))
+          xf = zeros(Float64, (1,sbpface.numnodes,1))
+          vtx = reshape([0.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
+          x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
+          ifaces = Array(Interface, 1)
+          ifaces[1] = Interface(1,2,2,2,1)
+          u = zeros(Float64, (sbp.numnodes, 2))
+          uface = zeros(Float64, (2, sbpface.numnodes, 1))
+          for i = 0:p
+            u[:,:] = x[1,:,:].^i
+            interiorfaceinterpolate!(sbpface, ifaces, u, uface)
+            @fact vec(uface[1,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @fact vec(uface[2,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing interiorfaceinterpolate! ("string($TSBP)" vector field method)") do
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,2))
+          xf = zeros(Float64, (1,sbpface.numnodes,1))
+          vtx = reshape([0.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
+          x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
+          ifaces = Array(Interface, 1)
+          ifaces[1] = Interface(1,2,2,2,1)          
+          u = zeros(Float64, (2, sbp.numnodes, 2))
+          uface = zeros(Float64, (2, 2, sbpface.numnodes, 1))
+          for i = 0:p
+            u[1,:,:] = x[1,:,:].^i
+            u[2,:,:] = 2.0.*u[1,:,:]
+            interiorfaceinterpolate!(sbpface, ifaces, u, uface)
+            @fact vec(uface[1,1,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @fact vec(uface[2,1,:,:]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
+            @fact vec(uface[1,2,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @fact vec(uface[2,2,:,:]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+
   context("Testing interiorfaceinterpolate! (TriSBP scalar field method)") do
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
@@ -1206,6 +1410,75 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
               roughly(2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
             end
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing interiorFaceInterpolate! ("string($TSBP)" scalar field method)") do
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,2))
+          xf = zeros(Float64, (1,sbpface.numnodes,1))
+          vtx = reshape([0.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
+          x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
+          ifaces = Array(Interface, 1)
+          ifaces[1] = Interface(1,2,2,2,1)
+          u = zeros(Float64, (sbp.numnodes, 2))
+          uface = zeros(Float64, (sbpface.numnodes, 2, 1))
+          for i = 0:p
+            u[:,:] = x[1,:,:].^i
+            for (findex, face) in enumerate(ifaces)          
+              interiorFaceInterpolate!(sbpface, face, view(u,:,face.elementL),
+                                       view(u,:,face.elementR),
+                                       view(uface,:,1,findex),
+                                       view(uface,:,2,findex))
+            end
+            @fact vec(uface[:,1,1]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @fact vec(uface[:,2,1]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+          end
+        end
+      end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing interiorFaceInterpolate! ("string($TSBP)" vector field method)") do
+        for p = 1:4
+          sbp = ($TSBP)(degree=p)
+          sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
+          x = zeros(Float64, (1,sbp.numnodes,2))
+          xf = zeros(Float64, (1,sbpface.numnodes,1))
+          vtx = reshape([0.0; 1.0], (2,1))
+          x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
+          xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
+          vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
+          x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
+          ifaces = Array(Interface, 1)
+          ifaces[1] = Interface(1,2,2,2,1)          
+          u = zeros(Float64, (2, sbp.numnodes, 2))
+          uface = zeros(Float64, (2, sbpface.numnodes, 2, 1))
+          for i = 0:p
+            u[1,:,:] = x[1,:,:].^i
+            u[2,:,:] = 2.0.*u[1,:,:]
+            for (findex, face) in enumerate(ifaces)
+              interiorFaceInterpolate!(sbpface, face, view(u,:,:,face.elementL),
+                                       view(u,:,:,face.elementR),
+                                       view(uface,:,:,1,findex),
+                                       view(uface,:,:,2,findex))
+            end
+            @fact vec(uface[1,:,1,1]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @fact vec(uface[2,:,1,1]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
+            @fact vec(uface[1,:,2,1]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @fact vec(uface[2,:,2,1]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
           end
         end
       end

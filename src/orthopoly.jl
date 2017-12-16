@@ -106,7 +106,7 @@ Warburton's nodal DG book.
 
 * `x`: points at which to evaluate polynomial
 * `alpha`,`beta`: define the type of Jacobi Polynomial (alpha + beta != 1)
-*  `N`: polynomial degree
+* `N`: polynomial degree
 
 **Outputs**
 

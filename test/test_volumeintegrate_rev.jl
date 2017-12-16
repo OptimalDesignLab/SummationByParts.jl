@@ -1,6 +1,7 @@
 facts("Testing SummationByParts Module (reverse-diff of volume integrate methods)...") do
 
-  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre,
+              getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
               getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeintegrate_rev! ("string($TSBP)" scalar field method)") do
@@ -18,7 +19,8 @@ facts("Testing SummationByParts Module (reverse-diff of volume integrate methods
     end
   end
 
-  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre,
+              getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
               getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeintegrate_rev! ("string($TSBP)" vector field method)") do
@@ -36,7 +38,8 @@ facts("Testing SummationByParts Module (reverse-diff of volume integrate methods
     end
   end
 
-  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre,
+              getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
               getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeIntegrateElement_rev! ("string($TSBP)" scalar field method)") do
@@ -54,7 +57,8 @@ facts("Testing SummationByParts Module (reverse-diff of volume integrate methods
     end
   end
 
-  for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre,
+              getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE,
               getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
       context("Testing volumeIntegrateElement_rev! ("string($TSBP)" vector field method)") do

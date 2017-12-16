@@ -1,5 +1,26 @@
 facts("Testing SummationByParts Module (differentiate methods)...") do
 
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing differentiate! ("string($TSBP)" scalar field method)") do
+        # verify the accuracy of the differentiation operators
+        for d = 1:4
+          sbp = ($TSBP)(degree=d)
+          vtx = sbp.vtx
+          x = calcnodes(sbp, vtx)
+          x = reshape(x, (sbp.numnodes,1))
+          for i = 0:d
+            u = x.^i
+            dudx = i.*x.^max(0,i-1)
+            res = zeros(u)
+            differentiate!(sbp, 1, u, res)
+            @fact res --> roughly(dudx, atol=5e-13)
+          end
+        end
+      end 
+    end
+  end
+
   for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE)
     @eval begin
       context("Testing differentiate! ("string($TSBP)" scalar field method)") do
@@ -67,6 +88,35 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
     end
   end
 
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing differentiate! ("string($TSBP)" vector field method)") do
+        # build a two element grid, and verify that Dxi*1 = 0.0 and Dxi*x^p =
+        # p*x^(p-1)
+        for d = 1:4
+          sbp = ($TSBP)(degree=d)
+          vtx = reshape([0.0; 1.0], (2,1))
+          x = ones(Float64, (2,sbp.numnodes,2))
+          x[2,:,1] = calcnodes(sbp, vtx)          
+          vtx = reshape([1.0; 2.0], (2,1))
+          x[2,:,2] = calcnodes(sbp, vtx)
+          for i = 0:d
+            u = x.^i
+            dudx = i.*x.^max(0,i-1)
+            res = zeros(u)
+            differentiate!(sbp, 1, u, res)
+            # account for mapping Jacobian
+            scale!(res, 2.0)
+            @fact res[1,:,1] --> roughly(zeros(1,sbp.numnodes), atol=5e-13)
+            @fact res[2,:,1] --> roughly(dudx[2,:,1], atol=5e-13)
+            @fact res[1,:,2] --> roughly(zeros(1,sbp.numnodes), atol=5e-13)
+            @fact res[2,:,2] --> roughly(dudx[2,:,2], atol=5e-13)
+          end
+        end
+      end 
+    end
+  end
+  
   for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE)
     @eval begin
       context("Testing differentiate! ("string($TSBP)" vector field method)") do      
@@ -109,6 +159,27 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
           @fact vec(res[3,:,1]) --> roughly(zeros(sbp.numnodes), atol=5e-12)
         end
       end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing differentiateElement! ("string($TSBP)" scalar field method)") do
+        # verify the accuracy of the element level differentiation operators
+        for d = 1:4
+          sbp = ($TSBP)(degree=d)
+          vtx = sbp.vtx
+          x = calcnodes(sbp, vtx)
+          x = reshape(x, (sbp.numnodes,1))
+          for i = 0:d
+            u = x.^i
+            dudx = i.*x.^max(0,i-1)
+            res = zeros(u)
+            differentiateElement!(sbp, 1, view(u,:,1), view(res,:,1))
+            @fact res --> roughly(dudx, atol=5e-13)
+          end
+        end
+      end 
     end
   end
 
@@ -176,6 +247,35 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
           end
         end
       end
+    end
+  end
+
+  for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
+    @eval begin
+      context("Testing differentiateElement! ("string($TSBP)" vector field method)") do
+        # verify the accuracy of the element level differentiation operators
+        for d = 1:4
+          sbp = ($TSBP)(degree=d)
+          vtx = reshape([0.0; 1.0], (2,1))
+          x = ones(Float64, (2,sbp.numnodes,2))
+          x[2,:,1] = calcnodes(sbp, vtx)          
+          vtx = reshape([1.0; 2.0], (2,1))
+          x[2,:,2] = calcnodes(sbp, vtx)
+          for i = 0:d
+            u = x.^i
+            dudx = i.*x.^max(0,i-1)
+            res = zeros(u)
+            differentiateElement!(sbp, 1, view(u,:,:,1), view(res,:,:,1))
+            differentiateElement!(sbp, 1, view(u,:,:,2), view(res,:,:,2))
+            # account for mapping Jacobian
+            scale!(res, 2.0)
+            @fact res[1,:,1] --> roughly(zeros(1,sbp.numnodes), atol=5e-13)
+            @fact res[2,:,1] --> roughly(dudx[2,:,1], atol=5e-13)
+            @fact res[1,:,2] --> roughly(zeros(1,sbp.numnodes), atol=5e-13)
+            @fact res[2,:,2] --> roughly(dudx[2,:,2], atol=5e-13)
+          end
+        end
+      end 
     end
   end
 
