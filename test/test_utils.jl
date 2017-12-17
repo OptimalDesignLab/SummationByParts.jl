@@ -210,6 +210,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     Acheck = Q*diagm(abs(λ))*Q'
     Aabs = zeros(A)
     SummationByParts.absMatrix!(A, Aabs)
+    println("diffnorm = ", norm(A - Acheck))
     @fact Aabs --> roughly(Acheck, rtol=1e-13)        
   end
 

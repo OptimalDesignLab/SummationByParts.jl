@@ -8,7 +8,7 @@ using ODLCommonTools
 import ODLCommonTools.sview
 
 view = ArrayViews.view
-
+#=
 include("test_orthopoly.jl")
 include("test_symcubatures.jl")
 include("test_cubature.jl")
@@ -30,6 +30,7 @@ include("test_faceinterpolate_rev.jl")
 include("test_faceintegrate.jl")
 include("test_faceintegrate_rev.jl")
 include("test_edgestabilize.jl")
+=#
 include("test_utils.jl")
 
 FactCheck.exitstatus()
