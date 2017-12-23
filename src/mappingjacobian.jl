@@ -114,7 +114,7 @@ function calcMappingJacobian!{Tsbp,Tmsh, T2}(sbp::TriSBP{Tsbp}, mapdegree::Int,
 end
 
 function calcMappingJacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int,
-                                         xref::AbstractArray{Tmsh,2},
+                                         xref::AbstractMatrix,
                                          xlag::AbstractArray{Tmsh,3},
                                          xsbp::AbstractArray{Tmsh,3},
                                          dξdx::AbstractArray{Tmsh,4},
