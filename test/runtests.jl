@@ -6,6 +6,7 @@ using FactCheck
 using ArrayViews
 using ODLCommonTools
 import ODLCommonTools.sview
+import SummationByParts.Add
 
 view = ArrayViews.view
 
@@ -16,6 +17,7 @@ include("test_buildfaceoperators.jl")
 include("test_buildoperators.jl")
 include("test_weakdifferentiate.jl")
 include("test_weakdifferentiate_rev.jl")
+include("test_weakdifferentiate_jac.jl")
 include("test_differentiate.jl")
 include("test_differentiate_rev.jl")
 include("test_directionaldifferentiate.jl")

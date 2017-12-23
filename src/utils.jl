@@ -450,6 +450,7 @@ function absMatrix!{T}(A::AbstractArray{T,2}, Aabs::AbstractArray{T,2})
   n = size(A,1)
   Aabs[:,:] = A[:,:]
   F = eigfact(Symmetric(Aabs))
+  fill!(Aabs, zero(T))
   for i = 1:n
     for j = 1:n
       for k = 1:n

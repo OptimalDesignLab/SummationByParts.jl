@@ -31,6 +31,7 @@ export Boundary, Interface
 export calcnodes, calcminnodedistance, getNumFaceNodes
 export weakdifferentiate!, weakDifferentiateElement!
 export weakdifferentiate_rev!, weakDifferentiateElement_rev!
+export weakDifferentiateElement_jac!
 export differentiate!, differentiateElement!
 export differentiate_rev!, differentiateElement_rev!
 export directionalDifferentiateElement!
@@ -566,6 +567,7 @@ include("buildfaceoperators.jl") #<--- functions related to building face operat
 include("buildoperators.jl") #<--- functions related to building SBP operators
 include("weakdifferentiate.jl") #<--- functions for weak differentiation
 include("weakdifferentiate_rev.jl") #<--- reverse-diff of weak differentiation
+include("weakdifferentiate_jac.jl") #<--- Jacobians for weak differentiation
 include("differentiate.jl") #<--- functions for strong differentiation
 include("differentiate_rev.jl") #<--- reverse-diff of strong differentiation
 include("directionaldifferentiate.jl") #<--- directional differentiation
