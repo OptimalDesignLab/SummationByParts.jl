@@ -3,16 +3,143 @@
 # and faceintegrate.
 
 @doc """
+### SummationByParts.boundaryFaceIntegrate_jac!
+
+Given the face-node flux Jacobians, this method computes the Jacobian of the
+chain boundaryFaceInterpolate! --> face-flux evaluation -->
+boundaryFaceIntegrate!  and adds the contributions to the relevant element's
+Jacobian matrix.  Different methods are available depending on the rank of
+`dfluxdu`:
+
+* For *scalar* fields, it is assumed that `dfluxdu` is a rank-1 array, with the
+only dimension for the face local-node index.  `dresdu` is the Jacobian of the
+element residual with respect to the state.
+* For *vector* fields, `dfluxdu` is a rank-3 array, with the first and second
+dimensions for indices of the vector field (at a particular face node) and the
+second dimension for the face local-node index.  `dresdu` is a rank-4 array that
+is the Jacobian of the element residual with respect to the state; the first 2
+dimensions are of size nvar = size(dfluxdu,1), while the third and fourth
+dimensions are of size `sbp.numnodes`.
+
+**Inputs**
+
+* `sbpface`: an SBP AbstractFace type
+* `face`: the relevant face (index) of the element
+* `dfluxdu`: array of the derivative of the flux w.r.t. the state trace
+* `±`: PlusFunctor to add to res, MinusFunctor to subract
+
+**In/Outs**
+
+* `dresdu`: Jacobian of element residual w.r.t. the state
+
+"""->
+function boundaryFaceIntegrate_jac!{
+  Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, face::Integer,
+                  dfluxdu::AbstractArray{Tflx,1},
+                  dresdu::AbstractArray{Tres,2},
+                  (±)::UnaryFunctor=Add())
+  @asserts_enabled begin
+    @assert( size(sbpface.interp,1) <= size(dresdu,1) )
+    @assert( size(sbpface.interp,2) == size(dfluxdu,1) )
+    @assert( size(dresdu,1) == size(dresdu,2) )
+  end
+
+  for i = 1:sbpface.numnodes
+    for j1 = 1:sbpface.stencilsize
+      # This is the loop over the columns
+      col = sbpface.perm[j1,face]
+      for j2 = 1:sbpface.stencilsize
+        # This is the loop over the rows
+        row = sbpface.perm[j2,face]
+        dresdu[row,col] += ±(sbpface.interp[j2,i]*sbpface.wface[i]
+                             *dfluxdu[i]*sbpface.interp[j1,i])
+      end
+    end
+  end
+end
+
+function boundaryFaceIntegrate_jac!{
+  Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, face::Integer,
+                  dfluxdu::AbstractArray{Tflx,3},
+                  dresdu::AbstractArray{Tres,4},
+                  (±)::UnaryFunctor=Add())
+  @asserts_enabled begin
+    @assert( size(sbpface.interp,1) <= size(dresdu,3) )
+    @assert( size(sbpface.interp,2) == size(dfluxdu,3) )
+    @assert( size(dresdu,3) == size(dresdu,4) ) 
+    @assert( size(dfluxdu,1) == size(dfluxdu,2) ==
+             size(dresdu,1) == size(dresdu,2) )
+  end
+
+  for i = 1:sbpface.numnodes
+    for j1 = 1:sbpface.stencilsize
+      # This is the loop over the columns
+      col = sbpface.perm[j1,face]
+      for j2 = 1:sbpface.stencilsize
+        # This is the loop over the rows
+        row = sbpface.perm[j2,face]   
+        for q = 1:size(dfluxdu,2)
+          for p = 1:size(dfluxdu,1)
+            dresdu[p,q,row,col] += ±(sbpface.interp[j2,i]*sbpface.wface[i]
+                                     *dfluxdu[p,q,i]*sbpface.interp[j1,i])
+          end
+        end
+      end
+    end
+  end
+end
+
+function boundaryFaceIntegrate_jac!{
+  Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp}, face::Integer,
+                  dfluxdu::AbstractArray{Tflx,1},
+                  dresdu::AbstractArray{Tres,2},
+                  (±)::UnaryFunctor=Add())
+  @asserts_enabled begin
+    @assert( size(dresdu,1) == size(dresdu,2) )
+  end
+  
+  for i = 1:sbpface.numnodes
+    col = sbpface.perm[i,face]
+    row = col
+    dresdu[row,col] += ±(sbpface.wface[i]*dfluxdu[i])
+  end
+end
+
+function boundaryFaceIntegrate_jac!{
+  Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp}, face::Integer,
+                  dfluxdu::AbstractArray{Tflx,3},
+                  dresdu::AbstractArray{Tres,4},
+                  (±)::UnaryFunctor=Add())
+  @asserts_enabled begin
+    @assert( size(dresdu,3) == size(dresdu,4) ) 
+    @assert( size(dfluxdu,1) == size(dfluxdu,2) ==
+             size(dresdu,1) == size(dresdu,2) )
+  end
+
+  for i = 1:sbpface.numnodes
+    col = sbpface.perm[i,face]
+    row = col
+    for q = 1:size(dfluxdu,2)
+      for p = 1:size(dfluxdu,1)
+        dresdu[p,q,row,col] += ±(sbpface.wface[i]*dfluxdu[p,q,i])
+      end
+    end
+  end
+end
+
+@doc """
 ### SummationByParts.interiorFaceIntegrate_jac!
 
 Given the face-node flux Jacobians, this method computes the Jacobian of the
-chain interiorFaceInterpolate! --> face-flux Jacobian --> interiorFaceIntegrate!
-and adds the contributions to the adjacent elements' Jacobians matrices.
-Different methods are available depending on the rank of `dfluxduL` and
-`dfluxduR`:
+chain interiorFaceInterpolate! --> face-flux evaluation -->
+interiorFaceIntegrate!  and adds the contributions to the adjacent elements'
+Jacobians matrices.  Different methods are available depending on the rank of
+`dfluxduL` and `dfluxduR`:
 
 * For *scalar* fields, it is assumed that `dfluxduL` and `dfluxduR` are rank-1
-arrays, with the only dimension for the face local-node index.  `dresLduL` is the Jacobian of the left-element residual with respect to the left-element solution, and similarly for `dresLduR`, `dresRduL`, `dresRduR`.
+arrays, with the only dimension for the face local-node index.  `dresLduL` is
+the Jacobian of the left-element residual with respect to the left-element
+solution, and similarly for `dresLduR`, `dresRduL`, `dresRduR`.
 * For *vector* fields, `dfluxduL` and `dfluxduR` are rank-3 arrays, with the
 first and second dimensions for indices of the vector field (at a particular
 face node) and the second dimension for the face local-node index.  `dresLduL`

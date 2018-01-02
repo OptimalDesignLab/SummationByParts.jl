@@ -1,4 +1,139 @@
 facts("Testing SummationByParts Module (Jacobian of face integration methods)...") do
+
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,1),
+              (getLineSegSBPLegendre,getLineSegFace,1),
+              (getTriSBPGamma,TriFace{Float64},2),
+              (getTriSBPOmega,TriFace{Float64},2),
+              (getTriSBPDiagE,getTriFaceForDiagE,2),
+              (getTetSBPGamma,TetFace{Float64},3),
+              (getTetSBPOmega,TetFace{Float64},3),
+              (getTetSBPDiagE,getTetFaceForDiagE,3))
+    @eval begin
+      context("Testing boundaryFaceIntegrate_jac! ("string($TSBP[1])" scalar field method)") do
+        for p = 1:4
+          # evaluate residual based on randomly selected face and random state
+          sbp = ($TSBP[1])(degree=p)
+          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          face = 0
+          if size(sbp.Q,3) == 1
+            face = rand(1:2)
+          elseif size(sbp.Q,3) == 2
+            face = rand(1:3)
+          else
+            face = rand(1:4)
+          end
+          u = randn(sbp.numnodes)
+          
+          # get the Jacobian directly
+          uface = zeros(sbpface.numnodes)
+          boundaryFaceInterpolate!(sbpface, face, u, uface)
+          flux_jac = zeros(Float64, (sbpface.numnodes))
+          for i = 1:sbpface.numnodes
+            # flux = 2*u*cos(u*u)
+            flux_jac[i] = -2.0*uface[i]*sin(uface[i]*uface[i])
+          end
+          dRdu = zeros(Float64, (sbp.numnodes, sbp.numnodes))
+          boundaryFaceIntegrate_jac!(sbpface, face, flux_jac, dRdu)
+
+          # get the Jacobian using complex step
+          u_c = complex(u)
+          uface_c = complex(uface)
+          flux_c = zeros(Complex128, (sbpface.numnodes))
+          res_c = zeros(u_c)
+          dRdu_cmplx = zeros(dRdu)
+          ceps = 1e-60
+          for i = 1:sbp.numnodes
+            u_c[i] += complex(0.0, ceps)
+            # interpolate to face
+            boundaryFaceInterpolate!(sbpface, face, u_c, uface_c)
+            # compute the (complexified) flux
+            for j = 1:sbpface.numnodes
+              flux_c[j] = cos(uface_c[j]*uface_c[j])
+            end
+            # get residuals
+            fill!(res_c, zero(Complex128))
+            boundaryFaceIntegrate!(sbpface, face, flux_c, res_c)
+            dRdu_cmplx[:,i] = imag(res_c[:,1])/ceps
+            u_c[i] -= complex(0.0, ceps)
+          end
+
+          # check for equality
+          @fact dRdu --> roughly(dRdu_cmplx, atol=1e-15)
+        end
+      end
+    end
+  end
+
+  for TSBP = ((getLineSegSBPLobbato,getLineSegFace,1),
+              (getLineSegSBPLegendre,getLineSegFace,1),
+              (getTriSBPGamma,TriFace{Float64},2),
+              (getTriSBPOmega,TriFace{Float64},2),
+              (getTriSBPDiagE,getTriFaceForDiagE,2),
+              (getTetSBPGamma,TetFace{Float64},3),
+              (getTetSBPOmega,TetFace{Float64},3),
+              (getTetSBPDiagE,getTetFaceForDiagE,3))
+    @eval begin
+      context("Testing boundaryFaceIntegrate_jac! ("string($TSBP[1])" vector field method)") do
+        for p = 1:4
+          # evaluate residual based on randomly selected face and random state
+          sbp = ($TSBP[1])(degree=p)
+          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          face = 0
+          if size(sbp.Q,3) == 1
+            face = rand(1:2)
+          elseif size(sbp.Q,3) == 2
+            face = rand(1:3)
+          else
+            face = rand(1:4)
+          end
+          u = randn(2,sbp.numnodes)
+          
+          # get the Jacobian directly
+          uface = zeros(2, sbpface.numnodes)
+          boundaryFaceInterpolate!(sbpface, face, u, uface)
+          flux_jac = zeros(Float64, (2, 2, sbpface.numnodes))
+          for i = 1:sbpface.numnodes
+            # flux = [u1*cos(u2); u1*u1*sin(u2)]
+            flux_jac[1,1,i] = cos(uface[2,i])
+            flux_jac[1,2,i] = -uface[1,i]*sin(uface[2,i])
+            flux_jac[2,1,i] = 2.0*uface[1,i]*sin(uface[2,i])
+            flux_jac[2,2,i] = uface[1,i]*uface[1,i]*cos(uface[2,i])
+          end
+          dRdu = zeros(Float64, (2, 2, sbp.numnodes, sbp.numnodes))
+          boundaryFaceIntegrate_jac!(sbpface, face, flux_jac, dRdu)
+
+          # get the Jacobian using complex step
+          u_c = complex(u)
+          uface_c = complex(uface)
+          flux_c = zeros(Complex128, (2, sbpface.numnodes))
+          res_c = zeros(u_c)
+          dRdu_cmplx = zeros(dRdu)
+          ceps = 1e-60
+          for i = 1:sbp.numnodes
+            for p = 1:2
+              u_c[p,i] += complex(0.0, ceps)
+              # interpolate to face
+              boundaryFaceInterpolate!(sbpface, face, u_c, uface_c)
+              # compute the (complexified) flux
+              for j = 1:sbpface.numnodes
+                # flux = [u1*cos(u2); u1*u1*sin(u2)]
+                flux_c[1,j] = uface_c[1,j]*cos(uface_c[2,j])
+                flux_c[2,j] = uface_c[1,j]*uface_c[1,j]*sin(uface_c[2,j])
+              end
+              # get residuals
+              fill!(res_c, zero(Complex128))
+              boundaryFaceIntegrate!(sbpface, face, flux_c, res_c)
+              dRdu_cmplx[:,p,:,i] = imag(res_c[:,:])/ceps
+              u_c[p,i] -= complex(0.0, ceps)
+            end
+          end
+
+          # check for equality
+          @fact dRdu --> roughly(dRdu_cmplx, atol=1e-15)
+        end
+      end
+    end
+  end
   
   for TSBP = ((getLineSegSBPLobbato,getLineSegFace,1),
               (getLineSegSBPLegendre,getLineSegFace,1),

@@ -49,6 +49,7 @@ export integratefunctional!, integrateBoundaryFunctional!
 export integratefunctional_rev!, integrateBoundaryFunctional_rev!
 export boundaryintegrate!, boundaryFaceIntegrate!
 export boundaryintegrate_rev!, boundaryFaceIntegrate_rev!
+export boundaryFaceIntegrate_jac!
 export interiorfaceintegrate!, interiorFaceIntegrate!
 export interiorfaceintegrate_rev!, interiorFaceIntegrate_rev!
 export interiorFaceIntegrate_jac!
