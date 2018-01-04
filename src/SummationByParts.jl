@@ -32,6 +32,7 @@ export Boundary, Interface
 export calcnodes, calcminnodedistance, getNumFaceNodes
 export weakdifferentiate!, weakDifferentiateElement!
 export weakdifferentiate_rev!, weakDifferentiateElement_rev!
+export weakDifferentiateElement_jac!
 export differentiate!, differentiateElement!
 export differentiate_rev!, differentiateElement_rev!
 export directionalDifferentiateElement!
@@ -49,8 +50,10 @@ export integratefunctional!, integrateBoundaryFunctional!
 export integratefunctional_rev!, integrateBoundaryFunctional_rev!
 export boundaryintegrate!, boundaryFaceIntegrate!
 export boundaryintegrate_rev!, boundaryFaceIntegrate_rev!
+export boundaryFaceIntegrate_jac!
 export interiorfaceintegrate!, interiorFaceIntegrate!
 export interiorfaceintegrate_rev!, interiorFaceIntegrate_rev!
+export interiorFaceIntegrate_jac!
 export edgestabilize!, permuteinterface!, buildinterpolation
 
 @doc """
@@ -567,6 +570,7 @@ include("buildfaceoperators.jl") #<--- functions related to building face operat
 include("buildoperators.jl") #<--- functions related to building SBP operators
 include("weakdifferentiate.jl") #<--- functions for weak differentiation
 include("weakdifferentiate_rev.jl") #<--- reverse-diff of weak differentiation
+include("weakdifferentiate_jac.jl") #<--- Jacobians for weak differentiation
 include("differentiate.jl") #<--- functions for strong differentiation
 include("differentiate_rev.jl") #<--- reverse-diff of strong differentiation
 include("directionaldifferentiate.jl") #<--- directional differentiation
@@ -580,6 +584,7 @@ include("faceinterpolate.jl") #<--- functions to interpolate data to faces
 include("faceinterpolate_rev.jl") #<--- functions to interpolate data to faces
 include("faceintegrate.jl") #<--- functions for integration over faces
 include("faceintegrate_rev.jl") #<--- reverse mode of faceintegrate.jl
+include("faceintegrate_jac.jl") #<--- Jacobians for combined face operations
 include("edgestabilize.jl") #<--- functions related to edge stabilization
 include("utils.jl") # <--- miscillaneous functions
 

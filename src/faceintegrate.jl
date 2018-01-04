@@ -503,9 +503,6 @@ index.
 * `resL`: where the result of the integration is stored for the *left* element
 * `resR`: where the result of the integration is stored for the *right* element
 
-**WARNING**: the order of the interfaces in `ifaces` and `flux` must be
-  consistent.
-
 """->
 function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 iface::Interface,
