@@ -1034,6 +1034,8 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
                                        vertices::Bool=true,
                                        opthist::Bool=false)
   w = SymCubatures.calcweights(cub)
+  #TODO: undo this
+#  face = TriFace{T}(d, cub, vtx)
   face = getTriFaceForDiagE(d, cub, vtx, vertices=vertices)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
   E = zeros(T, (cub.numnodes,cub.numnodes) )

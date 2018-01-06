@@ -42,17 +42,17 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
+function boundaryinterpolate!{Tsbp}(sbpface::DenseFace{Tsbp},
                                          bndryfaces::AbstractArray{Boundary},
-                                         uvol::AbstractArray{Tsol,3},
-                                         uface::AbstractArray{Tsol,3})
+                                         uvol::Abstract3DArray,
+                                         uface::Abstract3DArray)
   @assert( size(uvol,1) == size(uface,1) )
   @assert( size(sbpface.interp,1) <= size(uvol,2) )
   @assert( size(sbpface.interp,2) == size(uface,2) )
   for (bindex, bndry) in enumerate(bndryfaces)
     for i = 1:sbpface.numnodes
       for field=1:size(uvol, 1)
-        uface[field,i,bindex] = zero(Tsol)
+        uface[field,i,bindex] = zero(eltype(uface))
       end
       for j = 1:sbpface.stencilsize
          for field = 1:size(uvol,1)
@@ -127,16 +127,16 @@ function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
+function boundaryFaceInterpolate!{Tsbp}(sbpface::DenseFace{Tsbp},
                                              face::Integer,
-                                             uvol::AbstractArray{Tsol,2},
-                                             uface::AbstractArray{Tsol,2})
+                                             uvol::AbstractMatrix,
+                                             uface::AbstractMatrix)
   @assert( size(uvol,1) == size(uface,1) )
   @assert( size(sbpface.interp,1) <= size(uvol,2) )
   @assert( size(sbpface.interp,2) == size(uface,2) )
   for i = 1:sbpface.numnodes
     for field=1:size(uvol, 1)
-      uface[field,i] = zero(Tsol)
+      uface[field,i] = zero(eltype(uface))
     end
     for j = 1:sbpface.stencilsize
        for field = 1:size(uvol,1)
