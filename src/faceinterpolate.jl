@@ -155,10 +155,10 @@ function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
   end
 end
 
-function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+function boundaryFaceInterpolate!{Tsbp}(sbpface::SparseFace{Tsbp},
                                              face::Integer,
-                                             uvol::AbstractArray{Tsol,2},
-                                             uface::AbstractArray{Tsol,2})
+                                             uvol::AbstractMatrix,
+                                             uface::AbstractMatrix)
   @assert( size(uvol,1) == size(uface,1) )
   for i = 1:sbpface.numnodes
     for field=1:size(uvol, 1)

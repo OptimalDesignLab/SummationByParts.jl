@@ -241,8 +241,9 @@ function interiorFaceIntegrate_jac!{
         rowL = sbpface.perm[j2,iface.faceL]
         rowR = sbpface.perm[j2,iface.faceR]
         
-        for q = 1:size(dfluxduL,2)
-          for p = 1:size(dfluxduL,1)
+        @simd for q = 1:size(dfluxduL,2)
+          @simd for p = 1:size(dfluxduL,1)
+             
             dresLduL[p,q,rowL,colL] += ±(sbpface.interp[j2,i]*sbpface.wface[i]
                                          *dfluxduL[p,q,i]*sbpface.interp[j1,i])
             dresLduR[p,q,rowL,colR] += ±(sbpface.interp[j2,i]*sbpface.wface[i]
