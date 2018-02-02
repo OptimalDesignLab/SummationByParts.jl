@@ -9,7 +9,7 @@ export quadrature, quadratureUniform
 export getTriCubatureGamma, getTriCubatureOmega, getTriCubatureDiagE
 export getTetCubatureGamma, getTetCubatureOmega, getTetCubatureDiagE
 
-@doc """
+"""
 ### Cubature.cubatureresidual
 
 This method computes the residuals, `F`, between a cubature, defined by `cub`,
@@ -27,7 +27,7 @@ residual, with respect to the quadrature nodes and weights, is also returned.
 * `F`: the accuracy conditions for orthogonal polynomials up to degree q
 * `dF`: derivative of F with respect to x, y, (z,) w, in that order
 
-"""->
+"""
 function cubatureresidual{T}(cub::LineSymCub{T}, q::Int)
   # compute the nodes and weights defined by cub
   vtx = reshape(T[-1; 1], (2,1))
@@ -102,7 +102,7 @@ function cubatureresidual{T}(cub::TetSymCub{T}, q::Int)
   return F, dF 
 end
 
-@doc """
+"""
 ### Cubature.solvecubature!{SymCub{T}}
   
 Attempts to solve for the nodes and weights of a cubature that is exact for
@@ -121,7 +121,7 @@ defined by `cub`, which is a parametric abstract type (see symcubatures.jl).
 * `cub`: on entry, defines the initial guess for the cubature nodes and weights.
   on exit, defines the nodes and weights that satisfy the desired accuracy.
 
-"""->
+"""
 function solvecubature!{T}(cub::SymCub{T}, q::Int, mask::AbstractArray{Int64,1};
                            tol=10*eps(typeof(real(one(T)))),
                            hist::Bool=false)
@@ -188,7 +188,7 @@ function solvecubature!{T}(cub::SymCub{T}, q::Int, mask::AbstractArray{Int64,1};
   error("solvecubature failed to find solution in ",maxiter," iterations")
 end
 
-@doc """
+"""
 ### Cubature.solvecubatureweights!{SymCub{T}}
   
 Attempts to solve for the weights of a cubature that is exact for
@@ -206,7 +206,7 @@ defined by `cub`, which is a parametric abstract type (see symcubatures.jl).
 * `cub`: on entry, defines the initial guess for the cubature nodes and weights.
   on exit, defines the nodes and weights that satisfy the desired accuracy.
 
-"""->
+"""
 function solvecubatureweights!{T}(cub::SymCub{T}, q::Int;
                                   tol=10*eps(typeof(real(one(T)))),
                                   hist::Bool=false)
@@ -262,7 +262,7 @@ function solvecubatureweights!{T}(cub::SymCub{T}, q::Int;
   error("solvecubatureweights failed to find solution in ",maxiter," iterations")
 end
 
-@doc """
+"""
 ### Cubature.pointCubature
 
 This returns a (trivial) point cubature and default vertex -1
@@ -276,7 +276,7 @@ This returns a (trivial) point cubature and default vertex -1
 * `cub`: a symmetric cubature for point
 * `vtx`: vertex, [-1]
 
-"""->
+"""
 function pointCubature(T::Type=Float64)
   pt = PointSymCub{T}()
   SymCubatures.setweights!(pt, T[1;])
@@ -284,7 +284,7 @@ function pointCubature(T::Type=Float64)
   return pt, vtx
 end
 
-@doc """
+"""
 ### Cubature.quadrature{T}
 
 This high-level function computes and returns a symmetric cubature of requested
@@ -302,7 +302,7 @@ accuracy on the interval [-1,1]
 * `cub`: a symmetric cubature for the interval [-1,1]
 * `vtx`: vertices, [-1,1]
 
-"""->
+"""
 function quadrature(q::Int, T=Float64; internal::Bool=false)
   if internal
     # all nodes are internal (LG quadrature)
@@ -350,7 +350,7 @@ function quadrature(q::Int, T=Float64; internal::Bool=false)
   return quad, vtx
 end
 
-@doc """
+"""
 ### Cubature.quadratureUniform{T}
 
 This high-level function computes and returns a uniform cubature of requested
@@ -367,7 +367,7 @@ accuracy on the interval [-1,1]
 * `cub`: a symmetric cubature for the interval [-1,1]
 * `vtx`: vertices, [-1,1]
 
-"""->
+"""
 function quadratureUniform(q::Int, N::Int, T=Float64; internal::Bool=false)
   @assert(N >= q+1)
 
@@ -396,7 +396,7 @@ function quadratureUniform(q::Int, N::Int, T=Float64; internal::Bool=false)
   return quad, vtx
 end
 
-@doc """
+"""
 ### Cubature.tricubature{T}
 
 Deprecated; this function will be removed in the future
@@ -411,12 +411,12 @@ Deprecated; this function will be removed in the future
 * `cub`: a symmetric cubature for the right triangle
 * `vtx`: vertices for the right triangle
 
-"""->
+"""
 function tricubature(q::Int, T=Float64)
   return getTriCubatureGamma(q, T)
 end
 
-@doc """
+"""
 ### Cubature.getTriCubatureGamma{T}
 
 Returns a cubature rule and vertices for the SBP Gamma operators on triangles;
@@ -434,7 +434,7 @@ these are operators with p+1 nodes on each face, where, typically, p =
 * `cub`: a symmetric cubature for the right triangle
 * `vtx`: vertices for the right triangle
 
-"""->
+"""
 function getTriCubatureGamma(q::Int, T=Float64;
                              tol=10*eps(typeof(real(one(T)))))
   @assert( q >= 1 && q <= 9 && mod(q,2) == 1 )
@@ -502,7 +502,7 @@ function getTriCubatureGamma(q::Int, T=Float64;
   return cub, vtx
 end
 
-@doc """
+"""
 ### Cubature.getTriCubatureOmega{T}
 
 Returns a cubature rule and vertices for the SBP Omega operators on triangles;
@@ -520,7 +520,7 @@ strictly internal to the triangle.
 * `cub`: a symmetric cubature for the right triangle
 * `vtx`: vertices for the right triangle
 
-"""->
+"""
 function getTriCubatureOmega(q::Int, T=Float64;
                              tol=10*eps(typeof(real(one(T)))))
   cub_degree = q
@@ -622,7 +622,7 @@ function getTriCubatureOmega(q::Int, T=Float64;
   return cub, vtx
 end
 
-@doc """
+"""
 ### Cubature.getTriCubatureDiagE{T}
 
 Returns a cubature rule and vertices for the SBP DiagE operators on triangles;
@@ -641,7 +641,7 @@ LGL quadrature rules, which then leads to diagonal E.
 * `cub`: a symmetric cubature for the right triangle
 * `vtx`: vertices for the right triangle
 
-"""->
+"""
 function getTriCubatureDiagE(q::Int, T=Float64; vertices::Bool=true,
                              tol=10*eps(typeof(real(one(T)))))
   cub_degree = q
@@ -885,7 +885,7 @@ function getTriCubatureSparse(q::Int, T=Float64;
   return cub, vtx
 end
 
-@doc """
+"""
 ### Cubature.tetcubature{T}
 
 This high-level function computes and returns a symmetric cubature of requested
@@ -904,14 +904,14 @@ accuracy on the right tetrahedron.
 * `cub`: a symmetric cubature for the right tetrahedron
 * `vtx`: vertices for the right tetrahedron
 
-"""->
+"""
 function tetcubature(q::Int, T=Float64; internal::Bool=false,
                      facequad::Bool=false,
                      tol=10*eps(typeof(real(one(T)))))
 
 end
 
-@doc """
+"""
 ### Cubature.getTetCubatureGamma{T}
 
 Returns a cubature rule and vertices for the SBP Gamma operators on tetrahedra;
@@ -929,7 +929,7 @@ these are operators with (p+1)(p+2)/2 nodes on each face, where, typically, p =
 * `cub`: a symmetric cubature for the right tetrahedron
 * `vtx`: vertices for the right tetrahedron
 
-"""->
+"""
 function getTetCubatureGamma(q::Int, T=Float64;
                              tol=10*eps(typeof(real(one(T)))))
   cub_degree = -1
@@ -970,7 +970,7 @@ function getTetCubatureGamma(q::Int, T=Float64;
   return cub, vtx
 end
 
-@doc """
+"""
 ### Cubature.getTetCubatureOmega{T}
 
 Returns a cubature rule and vertices for the SBP Omega operators on tetrahedra;
@@ -988,7 +988,7 @@ strictly internal to the tet.
 * `cub`: a symmetric cubature for the right tetrahedron
 * `vtx`: vertices for the right tetrahedron
 
-"""->
+"""
 function getTetCubatureOmega(q::Int, T=Float64;
                              tol=10*eps(typeof(real(one(T)))))
   cub_degree = -1
@@ -1079,7 +1079,7 @@ function getTetCubatureOmega(q::Int, T=Float64;
   return cub, vtx
 end
 
-@doc """
+"""
 ### Cubature.getTetCubatureDiagE{T}
 
 Returns a cubature rule and vertices for the SBP DiagE operators on tetrahedra;
@@ -1098,7 +1098,7 @@ LGL quadrature rules, which then leads to diagonal E.
 * `cub`: a symmetric cubature for the right tetrahedron
 * `vtx`: vertices for the right tetrahedron
 
-"""->
+"""
 function getTetCubatureDiagE(q::Int, T=Float64; vertices::Bool=false,
                              tol=10*eps(typeof(real(one(T)))))
   cub_degree = q
@@ -1211,7 +1211,7 @@ function getTetCubatureDiagE(q::Int, T=Float64; vertices::Bool=false,
   return cub, vtx
 end
   
-@doc """
+"""
 ### Cubature.equivalenceconstant{T}
 
 Computes the equivalence constant for a given cubature; that is, it finds the
@@ -1228,7 +1228,7 @@ denotes the orthogonal polynomial evaluated at the cubature points.
 
 * `λmax`: maximum eigenvalue, which is the equivalence constant
 
-"""->
+"""
 function equivalenceconstant{T}(cub::TriSymCub{T}, vtx::Array{T,2}, q::Int)
   N = convert(Int, (q+1)*(q+2)/2) 
   P = zeros(T, (cub.numnodes,N) )

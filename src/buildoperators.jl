@@ -1,6 +1,6 @@
 # This file gathers together functions used to build the SBP operators
 
-@doc """
+"""
 ### SummationByParts.bndrynodalexpansion
 
 Computes the transformation matrix that maps the Proriol orthogonal polynomials
@@ -18,7 +18,7 @@ listed by row, then P*E = I, when restricted to the boundary nodes.
 
 * `E`: transformation matrix
 
-"""->
+"""
 function bndrynodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   numbndry = SymCubatures.getnumboundarynodes(cub)
   N = convert(Int64, (d+1)*(d+2)/2)
@@ -95,7 +95,7 @@ function bndrynodalexpansion{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   return inv(V)
 end
 
-@doc """
+"""
 ### SummationByParts.nodalexpansion
 
 Computes the transformation matrix that maps the Proriol orthogonal polynomials
@@ -116,7 +116,7 @@ Tayler.
 
 * `C`: transformation matrix
 
-"""->
+"""
 function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   #error("This method was broken by nodal reordering; it is currently unused")
   numbndry = SymCubatures.getnumboundarynodes(cub)
@@ -212,7 +212,7 @@ function nodalexpansion{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   return C
 end
 
-@doc """
+"""
 ### SummationByParts.boundaryoperators
 
 Finds the symmetric part of the SBP operators, `Ex`, `Ey` (`Ez`).  These
@@ -229,7 +229,7 @@ related to the mass matrices of the boundary faces.
 
 * `Ex`, `Ey` (`Ez`): symmetric parts of the SBP first derivative operators
 
-"""->
+"""
 function boundaryoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   numbndry = SymCubatures.getnumboundarynodes(cub)
   N = convert(Int, (d+1)*(d+2)/2 )
@@ -307,7 +307,7 @@ function boundaryoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   return Ex, Ey, Ez
 end  
 
-@doc """
+"""
 The following will eventually supercede current version and is based on the face operators
 
 Finds the symmetric part of the SBP operators, e.g. `Ex`.  These operators
@@ -323,7 +323,7 @@ the mass matrices of the boundary faces.
 
 * `E`: symmetric part of the SBP first derivative operator in direction di
 
-"""->
+"""
 function boundaryoperator!{T}(face::AbstractFace{T}, di::Int,
                               E::AbstractArray{T,2})
   @assert( size(face.interp,1) <= size(E,1) == size(E,2) )
@@ -352,7 +352,7 @@ function boundaryoperator!{T}(face::SparseFace{T}, di::Int,
   return E
 end
 
-@doc """
+"""
 ### SummationByParts.boundarymassmatrix
 
 Returns the (dense) mass matrix for a set of nodes on a reference boundary.
@@ -372,7 +372,7 @@ SymCubatures.getfacenodeindices).
 * `Hbndry`: reference boundary mass matrix
 * `bndryindices`: list of nodes that lie on each boundary
 
-"""->
+"""
 function boundarymassmatrix{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   bndryindices = SymCubatures.getfacenodeindices(cub)
   numbndrynodes = size(bndryindices,1)
@@ -407,7 +407,7 @@ function boundarymassmatrix{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   return Hbndry, bndryindices
 end
 
-@doc """
+"""
 ### SummationByParts.accuracyconstraints
 
 Returns the accuracy constraints on the asymmetric part of the SBP stiffness
@@ -433,7 +433,7 @@ Q_32 = -Q_23 is the number 3 variable.
 * `A`: the system matrix for the linear accuracy constraints
 * `bx`,`by` (`bz`): the right-hand-sides of the accuracy constraints
 
-"""->
+"""
 function accuracyconstraints{T}(cub::LineSymCub{T}, vtx::Array{T,2}, d::Int,
                                 E::Array{T,3}; dl::Int=0)
   x = SymCubatures.calcnodes(cub, vtx)
@@ -540,7 +540,7 @@ function accuracyconstraints{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int,
   return A, bx, by, bz
 end
 
-@doc """
+"""
 ### SummationByParts.commuteerror
 
 Returns the commute-error objective value.  For 2D SBP operators, this is
@@ -559,7 +559,7 @@ Dz*Dx)||^2 + ||H*(Dy*Dz - Dz*Dx||^2.
 
 * `f`: commute-error objective value
 
-"""->
+"""
 function commuteerror{T,T2}(w::Array{T}, Qxpart::AbstractArray{T,2},
                             Qypart::AbstractArray{T,2},
                             Z::Array{T,2}, reducedsol::Array{T2})
@@ -614,7 +614,7 @@ function commuteerror{T,T2}(w::Array{T}, Qxpart::AbstractArray{T,2},
   return f, dfdreducedsol
 end
 
-@doc """
+"""
 ### SummationByParts.buildoperators
 
 Construct and return the SBP matrix operators, specifically the diagonal norm
@@ -631,12 +631,12 @@ matrix and the stiffness matrices.
 * `w`: the diagonal norm stored as a 1D array
 * `Q`: the stiffness matrices
 
-"""->
+"""
 function buildoperators{T}(cub::LineSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
   face = getLineSegFace(d, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,1) )
-  SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
   scale!(Q, 0.5)
   A, bx = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   Ainv = pinv(A)
@@ -655,8 +655,8 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
   face = TriFace{T}(d, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
-  SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
-  SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
+  SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
   scale!(Q, 0.5)
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
 
@@ -718,9 +718,9 @@ function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
   face = TetFace{T}(d, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,3) )
-  SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
-  SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
-  SummationByParts.boundaryoperator!(face, 3, sview(Q,:,:,3))
+  SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
+  SummationByParts.boundaryoperator!(face, 3, view(Q,:,:,3))
   scale!(Q, 0.5)
   A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
 
@@ -780,13 +780,13 @@ function buildoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   return w, Q
 end
 
-@doc """
+"""
   
 **Note**: when a fifth input is included, it is interpreted as the degree of the
   interior bubble functions, and the Q operators returned are the
   spectral-element differentiation operators of Giraldo and Taylor
 
-"""->
+"""
 function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   w = SymCubatures.calcweights(cub)
   N = convert(Int, (e+1)*(e+2)/2 )
@@ -817,8 +817,8 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
 
   # # The following forms the skew-symmetric form of the SEM operators
   # face = TriFace{T}(degree=d, faceonly=true)
-  # SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
-  # SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
+  # SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
+  # SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
   # Q[:,:,1] += P.'*diagm(w)*dPdx - dPdx.'*diagm(w)*P
   # Q[:,:,2] += P.'*diagm(w)*dPdy - dPdy.'*diagm(w)*P
   # scale!(Q, 0.5)
@@ -826,7 +826,7 @@ function buildoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int)
   return w, Q  
 end
 
-@doc """
+"""
 ### SummationByParts.buildsparseoperators
 
 Construct and return sparse SBP matrix operators, specifically the diagonal norm
@@ -844,14 +844,14 @@ zeros in the S matrices, but they are not returned as sparse matrices.
 * `w`: the diagonal norm stored as a 1D array
 * `Q`: the stiffness matrices
 
-"""->
+"""
 function buildsparseoperators{T}(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int)
   w = SymCubatures.calcweights(cub)
   face = getTriFaceForDiagE(d, cub, vtx)
   #face = TriFace{T}(d, cub, vtx, vertices=false) #vertices=true)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
-  SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
-  SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
+  SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
   scale!(Q, 0.5)
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   # find a sparse solution for skew-symmetric Sx
@@ -881,9 +881,9 @@ function buildsparseoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   face = getTetFaceForDiagE(d, cub, vtx)
   #face = TetFace{T}(d+1, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,3) )
-  SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
-  SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
-  SummationByParts.boundaryoperator!(face, 3, sview(Q,:,:,3))
+  SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
+  SummationByParts.boundaryoperator!(face, 3, view(Q,:,:,3))
   scale!(Q, 0.5)
   A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   #rankA = rank(A)
@@ -960,7 +960,7 @@ function buildsparseoperators{T}(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int)
   return w, Q
 end
 
-@doc """
+"""
 ### SummationByParts.buildMinConditionOperators
 
 Construct and return SBP matrix operators that minimize the condition number of
@@ -981,7 +981,7 @@ operators.
 * `w`: the diagonal norm stored as a 1D array
 * `Q`: the stiffness matrices
 
-"""->
+"""
 function buildMinConditionOperators{T}(cub::LineSymCub{T}, vtx::Array{T,2},
                                        d::Int; tol::Float64=1e-13,
                                        vertices::Bool=true,
@@ -1000,7 +1000,7 @@ function buildMinConditionOperators{T}(cub::LineSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   xperp = Ainv*bx
   # define the objective and its gradient
-  absMatrix!(sview(Q,:,:,1), E)
+  absMatrix!(view(Q,:,:,1), E)
   function objX(xred)
     return SummationByParts.conditionObj(xred, rho, xperp, Znull, E)
   end
@@ -1037,8 +1037,8 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   face = getTriFaceForDiagE(d, cub, vtx, vertices=vertices)
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
   E = zeros(T, (cub.numnodes,cub.numnodes) )
-  SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
-  SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
+  SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
   scale!(Q, 0.5)
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   Ainv = pinv(A)
@@ -1051,7 +1051,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   xperp = Ainv*bx
   # define the objective and its gradient
-  absMatrix!(sview(Q,:,:,1), E)
+  absMatrix!(view(Q,:,:,1), E)
   function objX(xred)
     return SummationByParts.conditionObj(xred, rho, xperp, Znull, E)
   end
@@ -1069,7 +1069,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   xred = Optim.minimizer(results)
   x = xperp + Znull*xred
 
-  #spect = SummationByParts.eigenvalueObj(xred, 1, xperp, Znull, w, sview(Q,:,:,1))
+  #spect = SummationByParts.eigenvalueObj(xred, 1, xperp, Znull, w, view(Q,:,:,1))
   #println("spectral radius of x operator = ",spect)
     
   # gather slice of objective function
@@ -1088,7 +1088,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   yperp = Ainv*by
   # define the objective and its gradient
-  absMatrix!(sview(Q,:,:,2), E)
+  absMatrix!(view(Q,:,:,2), E)
   function objY(yred)
     return SummationByParts.conditionObj(yred, rho, yperp, Znull, E)
   end
@@ -1106,7 +1106,7 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   yred = Optim.minimizer(results)
   y = yperp + Znull*yred
 
-  #spect = SummationByParts.eigenvalueObj(yred, 1, yperp, Znull, w, sview(Q,:,:,2))
+  #spect = SummationByParts.eigenvalueObj(yred, 1, yperp, Znull, w, view(Q,:,:,2))
   #println("spectral radius of y operator = ",spect)
     
   @assert( norm(A*x - bx) < 1e-12)
@@ -1132,9 +1132,9 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   face = getTetFaceForDiagE(d, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,3) )
   E = zeros(T, (cub.numnodes,cub.numnodes) )
-  SummationByParts.boundaryoperator!(face, 1, sview(Q,:,:,1))
-  SummationByParts.boundaryoperator!(face, 2, sview(Q,:,:,2))
-  SummationByParts.boundaryoperator!(face, 3, sview(Q,:,:,3))
+  SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
+  SummationByParts.boundaryoperator!(face, 3, view(Q,:,:,3))
   scale!(Q, 0.5)
   A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   Ainv = pinv(A)
@@ -1147,7 +1147,7 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   xperp = Ainv*bx
   # define the objective and its gradient
-  absMatrix!(sview(Q,:,:,1), E)
+  absMatrix!(view(Q,:,:,1), E)
   function objX(xred)
     return SummationByParts.conditionObj(xred, rho, xperp, Znull, E)
   end
@@ -1165,7 +1165,7 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   xred = Optim.minimizer(results)
   x = xperp + Znull*xred
 
-  #spect = SummationByParts.eigenvalueObj(xred, 1, xperp, Znull, w, sview(Q,:,:,1))
+  #spect = SummationByParts.eigenvalueObj(xred, 1, xperp, Znull, w, view(Q,:,:,1))
   #println("spectral radius of x operator = ",spect)
     
   # gather slice of objective function
@@ -1184,7 +1184,7 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   yperp = Ainv*by
   # define the objective and its gradient
-  absMatrix!(sview(Q,:,:,2), E)
+  absMatrix!(view(Q,:,:,2), E)
   function objY(yred)
     return SummationByParts.conditionObj(yred, rho, yperp, Znull, E)
   end
@@ -1202,7 +1202,7 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   yred = Optim.minimizer(results)
   y = yperp + Znull*yred
 
-  #spect = SummationByParts.eigenvalueObj(yred, 1, yperp, Znull, w, sview(Q,:,:,2))
+  #spect = SummationByParts.eigenvalueObj(yred, 1, yperp, Znull, w, view(Q,:,:,2))
   #println("spectral radius of y operator = ",spect)
 
   #--------------------------------------
@@ -1211,7 +1211,7 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the minimum norm solution (a particular solution)
   zperp = Ainv*bz
   # define the objective and its gradient
-  absMatrix!(sview(Q,:,:,3), E)
+  absMatrix!(view(Q,:,:,3), E)
   function objZ(zred)
     return SummationByParts.conditionObj(zred, rho, zperp, Znull, E)
   end
@@ -1229,7 +1229,7 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   zred = Optim.minimizer(results)
   z = zperp + Znull*zred
 
-  #spect = SummationByParts.eigenvalueObj(zred, 1, zperp, Znull, w, sview(Q,:,:,3))
+  #spect = SummationByParts.eigenvalueObj(zred, 1, zperp, Znull, w, view(Q,:,:,3))
   #println("spectral radius of z operator = ",spect)
 
   @assert( norm(A*x - bx) < 1e-12)
@@ -1250,7 +1250,7 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   return w, Q
 end
 
-@doc """
+"""
 ### SummationByParts.getnodepermutation
 
 The node ordering produced by SymCubature is not convenient for mapping local to
@@ -1271,7 +1271,7 @@ returns a reordering that is more suited for local-to-global mapping.
 * `perm`: a permutation vector of indices
 * `faceperm`: a permutation vector for the face indices
 
-"""->
+"""
 function getnodepermutation{T}(cub::TriSymCub{T}, d::Int)
   perm = zeros(Int, (cub.numnodes))
   ptr = 0 # index pointer for TriSymCub nodes

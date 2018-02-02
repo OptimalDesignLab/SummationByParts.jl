@@ -107,9 +107,9 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
             differentiate!(sbp, 1, u, res)
             # account for mapping Jacobian
             scale!(res, 2.0)
-            @fact res[1,:,1] --> roughly(zeros(1,sbp.numnodes), atol=5e-13)
+            @fact res[1,:,1] --> roughly(zeros(sbp.numnodes), atol=5e-13)
             @fact res[2,:,1] --> roughly(dudx[2,:,1], atol=5e-13)
-            @fact res[1,:,2] --> roughly(zeros(1,sbp.numnodes), atol=5e-13)
+            @fact res[1,:,2] --> roughly(zeros(sbp.numnodes), atol=5e-13)
             @fact res[2,:,2] --> roughly(dudx[2,:,2], atol=5e-13)
           end
         end
@@ -269,9 +269,9 @@ facts("Testing SummationByParts Module (differentiate methods)...") do
             differentiateElement!(sbp, 1, view(u,:,:,2), view(res,:,:,2))
             # account for mapping Jacobian
             scale!(res, 2.0)
-            @fact res[1,:,1] --> roughly(zeros(1,sbp.numnodes), atol=5e-13)
+            @fact res[1,:,1] --> roughly(zeros(sbp.numnodes), atol=5e-13)
             @fact res[2,:,1] --> roughly(dudx[2,:,1], atol=5e-13)
-            @fact res[1,:,2] --> roughly(zeros(1,sbp.numnodes), atol=5e-13)
+            @fact res[1,:,2] --> roughly(zeros(sbp.numnodes), atol=5e-13)
             @fact res[2,:,2] --> roughly(dudx[2,:,2], atol=5e-13)
           end
         end

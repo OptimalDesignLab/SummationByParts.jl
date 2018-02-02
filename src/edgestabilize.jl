@@ -1,6 +1,6 @@
 # This file gathers together functions related to edge stabilization
 
-@doc """
+"""
 ### SummationByParts.edgestabilize!
 
 Applies edge stabilization to a given field, differentiating in the direction
@@ -19,7 +19,7 @@ specified by `dirvec`, and scaling by the `tau` field.
 
 * `res`: where the result is stored in [vol node, element] format
 
-"""->
+"""
 function edgestabilize!{Tsbp,Tmsh,Tsol}(sbpface::AbstractFace{Tsbp},
                                         ifaces::Array{Interface},
                                         dirvec::Array{Tmsh,4},

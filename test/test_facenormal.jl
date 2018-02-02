@@ -205,8 +205,8 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
       nrm = zeros(2,sbpface.numnodes,3)
       divfree = zeros(2)
       for f = 1:3
-        facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                    sview(xsbp,:,:,f), sview(nrm,:,:,f))
+        facenormal!(sbpface, p+1, xref, view(xlag,:,:,f),
+                    view(xsbp,:,:,f), view(nrm,:,:,f))
         divfree[1] += dot(vec(nrm[1,:,f]),sbpface.wface)
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
       end
@@ -244,8 +244,8 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
       nrm = zeros(2,sbpface.numnodes,3)
       divfree = zeros(2)
       for f = 1:3
-        facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                    sview(xsbp,:,:,f), sview(nrm,:,:,f))
+        facenormal!(sbpface, p+1, xref, view(xlag,:,:,f),
+                    view(xsbp,:,:,f), view(nrm,:,:,f))
         divfree[1] += dot(vec(nrm[1,:,f]),sbpface.wface)
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
       end
@@ -293,8 +293,8 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
       nrm = zeros(3,sbpface.numnodes,4)
       divfree = zeros(3)
       for f = 1:4
-        facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f), 
-                    sview(xsbp,:,:,f), sview(nrm,:,:,f))
+        facenormal!(sbpface, p+1, xref, view(xlag,:,:,f), 
+                    view(xsbp,:,:,f), view(nrm,:,:,f))
         divfree[1] += dot(vec(nrm[1,:,f]),sbpface.wface)
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
         divfree[3] += dot(vec(nrm[3,:,f]),sbpface.wface)
@@ -344,8 +344,8 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
       nrm = zeros(3,sbpface.numnodes,4)
       divfree = zeros(3)
       for f = 1:4
-        facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f), 
-                    sview(xsbp,:,:,f), sview(nrm,:,:,f))
+        facenormal!(sbpface, p+1, xref, view(xlag,:,:,f), 
+                    view(xsbp,:,:,f), view(nrm,:,:,f))
         divfree[1] += dot(vec(nrm[1,:,f]),sbpface.wface)
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
         divfree[3] += dot(vec(nrm[3,:,f]),sbpface.wface)

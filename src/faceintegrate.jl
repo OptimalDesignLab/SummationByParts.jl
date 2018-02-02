@@ -1,7 +1,7 @@
 # This file gathers together methods related to integration over faces, both
 # against test functions and for integral functionals.
 
-@doc """
+"""
 ### SummationByParts.integratefunctional!
 
 Integrates a given scalar (or vector) field over the boundary faces.
@@ -27,7 +27,7 @@ Integrates a given scalar (or vector) field over the boundary faces.
 
 * `fun`: in the case of the scalar version, the functional value is returned
 
-"""->
+"""
 function integratefunctional!{Tsbp,Tflx}(sbpface::DenseFace{Tsbp},
                                          bndryfaces::AbstractArray{Boundary},
                                          flux::AbstractArray{Tflx,2},
@@ -90,7 +90,7 @@ function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.integrateBoundaryFunctional!
 
 This is the single-face variant of integratefunctional!.  Integrates a given
@@ -117,7 +117,7 @@ scalar (or vector) field over the boundary faces.
 
 * `fun`: in the case of the scalar version, the functional value is returned
 
-"""->
+"""
 function integrateBoundaryFunctional!{Tsbp,Tflx}(sbpface::DenseFace{Tsbp},
                                                  face::Integer, 
                                                  flux::AbstractArray{Tflx,1},
@@ -166,7 +166,7 @@ function integrateBoundaryFunctional!{
   end
 end
 
-@doc """
+"""
 ### SummationByParts.boundaryintegrate!
 
 Scales flux values at boundary cubature points by cubature weights, and then
@@ -198,7 +198,7 @@ index.
 **WARNING**: the order of the boundaries in `bndryfaces` and `flux` must be
   consistent.
 
-"""->
+"""
 function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                             bndryfaces::AbstractArray{Boundary},
                                             flux::AbstractArray{Tflx,2},
@@ -272,7 +272,7 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.boundaryFaceIntegrate!
 
 This is the single-face variant of boundaryintegrate!. Scales flux values at
@@ -299,7 +299,7 @@ scalar case, the only dimension) is for the element-local node index.
 
 * `res`: where the result of the integration is stored
 
-"""->
+"""
 function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 face::Integer,
                                                 flux::AbstractArray{Tflx,1},
@@ -359,7 +359,7 @@ function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.interiorfaceintegrate!
 
 Scales flux values at element-interface cubature points by cubature weights, and
@@ -391,7 +391,7 @@ index.
 **WARNING**: the order of the interfaces in `ifaces` and `flux` must be
   consistent.
 
-"""->
+"""
 function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 ifaces::AbstractArray{Interface},
                                                 flux::AbstractArray{Tflx,2},
@@ -474,7 +474,7 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.interiorFaceIntegrate!
 
 This is the single-face variant of interiorfaceintegrate!.  Scales flux values
@@ -503,7 +503,7 @@ index.
 * `resL`: where the result of the integration is stored for the *left* element
 * `resR`: where the result of the integration is stored for the *right* element
 
-"""->
+"""
 function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 iface::Interface,
                                                 flux::AbstractArray{Tflx,1},

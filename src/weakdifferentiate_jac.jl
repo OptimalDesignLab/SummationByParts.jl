@@ -1,7 +1,7 @@
 # This file gathers together functions related to forming Jacobians of "weak"
 # differentiation using the SBP operators
 
-@doc """
+"""
 ### SummationByParts.weakDifferentiateElement!
 
 This function applies the SBP stiffness matrix (or its transpose) to a diagonal,
@@ -34,7 +34,7 @@ operator sbp.
 
 * `dresdu`: stores Q[:,:,di]*diag(dfluxdu) or Q[:,:,di]'*diag(dfluxdu)
 
-"""->
+"""
 function weakDifferentiateElement_jac!{
   Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                   dfluxdu::AbstractArray{Tflx,1},

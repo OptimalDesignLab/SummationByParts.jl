@@ -1,6 +1,6 @@
 # This file contains the reverse-mode version of the methods in differentiate.jl
 
-@doc """
+"""
 ### SummationByParts.differentiate_rev!
 
 This is the reverse differentiated version of differentiate!.  See
@@ -18,7 +18,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 * `flux_bar`: the result of the vector matrix product between D and `res_bar`
 
-"""->
+"""
 function differentiate_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                             flux_bar::AbstractArray{Tflx,2},
                                             res_bar::AbstractArray{Tres,2},
@@ -70,7 +70,7 @@ function differentiate_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   end
 end
 
-@doc """
+"""
 ### SummationByParts.differentiateElement_rev!
 
 This is the reverse differentiated version of differentiateElement!.  See
@@ -88,7 +88,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 * `flux_bar`: the result of the vector matrix product between D and `res_bar`
 
-"""->
+"""
 function differentiateElement_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                                flux_bar::AbstractArray{Tflx,1},
                                                res_bar::AbstractArray{Tres,1},

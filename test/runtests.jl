@@ -3,12 +3,12 @@ using SummationByParts.OrthoPoly
 using SummationByParts.Cubature
 using SummationByParts.SymCubatures
 using FactCheck
-using ArrayViews
-using ODLCommonTools
-import ODLCommonTools.sview
+#using ArrayViews
+#using ODLCommonTools
+#import ODLCommonTools.sview
 import SummationByParts.Add
 
-view = ArrayViews.view
+#view = ArrayViews.view
 
 include("test_orthopoly.jl")
 include("test_symcubatures.jl")

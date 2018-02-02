@@ -1,7 +1,7 @@
 # This file gathers together functions related to directional differentiation
 # using the SBP operators
 
-@doc """
+"""
 ### SummationByParts.directionalDifferentiateElement!
 
 Performs a directional derivative (in reference space) at a given node.  The
@@ -21,7 +21,7 @@ input field `u` is for **a single element**, not a collection of elements.
 
 * `Ddir`: derivative of `u` in direction `dir`
 
-"""->
+"""
 function directionalDifferentiateElement!{Tsbp,Tmsh,Tsol}(sbp::AbstractSBP{Tsbp},
                                                           dir::Array{Tmsh,1},
                                                           u::AbstractArray{Tsol,1},

@@ -1,7 +1,7 @@
 # This file gathers together a hodge-podge of functions that are not easily
 # categorized
 
-@doc """
+"""
 ### SummationByParts.getNumFaceNodes
 
 Returns the number of SBP element nodes on a face.
@@ -14,12 +14,12 @@ Returns the number of SBP element nodes on a face.
 
 * `numfacenodes`: number of nodes on (one) face of the element
 
-"""->
+"""
 function getNumFaceNodes{T}(sbp::AbstractSBP{T})
   return SymCubatures.getnumfacenodes(sbp.cub)
 end
 
-@doc """
+"""
 ### SummationByParts.getnbrnodeindex
 
 Returns the face-node index on `face.faceR` equivalent to index `i` on
@@ -35,12 +35,12 @@ Returns the face-node index on `face.faceR` equivalent to index `i` on
 
 * `j`: face-node index on `face.faceR`
 
-"""->
+"""
 function getnbrnodeindex{T}(sbp::TriSBP{T}, face::Interface, i::Int)
   return [2; 1; sbp.numfacenodes:-1:3][i]
 end
 
-@doc """
+"""
 ### SummationByParts.calcnodes
 
 This function returns the node coordinates for an SBP operator.  It basically
@@ -67,12 +67,12 @@ element mapping is linear, i.e. edges are lines.
   vtx = [1. 0.; 1. 1.; 0. 1.]
   x[:,:,2] = calcnodes(sbp, vtx)
 ```
-"""->
+"""
 function calcnodes{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx) 
   return SymCubatures.calcnodes(sbp.cub, vtx)
 end
 
-@doc """
+"""
 ### SummationByParts.calcminnodedistance
 
 Returns the minimum distance between distinct nodes on an element with straight sides
@@ -86,7 +86,7 @@ Returns the minimum distance between distinct nodes on an element with straight 
 
 * `mindist`: the minimum distance between distinct nodes
 
-"""->
+"""
 function calcminnodedistance{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx)
   x = SymCubatures.calcnodes(sbp.cub, vtx)
   mindist = convert(T, Inf)
@@ -98,7 +98,7 @@ function calcminnodedistance{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx)
   return mindist
 end
 
-@doc """
+"""
 ### SummationByParts.buildinterpolation
 
 Builds a matrix operator that can reconstruct a field located at the sbp nodes
@@ -114,7 +114,7 @@ to an auxlliary set of nodes.
 
 * `R`: the interpolation operator, size = [numpoints, sbp.numnodes]
 
-"""->
+"""
 function buildinterpolation{T}(sbp::LineSegSBP{T}, xinterp::AbstractArray{T,2};
                                d::Int=sbp.degree)
   # evaluate the basis at the SBP nodes and the interpolation points
@@ -182,7 +182,7 @@ function buildinterpolation{T}(sbp::TetSBP{T}, xinterp::AbstractArray{T,2};
   return R
 end
 
-@doc """
+"""
 ### SummationByParts.permuteinterface!
 
 For a given array of values on a faces, permutes the node values (in place) to 
@@ -201,7 +201,7 @@ Interface.  Methods are available for scalar and vector fields.
            is arbitrary) or [sbpface.numnodes x length(ifaces] if 2D.  
            The permutation is applied to the second array dimension for the 
            3D case or the first dimension in the 2D case.
-"""->
+"""
 function permuteinterface!{Tsbp, Tsol}(sbpface::AbstractFace{Tsbp}, 
                                        ifaces::AbstractArray{Interface}, 
                                        uface::AbstractArray{Tsol, 3})
@@ -214,8 +214,8 @@ function permuteinterface!{Tsbp, Tsol}(sbpface::AbstractFace{Tsbp},
 
   for iface =1:length(ifaces)
     orient = ifaces[iface].orient
-    permvec = sview(sbpface.nbrperm, :, orient)
-    facedata = sview(uface, :, :, iface)
+    permvec = view(sbpface.nbrperm, :, orient)
+    facedata = view(uface, :, :, iface)
     permuteface!(permvec, workarr, facedata)
   end
 
@@ -234,15 +234,15 @@ function permuteinterface!{Tsbp, Tsol}(sbpface::AbstractFace{Tsbp},
 
   for iface =1:length(ifaces)
     orient = ifaces[iface].orient
-    permvec = sview(sbpface.nbrperm, :, orient)
-    facedata = sview(uface, :, iface)
+    permvec = view(sbpface.nbrperm, :, orient)
+    facedata = view(uface, :, iface)
     permuteface!(permvec, workarr, facedata)
   end
 
   return nothing
 end
 
-@doc """
+"""
 ### SummationByParts.permuteface!
 
 This function applys a permutation to the data on a particular face.
@@ -258,7 +258,7 @@ This function applys a permutation to the data on a particular face.
               permutation is applied to the second dimension of the array
               for N=2 and the first dimension if N=1.  N > 2 is not
               currently supported
-"""->
+"""
 function permuteface!{Ti <: Integer, Tsol}(permvec::AbstractArray{Ti, 1},
                                            workarr::AbstractArray{Tsol, 2},
                                            facedata::AbstractArray{Tsol, 2})
@@ -295,7 +295,7 @@ function permuteface!{Ti <: Integer, Tsol}(permvec::AbstractArray{Ti, 1},
   return nothing
 end
 
-@doc """
+"""
 ### SummationByParts.basispursuit!
 
 Finds an approximate solution to the underdetermined problem `Ax = b` that is
@@ -322,7 +322,7 @@ basis pursuit.  This method is not well suited to high-accuracy solutions, so,
 for our purposes, it is best used as a means of identifying the sparsity
 pattern.
 
-"""->
+"""
 function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
                        x::AbstractVector{Float64}; rho::Float64=1.0,
                        alpha::Float64=1.0, hist::Bool=false,
@@ -387,7 +387,7 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.calcSparseSolution!
 
 Finds a solution to the underdetermined problem `Ax = b` that is sparse.  Uses
@@ -403,7 +403,7 @@ from `A`, from which an accurate solution is found.
 
 * `x`: sparse solution of the problem
 
-"""->
+"""
 function calcSparseSolution!(A::AbstractArray{Float64,2},
                              b::AbstractVector{Float64},
                              x::AbstractVector{Float64})
@@ -428,7 +428,7 @@ function calcSparseSolution!(A::AbstractArray{Float64,2},
 end
 
 
-@doc """
+"""
 ### SummationByParts.absMatrix!
 
 Computes the absolulte value of a symmetric matrix `A`; that is, using the
@@ -444,7 +444,7 @@ eigenvalue matrix.
 
 * `Aabs`: matrix where the absolute value is stored
 
-"""->
+"""
 function absMatrix!{T}(A::AbstractArray{T,2}, Aabs::AbstractArray{T,2})
   @assert( size(A) == size(Aabs) )
   n = size(A,1)
@@ -483,7 +483,7 @@ function compareEigs(x::Complex128, y::Complex128)
   end
 end
   
-@doc """
+"""
 ### SummationByParts.calcMatrixEigs!
 
 Finds the eigenvalues of the given matrix in order of increasing modulus; that
@@ -498,7 +498,7 @@ basically a front end for `eigfact`.
 
 * `λ`: eigenvalues of `A` sorted in increasing modulus
 
-"""->
+"""
 function calcMatrixEigs!{T}(A::AbstractArray{T,2},
                             λ::AbstractVector{T})
   @assert( size(A,1) == size(A,2) )
@@ -512,7 +512,7 @@ function calcMatrixEigs!{T}(A::AbstractArray{T,2},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.calcMatrixEigs_rev!
 
 The reverse-mode differentiated version of `calcMatrixEigs!`.  The math behind
@@ -529,7 +529,7 @@ results for forward and reverse mode algorithmic differentiation."
 * `λ`: eigenvalues of `A` sorted in increasing modulus
 * `A_bar`: derivatives ∂f/∂A
 
-"""->
+"""
 function calcMatrixEigs_rev!{T}(A::AbstractArray{T,2},
                                 λ::AbstractVector{T},
                                 λ_bar::AbstractVector{T},
@@ -546,7 +546,7 @@ function calcMatrixEigs_rev!{T}(A::AbstractArray{T,2},
   A_bar[:,:] = (fac[:vectors][:,idx]')\(diagm(λ_bar)*fac[:vectors][:,idx]') 
 end
 
-@doc """
+"""
 ### SummationByParts.conditionObj
 
 Let `x` = `Znull`*`xred` + `xperp` be the (unique) entries in a skew symmetric
@@ -568,7 +568,7 @@ the objective is differentiable.
 
 * `obj`: approximate condition number of `A` as defined above.
 
-"""->
+"""
 function conditionObj(xred::AbstractVector{Float64}, p,
                       xperp::AbstractVector{Float64},
                       Znull::AbstractArray{Float64,2},
@@ -605,7 +605,7 @@ function conditionObj(xred::AbstractVector{Float64}, p,
   return (S[1] + (1/p)*log(maxKS/n))*(1/S[end] + (1/p)*log(minKS/n))
 end
 
-@doc """
+"""
 ### SummationByParts.conditionObjGrad!
 
 Computes the gradient of the function `conditionObj` with respect to `xred`,
@@ -623,7 +623,7 @@ and returns it in the array `g`.
 
 * `g`: gradient of the objective `conditionObj` with respect to `xred`
 
-"""->
+"""
 function conditionObjGrad!(xred::AbstractVector{Float64}, p,
                            xperp::AbstractVector{Float64},
                            Znull::AbstractArray{Float64,2},
@@ -691,7 +691,7 @@ function conditionObjGrad!(xred::AbstractVector{Float64}, p,
   g[:] = Znull.'*x_bar
 end
 
-# @doc """
+# """
 # ### SummationByParts.conditionObjHess!
 
 # Computes the Hessian of the function `conditionObj` with respect to `xred`,
@@ -709,7 +709,7 @@ end
 
 # * `Hess`: Hessian of the objective `conditionObj` with respect to `xred`
 
-# """->
+# """
 # function conditionObjHess!(xred::AbstractVector{Float64}, p,
 #                            xperp::AbstractVector{Float64},
 #                            Znull::AbstractArray{Float64,2},
@@ -791,7 +791,7 @@ end
 #   g[:] = Znull.'*x_bar
 # end
 
-@doc """
+"""
 ### SummationByParts.eigenvalueObj
 
 Let `x` = `Znull`*`xred` + `xperp` be the (unique) entries in a skew symmetric
@@ -813,7 +813,7 @@ discretization of linear advection.
 
 * `obj`: the 2p-norm of the moduli of the eigenvalues of `A` as defined above.
 
-"""->
+"""
 function eigenvalueObj(xred::AbstractVector{Float64}, p::Int,
                        xperp::AbstractVector{Float64},
                        Znull::AbstractArray{Float64,2},
@@ -851,7 +851,7 @@ function eigenvalueObj(xred::AbstractVector{Float64}, p::Int,
   return abs(λ[end])
 end
 
-@doc """
+"""
 ### SummationByParts.eigenvalueObjGrad!
 
 Computes the gradient of the function `eigenvalueObj` with respect to `xred`,
@@ -870,7 +870,7 @@ and returns it in the array `g`.
 
 * `g`: gradient of the objective `eigenvalueObj` with respect to `xred`
 
-"""->
+"""
 function eigenvalueObjGrad!(xred::AbstractVector{Float64}, p::Int,
                             xperp::AbstractVector{Float64},
                             Znull::AbstractArray{Float64,2},

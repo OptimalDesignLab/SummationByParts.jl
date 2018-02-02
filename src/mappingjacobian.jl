@@ -1,7 +1,7 @@
 # This file gathers together functions related to the calculation of the
 # coordinate mapping Jacobian on elements and faces
 
-@doc """
+"""
 ### SummationByParts.calcMappingJacobian!
 
 Uses a given set of Lagrangian element nodes to determine an analytical
@@ -34,7 +34,7 @@ well as the test in `test/test_mappingjacobian.jl`).  These products are used to
 define the metric invariants.  *They are not needed by the 2-dimensional code*,
 and so this array can be passed empty in that case.
 
-"""->
+"""
 function calcMappingJacobian!{Tsbp,Tmsh, T2}(sbp::TriSBP{Tsbp}, mapdegree::Int,
                                          xref::AbstractArray{T2, 2},
                                          xlag::AbstractArray{Tmsh,3},
@@ -236,7 +236,7 @@ function calcMappingJacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int,
   end
 end
 
-@doc """
+"""
 ### SummationByParts.calcMappingJacobianElement!
 
 Single element variant of calcMappingJacobian!.  Uses a given set of Lagrangian
@@ -270,7 +270,7 @@ well as the test in `test/test_mappingjacobian.jl`).  These products are used to
 define the metric invariants.  *They are not needed by the 2-dimensional code,
 and so this array can be passed empty in that case*.
 
-"""->
+"""
 function calcMappingJacobianElement!{
   Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
              xlag::AbstractArray{Tmsh,2}, xsbp::AbstractArray{Tmsh,2},
@@ -421,7 +421,7 @@ function calcMappingJacobianElement!{
   end
 end
 
-# @doc """
+# """
 # ### SummationByParts.calcmappingjacobianreverse!
 
 # Forms the reverse-mode of algorithmic differentiation product for the method
@@ -450,7 +450,7 @@ end
 # See `calcmappingjacobian!` for an explanation of `Eone`; it is only needed in
 # the 3D case.
 
-# """->
+# """
 # function calcmappingjacobianreverse!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, 
 #                                                 mapdegree::Int,
 #                                                 xlag_r::AbstractArray{Tmsh,2},
@@ -511,7 +511,7 @@ end
 #   Eone_r = Array(Tmsh,0,0)
 # end
 
-@doc """
+"""
 ### SummationByParts.mappingjacobian!
 
 Evaluates the Jacobian of the mapping from face-reference coordinates to
@@ -528,7 +528,7 @@ physical coordinates, as well as the determinant of the Jacobian.
 * `dξdx`: the Jacobian in [ξ coord, x coord, face node, L/R, face] format
 * `jac`: the determinant in [face node, L/R, face] format
 
-"""->
+"""
 function mappingjacobian!{Tsbp,Tmsh}(sbpface::AbstractFace{Tsbp},
                                      ifaces::Array{Interface},
                                      x::AbstractArray{Tmsh,3},
@@ -576,7 +576,7 @@ function mappingjacobian!{Tsbp,Tmsh}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.mappingjacobian!
 
 **Deprecated**:
@@ -599,7 +599,7 @@ frame use the scaled Jacobian.
   phys coord, 3rd dim = node, 3rd dim = elem
 * `jac`: the determinant of the Jacobian; 1st dim = node, 2nd dim = elem
 
-"""->
+"""
 function mappingjacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
                                      x::AbstractArray{Tmsh,3},
                                      dξdx::AbstractArray{Tmsh,4},
@@ -685,7 +685,7 @@ function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
   # calculate the derivative of the coordinates with respect to (xi,eta,zeta)
   # using the SBP operator
   for di = 1:3
-    differentiate!(sbp, di, x, sview(dxdξ,:,:,:,di)) 
+    differentiate!(sbp, di, x, view(dxdξ,:,:,:,di)) 
   end
   fill!(dξdx, zero(Tmsh))
   # calculate the metrics
@@ -716,203 +716,3 @@ function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
   end
   # check for negative jac here?
 end
-
-@doc """
-### SummationByParts.mappingjacobian_rev!
-
-**Deprecated**:
-
-Forms the reverse-mode of algorithmic differentiation product for the method
-`mappingjacobian!`.  Specifically, it computes `x_bar` = `dξdx_bar`^T *
-∂`dξdx`/∂`x` + `jac_bar`^T * ∂`jac`/∂`x` where the various quantities are
-defined below (the `_bar` denotes the reverse mode).  Note that the input and
-output order of the arguments follows that used in `mappingjacobian!`.
-
-**Inputs**
-
-* `sbp`: an SBP operator type
-* `x`: the physical coordinates; 1st dim = coord, 2nd dim = node, 3rd dim = elem
-* `dξdx_bar`: gradient w.r.t. Jacobian; [ref coord, phys coord, sbp node, element]
-* `jac_bar`: gradient w.r.t. determinant of the Jacobian; [sbp node, element]
-
-**In/Outs**
-
-* `x_bar`: gradient w.r.t. SBP nodes; [coord, Lagrangian node, element]
-
-  """->
-function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
-                                         x::AbstractArray{Tmsh,3},
-                                         x_bar::AbstractArray{Tmsh,3},
-                                         dξdx_bar::AbstractArray{Tmsh,4},
-                                         jac_bar::AbstractArray{Tmsh,2})
-  @assert( sbp.numnodes == size(x,2) == size(x_bar,2) == size(dξdx_bar,3)
-           == size(jac_bar,1) )
-  @assert( size(x,3) == size(x_bar,3) == size(dξdx_bar,4) == size(jac_bar,2) )
-  @assert( size(x,1) == size(x_bar,1) == size(dξdx_bar,1) == size(dξdx_bar,2)
-           == 2 )
-  work = zeros(Tmsh, (2,sbp.numnodes,2))
-  dξdx = zeros(Tmsh, (2,2,sbp.numnodes))
-  for elem = 1:size(x,3)
-    # compute the coordinate derivatives
-    fill!(work, zero(Tmsh))
-    for di = 1:2
-      differentiateElement!(sbp, di, sview(x,:,:,elem), sview(work,:,:,di)) 
-    end
-    # compute the scaled metrics: could also pass these in to avoid recomputing
-    # them...
-    for i = 1:sbp.numnodes
-      dξdx[1,1,i] = work[2,i,2]
-      dξdx[1,2,i] = -work[1,i,2]
-      dξdx[2,1,i] = -work[2,i,1]
-      dξdx[2,2,i] = work[1,i,1]
-    end    
-    # start the reverse sweep
-    for i = 1:sbp.numnodes
-      jac = one(Tmsh)/(dξdx[1,1,i]*dξdx[2,2,i] - dξdx[1,2,i]*dξdx[2,1,i])
-      jac2 = jac_bar[i,elem]*jac*jac
-      dξdx_bar[1,1,i,elem] -= jac2*dξdx[2,2,i]
-      dξdx_bar[1,2,i,elem] += jac2*dξdx[2,1,i]
-      dξdx_bar[2,1,i,elem] += jac2*dξdx[1,2,i]
-      dξdx_bar[2,2,i,elem] -= jac2*dξdx[1,1,i]
-    end
-    fill!(work, zero(Tmsh))
-    for i = 1:sbp.numnodes
-      work[2,i,2] += dξdx_bar[1,1,i,elem]
-      work[1,i,2] -= dξdx_bar[1,2,i,elem]
-      work[2,i,1] -= dξdx_bar[2,1,i,elem]
-      work[1,i,1] += dξdx_bar[2,2,i,elem]
-    end
-    for di = 1:2
-      differentiateElement_rev!(sbp, di, sview(x_bar,:,:,elem), sview(work,:,:,di)) 
-    end
-  end
-end
-
-
-
-function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
-                                         x::AbstractArray{Tmsh,3},
-                                         x_bar::AbstractArray{Tmsh,3},
-                                         dξdx_bar::AbstractArray{Tmsh,4},
-                                         jac_bar::AbstractArray{Tmsh,2})
-  @assert( sbp.numnodes == size(x,2) == size(x_bar,2) == size(dξdx_bar,3)
-           == size(jac_bar,1) )
-  @assert( size(x,3) == size(x_bar,3) == size(dξdx_bar,4) == size(jac_bar,2) )
-  @assert( size(x,1) == size(x_bar,1) == size(dξdx_bar,1) == size(dξdx_bar,2)
-           == 3 )
-  work = zeros(Tmsh, (3,sbp.numnodes,3))
-  dxdξ = zeros(Tmsh, (3,3,sbp.numnodes))
-  dxdξ_bar = zeros(dxdξ)
-  for elem = 1:size(x,3)
-    # compute the coordinate derivatives
-    fill!(work, zero(Tmsh))
-    for di = 1:3
-      differentiateElement!(sbp, di, sview(x,:,:,elem), sview(work,:,:,di)) 
-    end
-    permutedims!(dxdξ, work, [1,3,2]) # probably slow
-
-    # Start the reverse sweep
-    fill!(dxdξ_bar, zero(Tmsh))
-    
-    # Get the contribution of the Jacobian product to dxdξ
-    for i = 1:sbp.numnodes
-      jac = one(Tmsh)/(dxdξ[1,1,i]*dxdξ[2,2,i]*dxdξ[3,3,i] +
-                       dxdξ[1,2,i]*dxdξ[2,3,i]*dxdξ[3,1,i] +
-                       dxdξ[1,3,i]*dxdξ[2,1,i]*dxdξ[3,2,i] -
-                       dxdξ[1,1,i]*dxdξ[2,3,i]*dxdξ[3,2,i] -
-                       dxdξ[1,2,i]*dxdξ[2,1,i]*dxdξ[3,3,i] -
-                       dxdξ[1,3,i]*dxdξ[2,2,i]*dxdξ[3,1,i])
-      jac2 = jac_bar[i,elem]*jac*jac
-      dxdξ_bar[1,1,i] -= jac2*(dxdξ[2,2,i]*dxdξ[3,3,i] -
-                               dxdξ[2,3,i]*dxdξ[3,2,i])
-      dxdξ_bar[2,2,i] -= jac2*(dxdξ[1,1,i]*dxdξ[3,3,i] -
-                               dxdξ[1,3,i]*dxdξ[3,1,i])
-      dxdξ_bar[3,3,i] -= jac2*(dxdξ[1,1,i]*dxdξ[2,2,i] -
-                               dxdξ[1,2,i]*dxdξ[2,1,i])
-      dxdξ_bar[1,2,i] -= jac2*(dxdξ[2,3,i]*dxdξ[3,1,i] -
-                               dxdξ[2,1,i]*dxdξ[3,3,i])
-      dxdξ_bar[2,3,i] -= jac2*(dxdξ[1,2,i]*dxdξ[3,1,i] -
-                               dxdξ[1,1,i]*dxdξ[3,2,i])
-      dxdξ_bar[3,1,i] -= jac2*(dxdξ[1,2,i]*dxdξ[2,3,i] -
-                               dxdξ[1,3,i]*dxdξ[2,2,i])
-      dxdξ_bar[1,3,i] -= jac2*(dxdξ[2,1,i]*dxdξ[3,2,i] -
-                               dxdξ[2,2,i]*dxdξ[3,1,i])
-      dxdξ_bar[2,1,i] -= jac2*(dxdξ[1,3,i]*dxdξ[3,2,i] -
-                               dxdξ[1,2,i]*dxdξ[3,3,i])
-      dxdξ_bar[3,2,i] -= jac2*(dxdξ[1,3,i]*dxdξ[2,1,i] -
-                               dxdξ[1,1,i]*dxdξ[2,3,i])
-    end
-    
-    # contribution of metrics to dxdξ
-    for di = 1:3
-      it1 = mod(di,3)+1
-      it2 = mod(di+1,3)+1
-      for i = 1:sbp.numnodes
-        for di2 = 1:3
-          it21 = mod(di2,3)+1
-          it22 = mod(di2+1,3)+1
-          #dξdx[it1,di2,i,elem] += (dxdξ[it22,i,elem,di]*dxdξ[it21,i,elem,it2] -
-          #                         dxdξ[it21,i,elem,di]*dxdξ[it22,i,elem,it2])
-          dxdξ_bar[it22,di,i] += dxdξ[it21,it2,i]*dξdx_bar[it1,di2,i,elem]
-          dxdξ_bar[it21,it2,i] += dxdξ[it22,di,i]*dξdx_bar[it1,di2,i,elem]
-          dxdξ_bar[it21,di,i] -= dxdξ[it22,it2,i]*dξdx_bar[it1,di2,i,elem]
-          dxdξ_bar[it22,it2,i] -= dxdξ[it21,di,i]*dξdx_bar[it1,di2,i,elem]
-        end
-      end # i loop
-    end # di loop
-
-    permutedims!(work, dxdξ_bar, [1,3,2]) # probably slow    
-    for di = 1:3
-      #differentiate!(sbp, di, x, sview(dxdξ,:,:,:,di))
-      differentiateElement_rev!(sbp, di, sview(x_bar,:,:,elem),
-                                sview(work,:,:,di))
-    end
-  end # loop over elements
-end
-
-# old version
-#=
-function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
-                                     x::AbstractArray{Tmsh,3},
-                                     dξdx::AbstractArray{Tmsh,4},
-                                     jac::AbstractArray{Tmsh,2})
-  @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
-  @assert( size(x,3) == size(dξdx,4) )
-  @assert( size(x,1) == 3 && size(dξdx,1) == 3 && size(dξdx,2) == 3 )
-  numelem = size(x,3)
-  dxdξ = zeros(Tmsh, (3,sbp.numnodes,numelem,3))
-  # calculate the derivative of the coordinates with respect to (xi,eta,zeta)
-  # using the SBP operator
-  for di = 1:3
-    differentiate!(sbp, di, x, sview(dxdξ,:,:,:,di)) 
-  end
-  fill!(dξdx, zero(Tmsh))
-  # calculate the metrics
-  for di = 1:3
-    it1 = mod(di,3)+1
-    it2 = mod(di+1,3)+1
-    for elem = 1:numelem
-      for i = 1:sbp.numnodes
-        for di2 = 1:3
-          it21 = mod(di2,3)+1
-          it22 = mod(di2+1,3)+1
-          dξdx[it1,di2,i,elem] = (dxdξ[it22,i,elem,di]*dxdξ[it21,i,elem,it2] -
-                                  dxdξ[it21,i,elem,di]*dxdξ[it22,i,elem,it2])            
-        end
-      end
-    end
-  end    
-  # calculate the determinant of the mapping
-  for elem = 1:numelem
-    for i = 1:sbp.numnodes
-      jac[i,elem] = one(Tmsh)/(dxdξ[1,i,elem,1]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,3] +
-                               dxdξ[1,i,elem,2]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,1] +
-                               dxdξ[1,i,elem,3]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,2] -
-                               dxdξ[1,i,elem,1]*dxdξ[2,i,elem,3]*dxdξ[3,i,elem,2] -
-                               dxdξ[1,i,elem,2]*dxdξ[2,i,elem,1]*dxdξ[3,i,elem,3] -
-                               dxdξ[1,i,elem,3]*dxdξ[2,i,elem,2]*dxdξ[3,i,elem,1])
-    end
-  end
-  # check for negative jac here?
-end
-=#
