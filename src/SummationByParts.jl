@@ -1,10 +1,20 @@
 __precompile__(false)
 module SummationByParts
 
+using Optim, LineSearches
 #using ArrayViews
-using Optim
 #using ODLCommonTools
 #import ODLCommonTools.sview
+
+"""
+    getComplexStep(T)
+
+returns an appropriate complex-step size for the given type
+"""
+getComplexStep{T <: Float32}(::Type{T}) = 1f-20
+getComplexStep{T <: Float64}(::Type{T}) = 1e-60
+getComplexStep{T <: Complex64}(::Type{T}) = 1f-20
+getComplexStep{T <: Complex128}(::Type{T}) = 1e-60
 
 include("compile_time.jl")
 include("face_types.jl")
@@ -63,7 +73,7 @@ export edgestabilize!, permuteinterface!
 residual updates in the useoperators.jl and usefaceoperators.jl files
 
 """
-abstract UnaryFunctor
+abstract type UnaryFunctor end
 
 """
 ### SBP.Add
@@ -77,9 +87,6 @@ end
 function (update::Add)(scalar)
   return scalar
 end
-#function call(update::Add, scalar)
-#  return scalar
-#end
 
 """
 ### SBP.Subtract
@@ -92,9 +99,6 @@ end
 function (update::Subtract)(scalar)
   return -scalar
 end
-#function call(update::Subtract, scalar)
-#  return -scalar
-#end
 
 include("sbp_types.jl") #<--- holds all the abstract and concrete types
 include("outerconstructors.jl") #<--- outer constructors and factories

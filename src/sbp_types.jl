@@ -7,8 +7,7 @@
 finite-difference operators.
 
 """
-abstract AbstractSBP{T<:Number}
-#abstract AbstractSBP{T<:AbstractFloat}
+abstract type AbstractSBP{T<:Number} end
 
 """
 ### SBP.TriSBP
@@ -33,8 +32,8 @@ immutable LineSegSBP{T} <: AbstractSBP{T}
   Q::Array{T,3}
 
   # inner constructor
-  function LineSegSBP(degree::Int, cub::LineSymCub{T}, vtx::Array{T,2},
-                      w::Array{T,1}, Q::Array{T,3})
+  function LineSegSBP{T}(degree::Int, cub::LineSymCub{T}, vtx::Array{T,2},
+                         w::Array{T,1}, Q::Array{T,3}) where T
     numnodes = cub.numnodes
     @assert( size(Q,1) == size(Q,2) == size(w,1) == numnodes )
     @assert( size(Q,3) == 1 )
@@ -67,8 +66,8 @@ immutable TriSBP{T} <: AbstractSBP{T}
   Q::Array{T,3}
 
   # inner constructor
-  function TriSBP(degree::Int, cub::TriSymCub{T}, vtx::Array{T,2},
-                  w::Array{T,1}, Q::Array{T,3})
+  function TriSBP{T}(degree::Int, cub::TriSymCub{T}, vtx::Array{T,2},
+                     w::Array{T,1}, Q::Array{T,3}) where T
     @assert( degree >= 1 && degree <= 4)
     numnodes = cub.numnodes
     @assert( size(Q,1) == size(Q,2) == size(w,1) == numnodes )
@@ -102,8 +101,8 @@ immutable SparseTriSBP{T} <: AbstractSBP{T}
   w::Array{T,1}
   Q::Array{T,3}
 
-  function SparseTriSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
-                        internal=false, cubdegree::Int=2*degree+1)
+  function SparseTriSBP{T}(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3], 
+                           internal=false, cubdegree::Int=2*degree+1) where T
     @assert( degree >= 1 && degree <= 4 )
     if internal
       cub, vtx = getTriCubatureOmega(cubdegree, T)
@@ -141,8 +140,8 @@ immutable TetSBP{T} <: AbstractSBP{T}
   Q::Array{T,3}
   
   # inner constructor
-  function TetSBP(degree::Int, cub::TetSymCub{T}, vtx::Array{T,2},
-                  w::Array{T,1}, Q::Array{T,3})
+  function TetSBP{T}(degree::Int, cub::TetSymCub{T}, vtx::Array{T,2},
+                     w::Array{T,1}, Q::Array{T,3}) where T
     @assert( degree >= 1 && degree <= 4)
     numnodes = cub.numnodes
     @assert( size(Q,1) == size(Q,2) == size(w,1) == numnodes )
@@ -176,8 +175,8 @@ immutable SparseTetSBP{T} <: AbstractSBP{T}
   w::Array{T,1}
   Q::Array{T,3}
 
-  function SparseTetSBP(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4],
-                        internal=false, cubdegree::Int=2*degree-1)
+  function SparseTetSBP{T}(;degree::Int=1, faceorder::Array{Int,1}=[1;2;3;4],
+                           internal=false, cubdegree::Int=2*degree-1) where T
     @assert( degree >= 1 && degree <= 3 )
     if internal
       cub, vtx = getTetCubatureOmega(cubdegree, T)
@@ -199,7 +198,7 @@ operations (e.g. volume-to-face reconstruction, face integration, etc) for
 summation-by-parts finite-difference operators.
 
 """
-abstract AbstractFace{T<:Number}
+abstract type AbstractFace{T<:Number} end
 
 """
 ### SBP.DenseFace
@@ -210,7 +209,7 @@ summation-by-parts finite-difference operators.  This is a subtype for which
 interpolation is a dense matrix.
 
 """
-abstract DenseFace{T} <: AbstractFace{T} 
+abstract type DenseFace{T} <: AbstractFace{T} end
 
 """
 ### SBP.LineSegFace
@@ -249,9 +248,10 @@ immutable LineSegFace{T} <: DenseFace{T}
   nbrperm::Array{Int,2}
 
   # inner constructor
-  function LineSegFace(degree::Int, facecub::PointSymCub{T}, facevtx::Array{T,2},
-                       interp::Array{T,2}, perm::Array{Int,2},
-                       deriv::Array{T,3}, dperm::Array{Int,2})
+  function LineSegFace{T}(degree::Int, facecub::PointSymCub{T},
+                          facevtx::Array{T,2}, interp::Array{T,2},
+                          perm::Array{Int,2}, deriv::Array{T,3},
+                          dperm::Array{Int,2}) where T
     @assert( degree >= 1 )
     numnodes = facecub.numnodes
     @assert( size(interp,2) == size(deriv,2) == numnodes )
@@ -302,9 +302,9 @@ immutable TriFace{T} <: DenseFace{T}
   nbrperm::Array{Int,2}
 
   # inner constructor
-  function TriFace(degree::Int, facecub::LineSymCub{T}, facevtx::Array{T,2},
-                   interp::Array{T,2}, perm::Array{Int,2},
-                   deriv::Array{T,3}, dperm::Array{Int,2})
+  function TriFace{T}(degree::Int, facecub::LineSymCub{T}, facevtx::Array{T,2},
+                      interp::Array{T,2}, perm::Array{Int,2},
+                      deriv::Array{T,3}, dperm::Array{Int,2}) where T
     @assert( degree >= 1 && degree <= 5 )
     numnodes = facecub.numnodes
     @assert( size(interp,2) == size(deriv,2) == numnodes )
@@ -355,8 +355,8 @@ immutable TetFace{T} <: DenseFace{T}
   nbrperm::Array{Int,2}
 
   # inner constructor
-  function TetFace(degree::Int, facecub::TriSymCub{T}, facevtx::Array{T,2},
-                   interp::Array{T,2}, perm::Array{Int,2})
+  function TetFace{T}(degree::Int, facecub::TriSymCub{T}, facevtx::Array{T,2},
+                      interp::Array{T,2}, perm::Array{Int,2}) where T
     @assert( degree >= 1 && degree <= 4 )
     numnodes = facecub.numnodes
     @assert( size(interp,2) == numnodes )
@@ -378,7 +378,7 @@ summation-by-parts finite-difference operators in the case where the
 face-cubature nodes and volume nodes coincide (i.e. diagonal E operators).
 
 """
-abstract SparseFace{T} <: AbstractFace{T}
+abstract type SparseFace{T} <: AbstractFace{T} end
 
 """
 ### SBP.TriSparseFace
@@ -415,8 +415,9 @@ immutable TriSparseFace{T} <: SparseFace{T}
   nbrperm::Array{Int,2}
 
   # inner constructor
-  function TriSparseFace(degree::Int, facecub::LineSymCub{T}, facevtx::Array{T,2},
-                         perm::Array{Int,2}, deriv::Array{T,3}, dperm::Array{Int,2})
+  function TriSparseFace{T}(degree::Int, facecub::LineSymCub{T},
+                            facevtx::Array{T,2}, perm::Array{Int,2},
+                            deriv::Array{T,3}, dperm::Array{Int,2}) where T
     # @assert( degree >= 1 && degree <= 5 )
     numnodes = facecub.numnodes
     @assert( size(deriv,2) == numnodes )
@@ -464,8 +465,8 @@ immutable TetSparseFace{T} <: SparseFace{T}
   nbrperm::Array{Int,2}
 
   # inner constructor
-  function TetSparseFace(degree::Int, facecub::TriSymCub{T}, facevtx::Array{T,2},
-                         perm::Array{Int,2})
+  function TetSparseFace{T}(degree::Int, facecub::TriSymCub{T},
+                            facevtx::Array{T,2}, perm::Array{Int,2}) where T
     @assert( degree >= 1 && degree <= 4 )
     numnodes = facecub.numnodes
     normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'

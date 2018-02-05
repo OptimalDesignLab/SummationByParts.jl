@@ -29,7 +29,7 @@ facts("Testing SummationByParts Module (Jacobian of weak differentiate methods).
             ceps = 1e-60
             for i = 1:sbp.numnodes
               u_c[i] += complex(0.0, ceps)
-              flux_c = sin(u_c)
+              flux_c = sin.(u_c)
               fill!(res_c, zero(Complex128))
               for di = 1:size(sbp.Q,3)
                 weakDifferentiateElement!(sbp, di, flux_c, res_c, Add(), trans)

@@ -42,7 +42,7 @@ function calcMappingJacobian!{Tsbp,Tmsh, T2}(sbp::TriSBP{Tsbp}, mapdegree::Int,
                                          dξdx::AbstractArray{Tmsh,4},
                                          jac::AbstractArray{Tmsh,2},
                                          Eone::AbstractArray{Tmsh,3}=
-                                           Array(Tmsh,0,0,0))
+                                             Array{Tmsh}(0,0,0))
   @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) )
   @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
            == size(dξdx,2) == 2 )
@@ -275,13 +275,12 @@ function calcMappingJacobianElement!{
   Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
              xlag::AbstractArray{Tmsh,2}, xsbp::AbstractArray{Tmsh,2},
              dξdx::AbstractArray{Tmsh,3}, jac::AbstractArray{Tmsh},
-             Eone::AbstractArray{Tmsh,2}=Array(Tmsh,0,0))
-
+             Eone::AbstractArray{Tmsh,2}=Array{Tmsh}(0,0))
+  numdof = binomial(mapdegree+2,2)
   @asserts_enabled begin
     @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) )
     @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
              == size(dξdx,2) == 2 )
-    numdof = binomial(mapdegree+2,2)
     @assert( size(xlag,2) == size(xref,2) == numdof )
   end
 
@@ -332,7 +331,6 @@ function calcMappingJacobianElement!{
              xlag::AbstractArray{Tmsh,2}, xsbp::AbstractArray{Tmsh,2},
              dξdx::AbstractArray{Tmsh,3}, jac::AbstractArray{Tmsh},
              Eone::AbstractArray{Tmsh,2})
-
   numdof = binomial(mapdegree+3,3)
   @asserts_enabled begin
     @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) 
@@ -420,96 +418,6 @@ function calcMappingJacobianElement!{
     end  
   end
 end
-
-# """
-# ### SummationByParts.calcmappingjacobianreverse!
-
-# Forms the reverse-mode of algorithmic differentiation product for the method
-# `calcmappingjacobian`.  Specifically, it computes `xlag_r` = `xsbp_r`^T *
-# ∂`xsbp`/∂`xlag` + `dξdx_r`^T * ∂`dξdx`/∂`xlag` + `jac_r`^T * ∂`jac`/∂`xlag`
-# where the various quantities are defined below (the `_r` denotes the reverse
-# mode) .  Note that the input and output order of the arguments follows that used
-# in `calcmappingjacobian`.
-
-# **Inputs**
-
-# * `sbp`: an SBP operator type
-# * `mapdegree`: the polynomial degree of the mapping
-# * `xsbp_r`: gradient of location of the SBP nodes; [coord, sbp node]
-# * `dξdx_r`: gradient of the scaled Jacobian; [ref coord, phys coord, sbp node]
-# * `jac_r`: gradient of the determinant of the Jacobian; [sbp node]
-# * `xref`: Lagrangian nodes in reference space; [coord, Lagrangian node]
-
-# **In/Outs**
-
-# * `xlag_r`: gradient of Lagrangian nodes; [coord, Lagrangian node]
-# * `Eone_r`: gradient of Ex*one, Ey*one (Ez*one); [sbp node, coord]
-
-# **Notes**
-
-# See `calcmappingjacobian!` for an explanation of `Eone`; it is only needed in
-# the 3D case.
-
-# """
-# function calcmappingjacobianreverse!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, 
-#                                                 mapdegree::Int,
-#                                                 xlag_r::AbstractArray{Tmsh,2},
-#                                                 xref::AbstractArray{Tmsh,2},
-#                                                 xsbp_r::AbstractArray{Tmsh,2},
-#                                                 dξdx_r::AbstractArray{Tmsh,3},
-#                                                 jac_r::AbstractArray{Tmsh},
-#                                                 Eone_r::AbstractArray{Tmsh,2})
-#   @assert( sbp.numnodes == size(xsbp_r,2) == size(dξdx_r,3) == size(jac_r,1) )
-#   @assert( size(xlag_r,1) == size(xref,1) == size(xsbp_r,1) == size(dξdx_r,1) 
-#            == size(dξdx_R,2) == 2 )
-#   numdof = binomial(mapdegree+2,2)
-#   @assert( size(xlag_r,2) == size(xref,2) == numdof )
-#   # Step 3: compute dxdξ_r = dξdx_r^T*∂(dξdx)/∂(dxdξ) + jac_r^T*∂(jac)/∂(dxdξ)
-#   dxdξ_r = zeros(Tmsh, (2,2,sbp.numnodes))
-#   for i = 1:sbp.numnodes
-#     # first, we need to account for dependence of determinant on dξdx
-#     fac = jac_r[i]*jac[i]*jac[i]
-#     dξdx_r[1,1,i] -= fac*dξdx[2,2,i]
-#     dξdx_r[2,2,i] -= fac*dξdx[1,1,i]
-#     dξdx_r[1,2,i] += fac*dξdx[2,1,i]
-#     dξdx_r[2,1,i] += fac*dξdx[1,2,i]
-#     # now dxdξ_r = (dξdx_r^T + jac_r^T*∂(jac)/∂(dξdx))*∂(dξdx)/∂(dxdξ)
-#     dxdξ_r[2,2,i] += dξdx_r[1,1,i] 
-#     dxdξ_r[1,2,i] -= dξdx_r[1,2,i] 
-#     dxdξ_r[2,1,i] -= dξdx_r[2,1,i]
-#     dxdξ_r[1,1,i] += dξdx_r[2,2,i]
-#   end
-#   # Step 2: coeff_r = dxdξ_r^T*∂(dxdξ)/∂(coeff) + xsbp_r^T*∂(xsbp)/∂(coeff)
-#   x = calcnodes(sbp) # <-- SBP nodes in reference space
-#   coeff_r = zeros(Tmsh, (numdof,2))
-#   ptr = 1
-#   for r = 0:mapdegree
-#     for j = 0:r
-#       i = r-j
-#       P = OrthoPoly.proriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
-#       dPdξ, dPdη = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]), i, j)
-#       for di = 1:2
-#         for nd = 1:sbp.numnodes
-#           coeff_r[ptr,di] += (xsbp_r[di,nd]*P[nd] + dxdξ_r[di,1,nd]*dPdξ[nd] +
-#                               dxdξ_r[di,2,nd]*dPdη[nd])
-#         end
-#       end
-#       ptr += 1
-#     end
-#   end
-#   # Step 1: xlag_r = coeff_r^T*∂(coeff)/∂(xlag)
-#   V = zeros(Tmsh, (numdof,numdof) )
-#   ptr = 1
-#   for r = 0:mapdegree
-#     for j = 0:r
-#       i = r-j
-#       V[:,ptr] = OrthoPoly.proriolpoly(vec(xref[1,:]), vec(xref[2,:]), i, j)
-#       ptr += 1
-#     end
-#   end
-#   xlag_r = ((V.')\coeff_r).'
-#   Eone_r = Array(Tmsh,0,0)
-# end
 
 """
 ### SummationByParts.mappingjacobian!
@@ -671,7 +579,6 @@ function mappingjacobian!{Tsbp,Tmsh}(sbp::SparseTriSBP{Tsbp},
   end
   # check for negative jac here?
 end
-
 
 function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
                                      x::AbstractArray{Tmsh,3},

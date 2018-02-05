@@ -35,9 +35,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:3
         for i = 0:(p+1)
@@ -92,9 +92,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:3
         for i = 0:(p+1)
@@ -159,9 +159,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:4
         for i = 1:numdof
@@ -226,9 +226,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:4
         for i = 1:numdof
@@ -286,9 +286,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:3
         for i = 0:(p+1)
@@ -352,9 +352,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:3
         for i = 0:(p+1)
@@ -427,9 +427,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:4
         for i = 1:numdof
@@ -502,9 +502,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:4
         for i = 1:numdof

@@ -17,7 +17,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
           vvol = zeros(uvol)
           vface = rand(Float64, (sbpface.numnodes,4))
           uface = zeros(vface)
-          bndryfaces = Array(Boundary, 4)
+          bndryfaces = Array{Boundary}(4)
           bndryfaces[1] = Boundary(1,1)
           if size(sbp.Q,3) < 2
             bndryfaces[2] = Boundary(1,2)
@@ -53,7 +53,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
           vvol = zeros(uvol)
           vface = rand(Float64, (4,sbpface.numnodes,4))
           uface = zeros(vface)
-          bndryfaces = Array(Boundary, 4)
+          bndryfaces = Array{Boundary}(4)
           bndryfaces[1] = Boundary(1,1)
           if size(sbp.Q,3) < 2
             bndryfaces[2] = Boundary(1,2)
@@ -147,7 +147,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
-          ifaces = Array(Interface, 1)
+          ifaces = Array{Interface}(1)
           if size(sbp.Q,3) < 2
             ifaces[1] = Interface(1,2,2,1,1)
           else
@@ -180,7 +180,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data interpolation 
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
-          ifaces = Array(Interface, 1)
+          ifaces = Array{Interface}(1)
           if size(sbp.Q,3) < 2
             ifaces[1] = Interface(1,2,2,1,1)
           else

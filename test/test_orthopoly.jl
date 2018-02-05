@@ -67,7 +67,7 @@ facts("Testing OrthoPoly Module...") do
     eps_step = 1e-60
     for N = 1:10
       dP = OrthoPoly.diffjacobipoly(x, alpha, beta, N)
-      xc = complex(x, eps_step)
+      xc = complex.(x, eps_step)
       Pc = OrthoPoly.jacobipoly(xc, alpha, beta, N)
       dP_cmplx = imag(Pc)/eps_step
       @fact dP --> roughly(dP_cmplx, atol=1e-15)
@@ -177,8 +177,8 @@ facts("Testing OrthoPoly Module...") do
       for j = 0:r
         i = r-j
         dPdx, dPdy = OrthoPoly.diffproriolpoly(x, y, i, j)
-        xc = complex(x, 0)
-        yc = complex(y, -eps_step)
+        xc = complex.(x, 0)
+        yc = complex.(y, -eps_step)
         Pc = OrthoPoly.proriolpoly(xc, yc, i, j)
         @fact dPdy --> roughly(-imag(Pc)/eps_step, atol=1e-14)
         xc -= eps_step*im

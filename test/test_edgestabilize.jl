@@ -13,7 +13,7 @@ facts("Testing SummationByParts Module (edge-stabilization methods)...") do
       x[:,:,2] = SummationByParts.SymCubatures.calcnodes(sbp.cub, vtx)
       dξdx = zeros(Float64, (2,2,sbpface.numnodes,2,1))
       jac = zeros(Float64, (sbpface.numnodes,2,1))
-      ifaces = Array(Interface, 1)
+      ifaces = Array{Interface}(1)
       ifaces[1] = Interface(1,2,2,3,1)
       mappingjacobian!(sbpface, ifaces, x, dξdx, jac)
       # build the normal vector to the face; (<dξdx,dηdx> , <dηdx,dηdx>)

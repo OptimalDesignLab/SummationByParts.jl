@@ -124,7 +124,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     q = rand(ndofpernode, sbpface.numnodes, nfaces)
     q2 = copy(q)
 
-    ifaces = Array(Interface, 2)
+    ifaces = Array{Interface}(2)
     for i=1:nfaces
       ifaces[i] = Interface(1,1,1,1,1)
     end
@@ -207,7 +207,7 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     Q, R = qr(rand(n,n))
     λ = randn(n)
     A = Q*diagm(λ)*Q'
-    Acheck = Q*diagm(abs(λ))*Q'
+    Acheck = Q*diagm(abs.(λ))*Q'
     Aabs = zeros(A)
     SummationByParts.absMatrix!(A, Aabs)
     @fact Aabs --> roughly(Acheck, rtol=1e-13)        
