@@ -3,7 +3,7 @@
 
 # install PkgFix if not present
 if !isdir(joinpath(Pkg.dir(), "PkgFix"))
-  Pkg.clone("PkgFix")
+  Pkg.clone("https://github.com/OptimalDesignLab/PkgFix.jl.git")
 end
 
 using PkgFix  # from now on, use PkgFix instead of Pkg for everything
@@ -18,7 +18,7 @@ pkg_dict = PkgFix.installed()
 #deps_path = joinpath(Pkg.dir("SummationByParts"), "deps")
 #cd(deps_path)
 if !haskey(pkg_dict, "ODLCommonTools")
-  PkgFix.add(ODL_URL, branch_ish=OLD_VER)
+  PkgFix.add(ODL_URL, branch_ish=ODL_VER)
   #=
   run(`./download.sh`)
   start_dir2 = pwd()
