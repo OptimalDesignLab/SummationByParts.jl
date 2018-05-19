@@ -216,6 +216,28 @@ function calcvandermondproriol{T}(coords::AbstractMatrix{T}, maxdegree::Int)
 end
 
 """
+  Like `calcvandermondproriol`, but computes the derivative of the Proriol
+  polynomials.
+"""
+function calcvandermonddiffproriol{T}(coords::AbstractMatrix{T}, maxdegree::Int)
+
+
+  npts, dim = size(coords)
+  npoly = binomial(maxdegree + dim, dim)
+  Vx = zeros(T, npts, npoly)
+  Vy = zeros(T, npts, npoly)
+
+  if dim == 2
+    calcvandermonddiffproriol2(coords, maxdegree, Vx, Vy)
+  else
+    error("3D not supported")
+  end
+
+  return Vx, Vy
+end
+
+
+"""
 ### SummationByParts.calcvandeermondproriol2
 
   2D function used by calcvandermondproriol()
@@ -233,6 +255,26 @@ function calcvandermondproriol2{T}(coords::AbstractMatrix{T}, maxdegree::Int,
 
   return nothing
 end
+
+
+function calcvandermonddiffproriol2{T}(coords::AbstractMatrix{T}, maxdegree::Int,
+                                Vx::AbstractMatrix{T}, Vy::AbstractMatrix{T})
+  ptr = 1
+  for r = 0:maxdegree
+    for j = 0:r
+      i = r-j
+      Px, Py = OrthoPoly.diffproriolpoly(coords[:, 1], coords[:, 2], i, j)
+
+      Vx[:,ptr] = Px
+      Vy[:,ptr] = Py
+      ptr += 1
+    end
+  end
+
+  return nothing
+end
+
+
 
 """
 ### SummationByParts.calcvandeermondproriol3
