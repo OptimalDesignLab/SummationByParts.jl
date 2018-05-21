@@ -9,7 +9,7 @@ end
 using PkgFix  # from now on, use PkgFix instead of Pkg for everything
 
 ODL_URL = "https://github.com/OptimalDesignLab/ODLCommonTools.jl.git"
-ODL_VER = "new_parallel"
+ODL_VER = "v0.3"
 ARRAYVIEWS_VER = "93e80390aeedb1dbcd90281b6dff7f760f430bc8"
 
 
