@@ -466,76 +466,79 @@ facts("Testing SummationByParts Module (buildoperators.jl file)...") do
     end
   end
 
-  context("Testing SummationByParts.buildMinConditionOperators (TriSymCub method, vertices=true)") do
-    for d = 1:4 
-      cub, vtx = getTriCubatureDiagE(2*d, Float64)
-      w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d)
-      Dx = diagm(1./w)*Q[:,:,1]
-      Dy = diagm(1./w)*Q[:,:,2]
-      xy = SymCubatures.calcnodes(cub, vtx)  
-      x = vec(xy[1,:]); y = vec(xy[2,:])
-      for r = 0:d
-        for j = 0:r
-          i = r-j
-          u = (x.^i).*(y.^j)
-          dudx = (i.*x.^max(0,i-1)).*(y.^j)
-          dudy = (x.^i).*(j.*y.^max(0,j-1))
-          @fact Dx*u --> roughly(dudx, atol=5e-13)
-          @fact Dy*u --> roughly(dudy, atol=5e-13)
-        end
-      end
-    end
-  end
-
-  context("Testing SummationByParts.buildMinConditionOperators (TriSymCub method, vertices=false)") do
-    for d = 1:4 
-      cub, vtx = getTriCubatureDiagE(2*d, Float64, vertices=false)
-      w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d,
-                                                         vertices=false)
-      Dx = diagm(1./w)*Q[:,:,1]
-      Dy = diagm(1./w)*Q[:,:,2]
-      xy = SymCubatures.calcnodes(cub, vtx)  
-      x = vec(xy[1,:]); y = vec(xy[2,:])
-      for r = 0:d
-        for j = 0:r
-          i = r-j
-          u = (x.^i).*(y.^j)
-          dudx = (i.*x.^max(0,i-1)).*(y.^j)
-          dudy = (x.^i).*(j.*y.^max(0,j-1))
-          @fact Dx*u --> roughly(dudx, atol=5e-13)
-          @fact Dy*u --> roughly(dudy, atol=5e-13)
-        end
-      end
-    end
-  end
-
-  context("Testing SummationByParts.buildMinConditionOperators (TetSymCub method)") do
-    #tol = [1e-12; 1e-12; 1e-12; 5e-8]
-    tol = [1e-12; 1e-12] #; 1e-12; 1e-12]
-    for d = 1:2 # d=3,4 are too slow for tests
-      cub, vtx = getTetCubatureDiagE(2*d, Float64, vertices=false)
-      w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d, tol=1e-2)
-      Dx = diagm(1./w)*Q[:,:,1]
-      Dy = diagm(1./w)*Q[:,:,2]
-      Dz = diagm(1./w)*Q[:,:,3]
-      xyz = SymCubatures.calcnodes(cub, vtx)      
-      x = vec(xyz[1,:]); y = vec(xyz[2,:]); z = vec(xyz[3,:])
-      for r = 0:d
-        for k = 0:r
-          for j = 0:r-k
-            i = r-j-k
-            u = (x.^i).*(y.^j).*(z.^k)
-            dudx = (i.*x.^max(0,i-1)).*(y.^j).*(z.^k)
-            dudy = (x.^i).*(j.*y.^max(0,j-1)).*(z.^k)
-            dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
-            @fact Dx*u --> roughly(dudx, atol=tol[d])
-            @fact Dy*u --> roughly(dudy, atol=tol[d])
-            @fact Dz*u --> roughly(dudz, atol=tol[d])
+  if SummationByParts.HAVE_OPTIM
+    context("Testing SummationByParts.buildMinConditionOperators (TriSymCub method, vertices=true)") do
+      for d = 1:4 
+        cub, vtx = getTriCubatureDiagE(2*d, Float64)
+        w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d)
+        Dx = diagm(1./w)*Q[:,:,1]
+        Dy = diagm(1./w)*Q[:,:,2]
+        xy = SymCubatures.calcnodes(cub, vtx)  
+        x = vec(xy[1,:]); y = vec(xy[2,:])
+        for r = 0:d
+          for j = 0:r
+            i = r-j
+            u = (x.^i).*(y.^j)
+            dudx = (i.*x.^max(0,i-1)).*(y.^j)
+            dudy = (x.^i).*(j.*y.^max(0,j-1))
+            @fact Dx*u --> roughly(dudx, atol=5e-13)
+            @fact Dy*u --> roughly(dudy, atol=5e-13)
           end
         end
       end
     end
-  end
+
+    context("Testing SummationByParts.buildMinConditionOperators (TriSymCub method, vertices=false)") do
+      for d = 1:4 
+        cub, vtx = getTriCubatureDiagE(2*d, Float64, vertices=false)
+        w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d,
+                                                           vertices=false)
+        Dx = diagm(1./w)*Q[:,:,1]
+        Dy = diagm(1./w)*Q[:,:,2]
+        xy = SymCubatures.calcnodes(cub, vtx)  
+        x = vec(xy[1,:]); y = vec(xy[2,:])
+        for r = 0:d
+          for j = 0:r
+            i = r-j
+            u = (x.^i).*(y.^j)
+            dudx = (i.*x.^max(0,i-1)).*(y.^j)
+            dudy = (x.^i).*(j.*y.^max(0,j-1))
+            @fact Dx*u --> roughly(dudx, atol=5e-13)
+            @fact Dy*u --> roughly(dudy, atol=5e-13)
+          end
+        end
+      end
+    end
+
+    context("Testing SummationByParts.buildMinConditionOperators (TetSymCub method)") do
+      #tol = [1e-12; 1e-12; 1e-12; 5e-8]
+      tol = [1e-12; 1e-12] #; 1e-12; 1e-12]
+      for d = 1:2 # d=3,4 are too slow for tests
+        cub, vtx = getTetCubatureDiagE(2*d, Float64, vertices=false)
+        w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, d, tol=1e-2)
+        Dx = diagm(1./w)*Q[:,:,1]
+        Dy = diagm(1./w)*Q[:,:,2]
+        Dz = diagm(1./w)*Q[:,:,3]
+        xyz = SymCubatures.calcnodes(cub, vtx)      
+        x = vec(xyz[1,:]); y = vec(xyz[2,:]); z = vec(xyz[3,:])
+        for r = 0:d
+          for k = 0:r
+            for j = 0:r-k
+              i = r-j-k
+              u = (x.^i).*(y.^j).*(z.^k)
+              dudx = (i.*x.^max(0,i-1)).*(y.^j).*(z.^k)
+              dudy = (x.^i).*(j.*y.^max(0,j-1)).*(z.^k)
+              dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
+              @fact Dx*u --> roughly(dudx, atol=tol[d])
+              @fact Dy*u --> roughly(dudy, atol=tol[d])
+              @fact Dz*u --> roughly(dudz, atol=tol[d])
+            end
+          end
+        end
+      end
+    end
+
+  end  # end HAVE_OPTIM
 
   # context("Testing SummationByParts.buildsparseoperators (TetSymCub method, internal nodes)") do
   #   tol = [1e-12; 1e-12; 1e-12; 1e-12] #5e-8]
