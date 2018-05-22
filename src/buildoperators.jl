@@ -986,6 +986,8 @@ function buildMinConditionOperators{T}(cub::LineSymCub{T}, vtx::Array{T,2},
                                        d::Int; tol::Float64=1e-13,
                                        vertices::Bool=true,
                                        opthist::Bool=false)
+  requireOptim()
+
   w = SymCubatures.calcweights(cub)
   Q = zeros(T, (cub.numnodes,cub.numnodes,1))
   E = zeros(T, (cub.numnodes,cub.numnodes))
@@ -1033,6 +1035,9 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
                                        d::Int; tol::Float64=1e-13,
                                        vertices::Bool=true,
                                        opthist::Bool=false)
+
+  requireOptim()
+
   w = SymCubatures.calcweights(cub)
   #TODO: undo this
 #  face = TriFace{T}(d, cub, vtx)
@@ -1131,6 +1136,8 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
                                        d::Int; tol::Float64=1e-2,
                                        vertices::Bool=false,
                                        opthist::Bool=false)
+  requireOptim()
+
   w = SymCubatures.calcweights(cub)
   face = getTetFaceForDiagE(d, cub, vtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,3) )

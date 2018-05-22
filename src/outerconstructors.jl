@@ -149,9 +149,18 @@ points
 function getTriSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
                         vertices::Bool=true)
   cub, vtx = getTriCubatureDiagE(2*degree, Tsbp, vertices=vertices)
-  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
-  w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
-                                                     vertices=vertices)
+  w = SymCubatures.calcweights(cub)
+
+  vstr = vertices ? "vert" : "novert"
+  if degree >= 1 && degree <= 4
+    Q = reshape( readdlm(joinpath(dirname(@__FILE__), "tri_diage_p$(degree)_$vstr.dat")), cub.numnodes, cub.numnodes, 2)
+
+  else  # perform optimization
+    w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
+                                                       vertices=vertices)
+  end
+
+
   return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
@@ -219,22 +228,19 @@ points
 function getTetSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
                         edges::Bool=false, vertices::Bool=false)
   @assert( degree >= 1 && degree <= 4 )
+  # the operators saved to disk only support the default values for hte
+  # node locations -> error if the user askes for something else
+  @assert !edges  
+  @assert !vertices
   cub, vtx = getTetCubatureDiagE(2*degree, Tsbp, vertices=vertices)
   w = zeros(Tsbp, (cub.numnodes))
   w = SymCubatures.calcweights(cub)
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 3))
-  if degree == 1
-    Q = reshape(readdlm(dirname(@__FILE__)"/tet_diage_p1.dat", '\t', Tsbp),
+  if degree >= 1 && degree <= 4
+    Q = reshape(readdlm(dirname(@__FILE__)"/tet_diage_p$(degree).dat", '\t', Tsbp),
                 size(Q))
-  elseif degree == 2
-    Q = reshape(readdlm(dirname(@__FILE__)"/tet_diage_p2.dat", '\t', Tsbp),
-                size(Q))
-  elseif degree == 3
-    Q = reshape(readdlm(dirname(@__FILE__)"/tet_diage_p3.dat", '\t', Tsbp),
-                size(Q))
-  elseif degree == 4
-    Q = reshape(readdlm(dirname(@__FILE__)"/tet_diage_p4.dat", '\t', Tsbp),
-                size(Q))
+  else
+    error("degree $degree Tet SBP diagE not supported")
   end
   return TetSBP{Tsbp}(degree, cub, vtx, w, Q)
 end

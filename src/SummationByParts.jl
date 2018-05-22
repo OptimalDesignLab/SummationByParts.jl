@@ -1,12 +1,15 @@
 __precompile__(false)
 module SummationByParts
 
+include("compile_time.jl")
+
 using ArrayViews
-using Optim
+if HAVE_OPTIM
+  using Optim
+end
 using ODLCommonTools
 import ODLCommonTools.sview
 
-include("compile_time.jl")
 include("orthopoly.jl")
 include("symcubatures.jl")
 include("cubature.jl")
