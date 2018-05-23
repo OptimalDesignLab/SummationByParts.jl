@@ -1,7 +1,7 @@
 # This file gathers together functions related to volumne integration over a
 # test function using SBP operators
 
-@doc """
+"""
 ### SummationByParts.volumeintegrate!
 
 Applies the SBP mass matrix operator, H, to data in `u` and stores
@@ -29,7 +29,7 @@ operator sbp.
 
 * `res`: where the result of applying H to u is stored
 
-"""->
+"""
 function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                           u::AbstractArray{Tsol,2},
                                           res::AbstractArray{Tres,2},
@@ -60,7 +60,7 @@ function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.volumeIntegrateElement!
 
 This is the single-element variant of volumeIntegrate!.  Applies the SBP mass
@@ -86,7 +86,7 @@ operator sbp.
 
 * `res`: where the result of applying H to u is stored
 
-"""->
+"""
 function volumeIntegrateElement!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                                  u::AbstractArray{Tsol,1},
                                                  res::AbstractArray{Tres,1},

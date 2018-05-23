@@ -3,7 +3,7 @@
 
 for TFACE = (TriFace, TriSparseFace)
   @eval begin
-    @doc """
+    """
     ### SummationByParts.calcFaceNormals_rev!
 
     This is the reverse differentiated version of calcFaceNormals!.  See
@@ -26,7 +26,7 @@ for TFACE = (TriFace, TriSparseFace)
       
     * `xlag_bar`: result of vector Jacobian product; [coord, Lag node, face]
       
-    """->
+    """
     function calcFaceNormals_rev!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
                                              mapdegree::Int,
                                              xref::AbstractArray{Tmsh,2},
@@ -206,7 +206,7 @@ end
 
 for TFACE = (TriFace, TriSparseFace)
   @eval begin
-    @doc """
+    """
     ### SummationByParts.facenormal_rev!
 
     This is the reverse differentiated version of facenormal!.  See
@@ -228,7 +228,7 @@ for TFACE = (TriFace, TriSparseFace)
 
     * `xlag_bar`: result of vector Jacobian product; [coord, Lagrangian node]
 
-    """->
+    """
     function facenormal_rev!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
                                         mapdegree::Int,
                                         xref::AbstractArray{Tmsh,2},

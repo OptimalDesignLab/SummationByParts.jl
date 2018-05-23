@@ -1,7 +1,7 @@
 # This file gathers together functions related to interpolation of quantities to
 # the element faces
 
-@doc """
+"""
 ### SummationByParts.boundaryinterpolate!
 
 Interpolates element-node data to the element-face cubature nodes for the given
@@ -24,7 +24,7 @@ the third dimension for the element index (boundary index).
 
 * `uface`: field data interpolated to the faces
 
-"""->
+"""
 function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                          bndryfaces::AbstractArray{Boundary},
                                          uvol::AbstractArray{Tsol,2},
@@ -90,7 +90,7 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.boundaryFaceInterpolate!
 
 This is the single-face variant of boundaryinterpolate!.  Interpolates vector
@@ -112,7 +112,7 @@ node index.
 **In/Outs**
   * `uface`: field data interpolated to the faces
   
-"""->
+"""
 function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              face::Integer,
                                              uvol::AbstractArray{Tsol,1},
@@ -167,7 +167,7 @@ function boundaryFaceInterpolate!{Tsbp}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.interiorfaceinterpolate!
 
 Interpolates element-node data to the element-face cubature nodes for the given
@@ -190,7 +190,7 @@ set of faces.  Different methods are available depending on the rank of `uvol`:
 
 * `uface`: field data interpolated to the faces
 
-"""->
+"""
 function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              ifaces::AbstractArray{Interface},
                                              uvol::AbstractArray{Tsol,2},
@@ -269,7 +269,7 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.interiorFaceInterpolate!
 
 This is the single face variant of interiorFaceInterpolate!  Interpolates
@@ -296,7 +296,7 @@ left.  Different methods are available depending on the rank of `uvol`:
 * `ufaceL`: field data from `uL` interpolated to the face
 * `ufaceR`: field data from `uR` interpolated to the face
 
-"""->
+"""
 function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              iface::Interface,
                                              uL::AbstractArray{Tsol,1},

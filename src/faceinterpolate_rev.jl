@@ -1,7 +1,7 @@
 # This file contains the reverse-mode version of the methods in
 # faceinterpolate.jl
 
-@doc """
+"""
 ### SummationByParts.boundaryinterpolate_rev!
 
 This is the reverse differentiated version of boundaryinterpolate!.  See
@@ -18,7 +18,7 @@ differentiated with respect to the primal version's `uvol` variable.
 
 * `uvol_bar`: the result of the vector matrix product between R and `uface_bar`
 
-"""->
+"""
 function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              bndryfaces::AbstractArray{Boundary},
                                              uvol_bar::AbstractArray{Tsol,2},
@@ -87,7 +87,7 @@ function boundaryinterpolate_rev!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.boundaryFaceInterpolate_rev!
 
 This is the reverse differentiated version of boundaryFaceInterpolate!.  See
@@ -104,7 +104,7 @@ differentiated with respect to the primal version's `uvol` variable.
 
 * `uvol_bar`: the result of the vector-matrix product between R and `uface_bar`
   
-"""->
+"""
 function boundaryFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                                  face::Integer,
                                                  uvol_bar::AbstractArray{Tsol,1},
@@ -160,7 +160,7 @@ function boundaryFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.interiorfaceinterpolate_rev!
 
 This is the reverse differentiated version of interiorfaceinterpolate!.  See
@@ -177,7 +177,7 @@ differentiated with respect to the primal version's `uvol` variable.
 
 * `uvol_bar`: the result of the vector-matrix product between R and `uface_bar`
 
-"""->
+"""
 function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              ifaces::AbstractArray{Interface},
                                              uvol_bar::AbstractArray{Tsol,2},
@@ -264,7 +264,7 @@ function interiorfaceinterpolate_rev!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.interiorFaceInterpolate_rev!
 
 This is the reverse differentiated version of interiorFaceInterpolate!.  See
@@ -283,7 +283,7 @@ differentiated with respect to the primal version's `uL` and `uR` variables.
 * `uL_bar`: the result of the vector-matrix product between R and `ufaceL_bar`
 * `uR_bar`: the result of the vector-matrix product between R and `ufaceR_bar`
 
-"""->
+"""
 function interiorFaceInterpolate_rev!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
                                              iface::Interface,
                                              uL_bar::AbstractArray{Tsol,1},

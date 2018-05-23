@@ -1,7 +1,7 @@
 module OrthoPoly
 # utilities for working with orthogonal polynomials
 
-@doc """
+"""
 ### OrthoPoly.lglnodes
 
 Computes the Legendre-Gauss-Lobatto (LGL) quadrature nodes and weights on the
@@ -24,7 +24,7 @@ Methods in Fluid Dynamics,\" Section 2.3. Springer-Verlag 1987
 Julia version adapted from Matlab code written by Greg von Winckel - 04/17/2004
 Contact: gregvw@chtm.unm.edu
  
-"""->
+"""
 function lglnodes(N, T=Float64)
   N1 = N+1
   # Use the Chebyshev-Gauss-Lobatto nodes as an initial guess
@@ -47,7 +47,7 @@ function lglnodes(N, T=Float64)
   return x, w
 end
 
-@doc """
+"""
 ### OrthoPoly.lgnodes
 
 Computes the Legendre-Gauss (LG) quadrature nodes and weights on the
@@ -67,7 +67,7 @@ denotes the Nth Legendre polynomial.
 Julia version adapted from Matlab code written by Greg von Winckel - 02/25/2004
 Contact: gregvw@chtm.unm.edu
  
-"""->
+"""
 function lgnodes(N, T=Float64)
   Nm1 = N-1; Np1 = N+1
   N == 1 ? xu = [0.0] : xu = linspace(-1,1,N)
@@ -96,7 +96,7 @@ function lgnodes(N, T=Float64)
   return x, w
 end
 
-@doc """
+"""
 ### OrthoPoly.jacobipoly{T}
 
 Evaluate a Jacobi polynomial at some points.  Based on JacobiP in Hesthaven and
@@ -112,7 +112,7 @@ Warburton's nodal DG book.
 
 * `P`: the polynomial evaluated at x
 
-"""->
+"""
 function jacobipoly{T}(x::Array{T}, alpha::AbstractFloat, beta::AbstractFloat,
                        N::Int)
   @assert( alpha + beta != -1 )
@@ -146,7 +146,7 @@ function jacobipoly{T}(x::Array{T}, alpha::AbstractFloat, beta::AbstractFloat,
   size(P_1,1) > size(P_1,2) ? (return P_1) : (return P_1.')
 end
 
-@doc """
+"""
 ### OrthoPoly.diffjacobipoly{T}
 
 Evaluate the first derivative of a Jacobi Polynomial at some points.
@@ -161,7 +161,7 @@ Evaluate the first derivative of a Jacobi Polynomial at some points.
 
 * dP - derivative of polynomial evaluated at x
 
-"""->
+"""
 function diffjacobipoly{T}(x::Array{T}, alpha::AbstractFloat, 
                            beta::AbstractFloat, N::Int)
   @assert( alpha + beta != -1 )
@@ -199,7 +199,7 @@ function diffjacobipoly{T}(x::Array{T}, alpha::AbstractFloat,
   size(DP_1,1) > size(DP_1,2) ? (return DP_1) : (return DP_1.')
 end
 
-@doc """
+"""
 ### OrthoPoly.proriolpoly{T}: method for right triangle
 
 Evaluate Proriol orthogonal polynomial basis function on the right triangle.
@@ -214,7 +214,7 @@ Evaluate Proriol orthogonal polynomial basis function on the right triangle.
 
 * `P`: basis function at (`x`,`y`)
 
-"""->
+"""
 function proriolpoly{T}(x::Array{T}, y::Array{T}, i::Int, j::Int)
   @assert( i >= 0 && j >= 0 )
   xi = zeros(T, size(x))
@@ -227,7 +227,7 @@ function proriolpoly{T}(x::Array{T}, y::Array{T}, i::Int, j::Int)
   return P
 end
 
-@doc """
+"""
 ### OrthoPoly.proriolpoly{T}: method for a right tetrahedron
 
 Evaluate Proriol orthogonal polynomial basis function on the right tetrahedron.
@@ -242,7 +242,7 @@ Evaluate Proriol orthogonal polynomial basis function on the right tetrahedron.
 
 * `P`: basis function at (`x`,`y`,`z`)
 
-"""->
+"""
 function proriolpoly{T}(x::Array{T}, y::Array{T}, z::Array{T}, i::Int, j::Int,
                         k::Int)
   @assert( i >= 0 && j >= 0 && k >= 0 )
@@ -258,7 +258,7 @@ function proriolpoly{T}(x::Array{T}, y::Array{T}, z::Array{T}, i::Int, j::Int,
   return P
 end
 
-@doc """
+"""
 ### OrthoPoly.diffproriolpoly
 
 Evaluate the derivatives of a Proriol orthogonal polynomial basis function on
@@ -274,7 +274,7 @@ the right triangle.
 
 * `dPdx`,`dPdy`: derivative of basis function at (`x`,`y`)
 
-"""->
+"""
 function diffproriolpoly{T}(x::Array{T}, y::Array{T}, i::Int, j::Int)
   xi = zeros(T, size(x))
   for k = 1:length(x)
@@ -310,7 +310,7 @@ function diffproriolpoly{T}(x::Array{T}, y::Array{T}, i::Int, j::Int)
   return dPdx, dPdy
 end
 
-@doc """
+"""
 ### OrthoPoly.diffproriolpoly{T}
 
 Evaluate the derivatives of a Proriol orthogonal polynomial basis function on
@@ -330,7 +330,7 @@ the right tetrahedron.
 
 * `dPdx`,`dPdy`,`dPdz`: derivatives of basis function at (`x`,`y`,`z`)
 
-"""->
+"""
 function diffproriolpoly{T}(x::Array{T}, y::Array{T}, z::Array{T}, i::Int, 
                             j::Int, k::Int)
   # each node is independent, so use complex step once for each coordinate. Care

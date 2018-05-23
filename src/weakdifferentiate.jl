@@ -1,7 +1,7 @@
 # This file gathers together functions related to "weak" differentiation using
 # the SBP operators
 
-@doc """
+"""
 ### SummationByParts.weakdifferentiate!
 
 Applies the SBP stiffness matrix (or its transpose) to data in `flux` and adds
@@ -31,7 +31,7 @@ operator sbp.
 
 * `res`: where the result of applying Q[:,:,di] to u is stored
 
-"""->
+"""
 function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int, 
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2},
@@ -90,7 +90,7 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   end
 end
 
-@doc """
+"""
 ### SummationByParts.weakDifferentiateElement!
 
 This is the single-element variant of weakdifferentiate!.  Applies the SBP
@@ -118,7 +118,7 @@ operator sbp.
 
 * `res`: where the result of applying Q[:,:,di] to u is stored
 
-"""->
+"""
 function weakDifferentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
                                                    di::Int,
                                                    flux::AbstractArray{Tflx,1},

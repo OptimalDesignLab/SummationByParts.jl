@@ -2,7 +2,7 @@
 # face-based integral terms; it combines operations from both faceinterpolate
 # and faceintegrate.
 
-@doc """
+"""
 ### SummationByParts.boundaryFaceIntegrate_jac!
 
 Given the face-node flux Jacobians, this method computes the Jacobian of the
@@ -32,7 +32,7 @@ dimensions are of size `sbp.numnodes`.
 
 * `dresdu`: Jacobian of element residual w.r.t. the state
 
-"""->
+"""
 function boundaryFaceIntegrate_jac!{
   Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, face::Integer,
                   dfluxdu::AbstractArray{Tflx,1},
@@ -127,7 +127,7 @@ function boundaryFaceIntegrate_jac!{
   end
 end
 
-@doc """
+"""
 ### SummationByParts.interiorFaceIntegrate_jac!
 
 Given the face-node flux Jacobians, this method computes the Jacobian of the
@@ -163,7 +163,7 @@ size(dfluxduL,1), while the third and fourth dimensions are of size
 * `dresRduL`: Jacobian of right residual w.r.t. left state
 * `dresRduR`: Jacobian of right residual w.r.t. right state
 
-"""->
+"""
 function interiorFaceIntegrate_jac!{
   Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, iface::Interface,
                   dfluxduL::AbstractArray{Tflx,1},

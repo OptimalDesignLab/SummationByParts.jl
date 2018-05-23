@@ -119,8 +119,8 @@ facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") d
           nrm = zeros(3,sbpface.numnodes,4)
           E = zeros(sbp.numnodes,sbp.numnodes,3)
           for f = 1:4
-            facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                        sview(xsbp,:,:,f), sview(nrm,:,:,f))
+            facenormal!(sbpface, p+1, xref, view(xlag,:,:,f),
+                        view(xsbp,:,:,f), view(nrm,:,:,f))
             for di = 1:3
               # for the given Lagrangian nodes, the face-normal is inward pointing,
               # so subtract to reverse sign

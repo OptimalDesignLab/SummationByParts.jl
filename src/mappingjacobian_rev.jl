@@ -1,6 +1,6 @@
 # This file gathers together functions related to the reverse-mode differentiation of mapping Jacobian
 
-@doc """
+"""
 ### SummationByParts.calcMappingJacobian_rev!
 
 Forms the reverse-mode of algorithmic differentiation product for the method
@@ -31,7 +31,7 @@ of the arguments follows that used in `calcMappingJacobian!`.
 See `calcMappingJacobian!` for an explanation of `Eone`; it is only needed in
 the 3D case, but Eone_bar needs to be supplied in both 2D and 3D.
 
-"""->
+"""
 function calcMappingJacobian_rev!{
   Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
              xlag::AbstractArray{Tmsh,3}, xlag_bar::AbstractArray{Tmsh,3},
@@ -329,7 +329,7 @@ function calcMappingJacobian_rev!{
   end
 end
 
-@doc """
+"""
 ### SummationByParts.mappingjacobian_rev!
 
 **Deprecated**:
@@ -351,7 +351,7 @@ output order of the arguments follows that used in `mappingjacobian!`.
 
 * `x_bar`: gradient w.r.t. SBP nodes; [coord, Lagrangian node, element]
 
-  """->
+  """
 function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
                                          x::AbstractArray{Tmsh,3},
                                          x_bar::AbstractArray{Tmsh,3},
@@ -368,7 +368,7 @@ function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
     # compute the coordinate derivatives
     fill!(work, zero(Tmsh))
     for di = 1:2
-      differentiateElement!(sbp, di, sub(x,:,:,elem), sub(work,:,:,di)) 
+      differentiateElement!(sbp, di, view(x,:,:,elem), view(work,:,:,di)) 
     end
     # compute the scaled metrics: could also pass these in to avoid recomputing
     # them...
@@ -395,7 +395,7 @@ function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
       work[1,i,1] += dξdx_bar[2,2,i,elem]
     end
     for di = 1:2
-      differentiateElement_rev!(sbp, di, sub(x_bar,:,:,elem), sub(work,:,:,di)) 
+      differentiateElement_rev!(sbp, di, view(x_bar,:,:,elem), view(work,:,:,di)) 
     end
   end
 end
@@ -418,7 +418,7 @@ function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
     # compute the coordinate derivatives
     fill!(work, zero(Tmsh))
     for di = 1:3
-      differentiateElement!(sbp, di, sub(x,:,:,elem), sub(work,:,:,di)) 
+      differentiateElement!(sbp, di, view(x,:,:,elem), view(work,:,:,di)) 
     end
     permutedims!(dxdξ, work, [1,3,2]) # probably slow
 
@@ -474,9 +474,9 @@ function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
 
     permutedims!(work, dxdξ_bar, [1,3,2]) # probably slow    
     for di = 1:3
-      #differentiate!(sbp, di, x, sub(dxdξ,:,:,:,di))
-      differentiateElement_rev!(sbp, di, sub(x_bar,:,:,elem),
-                                sub(work,:,:,di))
+      #differentiate!(sbp, di, x, view(dxdξ,:,:,:,di))
+      differentiateElement_rev!(sbp, di, view(x_bar,:,:,elem),
+                                view(work,:,:,di))
     end
   end # loop over elements
 end
