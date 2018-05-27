@@ -81,7 +81,6 @@ function getTriSBPOmega0(;degree::Int=1, Tsbp::Type=Float64)
 end
 
 
-
 """
 ### SBP.getTriSBPOmega
 

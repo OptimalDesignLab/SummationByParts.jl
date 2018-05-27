@@ -49,12 +49,12 @@ facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") d
           xsbp_c = zeros(Complex{Float64}, (2,sbp.numnodes,1))
           dξdx_c = zeros(Complex{Float64}, (2,2,sbp.numnodes,1))
           jac_c = zeros(Complex{Float64}, (sbp.numnodes,1))
-          xref_c = complex(xref, 0.0)
+          xref_c = complex.(xref, 0.0)
           dRdxlag_cmplx = zeros(2,numdof,1)
           eps_cmplx = 1e-60
           for di = 1:2
             for nd = 1:numdof
-              xlag_c = complex(xlag, 0.0)
+              xlag_c = complex.(xlag, 0.0)
               xlag_c[di,nd,1] += complex(0.0, eps_cmplx)
               # compute the complex perturbed SBP nodes and the mapping Jacobian
               calcMappingJacobian!(sbp, p+1, xref_c, xlag_c, xsbp_c, dξdx_c, jac_c)
@@ -166,9 +166,9 @@ facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") d
           xsbp_c = zeros(Complex{Float64}, (3,sbp.numnodes,1))
           dξdx_c = zeros(Complex{Float64}, (3,3,sbp.numnodes,1))
           jac_c = zeros(Complex{Float64}, (sbp.numnodes,1))
-          xref_c = complex(xref, 0.0)                
-          Eone_c = complex(Eone, 0.0)
-          xlag_c = complex(xlag, 0.0)      
+          xref_c = complex.(xref, 0.0)                
+          Eone_c = complex.(Eone, 0.0)
+          xlag_c = complex.(xlag, 0.0)      
           dRdxlag_cmplx = zeros(3,numdof,1)
           eps_cmplx = 1e-60
           for di = 1:3
@@ -230,7 +230,7 @@ facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") d
           jac_bar = randn(sbp.numnodes,1)
 
           x_bar_cs = zeros(x)
-          x_cmplx = complex(x, zeros(x))
+          x_cmplx = complex.(x, zeros(x))
           dξdx_cmplx = zeros(Complex128, (2,2,sbp.numnodes,1))
           jac_cmplx = zeros(Complex128, (sbp.numnodes,1))
           ceps = 1e-60
@@ -269,7 +269,7 @@ facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") d
           jac_bar = randn(sbp.numnodes,1)
 
           x_bar_cs = zeros(x)
-          x_cmplx = complex(x, zeros(x))
+          x_cmplx = complex.(x, zeros(x))
           dξdx_cmplx = zeros(Complex128, (3,3,sbp.numnodes,1))
           jac_cmplx = zeros(Complex128, (sbp.numnodes,1))
           ceps = 1e-60

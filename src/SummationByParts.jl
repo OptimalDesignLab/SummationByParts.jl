@@ -7,14 +7,20 @@ using ArrayViews
 import ArrayViews.view
 
 if HAVE_OPTIM
-  using Optim
+  using Optim, LineSearches
 end
 using ODLCommonTools
 import ODLCommonTools.sview
 
-#using ArrayViews
-#using ODLCommonTools
-#import ODLCommonTools.sview
+"""
+    getComplexStep(T)
+
+returns an appropriate complex-step size for the given type
+"""
+getComplexStep{T <: Float32}(::Type{T}) = 1f-20
+getComplexStep{T <: Float64}(::Type{T}) = 1e-60
+getComplexStep{T <: Complex64}(::Type{T}) = 1f-20
+getComplexStep{T <: Complex128}(::Type{T}) = 1e-60
 
 include("face_types.jl")
 include("orthopoly.jl")
@@ -73,7 +79,7 @@ export edgestabilize!, permuteinterface!, buildinterpolation
 residual updates in the useoperators.jl and usefaceoperators.jl files
 
 """
-abstract UnaryFunctor
+abstract type UnaryFunctor end
 
 """
 ### SBP.Add

@@ -393,7 +393,7 @@ function permuteinterface!{Tsbp, Tsol}(sbpface::AbstractFace{Tsbp},
 
   dofpernode, numfacenodes, numfaces = size(uface)
   # temporary array needed during permutation
-  workarr = Array(Tsol, dofpernode, numfacenodes)
+  workarr = Array{Tsol}(dofpernode, numfacenodes)
 
   for iface =1:length(ifaces)
     orient = ifaces[iface].orient
@@ -413,7 +413,7 @@ function permuteinterface!{Tsbp, Tsol}(sbpface::AbstractFace{Tsbp},
 
   numfacenodes, numfaces = size(uface)
   # temporary array needed during permutation
-  workarr = Array(Tsol, numfacenodes)
+  workarr = Array{Tsol}(numfacenodes)
 
   for iface =1:length(ifaces)
     orient = ifaces[iface].orient
@@ -519,7 +519,7 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
     return norm(x,1)    
   end
   function shrinkage(a, kappa)
-    return max(0, a-kappa) - max(0, -a-kappa)
+    return max.(0, a-kappa) - max.(0, -a-kappa)
   end
 
   maxiter = 10000
@@ -598,7 +598,7 @@ function calcSparseSolution!(A::AbstractArray{Float64,2},
   # use the approximate solution to identify the non-zero entries
   rankA = rank(A)
   P = zeros(size(A,2),rankA)
-  idx = sortperm(abs(x), rev=true)
+  idx = sortperm(abs.(x), rev=true)
   for i = 1:rankA
     P[idx[i],i] = 1.0
   end

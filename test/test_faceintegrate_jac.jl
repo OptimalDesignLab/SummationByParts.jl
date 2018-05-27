@@ -149,7 +149,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           # create a two element mesh with random orientation
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
-          ifaces = Array(Interface, 1)
+          ifaces = Array{Interface}(1)
           if size(sbp.Q,3) == 1
             ifaces[1] = Interface(1,2,rand(1:2),rand(1:2),1)
           elseif size(sbp.Q,3) == 2
@@ -245,7 +245,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           # create a two element mesh with random orientation
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
-          ifaces = Array(Interface, 1)
+          ifaces = Array{Interface}(1)
           if size(sbp.Q,3) == 1
             ifaces[1] = Interface(1,2,rand(1:2),rand(1:2),1)
           elseif size(sbp.Q,3) == 2

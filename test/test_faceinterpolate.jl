@@ -16,7 +16,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
           xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
           xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
-          bndryfaces = Array(Boundary, 4)
+          bndryfaces = Array{Boundary}(4)
           bndryfaces[1] = Boundary(1,1)
           bndryfaces[2] = Boundary(1,2)
           bndryfaces[3] = Boundary(2,1)
@@ -49,7 +49,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
           xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
           xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
-          bndryfaces = Array(Boundary, 4)
+          bndryfaces = Array{Boundary}(4)
           bndryfaces[1] = Boundary(1,1)
           bndryfaces[2] = Boundary(1,2)
           bndryfaces[3] = Boundary(2,1)
@@ -83,7 +83,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array(Boundary, 4)
+      bndryfaces = Array{Boundary}(4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -117,7 +117,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array(Boundary, 4)
+      bndryfaces = Array{Boundary}(4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -154,7 +154,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array(Boundary, 4)
+      bndryfaces = Array{Boundary}(4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -188,7 +188,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array(Boundary, 4)
+      bndryfaces = Array{Boundary}(4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -218,7 +218,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array(Boundary, 12)
+      bndryfaces = Array{Boundary}(12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -281,7 +281,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array(Boundary, 12)
+      bndryfaces = Array{Boundary}(12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -348,7 +348,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array(Boundary, 12)
+      bndryfaces = Array{Boundary}(12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -411,7 +411,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array(Boundary, 12)
+      bndryfaces = Array{Boundary}(12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -487,7 +487,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
           xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
           xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
-          bndryfaces = Array(Boundary, 4)
+          bndryfaces = Array{Boundary}(4)
           bndryfaces[1] = Boundary(1,1)
           bndryfaces[2] = Boundary(1,2)
           bndryfaces[3] = Boundary(2,1)
@@ -524,7 +524,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
           xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
           xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
-          bndryfaces = Array(Boundary, 4)
+          bndryfaces = Array{Boundary}(4)
           bndryfaces[1] = Boundary(1,1)
           bndryfaces[2] = Boundary(1,2)
           bndryfaces[3] = Boundary(2,1)
@@ -562,7 +562,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array(Boundary, 4)
+      bndryfaces = Array{Boundary}(4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -600,7 +600,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array(Boundary, 4)
+      bndryfaces = Array{Boundary}(4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -641,7 +641,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array(Boundary, 4)
+      bndryfaces = Array{Boundary}(4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -679,7 +679,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array(Boundary, 4)
+      bndryfaces = Array{Boundary}(4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -713,7 +713,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array(Boundary, 12)
+      bndryfaces = Array{Boundary}(12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -780,7 +780,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array(Boundary, 12)
+      bndryfaces = Array{Boundary}(12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -851,7 +851,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array(Boundary, 12)
+      bndryfaces = Array{Boundary}(12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -918,7 +918,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array(Boundary, 12)
+      bndryfaces = Array{Boundary}(12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -994,7 +994,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
           vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-          ifaces = Array(Interface, 1)
+          ifaces = Array{Interface}(1)
           ifaces[1] = Interface(1,2,2,2,1)
           u = zeros(Float64, (sbp.numnodes, 2))
           uface = zeros(Float64, (2, sbpface.numnodes, 1))
@@ -1022,7 +1022,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
           vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-          ifaces = Array(Interface, 1)
+          ifaces = Array{Interface}(1)
           ifaces[1] = Interface(1,2,2,2,1)          
           u = zeros(Float64, (2, sbp.numnodes, 2))
           uface = zeros(Float64, (2, 2, sbpface.numnodes, 1))
@@ -1053,7 +1053,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array(Interface, 1)
+      ifaces = Array{Interface}(1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (sbp.numnodes,2))
       uface = zeros(Float64, (2, sbpface.numnodes, 1))
@@ -1087,7 +1087,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array(Interface, 1)
+      ifaces = Array{Interface}(1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (2,sbp.numnodes,2))
       uface = zeros(Float64, (2, 2, sbpface.numnodes, 1))
@@ -1120,7 +1120,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array(Interface, 1)
+      ifaces = Array{Interface}(1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (sbp.numnodes,2))
       uface = zeros(Float64, (2, sbpface.numnodes, 1))
@@ -1154,7 +1154,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array(Interface, 1)
+      ifaces = Array{Interface}(1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (2,sbp.numnodes,2))
       uface = zeros(Float64, (2, 2, sbpface.numnodes, 1))
@@ -1183,7 +1183,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array(Interface, 4)
+      ifaces = Array{Interface}(4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1240,7 +1240,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array(Interface, 4)
+      ifaces = Array{Interface}(4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1304,7 +1304,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array(Interface, 4)
+      ifaces = Array{Interface}(4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1361,7 +1361,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array(Interface, 4)
+      ifaces = Array{Interface}(4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1429,7 +1429,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
           vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-          ifaces = Array(Interface, 1)
+          ifaces = Array{Interface}(1)
           ifaces[1] = Interface(1,2,2,2,1)
           u = zeros(Float64, (sbp.numnodes, 2))
           uface = zeros(Float64, (sbpface.numnodes, 2, 1))
@@ -1462,7 +1462,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
           vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-          ifaces = Array(Interface, 1)
+          ifaces = Array{Interface}(1)
           ifaces[1] = Interface(1,2,2,2,1)          
           u = zeros(Float64, (2, sbp.numnodes, 2))
           uface = zeros(Float64, (2, sbpface.numnodes, 2, 1))
@@ -1498,7 +1498,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array(Interface, 1)
+      ifaces = Array{Interface}(1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (sbp.numnodes,2))
       uface = zeros(Float64, (sbpface.numnodes, 2, 1))
@@ -1537,7 +1537,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array(Interface, 1)
+      ifaces = Array{Interface}(1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (2,sbp.numnodes,2))
       uface = zeros(Float64, (2, sbpface.numnodes, 2, 1))
@@ -1575,7 +1575,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array(Interface, 1)
+      ifaces = Array{Interface}(1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (sbp.numnodes,2))
       uface = zeros(Float64, (sbpface.numnodes, 2, 1))
@@ -1614,7 +1614,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array(Interface, 1)
+      ifaces = Array{Interface}(1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (2,sbp.numnodes,2))
       uface = zeros(Float64, (2, sbpface.numnodes, 2, 1))
@@ -1648,7 +1648,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array(Interface, 4)
+      ifaces = Array{Interface}(4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1710,7 +1710,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array(Interface, 4)
+      ifaces = Array{Interface}(4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1779,7 +1779,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array(Interface, 4)
+      ifaces = Array{Interface}(4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1841,7 +1841,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array(Interface, 4)
+      ifaces = Array{Interface}(4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)

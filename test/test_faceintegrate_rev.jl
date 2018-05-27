@@ -18,7 +18,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
           vtx = [1. 0.; 1. 1.; 0. 1.]
           xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
           xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-          bndryfaces = Array(Boundary, 4)
+          bndryfaces = Array{Boundary}(4)
           bndryfaces[1] = Boundary(1,1)
           bndryfaces[2] = Boundary(1,3)
           bndryfaces[3] = Boundary(2,1)
@@ -74,7 +74,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
           xf = zeros(Float64, (3,sbpface.numnodes,12))
           facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-          bndryfaces = Array(Boundary, 12)
+          bndryfaces = Array{Boundary}(12)
 
           vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
           xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[facevtx[:,1],:])
@@ -194,7 +194,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
           vface = zeros(uface)
           vvol = rand(Float64, (sbp.numnodes,2))
           uvol = zeros(vvol)
-          bndryfaces = Array(Boundary, 4)
+          bndryfaces = Array{Boundary}(4)
           bndryfaces[1] = Boundary(1,1)
           if size(sbp.Q,3) < 2
             bndryfaces[2] = Boundary(1,2)
@@ -230,7 +230,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
           vface = zeros(uface)
           vvol = rand(Float64, (4,sbp.numnodes,2))
           uvol = zeros(vvol)
-          bndryfaces = Array(Boundary, 4)
+          bndryfaces = Array{Boundary}(4)
           bndryfaces[1] = Boundary(1,1)
           if size(sbp.Q,3) < 2
             bndryfaces[2] = Boundary(1,2)
@@ -324,7 +324,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
-          ifaces = Array(Interface, 1)
+          ifaces = Array{Interface}(1)
           if size(sbp.Q,3) < 2
             ifaces[1] = Interface(1,2,2,1,1)
           else
@@ -357,7 +357,7 @@ facts("Testing SummationByParts Module (reverse-diff of face-data integration me
         for p = 1:($TSBP[3])
           sbp = ($TSBP[1])(degree=p)
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
-          ifaces = Array(Interface, 1)
+          ifaces = Array{Interface}(1)
           if size(sbp.Q,3) < 2
             ifaces[1] = Interface(1,2,2,1,1)
           else

@@ -1006,12 +1006,12 @@ function buildMinConditionOperators{T}(cub::LineSymCub{T}, vtx::Array{T,2},
   function objX(xred)
     return SummationByParts.conditionObj(xred, rho, xperp, Znull, E)
   end
-  function objXGrad!(xred, g)
+  function objXGrad!(g, xred)
     SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
-                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           BFGS(linesearch = BackTracking(order=3)),
                            Optim.Options(g_tol = tol, x_tol = 1e-60,
                                          f_tol = 1e-60, iterations = 1000,
                                          store_trace=false, show_trace=opthist))
@@ -1062,12 +1062,12 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   function objX(xred)
     return SummationByParts.conditionObj(xred, rho, xperp, Znull, E)
   end
-  function objXGrad!(xred, g)
+  function objXGrad!(g, xred)
     SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, E, g)
-  end
+  end  
   # find the solution
   results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
-                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           BFGS(linesearch = BackTracking(order=3)),
                            Optim.Options(g_tol = 1e-13, x_tol = 1e-60,
                                          f_tol = 1e-60, iterations = 1000,
                                          store_trace=false, show_trace=opthist))
@@ -1076,9 +1076,6 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   xred = Optim.minimizer(results)
   println("xred = ", xred)
   x = xperp + Znull*xred
-
-  #spect = SummationByParts.eigenvalueObj(xred, 1, xperp, Znull, w, view(Q,:,:,1))
-  #println("spectral radius of x operator = ",spect)
     
   # gather slice of objective function
   # N = 201
@@ -1100,12 +1097,12 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   function objY(yred)
     return SummationByParts.conditionObj(yred, rho, yperp, Znull, E)
   end
-  function objYGrad!(yred, g)
+  function objYGrad!(g, yred)
     SummationByParts.conditionObjGrad!(yred, rho, yperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objY, objYGrad!, ones(size(Znull,2)),
-                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           BFGS(linesearch = BackTracking(order=3)),
                            Optim.Options(g_tol = 1e-13, x_tol = 1e-60,
                                          f_tol = 1e-60, iterations = 1000,
                                          store_trace=false, show_trace=opthist))
@@ -1114,12 +1111,9 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   yred = Optim.minimizer(results)
   y = yperp + Znull*yred
 
-  #spect = SummationByParts.eigenvalueObj(yred, 1, yperp, Znull, w, view(Q,:,:,2))
-  #println("spectral radius of y operator = ",spect)
-  println("norm(A*x - bx) = ", norm(A*x - bx)) 
+  #--------------------------------------
   @assert( norm(A*x - bx) < 1e-12)
   @assert( norm(A*y - by) < 1e-12)
-
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
     for col = 1:row-1
@@ -1161,12 +1155,12 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   function objX(xred)
     return SummationByParts.conditionObj(xred, rho, xperp, Znull, E)
   end
-  function objXGrad!(xred, g)
+  function objXGrad!(g, xred)
     SummationByParts.conditionObjGrad!(xred, rho, xperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objX, objXGrad!, randn(size(Znull,2)), 
-                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           BFGS(linesearch = BackTracking(order=3)),
                            Optim.Options(g_tol = tol, x_tol = 1e-100,
                                          f_tol = 1e-100, iterations = 100000,
                                          store_trace=false, show_trace=opthist))
@@ -1198,12 +1192,12 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   function objY(yred)
     return SummationByParts.conditionObj(yred, rho, yperp, Znull, E)
   end
-  function objYGrad!(yred, g)
+  function objYGrad!(g, yred)
     SummationByParts.conditionObjGrad!(yred, rho, yperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objY, objYGrad!, randn(size(Znull,2)),
-                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           BFGS(linesearch = BackTracking(order=3)),
                            Optim.Options(g_tol = tol, x_tol = 1e-100,
                                          f_tol = 1e-100, iterations = 100000,
                                          store_trace=false, show_trace=opthist))
@@ -1225,12 +1219,12 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   function objZ(zred)
     return SummationByParts.conditionObj(zred, rho, zperp, Znull, E)
   end
-  function objZGrad!(zred, g)
+  function objZGrad!(g, zred)
     SummationByParts.conditionObjGrad!(zred, rho, zperp, Znull, E, g)
   end
   # find the solution
   results = Optim.optimize(objZ, objZGrad!, randn(size(Znull,2)),
-                           BFGS(linesearch = Optim.LineSearches.bt3!),
+                           BFGS(linesearch = BackTracking(order=3)),
                            Optim.Options(g_tol = tol, x_tol = 1e-100,
                                          f_tol = 1e-100, iterations = 100000,
                                          store_trace=false, show_trace=opthist))
@@ -1242,6 +1236,7 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
   #spect = SummationByParts.eigenvalueObj(zred, 1, zperp, Znull, w, view(Q,:,:,3))
   #println("spectral radius of z operator = ",spect)
 
+  #--------------------------------------
   @assert( norm(A*x - bx) < 1e-12)
   @assert( norm(A*y - by) < 1e-12)
   @assert( norm(A*z - bz) < 1e-12)

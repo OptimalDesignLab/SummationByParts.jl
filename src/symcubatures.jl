@@ -12,7 +12,8 @@ nodal distributions.  It is parameterized on `T` in order to allow for future
 implementations of arbitrary precision types.  The parameterization also permits
 the use of the complex-step method for verification.
 
-""" abstract SymCub{T<:Number}
+"""
+abstract type SymCub{T<:Number} end
 
 """
 ### SymCubatures.PointSymCub
@@ -43,7 +44,7 @@ type PointSymCub{T} <: SymCub{T}
   params::Array{T,1}
   weights::Array{T,1}
 
-  function PointSymCub()
+  function PointSymCub{T}() where T
     numparams = 0
     numweights = 1
     numnodes = 1
@@ -89,8 +90,9 @@ type LineSymCub{T} <: SymCub{T}
   numsym::Array{Int,1}
   params::Array{T,1}
   weights::Array{T,1}
-
-  function LineSymCub(;numedge::Int=0, vertices::Bool=true, centroid::Bool=false)
+    
+  function LineSymCub{T}(;numedge::Int=0, vertices::Bool=true,
+                         centroid::Bool=false) where T
     @assert(numedge >= 0)
     # compute the number of degrees of freedom and unique weights
     numparams = 0
@@ -161,9 +163,9 @@ type TriSymCub{T} <: SymCub{T}
   params::Array{T,1}
   weights::Array{T,1}
 
-  function TriSymCub(;numedge::Int=0, numS21::Int=0, numS111::Int=0,
-                     vertices::Bool=true, midedges::Bool=false,
-                     centroid::Bool=false)
+  function TriSymCub{T}(;numedge::Int=0, numS21::Int=0, numS111::Int=0,
+                        vertices::Bool=true, midedges::Bool=false,
+                        centroid::Bool=false) where T
     @assert(numedge >= 0)
     @assert(numS21 >= 0)
     @assert(numS111 >= 0)
@@ -257,10 +259,11 @@ type TetSymCub{T} <: SymCub{T}
   params::Array{T,1}
   weights::Array{T,1}
 
-  function TetSymCub(;numedge::Int=0, numfaceS21::Int=0, numfaceS111::Int=0,
-                     numS31::Int=0, numS22::Int=0, numS211::Int=0,
-                     numS1111::Int=0, vertices::Bool=true, midedges::Bool=false,
-                     centroid::Bool=false, facecentroid::Bool=false)
+  function TetSymCub{T}(;numedge::Int=0, numfaceS21::Int=0, numfaceS111::Int=0,
+                        numS31::Int=0, numS22::Int=0, numS211::Int=0,
+                        numS1111::Int=0, vertices::Bool=true,
+                        midedges::Bool=false, centroid::Bool=false,
+                        facecentroid::Bool=false) where T
     @assert(numedge >= 0)
     @assert(numfaceS21 >= 0)
     @assert(numfaceS111 >= 0)
@@ -2195,7 +2198,7 @@ and only allow the internal nodes to move.
 
 """
 function getInternalParamMask{T}(cub::TriSymCub{T})
-  mask = Array(Int64, (0))
+  mask = Array{Int64}(0)
   paramptr = 1
   # include S21 orbit parameters
   for i = 1:cub.numS21
@@ -2215,7 +2218,7 @@ function getInternalParamMask{T}(cub::TriSymCub{T})
 end
 
 function getInternalParamMask{T}(cub::TetSymCub{T})
-  mask = Array(Int64, (0))
+  mask = Array{Int64}(0)
   paramptr = 1
   # include S31 orbit parameters
   for i = 1:cub.numS31

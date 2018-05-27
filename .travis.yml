@@ -3,14 +3,13 @@ os:
   - linux
   - osx
 julia:
-  - release
   - 0.6
 notifications:
   email: true
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
-  - julia --check-bounds=yes -e 'versioninfo(); Pkg.clone(pwd()); Pkg.build("SummationByParts"); Pkg.test("SummationByParts"; coverage=true)'
+  - julia --check-bounds=yes -e 'versioninfo(); Pkg.clone(pwd()); Pkg.build("SummationByParts"); Pkg.test("SummationByParts"; coverage=true)' 
 after_success:
   - julia -e 'cd(Pkg.dir("SummationByParts")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
 
