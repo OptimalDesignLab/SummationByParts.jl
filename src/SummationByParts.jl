@@ -22,7 +22,6 @@ getComplexStep{T <: Float64}(::Type{T}) = 1e-60
 getComplexStep{T <: Complex64}(::Type{T}) = 1f-20
 getComplexStep{T <: Complex128}(::Type{T}) = 1e-60
 
-include("face_types.jl")
 include("orthopoly.jl")
 include("symcubatures.jl")
 include("cubature.jl")
@@ -43,7 +42,6 @@ export AbstractFace
 export DenseFace, LineSegFace, TriFace, TetFace
 export SparseFace, TriSparseFace, TetSparseFace
 export getLineSegFace, getTriFaceForDiagE, getTetFaceForDiagE
-export Boundary, Interface
 
 export calcnodes, calcminnodedistance, getNumFaceNodes
 export weakdifferentiate!, weakDifferentiateElement!
