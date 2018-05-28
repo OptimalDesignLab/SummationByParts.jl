@@ -16,7 +16,6 @@ import ODLCommonTools.sview
 #using ODLCommonTools
 #import ODLCommonTools.sview
 
-include("face_types.jl")
 include("orthopoly.jl")
 include("symcubatures.jl")
 include("cubature.jl")
