@@ -3,6 +3,7 @@ using SummationByParts.OrthoPoly
 using SummationByParts.Cubature
 using SummationByParts.SymCubatures
 using FactCheck
+using ODLCommonTools
 import SummationByParts.Add
 
 # runs on Travis take too long, so we run a reduced set of tests
