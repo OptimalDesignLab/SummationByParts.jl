@@ -37,7 +37,6 @@ export AbstractFace
 export DenseFace, LineSegFace, TriFace, TetFace
 export SparseFace, TriSparseFace, TetSparseFace
 export getLineSegFace, getTriFaceForDiagE, getTetFaceForDiagE
-export Boundary, Interface
 
 export calcnodes, calcminnodedistance, getNumFaceNodes
 export weakdifferentiate!, weakDifferentiateElement!
