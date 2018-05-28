@@ -1,6 +1,8 @@
 module OrthoPoly
 # utilities for working with orthogonal polynomials
 
+using ..getComplexStep
+
 """
 ### OrthoPoly.lglnodes
 

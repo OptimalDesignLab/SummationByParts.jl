@@ -3,8 +3,8 @@ module SummationByParts
 
 include("compile_time.jl")
 
-using ArrayViews
-import ArrayViews.view
+#using ArrayViews
+#import ArrayViews.view
 
 if HAVE_OPTIM
   using Optim, LineSearches
