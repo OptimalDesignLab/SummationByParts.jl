@@ -10,7 +10,7 @@ Pkg.checkout("PkgFix", "upgrade_0.6")
 using PkgFix  # from now on, use PkgFix instead of Pkg for everything
 
 ODL_URL = "https://github.com/OptimalDesignLab/ODLCommonTools.jl.git"
-ODL_VER = "update_0.6"
+ODL_VER = "upgrade_0.6"
 ARRAYVIEWS_VER = "master"
 
 
