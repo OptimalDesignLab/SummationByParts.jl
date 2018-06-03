@@ -1,4 +1,4 @@
-__precompile__(false)
+__precompile__()
 module SummationByParts
 
 include("compile_time.jl")
@@ -133,5 +133,8 @@ include("faceintegrate_rev.jl") #<--- reverse mode of faceintegrate.jl
 include("faceintegrate_jac.jl") #<--- Jacobians for combined face operations
 include("edgestabilize.jl") #<--- functions related to edge stabilization
 include("utils.jl") # <--- miscellaneous functions
+
+#include("precompile_SummationByParts.jl")
+#_precompile_()
 
 end # module
