@@ -13,7 +13,7 @@ global const ODL_URL = "https://github.com/OptimalDesignLab/ODLCommonTools.jl.gi
 global const ODL_VER = "upgrade_0.6"
 
 global const ARRAYVIEWS_URL = "https://github.com/JaredCrean2/ArrayViews.jl.git"
-global const ARRAYVIEWS_VER = "fix_depwarn"
+global const ARRAYVIEWS_VER = "work"
 
 
 pkg_dict = PkgFix.installed()
