@@ -1,7 +1,7 @@
 # This file gathers together functions related to strong differentiation using
 # the SBP operators
 
-@doc """
+"""
 ### SummationByParts.differentiate!
 
 Applies the SBP differentiation matrix operator, D, to data in `flux` and stores
@@ -30,7 +30,7 @@ operator sbp.
 
 * `res`: where the result of applying inv(H)*Q[:,:,di] to u is stored
 
-"""->
+"""
 function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux::AbstractArray{Tflx,2},
                                         res::AbstractArray{Tres,2},
@@ -71,7 +71,7 @@ function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   end
 end
 
-@doc """
+"""
 ### SummationByParts.differentiateElement!
 
 This is the single-element variant of differentiate!  Applies the SBP
@@ -99,7 +99,7 @@ operator sbp.
 
 * `res`: where the result of applying inv(H)*Q[:,:,di] to u is stored
 
-"""->
+"""
 function differentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                                flux::AbstractArray{Tflx,1},
                                                res::AbstractArray{Tres,1},

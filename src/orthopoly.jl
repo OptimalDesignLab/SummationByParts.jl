@@ -1,7 +1,9 @@
 module OrthoPoly
 # utilities for working with orthogonal polynomials
 
-@doc """
+using ..getComplexStep
+
+"""
 ### OrthoPoly.lglnodes
 
 Computes the Legendre-Gauss-Lobatto (LGL) quadrature nodes and weights on the
@@ -24,17 +26,17 @@ Methods in Fluid Dynamics,\" Section 2.3. Springer-Verlag 1987
 Julia version adapted from Matlab code written by Greg von Winckel - 04/17/2004
 Contact: gregvw@chtm.unm.edu
  
-"""->
+"""
 function lglnodes(N, T=Float64)
   N1 = N+1
   # Use the Chebyshev-Gauss-Lobatto nodes as an initial guess
-  x = -cos(π*[0:N;]/N)
+  x = -cos.(π*[0:N;]/N)
   # The Legendre Vandermonde Matrix 
   P = zeros(T, (N1,N1))
   # Compute P_(N) using the recursion relation; compute its first and second
   # derivatives and update x using the Newton-Raphson method.
   xold = (T)(2)
-  while maxabs(real(x-xold)) > eps(real((T)(1)))
+  while maximum(abs, real(x-xold)) > eps(real((T)(1)))
     xold = x
     P[:,1] = one(T)
     P[:,2] = x
@@ -47,7 +49,7 @@ function lglnodes(N, T=Float64)
   return x, w
 end
 
-@doc """
+"""
 ### OrthoPoly.lgnodes
 
 Computes the Legendre-Gauss (LG) quadrature nodes and weights on the
@@ -67,12 +69,12 @@ denotes the Nth Legendre polynomial.
 Julia version adapted from Matlab code written by Greg von Winckel - 02/25/2004
 Contact: gregvw@chtm.unm.edu
  
-"""->
+"""
 function lgnodes(N, T=Float64)
   Nm1 = N-1; Np1 = N+1
   N == 1 ? xu = [0.0] : xu = linspace(-1,1,N)
   # initial guess
-  x = -cos((2*[0:Nm1;]+1)*pi/(2*Nm1+2)) - (0.27/N)*sin(pi*xu*Nm1/Np1)
+  x = -cos.((2*[0:Nm1;]+1)*pi/(2*Nm1+2)) - (0.27/N)*sin.(pi*xu*Nm1/Np1)
   # Legendre-Gauss Vandermonde Matrix and its derivative
   L = zeros(N,Np1)
   Lp = zeros(N)
@@ -81,7 +83,7 @@ function lgnodes(N, T=Float64)
   # old points
   xold = (T)(2)
   iter = 1; maxiter = 30
-  while maxabs(real(x-xold)) > 0.1*eps(real((T)(1))) && iter < maxiter
+  while maximum(abs, real(x-xold)) > 0.1*eps(real((T)(1))) && iter < maxiter
     iter += 1
     L[:,1] = one(T)
     L[:,2] = x
@@ -96,7 +98,7 @@ function lgnodes(N, T=Float64)
   return x, w
 end
 
-@doc """
+"""
 ### OrthoPoly.jacobipoly{T}
 
 Evaluate a Jacobi polynomial at some points.  Based on JacobiP in Hesthaven and
@@ -112,7 +114,7 @@ Warburton's nodal DG book.
 
 * `P`: the polynomial evaluated at x
 
-"""->
+"""
 function jacobipoly{T}(x::Array{T}, alpha::AbstractFloat, beta::AbstractFloat,
                        N::Int)
   @assert( alpha + beta != -1 )
@@ -146,7 +148,7 @@ function jacobipoly{T}(x::Array{T}, alpha::AbstractFloat, beta::AbstractFloat,
   size(P_1,1) > size(P_1,2) ? (return P_1) : (return P_1.')
 end
 
-@doc """
+"""
 ### OrthoPoly.diffjacobipoly{T}
 
 Evaluate the first derivative of a Jacobi Polynomial at some points.
@@ -161,7 +163,7 @@ Evaluate the first derivative of a Jacobi Polynomial at some points.
 
 * dP - derivative of polynomial evaluated at x
 
-"""->
+"""
 function diffjacobipoly{T}(x::Array{T}, alpha::AbstractFloat, 
                            beta::AbstractFloat, N::Int)
   @assert( alpha + beta != -1 )
@@ -199,7 +201,7 @@ function diffjacobipoly{T}(x::Array{T}, alpha::AbstractFloat,
   size(DP_1,1) > size(DP_1,2) ? (return DP_1) : (return DP_1.')
 end
 
-@doc """
+"""
 ### OrthoPoly.proriolpoly{T}: method for right triangle
 
 Evaluate Proriol orthogonal polynomial basis function on the right triangle.
@@ -214,7 +216,7 @@ Evaluate Proriol orthogonal polynomial basis function on the right triangle.
 
 * `P`: basis function at (`x`,`y`)
 
-"""->
+"""
 function proriolpoly{T}(x::Array{T}, y::Array{T}, i::Int, j::Int)
   @assert( i >= 0 && j >= 0 )
   xi = zeros(T, size(x))
@@ -227,7 +229,7 @@ function proriolpoly{T}(x::Array{T}, y::Array{T}, i::Int, j::Int)
   return P
 end
 
-@doc """
+"""
 ### OrthoPoly.proriolpoly{T}: method for a right tetrahedron
 
 Evaluate Proriol orthogonal polynomial basis function on the right tetrahedron.
@@ -242,7 +244,7 @@ Evaluate Proriol orthogonal polynomial basis function on the right tetrahedron.
 
 * `P`: basis function at (`x`,`y`,`z`)
 
-"""->
+"""
 function proriolpoly{T}(x::Array{T}, y::Array{T}, z::Array{T}, i::Int, j::Int,
                         k::Int)
   @assert( i >= 0 && j >= 0 && k >= 0 )
@@ -258,7 +260,7 @@ function proriolpoly{T}(x::Array{T}, y::Array{T}, z::Array{T}, i::Int, j::Int,
   return P
 end
 
-@doc """
+"""
 ### OrthoPoly.diffproriolpoly
 
 Evaluate the derivatives of a Proriol orthogonal polynomial basis function on
@@ -274,7 +276,7 @@ the right triangle.
 
 * `dPdx`,`dPdy`: derivative of basis function at (`x`,`y`)
 
-"""->
+"""
 function diffproriolpoly{T}(x::Array{T}, y::Array{T}, i::Int, j::Int)
   xi = zeros(T, size(x))
   for k = 1:length(x)
@@ -310,7 +312,7 @@ function diffproriolpoly{T}(x::Array{T}, y::Array{T}, i::Int, j::Int)
   return dPdx, dPdy
 end
 
-@doc """
+"""
 ### OrthoPoly.diffproriolpoly{T}
 
 Evaluate the derivatives of a Proriol orthogonal polynomial basis function on
@@ -330,16 +332,16 @@ the right tetrahedron.
 
 * `dPdx`,`dPdy`,`dPdz`: derivatives of basis function at (`x`,`y`,`z`)
 
-"""->
+"""
 function diffproriolpoly{T}(x::Array{T}, y::Array{T}, z::Array{T}, i::Int, 
                             j::Int, k::Int)
   # each node is independent, so use complex step once for each coordinate. Care
   # is needed at the one vertex, where the xi and eta mappings become singular.
   # To avoid problems, directional derivatives are used.
-  eps_step = 1e-60
-  xc = complex(x,0)
-  yc = complex(y,0)
-  zc = complex(z,0)
+  eps_step = getComplexStep(T)
+  xc = complex.(x,0)
+  yc = complex.(y,0)
+  zc = complex.(z,0)
   # compute derivative with respect to z
   zc -= eps_step*im
   Pc = proriolpoly(xc, yc, zc, i, j, k)

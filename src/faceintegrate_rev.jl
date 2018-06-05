@@ -1,6 +1,6 @@
 # This file contains the reverse-mode version of the methods in faceintegrate.jl
 
-@doc """
+"""
 ### SummationByParts.integratefunctional_rev!
 
 This is the reverse differentiated version of integratefunctional!.  See
@@ -18,7 +18,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 * `flux_bar`: result of the vector-Jacobian product.
 
-"""->
+"""
 function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
                                                   bndryfaces::AbstractArray{Boundary},
                                                   flux_bar::AbstractArray{Tflx,3},
@@ -54,7 +54,7 @@ function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.integrateBoundaryFunctional_rev!
 
 This is the reverse differentiated version of integrateBoundaryFunctional!.  See
@@ -72,7 +72,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 * `flux_bar`: result of the vector-Jacobian product.
 
-"""->
+"""
 function integrateBoundaryFunctional_rev!{
   Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp}, face::Integer,
                   flux_bar::AbstractArray{Tflx,2}, fun_bar::AbstractArray{Tfun,1},
@@ -100,7 +100,7 @@ function integrateBoundaryFunctional_rev!{
   end
 end
 
-@doc """
+"""
 ### SummationByParts.boundaryintegrate_rev!
 
 This is the reverse differentiated version of boundaryintegrate!.  See
@@ -118,7 +118,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 * `flux_bar`: result of the vector matrix product between (R^T*B) and `res_bar`
 
-"""->
+"""
 function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 bndryfaces::AbstractArray{Boundary},
                                                 flux_bar::AbstractArray{Tflx,2},
@@ -206,7 +206,7 @@ function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.boundaryFaceIntegrate_rev!
 
 This is the reverse differentiated version of boundaryFaceIntegrate!.  See
@@ -224,7 +224,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 * `flux_bar`: result of the vector matrix product between (R^T*B) and `res_bar`
 
-"""->
+"""
 function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
                                                     face::Integer,
                                                     flux_bar::AbstractArray{Tflx,1},
@@ -294,7 +294,7 @@ function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.interiorfaceintegrate_rev!
 
 This is the reverse differentiated version of interiorfaceintegrate!.  See
@@ -312,7 +312,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 * `flux_bar`: result of the vector matrix product between (R^T*B) and `res_bar`
 
-"""->
+"""
 function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                     ifaces::AbstractArray{Interface},
                                                     flux_bar::AbstractArray{Tflx,2},
@@ -415,7 +415,7 @@ function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.interiorFaceIntegrate_rev!
 
 This is the reverse differentiated version of interiorFaceIntegrate!.  See
@@ -434,7 +434,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 * `flux_bar`: result of the vector-matrix product
 
-"""->
+"""
 function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                     iface::Interface,
                                                     flux_bar::AbstractArray{Tflx,1},

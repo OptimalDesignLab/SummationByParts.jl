@@ -12,7 +12,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
         u = vec(x[1,:].^i)
         # loop over each face
         for f = 1:2
-          xface = SymCubatures.calcnodes(facecub, vtx[f,:])
+          xface = SymCubatures.calcnodes(facecub, reshape(vtx[f,:],(1,1)))
           uface = vec(xface[1,:].^i)
           @fact R*u[perm[:,f]] --> roughly(uface, atol=1e-15)
         end
@@ -32,7 +32,7 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
         u = vec(x[1,:].^i)
         # loop over each face
         for f = 1:2
-          xface = SymCubatures.calcnodes(facecub, vtx[f,:])
+          xface = SymCubatures.calcnodes(facecub, reshape(vtx[f,:],(1,1)))
           uface = vec(xface[1,:].^i)
           @fact R*u[perm[:,f]] --> roughly(uface, atol=1e-15)
         end
@@ -172,11 +172,11 @@ facts("Testing SummationByParts Module (buildfaceoperators.jl file)...") do
       for i = 0:d
         u = vec(x[1,:].^i)
         # consider face 1
-        xface = SymCubatures.calcnodes(facecub, vtx[1,:])
+        xface = SymCubatures.calcnodes(facecub, reshape(vtx[1,:],(1,1)))
         dudn = vec(i.*xface[1,:].^max(i-1,0))
         @fact D[:,:,1].'*u[perm[:,1]] --> roughly(dudn, atol=1e-13)
         # consider face 2
-        xface = SymCubatures.calcnodes(facecub, vtx[2,:])
+        xface = SymCubatures.calcnodes(facecub, reshape(vtx[2,:],(1,1)))
         dudn = -vec(i.*xface[1,:].^max(i-1,0))
         @fact D[:,:,1].'*u[perm[:,2]] --> roughly(dudn, atol=1e-13)
       end

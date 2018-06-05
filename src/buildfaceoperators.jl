@@ -1,6 +1,6 @@
 # This file gathers together functions used to build the SBP face operators
 
-@doc """
+"""
 ### SummationByParts.buildfacereconstruction
 
 Builds a matrix operator that can reconstruct a field from a set of volume nodes
@@ -20,7 +20,7 @@ applied on all the faces.
 * `R`: the volume- to face-node reconstruction operator
 * `perm`: a permutation array that allows `R` to be applied on all faces
 
-"""->
+"""
 function buildfacereconstruction{T}(facecub::PointSymCub{T}, cub::LineSymCub{T},
                                     vtx::Array{T,2}, d::Int)
   # first, decide whether or not to use volume nodes or just face nodes
@@ -133,7 +133,7 @@ function buildfacereconstruction{T}(facecub::TriSymCub{T}, cub::TetSymCub{T},
   return R, perm
 end
 
-@doc """
+"""
 ### SummationByParts.buildfacederivatives
 
 Builds matrix operators that can differentiate a polynomial field of degree `d`
@@ -158,7 +158,7 @@ the same operators to be applied on all the faces.
 * `D`: derivative operators in [face node, vol node, direction] format
 * `perm`: a permutation array that allows `D` to be applied on all faces
 
-"""->
+"""
 function buildfacederivatives{T}(facecub::PointSymCub{T}, cub::LineSymCub{T},
                                  vtx::Array{T,2}, d::Int)
   perm = SymCubatures.getfacebasedpermutation(cub)

@@ -1,6 +1,6 @@
 # This file gathers together outer constructors for the SBP operators
 
-@doc """
+"""
 ### SBP.getLineSegSBPLobbato
 
 Returns Gauss-Lobbato type elements, that have nodes on the element boundary
@@ -14,7 +14,7 @@ Returns Gauss-Lobbato type elements, that have nodes on the element boundary
 
 * `sbp`: a Gauss-Lobbato operator of the appropriate degree
 
-"""->
+"""
 function getLineSegSBPLobbato(;degree::Int=1, Tsbp::Type=Float64)
   cub, vtx = quadrature(2*degree-1, Tsbp, internal=false)
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
@@ -22,7 +22,7 @@ function getLineSegSBPLobbato(;degree::Int=1, Tsbp::Type=Float64)
   return LineSegSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
-@doc """
+"""
 ### SBP.getLineSegSBPLegendre
 
 Returns Gauss-Legendre type elements, that do not have nodes on the element
@@ -37,7 +37,7 @@ boundary
 
 * `sbp`: a Legendre-Gauss operator of the appropriate degree
 
-"""->
+"""
 function getLineSegSBPLegendre(;degree::Int=1, Tsbp::Type=Float64)
   cub, vtx = quadrature(2*degree, Tsbp, internal=true)
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
@@ -45,7 +45,7 @@ function getLineSegSBPLegendre(;degree::Int=1, Tsbp::Type=Float64)
   return LineSegSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
-@doc """
+"""
 ### SBP.getTriSBPGamma
 
 Returns SBP-Gamma type elements, that have nodes on the element boundary
@@ -59,7 +59,7 @@ Returns SBP-Gamma type elements, that have nodes on the element boundary
 
 * `sbp`: an SBP-Gamma operator of the appropriate degree
 
-"""->
+"""
 function getTriSBPGamma(;degree::Int=1, Tsbp::Type=Float64)
   cub, vtx = getTriCubatureGamma(2*degree-1, Tsbp)
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
@@ -81,8 +81,7 @@ function getTriSBPOmega0(;degree::Int=1, Tsbp::Type=Float64)
 end
 
 
-
-@doc """
+"""
 ### SBP.getTriSBPOmega
 
 Returns SBP-Omega type elements, that have no nodes on the element boundary
@@ -96,7 +95,7 @@ Returns SBP-Omega type elements, that have no nodes on the element boundary
 
 * `sbp`: an SBP-Omega operator of the appropriate degree
 
-"""->
+"""
 function getTriSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
   cub, vtx = getTriCubatureOmega(2*degree, Tsbp)
   w, Q = SummationByParts.buildoperators(cub, vtx, degree)
@@ -130,7 +129,7 @@ function getTriSBPOmega2(;degree::Int=1, Tsbp::Type=Float64)
 end
 
 
-@doc """
+"""
 ### SBP.getTriSBPDiagE
 
 Returns SBP-DiagE type elements, whose boundary nodes are positioned at cubature
@@ -145,7 +144,7 @@ points
 
 * `sbp`: an SBP-DiagE operator of the appropriate degree
 
-"""->
+"""
 function getTriSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
                         vertices::Bool=true)
   cub, vtx = getTriCubatureDiagE(2*degree, Tsbp, vertices=vertices)
@@ -164,7 +163,7 @@ function getTriSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
   return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
-@doc """
+"""
 ### SBP.getTetSBPGamma
 
 Returns SBP-Gamma type elements, that have nodes on the element boundary
@@ -178,7 +177,7 @@ Returns SBP-Gamma type elements, that have nodes on the element boundary
 
 * `sbp`: an SBP-Gamma operator of the appropriate degree
 
-"""->
+"""
 function getTetSBPGamma(;degree::Int=1, Tsbp::Type=Float64)
   
   cub, vtx = getTetCubatureGamma(2*degree-1, Tsbp)
@@ -187,7 +186,7 @@ function getTetSBPGamma(;degree::Int=1, Tsbp::Type=Float64)
   return TetSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
-@doc """
+"""
 ### SBP.getTetSBPOmega
 
 Returns SBP-Omega type elements, that have no nodes on the element boundary
@@ -201,7 +200,7 @@ Returns SBP-Omega type elements, that have no nodes on the element boundary
 
 * `sbp`: an SBP-Omega operator of the appropriate degree
 
-"""->
+"""
 function getTetSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
   cub, vtx = getTetCubatureOmega(2*degree-1, Tsbp)
   Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 3))
@@ -209,7 +208,7 @@ function getTetSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
   return TetSBP{Tsbp}(degree, cub, vtx, w, Q)  
 end
 
-@doc """
+"""
 ### SBP.getTetSBPDiagE
 
 Returns SBP-DiagE type elements, whose boundary nodes are positioned at cubature
@@ -224,7 +223,7 @@ points
 
 * `sbp`: an SBP-DiagE operator of the appropriate degree
 
-"""->
+"""
 function getTetSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
                         edges::Bool=false, vertices::Bool=false)
   @assert( degree >= 1 && degree <= 4 )
@@ -245,7 +244,7 @@ function getTetSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
   return TetSBP{Tsbp}(degree, cub, vtx, w, Q)
 end
 
-@doc """
+"""
 ### SBP.getLineSegFace
 
 Returns a trival face for line-segment elements.
@@ -260,7 +259,7 @@ Returns a trival face for line-segment elements.
 
 * `sbpface`: an SBP face type for line-segment elements
 
-"""->
+"""
 function getLineSegFace{T}(degree::Int, volcub::LineSymCub{T}, vtx::Array{T,2})
   facecub, facevtx = pointCubature()
   R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
@@ -272,7 +271,7 @@ function getLineSegFace{T}(degree::Int, volcub::LineSymCub{T}, vtx::Array{T,2})
   return LineSegFace{T}(degree, facecub, facevtx, R.', perm, D, Dperm)
 end
 
-@doc """
+"""
 ### SBP.TriFace
 
 Outer constructor for backward compatibility
@@ -288,12 +287,12 @@ Outer constructor for backward compatibility
 
 * `sbpface`: an SBP face type for triangle elements
 
-"""->
-function call{T}(::Type{TriFace{T}}, degree::Int, volcub::TriSymCub{T},
-                 vtx::Array{T,2}; vertices::Bool=false)
+"""
+function (::Type{TriFace{T}}){T}(degree::Int, volcub::TriSymCub{T},
+                                 vtx::Array{T,2}; vertices::Bool=false)
   @assert( degree >= 1 && degree <= 5 )
-  R::Array{T,2}
-  perm::Array{Int,2}
+  local R::Array{T,2}
+  local perm::Array{Int,2}
   if vertices
     facecub, facevtx = quadrature(2*degree, T, internal=false)
     R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
@@ -312,7 +311,7 @@ function call{T}(::Type{TriFace{T}}, degree::Int, volcub::TriSymCub{T},
   TriFace{T}(degree, facecub, facevtx, R.', perm, D, Dperm)
 end
 
-@doc """
+"""
 ### SBP.getTriFaceForDiagE
 
 Returns a quadrature that can be used to construct SBP operators with diagonal
@@ -329,7 +328,7 @@ boundary operators, E.
 
 * `sbpface`: an SBP face type for triangle elements
 
-"""->
+"""
 function getTriFaceForDiagE{T}(degree::Int, volcub::TriSymCub{T},
                                vtx::Array{T,2}; vertices::Bool=true)
   #@assert( degree >= 1 && degree <= 4 )
@@ -354,7 +353,7 @@ function getTriFaceForDiagE{T}(degree::Int, volcub::TriSymCub{T},
   return TriSparseFace{T}(degree, facecub, facevtx, perm_red, D, Dperm)
 end
 
-@doc """
+"""
 ### SBP.TetFace
 
 Outer constructor for backward compatibility
@@ -369,9 +368,9 @@ Outer constructor for backward compatibility
 
 * `sbpface`: an SBP face type for tetrahedral elements
 
-"""->
-function call{T}(::Type{TetFace{T}}, degree::Int, volcub::TetSymCub{T},
-                 vtx::Array{T,2})
+"""
+function (::Type{TetFace{T}}){T}(degree::Int, volcub::TetSymCub{T},
+                                 vtx::Array{T,2})
   @assert( degree >= 1 && degree <= 4 )
   facecub, facevtx = getTriCubatureOmega(2*degree, T)
   normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'
@@ -388,7 +387,7 @@ function call{T}(::Type{TetFace{T}}, degree::Int, volcub::TetSymCub{T},
   TetFace{T}(degree, facecub, facevtx, R.', perm)
 end
 
-@doc """
+"""
 ### SBP.getTetFaceForDiagE
 
 Returns a quadrature that can be used to construct SBP operators with diagonal
@@ -404,7 +403,7 @@ boundary operators, E.
 
 * `sbpface`: an SBP face type for triangle elements
 
-"""->
+"""
 function getTetFaceForDiagE{T}(degree::Int, volcub::TetSymCub{T},
                                vtx::Array{T,2})
   @assert( degree >= 1 && degree <= 4 )

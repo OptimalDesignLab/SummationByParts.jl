@@ -102,8 +102,8 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
           nrm = zeros(3,sbpface.numnodes,4)
           E = zeros(sbp.numnodes,sbp.numnodes,3)
           for f = 1:4
-            facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                        sview(xsbp,:,:,f), sview(nrm,:,:,f))
+            facenormal!(sbpface, p+1, xref, view(xlag,:,:,f),
+                        view(xsbp,:,:,f), view(nrm,:,:,f))
             for di = 1:3
               # for the given Lagrangian nodes, the face-normal is inward pointing,
               # so subtract to reverse sign
@@ -249,8 +249,8 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
           nrm = zeros(3,sbpface.numnodes,4)
           E = zeros(sbp.numnodes,sbp.numnodes,3)
           for f = 1:4
-            facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                        sview(xsbp,:,:,f), sview(nrm,:,:,f))
+            facenormal!(sbpface, p+1, xref, view(xlag,:,:,f),
+                        view(xsbp,:,:,f), view(nrm,:,:,f))
             for di = 1:3
               # for the given Lagrangian nodes, the face-normal is inward pointing,
               # so subtract to reverse sign
@@ -322,9 +322,9 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
   #           mappingjacobian!(sbp, x, dξdx, jac)
   
   #           invariant = zeros(Float64, (3,sbp.numnodes,1))
-  #           differentiate!(sbp, 1, sview(dξdx,1,:,:,:), invariant)
-  #           differentiate!(sbp, 2, sview(dξdx,2,:,:,:), invariant)
-  #           differentiate!(sbp, 3, sview(dξdx,3,:,:,:), invariant)
+  #           differentiate!(sbp, 1, view(dξdx,1,:,:,:), invariant)
+  #           differentiate!(sbp, 2, view(dξdx,2,:,:,:), invariant)
+  #           differentiate!(sbp, 3, view(dξdx,3,:,:,:), invariant)
   #           @fact invariant --> roughly(zeros(Float64, (3,sbp.numnodes,1)), atol=1e-13)
   #         end
   #       end
@@ -345,7 +345,7 @@ facts("Testing SummationByParts Module (mapping Jacobian methods)...") do
       x[:,:,2] = SummationByParts.SymCubatures.calcnodes(sbp.cub, vtx)
       dξdx = zeros(Float64, (2,2,sbpface.numnodes,2,1))
       jac = zeros(Float64, (sbpface.numnodes,2,1))
-      ifaces = Array(Interface, 1)
+      ifaces = Array{Interface}(1)
       ifaces[1] = Interface(1,2,2,3,1)
       mappingjacobian!(sbpface, ifaces, x, dξdx, jac)
       # verify on element 1

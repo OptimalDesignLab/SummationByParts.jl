@@ -1,7 +1,7 @@
 # This file contains the reverse-mode version of the methods in
 # volumeintegrate.jl
 
-@doc """
+"""
 ### SummationByParts.volumeintegrate_rev!
 
 This is the reverse differentiated version of volumeintegrate!.  See
@@ -18,7 +18,7 @@ differentiated with respect to the primal version's `u` variable.
 
 * `u_bar`: the result of the vector matrix product between H and `res_bar`
 
-"""->
+"""
 function volumeintegrate_rev!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                               u_bar::AbstractArray{Tsol,2},
                                               res_bar::AbstractArray{Tres,2},
@@ -51,7 +51,7 @@ function volumeintegrate_rev!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
   end
 end
 
-@doc """
+"""
 ### SummationByParts.volumeIntegrateElement_rev!
 
 This is the reverse differentiated version of volumeIntegrateElement!.  See
@@ -68,7 +68,7 @@ differentiated with respect to the primal version's `u` variable.
 
 * `u_bar`: the result of the vector matrix product between H and `res_bar`
 
-"""->
+"""
 function volumeIntegrateElement_rev!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
                                                      u_bar::AbstractArray{Tsol,1},
                                                      res_bar::AbstractArray{Tres,1},

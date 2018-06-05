@@ -3,7 +3,7 @@
 
 for TFACE = (TriFace, TriSparseFace)
   @eval begin
-    @doc """
+    """
     ### SummationByParts.calcFaceNormals!
     
     Uses a given set of Lagrangian face nodes to determine an analytical
@@ -22,7 +22,7 @@ for TFACE = (TriFace, TriSparseFace)
     * `xsbp`: SBP-face nodes in physical space; [coord, sbp node, face]
     * `nrm`: scaled face-normal at the sbpface nodes; [component, sbp node, face]
     
-    """->    
+    """    
     function calcFaceNormals!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
                                          mapdegree::Int,
                                          xref::AbstractArray{Tsbp,2},
@@ -160,7 +160,7 @@ end
 
 for TFACE = (TriFace, TriSparseFace)
   @eval begin
-    @doc """
+    """
     ### SummationByParts.facenormal!
 
     This is the single-face variant of calcFaceNormals!.  Uses a given set of
@@ -179,7 +179,7 @@ for TFACE = (TriFace, TriSparseFace)
     * `xsbp`: location of the SBP-face nodes in physical space; [coord, sbp node]
     * `nrm`: scaled face-normal at the sbpface nodes
       
-    """->
+    """
     function facenormal!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
                                     mapdegree::Int,
                                     xref::AbstractArray{Tsbp,2},

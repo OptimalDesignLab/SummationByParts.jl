@@ -35,9 +35,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:3
         for i = 0:(p+1)
@@ -92,9 +92,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:3
         for i = 0:(p+1)
@@ -159,9 +159,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:4
         for i = 1:numdof
@@ -226,9 +226,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:4
         for i = 1:numdof
@@ -276,8 +276,8 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xsbp = zeros(2,sbpface.numnodes,3)
       nrm = zeros(2,sbpface.numnodes,3)
       for f = 1:3
-        facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                    sview(xsbp,:,:,f), sview(nrm,:,:,f))
+        facenormal!(sbpface, p+1, xref, view(xlag,:,:,f),
+                    view(xsbp,:,:,f), view(nrm,:,:,f))
       end
       
       # set vector that multiplies from the left
@@ -286,16 +286,16 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:3
         for i = 0:(p+1)
           for di = 1:2
             xlag_cmplx[di,i+1,f] += complex(0.0, ceps)
-            facenormal!(sbpface, p+1, xref, sview(xlag_cmplx,:,:,f),
-                        sview(xsbp_cmplx,:,:,f), sview(nrm_cmplx,:,:,f))
+            facenormal!(sbpface, p+1, xref, view(xlag_cmplx,:,:,f),
+                        view(xsbp_cmplx,:,:,f), view(nrm_cmplx,:,:,f))
             xlag_bar_cmplx[di,i+1,f] = (sum(xsbp_bar[:,:,f].*
                                             imag(xsbp_cmplx[:,:,f])) +
                                         sum(nrm_bar[:,:,f].*
@@ -306,9 +306,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       end
       xlag_bar = zeros(size(xlag))
       for f = 1:3
-        facenormal_rev!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                        sview(xlag_bar,:,:,f), sview(xsbp_bar,:,:,f),
-                        sview(nrm_bar,:,:,f))
+        facenormal_rev!(sbpface, p+1, xref, view(xlag,:,:,f),
+                        view(xlag_bar,:,:,f), view(xsbp_bar,:,:,f),
+                        view(nrm_bar,:,:,f))
       end
       @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
     end
@@ -342,8 +342,8 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xsbp = zeros(2,sbpface.numnodes,3)
       nrm = zeros(2,sbpface.numnodes,3)
       for f = 1:3
-        facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                    sview(xsbp,:,:,f), sview(nrm,:,:,f))
+        facenormal!(sbpface, p+1, xref, view(xlag,:,:,f),
+                    view(xsbp,:,:,f), view(nrm,:,:,f))
       end
       
       # set vector that multiplies from the left
@@ -352,16 +352,16 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:3
         for i = 0:(p+1)
           for di = 1:2
             xlag_cmplx[di,i+1,f] += complex(0.0, ceps)
-            facenormal!(sbpface, p+1, xref, sview(xlag_cmplx,:,:,f),
-                        sview(xsbp_cmplx,:,:,f), sview(nrm_cmplx,:,:,f))
+            facenormal!(sbpface, p+1, xref, view(xlag_cmplx,:,:,f),
+                        view(xsbp_cmplx,:,:,f), view(nrm_cmplx,:,:,f))
             xlag_bar_cmplx[di,i+1,f] = (sum(xsbp_bar[:,:,f].*
                                             imag(xsbp_cmplx[:,:,f])) +
                                         sum(nrm_bar[:,:,f].*
@@ -372,9 +372,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       end
       xlag_bar = zeros(size(xlag))
       for f = 1:3
-        facenormal_rev!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                        sview(xlag_bar,:,:,f), sview(xsbp_bar,:,:,f),
-                        sview(nrm_bar,:,:,f))
+        facenormal_rev!(sbpface, p+1, xref, view(xlag,:,:,f),
+                        view(xlag_bar,:,:,f), view(xsbp_bar,:,:,f),
+                        view(nrm_bar,:,:,f))
       end
       @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
     end
@@ -418,8 +418,8 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xsbp = zeros(3,sbpface.numnodes,4)
       nrm = zeros(3,sbpface.numnodes,4)
       for f = 1:4
-        facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f), sview(xsbp,:,:,f),
-                    sview(nrm,:,:,f))
+        facenormal!(sbpface, p+1, xref, view(xlag,:,:,f), view(xsbp,:,:,f),
+                    view(nrm,:,:,f))
       end
       # set vector that multiplies from the left
       xsbp_bar = rand(size(xsbp))
@@ -427,16 +427,16 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:4
         for i = 1:numdof
           for di = 1:3
             xlag_cmplx[di,i,f] += complex(0.0, ceps)
-            facenormal!(sbpface, p+1, xref, sview(xlag_cmplx,:,:,f),
-                         sview(xsbp_cmplx,:,:,f), sview(nrm_cmplx,:,:,f))
+            facenormal!(sbpface, p+1, xref, view(xlag_cmplx,:,:,f),
+                        view(xsbp_cmplx,:,:,f), view(nrm_cmplx,:,:,f))
             xlag_bar_cmplx[di,i,f] = (sum(xsbp_bar[:,:,f].*
                                           imag(xsbp_cmplx[:,:,f])) +
                                       sum(nrm_bar[:,:,f].*
@@ -447,9 +447,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       end
       xlag_bar = zeros(size(xlag))
       for f = 1:4
-        facenormal_rev!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                         sview(xlag_bar,:,:,f), sview(xsbp_bar,:,:,f),
-                         sview(nrm_bar,:,:,f))
+        facenormal_rev!(sbpface, p+1, xref, view(xlag,:,:,f),
+                        view(xlag_bar,:,:,f), view(xsbp_bar,:,:,f),
+                        view(nrm_bar,:,:,f))
       end
       @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
     end
@@ -493,8 +493,8 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xsbp = zeros(3,sbpface.numnodes,4)
       nrm = zeros(3,sbpface.numnodes,4)
       for f = 1:4
-        facenormal!(sbpface, p+1, xref, sview(xlag,:,:,f), sview(xsbp,:,:,f),
-                    sview(nrm,:,:,f))
+        facenormal!(sbpface, p+1, xref, view(xlag,:,:,f), view(xsbp,:,:,f),
+                    view(nrm,:,:,f))
       end
       # set vector that multiplies from the left
       xsbp_bar = rand(size(xsbp))
@@ -502,16 +502,16 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       xlag_bar_cmplx = zeros(size(xlag))
       
       # differentiate with respect to the Lagrangian nodes using complex step
-      xlag_cmplx = complex(xlag, 0.0)
-      xsbp_cmplx = complex(xsbp, 0.0)
-      nrm_cmplx = complex(nrm, 0.0)
+      xlag_cmplx = complex.(xlag, 0.0)
+      xsbp_cmplx = complex.(xsbp, 0.0)
+      nrm_cmplx = complex.(nrm, 0.0)
       ceps = 1e-60
       for f = 1:4
         for i = 1:numdof
           for di = 1:3
             xlag_cmplx[di,i,f] += complex(0.0, ceps)
-            facenormal!(sbpface, p+1, xref, sview(xlag_cmplx,:,:,f),
-                         sview(xsbp_cmplx,:,:,f), sview(nrm_cmplx,:,:,f))
+            facenormal!(sbpface, p+1, xref, view(xlag_cmplx,:,:,f),
+                        view(xsbp_cmplx,:,:,f), view(nrm_cmplx,:,:,f))
             xlag_bar_cmplx[di,i,f] = (sum(xsbp_bar[:,:,f].*
                                           imag(xsbp_cmplx[:,:,f])) +
                                       sum(nrm_bar[:,:,f].*
@@ -522,9 +522,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       end
       xlag_bar = zeros(size(xlag))
       for f = 1:4
-        facenormal_rev!(sbpface, p+1, xref, sview(xlag,:,:,f),
-                         sview(xlag_bar,:,:,f), sview(xsbp_bar,:,:,f),
-                         sview(nrm_bar,:,:,f))
+        facenormal_rev!(sbpface, p+1, xref, view(xlag,:,:,f),
+                        view(xlag_bar,:,:,f), view(xsbp_bar,:,:,f),
+                        view(nrm_bar,:,:,f))
       end
       @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
     end

@@ -1,7 +1,7 @@
 # This file contains the reverse-mode version of the methods in
 # weakdifferentiate.jl
 
-@doc """
+"""
 ### SummationByParts.weakdifferentiate_rev!
 
 This is the reverse differentiated version of weakdifferentiate!.  See
@@ -20,7 +20,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 * `flux_bar`: the result of the vector matrix product between Q and `res_bar`
 
-"""->
+"""
 function weakdifferentiate_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int, 
                                                 flux_bar::AbstractArray{Tflx,2},
                                                 res_bar::AbstractArray{Tres,2},
@@ -83,7 +83,7 @@ function weakdifferentiate_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   end
 end
 
-@doc """
+"""
 ### SummationByParts.weakDifferentiateElement_rev!
 
 This is the reverse differentiated version of weakDifferentiateElement!.  See
@@ -102,7 +102,7 @@ differentiated with respect to the primal version's `flux` variable.
 
 * `flux_bar`: the result of the vector matrix product between Q and `res_bar`
 
-"""->
+"""
 function weakDifferentiateElement_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
                                                        flux_bar::AbstractArray{Tflx,1},
                                                        res_bar::AbstractArray{Tres,1},
