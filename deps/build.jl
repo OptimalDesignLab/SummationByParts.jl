@@ -5,7 +5,11 @@
 if !isdir(joinpath(Pkg.dir(), "PkgFix"))
   Pkg.clone("https://github.com/OptimalDesignLab/PkgFix.jl.git")
 end
-Pkg.checkout("PkgFix", "upgrade_0.6")
+start_dir=pwd()
+cd(Pkg.dir("PkgFix"))
+run(`git checkout upgrade_0.6`)
+cd(start_dir)
+
 
 using PkgFix  # from now on, use PkgFix instead of Pkg for everything
 
