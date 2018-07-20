@@ -115,14 +115,14 @@ to an auxlliary set of nodes.
 * `R`: the interpolation operator, size = [numpoints, sbp.numnodes]
 
 """
-function buildinterpolation{T}(sbp::LineSegSBP{T}, xinterp::AbstractArray{T,2};
-                               d::Int=sbp.degree)
+function _buildinterpolation1D{T}(xsbp::AbstractArray{T,2}, xinterp::AbstractArray{T,2},
+                               d::Int)
   # evaluate the basis at the SBP nodes and the interpolation points
   @assert size(xinterp, 1) == 1
   N = convert(Int, d+1 )
-  Psbp = zeros(T, (sbp.numnodes,N) )
+  Psbp = zeros(T, (size(xsbp, 2),N) )
   Pinterp = zeros(T, (size(xinterp,2),N) )
-  xsbp = calcnodes(sbp, sbp.vtx)
+#  xsbp = calcnodes(sbp, sbp.vtx)
   ptr = 1
   for i = 0:d
     Psbp[:,ptr] = OrthoPoly.jacobipoly(vec(xsbp[1,:]), 0.0, 0.0, i)
@@ -133,14 +133,65 @@ function buildinterpolation{T}(sbp::LineSegSBP{T}, xinterp::AbstractArray{T,2};
   return R
 end
 
-function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2};
+"""
+### SummationByParts.buildinterpolation
+
+Alternative interface for computing interpolations from the nodes of an
+SBP operator to an arbitrary set of nodes.
+
+**Inputs**
+
+* `sbp`: an SBP operator
+* `xinterp`: points to interpolate to in ref coords, size = [ndim,numpoints]
+* `d=sbp.degree`: (optional) interpolation is exact for degree d polys
+
+**Returns**
+
+* `R`: the interpolation operator, size = [numpoints, sbp.numnodes]
+
+"""
+function buildinterpolation{T}(sbp::AbstractSBP{T}, xinterp::AbstractArray{T,2};
                                d::Int=sbp.degree)
+
+  xsbp = calcnodes(sbp, sbp.vtx)
+  return buildinterpolation(xsbp, xinterp, d)
+end
+
+"""
+### SummationByParts.buildinterpolation
+
+Builds a matrix that constructs interpolation operators from an an arbitrary
+set of points to an arbitrary set of points
+
+**Inputs**
+
+* `xsbp`: coordinates of points interpolating from, [ndim, numinpoints]
+* `xinterp`: coordinates of points interpolating to [ndim, numoutpoints]
+* d: degree of interpolation operator
+
+"""
+function buildinterpolation{T}(xsbp::AbstractArray{T, 2}, xinterp::AbstractArray{T, 2}, d::Int)
+
+  R = if size(xsbp, 1) == 1
+    _buildinterpolation1D(xsbp, xinterp, d)
+  elseif size(xsbp, 1) == 2
+    _buildinterpolation2D(xsbp, xinterp, d)
+  elseif size(xsbp, 1) == 3
+    _buildinterpolation3D(xsbp, xinterp, d)
+  else
+    error("dimension > 3 not supported")
+  end
+
+  return R
+end
+
+
+function _buildinterpolation2D{T}(xsbp::AbstractArray{T, 2}, xinterp::AbstractArray{T, 2}, d::Int)
   # evaluate the basis at the SBP nodes and the interpolation points
   @assert size(xinterp, 1) == 2
   N = convert(Int, (d+1)*(d+2)/2 )
-  Psbp = zeros(T, (sbp.numnodes,N) )
+  Psbp = zeros(T, (size(xsbp,2),N) )
   Pinterp = zeros(T, (size(xinterp,2),N) )
-  xsbp = calcnodes(sbp, sbp.vtx)
   ptr = 1
   for r = 0:d
     for j = 0:r
@@ -155,14 +206,14 @@ function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2};
   return R
 end
 
-function buildinterpolation{T}(sbp::TetSBP{T}, xinterp::AbstractArray{T,2};
-                               d::Int=sbp.degree)
+function _buildinterpolation3D{T}(xsbp::AbstractArray{T, 2}, xinterp::AbstractArray{T,2},
+                               d::Int)
   # evaluate the basis at the SBP nodes and the interpolation points
   @assert size(xinterp, 1) == 3
   N = convert(Int, (d+1)*(d+2)*(d+3)/6)
-  Psbp = zeros(T, (sbp.numnodes,N) )
+  Psbp = zeros(T, (size(xsbp,2),N) )
   Pinterp = zeros(T, (size(xinterp,2),N) )
-  xsbp = calcnodes(sbp, sbp.vtx)
+#  xsbp = calcnodes(sbp, sbp.vtx)
   ptr = 1
   for r = 0:d
     for k = 0:r
