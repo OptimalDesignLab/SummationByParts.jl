@@ -146,6 +146,39 @@ facts("Testing SummationByParts Module (utils.jl file)...") do
     end
   end
 
+  context("Testing buildinterpolation for arbitrary points") do
+    sbp = getTriSBPOmega(degree=1)
+    # interpolate from vertices to mid edge nodes
+    vtx = sbp.vtx.'
+    edge_pts = zeros(vtx)
+    for i=1:3
+      i2 = (i % 3) + 1
+      for d=1:2
+        edge_pts[1] = 0.5(vtx[d, i] + vtx[d, i2])
+      end
+    end
+
+    vals_verts = zeros(3)
+    vals_edges_exact = zeros(3)
+    for i=1:3
+      x = vtx[1, i]; y = vtx[2, i]
+      vals_verts[i] = x + y + 1
+
+      x = edge_pts[1, i]; y = edge_pts[2, i]
+      vals_edges_exact[i] = x + y + 1
+    end
+
+    interp = SummationByParts.buildinterpolation(vtx, edge_pts, 1)
+    vals_edges = interp*vals_verts
+    println("vals_edges = ", vals_edges)
+    println("vals_edges_exact = ", vals_edges_exact)
+
+    for i=1:3
+      @fact vals_edges[i] --> roughly(vals_edges_exact[i], atol=1e-13)
+    end
+
+  end  # end context
+
   context("Testing SummationByParts.buildinterpolation (Staggered grid)") do
 
     # check that it is the identity if the two operators are the same
