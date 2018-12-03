@@ -33,7 +33,7 @@ the 3D case, but Eone_bar needs to be supplied in both 2D and 3D.
 
 """
 function calcMappingJacobian_rev!{
-  Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
+  Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractMatrix,
              xlag::AbstractArray{Tmsh,3}, xlag_bar::AbstractArray{Tmsh,3},
              xsbp_bar::AbstractArray{Tmsh,3}, dξdx_bar::AbstractArray{Tmsh,4},
              jac_bar::AbstractArray{Tmsh,2}, Eone_bar::AbstractArray{Tmsh,3})
@@ -149,7 +149,7 @@ function calcMappingJacobian_rev!{
 end
 
 function calcMappingJacobian_rev!{
-  Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
+  Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int, xref::AbstractMatrix,
              xlag::AbstractArray{Tmsh,3}, xlag_bar::AbstractArray{Tmsh,3},
              xsbp_bar::AbstractArray{Tmsh,3}, dξdx_bar::AbstractArray{Tmsh,4},
              jac_bar::AbstractArray{Tmsh,2}, Eone_bar::AbstractArray{Tmsh,3})

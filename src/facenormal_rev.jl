@@ -29,7 +29,7 @@ for TFACE = (TriFace, TriSparseFace)
     """
     function calcFaceNormals_rev!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
                                              mapdegree::Int,
-                                             xref::AbstractArray{Tmsh,2},
+                                             xref::AbstractMatrix,
                                              xlag::AbstractArray{Tmsh,3},
                                              xlag_bar::AbstractArray{Tmsh,3},
                                              xsbp_bar::AbstractArray{Tmsh,3},
@@ -94,7 +94,7 @@ for TFACE = (TetFace, TetSparseFace)
   @eval begin
     function calcFaceNormals_rev!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
                                              mapdegree::Int,
-                                             xref::AbstractArray{Tmsh,2},
+                                             xref::AbstractMatrix,
                                              xlag::AbstractArray{Tmsh,3},
                                              xlag_bar::AbstractArray{Tmsh,3},
                                              xsbp_bar::AbstractArray{Tmsh,3},
