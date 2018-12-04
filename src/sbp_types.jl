@@ -7,7 +7,7 @@
 finite-difference operators.
 
 """
-abstract type AbstractSBP{T<:Number} end
+abstract type AbstractSBP{T<:Number} <: AbstractOperator{T} end
 
 """
 ### SBP.TriSBP

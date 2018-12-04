@@ -58,6 +58,7 @@ facts("Testing SummationByParts Module (reverse-diff of mapping Jacobian)...") d
               xlag_c[di,nd,1] += complex(0.0, eps_cmplx)
               # compute the complex perturbed SBP nodes and the mapping Jacobian
               calcMappingJacobian!(sbp, p+1, xref_c, xlag_c, xsbp_c, dξdx_c, jac_c)
+              println("jac_c = ", jac_c)
               dRdxlag_cmplx[di,nd,1] +=
                 (dot(vec(dRdxsbp[:,:,1]),vec(imag(xsbp_c))) +
                  dot(vec(dRddξdx[:,:,:,1]),vec(imag(dξdx_c))) +
