@@ -26,6 +26,8 @@ of the arguments follows that used in `calcMappingJacobian!`.
 * `xlag_bar`: gradient w.r.t. Lagrangian nodes; [coord, Lagrangian node, element]
 * `Eone_bar`: gradient w.r.t. Ex*one, Ey*one (Ez*one); [sbp node, coord, element]
 
+The above arrays are *updated*, not overwritten.
+
 **Notes**
 
 See `calcMappingJacobian!` for an explanation of `Eone`; it is only needed in
@@ -73,8 +75,8 @@ function calcMappingJacobian_rev!{
     end
   end
   # loop over each element...
-  fill!(xlag_bar, zero(Tmsh))
-  fill!(Eone_bar, zero(Tmsh))
+#  fill!(xlag_bar, zero(Tmsh))
+#  fill!(Eone_bar, zero(Tmsh))
   coeff = zeros(Tmsh, (numdof,2))
   coeff_bar = zeros(Tmsh, (numdof,2))
   dxdξ = zeros(Tmsh, (2,2,sbp.numnodes))
