@@ -14,7 +14,7 @@ cd(start_dir)
 using PkgFix  # from now on, use PkgFix instead of Pkg for everything
 
 global const ODL_URL = "https://github.com/OptimalDesignLab/ODLCommonTools.jl.git"
-global const ODL_VER = "master"
+global const ODL_VER = "v0.5"
 
 global const ARRAYVIEWS_URL = "https://github.com/JaredCrean2/ArrayViews.jl.git"
 global const ARRAYVIEWS_VER = "work"
