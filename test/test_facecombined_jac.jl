@@ -1,4 +1,4 @@
-facts("Testing SummationByParts Module (Jacobian of face integration methods)...") do
+facts("Testing SummationByParts Module (Jacobian of face combined methods)...") do
 
   for TSBP = ((getLineSegSBPLobbato,getLineSegFace,1),
               (getLineSegSBPLegendre,getLineSegFace,1),
@@ -9,7 +9,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               (getTetSBPOmega,TetFace{Float64},3),
               (getTetSBPDiagE,getTetFaceForDiagE,3))
     @eval begin
-      context("Testing boundaryFaceIntegrate_jac! ("string($TSBP[1])" scalar field method)") do
+      context("Testing boundaryFaceCombined_jac! ("string($TSBP[1])" scalar field method)") do
         for p = 1:4
           # evaluate residual based on randomly selected face and random state
           sbp = ($TSBP[1])(degree=p)
@@ -33,7 +33,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
             flux_jac[i] = -2.0*uface[i]*sin(uface[i]*uface[i])
           end
           dRdu = zeros(Float64, (sbp.numnodes, sbp.numnodes))
-          boundaryFaceIntegrate_jac!(sbpface, face, flux_jac, dRdu)
+          boundaryFaceCombined_jac!(sbpface, face, flux_jac, dRdu)
 
           # get the Jacobian using complex step
           u_c = complex(u)
@@ -73,7 +73,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               (getTetSBPOmega,TetFace{Float64},3),
               (getTetSBPDiagE,getTetFaceForDiagE,3))
     @eval begin
-      context("Testing boundaryFaceIntegrate_jac! ("string($TSBP[1])" vector field method)") do
+      context("Testing boundaryFaceCombined_jac! ("string($TSBP[1])" vector field method)") do
         for p = 1:4
           # evaluate residual based on randomly selected face and random state
           sbp = ($TSBP[1])(degree=p)
@@ -100,7 +100,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
             flux_jac[2,2,i] = uface[1,i]*uface[1,i]*cos(uface[2,i])
           end
           dRdu = zeros(Float64, (2, 2, sbp.numnodes, sbp.numnodes))
-          boundaryFaceIntegrate_jac!(sbpface, face, flux_jac, dRdu)
+          boundaryFaceCombined_jac!(sbpface, face, flux_jac, dRdu)
 
           # get the Jacobian using complex step
           u_c = complex(u)
@@ -144,7 +144,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               (getTetSBPOmega,TetFace{Float64},3),
               (getTetSBPDiagE,getTetFaceForDiagE,3))
     @eval begin
-      context("Testing interiorFaceIntegrate_jac! ("string($TSBP[1])" scalar field method)") do
+      context("Testing interiorFaceCombined_jac! ("string($TSBP[1])" scalar field method)") do
         for p = 1:4
           # create a two element mesh with random orientation
           sbp = ($TSBP[1])(degree=p)
@@ -178,7 +178,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           dR1du2 = zeros(dR1du1)
           dR2du1 = zeros(dR1du1)
           dR2du2 = zeros(dR1du1)
-          interiorFaceIntegrate_jac!(sbpface, ifaces[1],
+          interiorFaceCombined_jac!(sbpface, ifaces[1],
                                      flux_jac1, flux_jac2,
                                      dR1du1, dR1du2, dR2du1, dR2du2)
 
@@ -240,7 +240,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               (getTetSBPOmega,TetFace{Float64},3),
               (getTetSBPDiagE,getTetFaceForDiagE,3))
     @eval begin
-      context("Testing interiorFaceIntegrate_jac! ("string($TSBP[1])" vector field method)") do
+      context("Testing interiorFaceCombined_jac! ("string($TSBP[1])" vector field method)") do
         for p = 1:4
           # create a two element mesh with random orientation
           sbp = ($TSBP[1])(degree=p)
@@ -289,7 +289,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           dR1du2 = zeros(dR1du1)
           dR2du1 = zeros(dR1du1)
           dR2du2 = zeros(dR1du1)
-          interiorFaceIntegrate_jac!(sbpface, ifaces[1],
+          interiorFaceCombined_jac!(sbpface, ifaces[1],
                                      flux_jac1, flux_jac2,
                                      dR1du1, dR1du2, dR2du1, dR2du2)
 
