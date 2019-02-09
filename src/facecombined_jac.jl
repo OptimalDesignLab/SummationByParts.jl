@@ -3,7 +3,7 @@
 # and faceintegrate.
 
 """
-### SummationByParts.boundaryFaceIntegrate_jac!
+### SummationByParts.boundaryFaceCombined_jac!
 
 Given the face-node flux Jacobians, this method computes the Jacobian of the
 chain boundaryFaceInterpolate! --> face-flux evaluation -->
@@ -33,7 +33,7 @@ dimensions are of size `sbp.numnodes`.
 * `dresdu`: Jacobian of element residual w.r.t. the state
 
 """
-function boundaryFaceIntegrate_jac!{
+function boundaryFaceCombined_jac!{
   Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, face::Integer,
                   dfluxdu::AbstractArray{Tflx,1},
                   dresdu::AbstractArray{Tres,2},
@@ -58,7 +58,7 @@ function boundaryFaceIntegrate_jac!{
   end
 end
 
-function boundaryFaceIntegrate_jac!{
+function boundaryFaceCombined_jac!{
   Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, face::Integer,
                   dfluxdu::AbstractArray{Tflx,3},
                   dresdu::AbstractArray{Tres,4},
@@ -89,7 +89,7 @@ function boundaryFaceIntegrate_jac!{
   end
 end
 
-function boundaryFaceIntegrate_jac!{
+function boundaryFaceCombined_jac!{
   Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp}, face::Integer,
                   dfluxdu::AbstractArray{Tflx,1},
                   dresdu::AbstractArray{Tres,2},
@@ -105,7 +105,7 @@ function boundaryFaceIntegrate_jac!{
   end
 end
 
-function boundaryFaceIntegrate_jac!{
+function boundaryFaceCombined_jac!{
   Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp}, face::Integer,
                   dfluxdu::AbstractArray{Tflx,3},
                   dresdu::AbstractArray{Tres,4},
@@ -128,7 +128,7 @@ function boundaryFaceIntegrate_jac!{
 end
 
 """
-### SummationByParts.interiorFaceIntegrate_jac!
+### SummationByParts.interiorFaceCombined_jac!
 
 Given the face-node flux Jacobians, this method computes the Jacobian of the
 chain interiorFaceInterpolate! --> face-flux evaluation -->
@@ -164,7 +164,7 @@ size(dfluxduL,1), while the third and fourth dimensions are of size
 * `dresRduR`: Jacobian of right residual w.r.t. right state
 
 """
-function interiorFaceIntegrate_jac!{
+function interiorFaceCombined_jac!{
   Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, iface::Interface,
                   dfluxduL::AbstractArray{Tflx,1},
                   dfluxduR::AbstractArray{Tflx,1},
@@ -206,7 +206,7 @@ function interiorFaceIntegrate_jac!{
   end
 end
 
-function interiorFaceIntegrate_jac!{
+function interiorFaceCombined_jac!{
   Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, iface::Interface,
                   dfluxduL::AbstractArray{Tflx,3},
                   dfluxduR::AbstractArray{Tflx,3},
@@ -259,7 +259,7 @@ function interiorFaceIntegrate_jac!{
   end
 end
 
-function interiorFaceIntegrate_jac!{
+function interiorFaceCombined_jac!{
   Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp}, iface::Interface,
                   dfluxduL::AbstractArray{Tflx,1},
                   dfluxduR::AbstractArray{Tflx,1},
@@ -288,7 +288,7 @@ function interiorFaceIntegrate_jac!{
   end
 end
 
-function interiorFaceIntegrate_jac!{
+function interiorFaceCombined_jac!{
   Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp}, iface::Interface,
                   dfluxduL::AbstractArray{Tflx,3},
                   dfluxduR::AbstractArray{Tflx,3},
