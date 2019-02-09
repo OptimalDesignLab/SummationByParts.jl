@@ -54,8 +54,10 @@ export facenormal!, calcFaceNormals!
 export facenormal_rev!, calcFaceNormals_rev!
 export boundaryinterpolate!, boundaryFaceInterpolate!
 export boundaryinterpolate_rev!, boundaryFaceInterpolate_rev!
+export boundaryFaceInterpolate_jac!
 export interiorfaceinterpolate!, interiorFaceInterpolate!
 export interiorfaceinterpolate_rev!, interiorFaceInterpolate_rev!
+export interiorFaceInterpolate_jac!
 export integratefunctional!, integrateBoundaryFunctional!
 export integratefunctional_rev!, integrateBoundaryFunctional_rev!
 export boundaryintegrate!, boundaryFaceIntegrate!
@@ -118,6 +120,7 @@ include("mappingjacobian.jl") #<--- functions to compute the mapping jacobian
 include("mappingjacobian_rev.jl") #<--- reverse-diff of mappingjacobian
 include("faceinterpolate.jl") #<--- functions to interpolate data to faces
 include("faceinterpolate_rev.jl") #<--- functions to interpolate data to faces
+include("faceinterpolate_jac.jl") #<--- functions for Jacobian interpolation
 include("faceintegrate.jl") #<--- functions for integration over faces
 include("faceintegrate_rev.jl") #<--- reverse mode of faceintegrate.jl
 include("faceintegrate_jac.jl") #<--- Jacobians for combined face operations

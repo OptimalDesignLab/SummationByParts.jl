@@ -207,9 +207,11 @@ defined by `cub`, which is a parametric abstract type (see symcubatures.jl).
   on exit, defines the nodes and weights that satisfy the desired accuracy.
 
 """
-function solvecubatureweights!{T}(cub::SymCub{T}, q::Int;
+function solvecubatureweights!{T}(cub::SymCub{T}, q::Int,
+                                  mask::AbstractArray{Int64,1};
                                   tol=10*eps(typeof(real(one(T)))),
                                   hist::Bool=false)
+  @assert( length(mask) <= cub.numweights )
   Jac = SymCubatures.calcjacobianofweights(cub)
 
   # compute accuracy for initial guess 
@@ -228,13 +230,19 @@ function solvecubatureweights!{T}(cub::SymCub{T}, q::Int;
   nu = 1000.0 #100.0
   v = zeros(T, (cub.numweights) )
   v = cub.weights
+  dv = zeros(v)
   for k = 1:maxiter
     JtJ = Jac.'*(dF[:,end-cub.numnodes+1:end].'*
       dF[:,end-cub.numnodes+1:end])*Jac
     H = JtJ + nu*diagm(diag(JtJ))
     g = -Jac.'*dF[:,end-cub.numnodes+1:end].'*F
-    dv = H\g
+    #dv = H\g
 
+    # solve only for those weights that are in mask
+    fill!(dv, zero(T))
+    Hred = H[mask,mask]
+    dv[mask] = Hred\g[mask]
+    
     # update cubature definition and check for convergence
     v += dv
     SymCubatures.setweights!(cub, v)
@@ -387,7 +395,8 @@ function quadratureUniform(q::Int, N::Int, T=Float64; internal::Bool=false)
   SymCubatures.setparams!(quad, alpha)
   weight = (2.0/N)*ones(T, (numedge + 1 + centroid))
   SymCubatures.setweights!(quad, weight)
-  solvecubatureweights!(quad, q)
+  mask = 1:quad.numweights
+  solvecubatureweights!(quad, q, mask)
   #mask = zeros(Int64, (0))
   #append!(mask, (quad.numparams+1):(quad.numparams+quad.numweights))
   #Cubature.solvecubature!(quad, q, mask, tol=1e-15)
@@ -648,7 +657,11 @@ function getTriCubatureDiagE(q::Int, T=Float64; vertices::Bool=true,
   mask = zeros(Int64, (0))
   if vertices
     # include the vertices in the cubature
-    if q <= 2
+    if q <= 0
+      cub = SymCubatures.TriSymCub{T}(vertices=true) 
+      SymCubatures.setweights!(cub, T[2/3])
+      cub_degree = 1      
+    elseif q <= 2
       cub = SymCubatures.TriSymCub{T}(midedges=true, centroid=true)
       SymCubatures.setweights!(cub, T[9/10, 1/10, 4/15])
       cub_degree = 3

@@ -19,10 +19,13 @@ include("test_mappingjacobian.jl")
 include("test_mappingjacobian_rev.jl")
 include("test_faceinterpolate.jl")
 include("test_faceinterpolate_rev.jl")
+include("test_faceinterpolate_jac.jl")
 include("test_faceintegrate.jl")
 include("test_faceintegrate_rev.jl")
 include("test_faceintegrate_jac.jl")
 include("test_utils.jl")
+
+
 
 # include("test_orthopoly.jl")
 # include("test_symcubatures.jl")

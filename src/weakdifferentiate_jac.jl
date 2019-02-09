@@ -2,7 +2,7 @@
 # differentiation using the SBP operators
 
 """
-### SummationByParts.weakDifferentiateElement!
+### SummationByParts.weakDifferentiateElement_jac!
 
 This function applies the SBP stiffness matrix (or its transpose) to a diagonal,
 or block diagonal, matrix of flux jacobians `dfluxdu`.  The resulting matrix is

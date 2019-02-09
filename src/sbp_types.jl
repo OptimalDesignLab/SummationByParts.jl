@@ -10,7 +10,7 @@ finite-difference operators.
 abstract type AbstractSBP{T<:Number} end
 
 """
-### SBP.TriSBP
+### SBP.LineSegSBP
 
 Defines diagonal-norm SBP first-derivative operators on a line segment.
 
@@ -68,7 +68,7 @@ immutable TriSBP{T} <: AbstractSBP{T}
   # inner constructor
   function TriSBP{T}(degree::Int, cub::TriSymCub{T}, vtx::Array{T,2},
                      w::Array{T,1}, Q::Array{T,3}) where T
-    @assert( degree >= 1 && degree <= 4)
+    @assert( degree >= 0 && degree <= 4)
     numnodes = cub.numnodes
     @assert( size(Q,1) == size(Q,2) == size(w,1) == numnodes )
     @assert( size(Q,3) == 2 )
