@@ -62,9 +62,11 @@ export integratefunctional!, integrateBoundaryFunctional!
 export integratefunctional_rev!, integrateBoundaryFunctional_rev!
 export boundaryintegrate!, boundaryFaceIntegrate!
 export boundaryintegrate_rev!, boundaryFaceIntegrate_rev!
+export boundaryFaceIntegrate_jac!
 export boundaryFaceCombined_jac!
 export interiorfaceintegrate!, interiorFaceIntegrate!
 export interiorfaceintegrate_rev!, interiorFaceIntegrate_rev!
+export interiorFaceIntegrate_jac!
 export interiorFaceCombined_jac!
 export edgestabilize!, permuteinterface!
 
@@ -123,6 +125,7 @@ include("faceinterpolate_rev.jl") #<--- functions to interpolate data to faces
 include("faceinterpolate_jac.jl") #<--- functions for Jacobian interpolation
 include("faceintegrate.jl") #<--- functions for integration over faces
 include("faceintegrate_rev.jl") #<--- reverse mode of faceintegrate.jl
+include("faceintegrate_jac.jl") #<--- functions for Jacobian face integration
 include("facecombined_jac.jl") #<--- Jacobians for combined face operations
 include("edgestabilize.jl") #<--- functions related to edge stabilization
 include("utils.jl") # <--- miscellaneous functions
