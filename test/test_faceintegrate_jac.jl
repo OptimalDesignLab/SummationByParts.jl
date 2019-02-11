@@ -180,8 +180,93 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
             end
           end
           # check for equality
-          @fact dFdu --> roughly(dFdu_cmplx, atol=1e-15)          
-          
+          @fact dFdu --> roughly(dFdu_cmplx, atol=1e-15)
+
+          # test 5D method consistency with 4D method (faceIntegrate)
+          dim = size(sbp.Q, 3)
+          facejacL_4d = rand(2, 2, sbpface.numnodes, sbp.numnodes, dim)
+          facejacR_4d = rand(2, 2, sbpface.numnodes, sbp.numnodes, dim)
+          facejacL_5d = zeros(2, 2, dim, sbpface.numnodes, sbp.numnodes)
+          facejacR_5d = zeros(2, 2, dim, sbpface.numnodes, sbp.numnodes)
+          resjacL_4d = zeros(2, 2, sbp.numnodes, sbp.numnodes, dim)
+          resjacR_4d = zeros(2, 2, sbp.numnodes, sbp.numnodes, dim)
+          resjacL_5d = zeros(2, 2, dim, sbp.numnodes, sbp.numnodes)
+          resjacR_5d = zeros(2, 2, dim, sbp.numnodes, sbp.numnodes)
+
+          for q=1:sbp.numnodes
+            for p=1:sbpface.numnodes
+              for d=1:dim
+                for j=1:2
+                  for i=1:2
+                    facejacL_5d[i, j, d, p, q] = facejacL_4d[i, j, p, q, d]
+                    facejacR_5d[i, j, d, p, q] = facejacR_4d[i, j, p, q, d]
+                  end
+                end
+              end
+            end
+          end
+
+          op = SummationByParts.Subtract()
+          for include_quad in [true, false]
+            for d=1:dim
+              facejacL_d = sview(facejacL_4d, :, :, :, :, d)
+              facejacR_d = sview(facejacR_4d, :, :, :, :, d)
+              resjacL_d = sview(resjacL_4d, :, :, :, :, d)
+              resjacR_d = sview(resjacR_4d, :, :, :, :, d)
+              interiorFaceIntegrate_jac!(sbpface, ifaces[1], facejacL_d,
+                    facejacR_d, resjacL_d, resjacR_d, op, include_quadrature=include_quad)
+            end
+
+            interiorFaceIntegrate_jac!(sbpface, ifaces[1], facejacL_5d,
+                    facejacR_5d, resjacL_5d, resjacR_5d, op, include_quadrature=include_quad)
+
+
+            for d=1:dim
+              @fact maximum(abs.(resjacL_5d[:, :, d, :, :] - resjacL_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
+              @fact maximum(abs.(resjacR_5d[:, :, d, :, :] - resjacR_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
+            end
+          end  # end include_quad
+
+          # test 5D method consistency with 4D method (faceIntegrate)
+          facejacL_4d = zeros(2, 2, sbpface.numnodes, sbp.numnodes, dim)
+          facejacR_4d = zeros(2, 2, sbpface.numnodes, sbp.numnodes, dim)
+          facejacL_5d = zeros(2, 2, dim, sbpface.numnodes, sbp.numnodes)
+          facejacR_5d = zeros(2, 2, dim, sbpface.numnodes, sbp.numnodes)
+          resjacL_4d = rand(2, 2, sbp.numnodes, sbp.numnodes, dim)
+          resjacR_4d = rand(2, 2, sbp.numnodes, sbp.numnodes, dim)
+          resjacL_5d = zeros(2, 2, dim, sbp.numnodes, sbp.numnodes)
+          resjacR_5d = zeros(2, 2, dim, sbp.numnodes, sbp.numnodes)
+
+          for q=1:sbp.numnodes
+            for p=1:sbp.numnodes
+              for d=1:dim
+                for j=1:2
+                  for i=1:2
+                    resjacL_5d[i, j, d, p, q] = resjacL_4d[i, j, p, q, d]
+                    resjacR_5d[i, j, d, p, q] = resjacR_4d[i, j, p, q, d]
+                  end
+                end
+              end
+            end
+          end
+
+          for d=1:dim
+            facejacL_d = sview(facejacL_4d, :, :, :, :, d)
+            facejacR_d = sview(facejacR_4d, :, :, :, :, d)
+            resjacL_d = sview(resjacL_4d, :, :, :, :, d)
+            resjacR_d = sview(resjacR_4d, :, :, :, :, d)
+            interiorFaceInterpolate_jac!(sbpface, ifaces[1], resjacL_d,
+                  resjacR_d, facejacL_d, facejacR_d)
+          end
+
+            interiorFaceInterpolate_jac!(sbpface, ifaces[1], resjacL_5d,
+                    resjacR_5d, facejacL_5d, facejacR_5d)
+
+          for d=1:dim
+            @fact maximum(abs.(facejacL_5d[:, :, d, :, :] - facejacL_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
+            @fact maximum(abs.(facejacR_5d[:, :, d, :, :] - facejacR_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
+          end
+             
         end
       end
     end

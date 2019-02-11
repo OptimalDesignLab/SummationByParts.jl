@@ -236,6 +236,7 @@ function interiorFaceInterpolate_jac!(sbpface::DenseFace{Tsbp},
                                       dfduL_face::AbstractArray{Tsol,5},
                                       dfduR_face::AbstractArray{Tsol,5}
                                       ) where {Tsbp,Tsol}
+
   @asserts_enabled begin
     @assert( size(dfduL_face,4) == size(dfduR_face,4) == size(sbpface.interp,2) )
     @assert( size(sbpface.interp,1) <= size(dfduL,4) == size(dfduL,5) ==

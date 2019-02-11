@@ -1,6 +1,6 @@
 # things defined here would be defined using the pre-processor in C
 
-global const ENABLE_ASSERTS = false
+global const ENABLE_ASSERTS = true
 
 macro asserts_enabled(expr1)
 

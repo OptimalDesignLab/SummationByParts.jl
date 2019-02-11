@@ -257,6 +257,13 @@ function interiorFaceIntegrate_jac!(sbpface::DenseFace{Tsbp},
                                     (±)::UnaryFunctor=Add();
                                     include_quadrature::Bool=true
                                     ) where {Tsbp,Tjac}
+#=
+  println("size(interp, 1) = ", size(sbpface.interp, 1))
+  println("size(dfduL, 3) = ", size(dfduL, 3))
+  println("size(dfduL, 4) = ", size(dfduL, 4))
+  println("size(dfduR, 3) = ", size(dfduR, 4))
+  println("size(dfduL_face, 4) = ", size(dfdu_face, 4))
+  =#
   @asserts_enabled begin
     @assert( size(dfduL_face,3) == size(dfduR_face,3) == size(sbpface.interp,2) )
     @assert( size(sbpface.interp,1) <= size(dfduL,3) == size(dfduL,4) ==
@@ -391,9 +398,9 @@ function interiorFaceIntegrate_jac!(sbpface::DenseFace{Tsbp},
             for q = 1:size(dfduL,2)
               for p = 1:size(dfduL,1)
                 dfduL[p,q,d,sbpface.perm[j,iface.faceL],k] +=
-                  ±(sbpface.interp[j,i]*sbpface.wface[i]*dfduL_face[p,q,i,k])
+                  ±(sbpface.interp[j,i]*sbpface.wface[i]*dfduL_face[p,q,d,i,k])
                 dfduR[p,q,d,sbpface.perm[j,iface.faceR],k] -=
-                  ±(sbpface.interp[j,iR]*sbpface.wface[iR]*dfduR_face[p,q,i,k])
+                  ±(sbpface.interp[j,iR]*sbpface.wface[iR]*dfduR_face[p,q,d,i,k])
               end
             end
           end
