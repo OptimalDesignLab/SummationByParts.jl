@@ -75,6 +75,76 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           end
           # check for equality
           @fact dFdu --> roughly(dFdu_cmplx, atol=1e-15)
+
+          # test 5D method consistency with 4D (integrate)
+          dim = size(sbp.Q, 3)
+          facejac_4d = rand(2, 2, sbpface.numnodes, sbp.numnodes, dim)
+          facejac_5d = zeros(2, 2, dim, sbpface.numnodes, sbp.numnodes)
+          resjac_4d = zeros(2, 2, sbp.numnodes, sbp.numnodes, dim)
+          resjac_5d = zeros(2, 2, dim, sbp.numnodes, sbp.numnodes
+                            )
+          for q=1:sbp.numnodes
+            for p=1:sbpface.numnodes
+              for d=1:dim
+                for j=1:2
+                  for i=1:2
+                    facejac_5d[i, j, d, p, q] = facejac_4d[i, j, p, q, d]
+                  end
+                end
+              end
+            end
+          end
+
+          op = SummationByParts.Subtract()
+          for include_quad in [true, false]
+            for d=1:dim
+              facejac_d = sview(facejac_4d, :, :, :, :, d)
+              resjac_d = sview(resjac_4d, :, :, :, :, d)
+              boundaryFaceIntegrate_jac!(sbpface, face, facejac_d,
+                               resjac_d, op, include_quadrature=include_quad)
+            end
+
+            boundaryFaceIntegrate_jac!(sbpface, face, facejac_5d,
+                            resjac_5d, op, include_quadrature=include_quad)
+
+
+            for d=1:dim
+              @fact maximum(abs.(resjac_5d[:, :, d, :, :] - resjac_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
+            end
+          end  # end include_quad
+
+          # test 5D method consistency with 4D (interpolate)
+          dim = size(sbp.Q, 3)
+          facejac_4d = zeros(2, 2, sbpface.numnodes, sbp.numnodes, dim)
+          facejac_5d = zeros(2, 2, dim, sbpface.numnodes, sbp.numnodes)
+          resjac_4d = rand(2, 2, sbp.numnodes, sbp.numnodes, dim)
+          resjac_5d = zeros(2, 2, dim, sbp.numnodes, sbp.numnodes)
+ 
+          for q=1:sbp.numnodes
+            for p=1:sbp.numnodes
+              for d=1:dim
+                for j=1:2
+                  for i=1:2
+                    resjac_5d[i, j, d, p, q] = resjac_4d[i, j, p, q, d]
+                  end
+                end
+              end
+            end
+          end
+
+          for d=1:dim
+            facejac_d = sview(facejac_4d, :, :, :, :, d)
+            resjac_d = sview(resjac_4d, :, :, :, :, d)
+            boundaryFaceInterpolate_jac!(sbpface, face, resjac_d, facejac_d)
+          end
+
+          boundaryFaceInterpolate_jac!(sbpface, face, resjac_5d, facejac_5d)
+
+          for d=1:dim
+            @fact maximum(abs.(facejac_5d[:, :, d, :, :] - facejac_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
+          end
+ 
+
         end
       end
     end
