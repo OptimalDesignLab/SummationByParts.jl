@@ -256,8 +256,10 @@ function calcvandermondproriol{T}(coords::AbstractMatrix{T}, maxdegree::Int)
   V = zeros(T, npts, npoly)
 
   if dim == 2
+    @assert size(coords, 2) == 2
     calcvandermondproriol2(coords, maxdegree, V)
   elseif dim == 3
+    @assert size(coords, 2) == 3
     calcvandermondproriol3(coords, maxdegree, V)
   else
     throw(ErrorException("Cannot evaluate Vandermond matrix for dimension $dim > 3 polynomials"))

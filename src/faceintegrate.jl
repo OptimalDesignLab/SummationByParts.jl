@@ -530,10 +530,14 @@ function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
                                                 resL::AbstractArray{Tres,2},
                                                 resR::AbstractArray{Tres,2},
                                                 (±)::UnaryFunctor=Add())
-  @assert( size(resL,1) == size(resR,1) == size(flux,1) )  
-  @assert( size(sbpface.interp,1) <= size(resL,2) )
-  @assert( size(sbpface.interp,1) <= size(resR,2) )
-  @assert( size(sbpface.interp,2) == size(flux,2) )
+
+  @asserts_enabled begin
+    @assert( size(resL,1) == size(resR,1) == size(flux,1) )  
+    @assert( size(sbpface.interp,1) <= size(resL,2) )
+    @assert( size(sbpface.interp,1) <= size(resR,2) )
+    @assert( size(sbpface.interp,2) == size(flux,2) )
+  end
+
   for i = 1:sbpface.numnodes
     iR = sbpface.nbrperm[i,iface.orient]
     for j = 1:sbpface.stencilsize
@@ -566,7 +570,10 @@ function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
                                                 resL::AbstractArray{Tres,2},
                                                 resR::AbstractArray{Tres,2},
                                                 (±)::UnaryFunctor=Add())
-  @assert( size(resL,1) == size(resR,1) == size(flux,1) )  
+  @asserts_enabled begin
+    @assert( size(resL,1) == size(resR,1) == size(flux,1) )  
+  end
+
   for i = 1:sbpface.numnodes
     iR = sbpface.nbrperm[i,iface.orient]
     for field = 1:size(flux,1)

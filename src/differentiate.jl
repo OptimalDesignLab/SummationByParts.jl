@@ -138,15 +138,16 @@ function differentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   end
 
   if trans # apply transposed D
-    Hinvflux = zeros(Tres, (size(flux,1)))
+#    Hinvflux = zeros(Tres, (size(flux,1)))
     for i = 1:sbp.numnodes
       Hinv = 1./sbp.w[i]
-      for field = 1:size(flux,1)
-        Hinvflux[field] = Hinv*flux[field,i]
-      end
+#      for field = 1:size(flux,1)
+#        Hinvflux[field] = Hinv*flux[field,i]
+#      end
       for j = 1:sbp.numnodes
         for field = 1:size(flux,1)
-          res[field,j] += ±(sbp.Q[i,j,di]*Hinvflux[field])
+#          res[field,j] += ±(sbp.Q[i,j,di]*Hinvflux[field])
+          res[field,j] += ±(sbp.Q[i,j,di]*Hinv*flux[field, i])
         end
       end
     end
