@@ -139,6 +139,8 @@ points
 
 * `degree`: maximum polynomial degree for which the derivatives are exact
 * `Tsbp`: floating point type used for the operators
+* `vertices`: include vertices in the operator
+* `mincond`: use the min-condition number operators
 
 **Returns**
 
@@ -146,19 +148,31 @@ points
 
 """
 function getTriSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
-                        vertices::Bool=true)
-  cub, vtx = getTriCubatureDiagE(2*degree, Tsbp, vertices=vertices)
-  w = SymCubatures.calcweights(cub)
-
-  vstr = vertices ? "vert" : "novert"
-  if degree >= 1 && degree <= 4
-    Q = reshape( readdlm(joinpath(dirname(@__FILE__), "tri_diage_p$(degree)_$vstr.dat")), cub.numnodes, cub.numnodes, 2)
-
-  else  # perform optimization
-    w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
-                                                       vertices=vertices)
+                        vertices::Bool=true, mincond::Bool=true)
+  if degree == 0
+    cub, vtx = getTriCubatureGamma(1, Tsbp)
+    Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+    w, Q = SummationByParts.buildoperators(cub, vtx, 1)
+    return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
   end
+  cub, vtx = getTriCubatureDiagE(2*degree, Tsbp, vertices=vertices)
+ 
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+  if mincond
+    # use the files written to disk
+    w = SymCubatures.calcweights(cub)
+    vstr = vertices ? "vert" : "novert"
+    if degree >= 1 && degree <= 4
+      Q = reshape( readdlm(joinpath(dirname(@__FILE__), "tri_diage_p$(degree)_$vstr.dat")), cub.numnodes, cub.numnodes, 2)
 
+    else  # perform optimization
+      w, Q = SummationByParts.buildMinConditionOperators(cub, vtx, degree,
+                                                         vertices=vertices)
+    end
+  else
+#    w, Q = SummationByParts.buildMinFrobeniusOperators(cub, vtx, degree,
+#                                                       vertices=vertices)
+  end
 
   return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
 end

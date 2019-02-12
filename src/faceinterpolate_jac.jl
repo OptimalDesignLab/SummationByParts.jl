@@ -77,6 +77,59 @@ function boundaryFaceInterpolate_jac!(sbpface::SparseFace{Tsbp},
     end
   end
 end
+#=
+function boundaryFaceInterpolate_jac!(sbpface::DenseFace{Tsbp},
+                                      face::Integer,
+                                      dfdu::AbstractArray{Tsol,3},
+                                      dfdu_face::AbstractArray{Tsol,4}
+                                      ) where {Tsbp,Tsol}
+  @asserts_enabled begin
+    @assert( size(dfdu_face,3) == size(sbpface.interp,2) )
+    @assert( size(sbpface.interp,1) <= size(dfdu,3)  == size(dfdu_face,4) )
+    @assert( size(dfdu,1) == size(dfdu,2) == size(dfdu_face,1) ==
+             size(dfdu_face,2) )
+  end
+  # loop over the volume variables that we are differentiating w.r.t.
+    # loop over the face nodes
+    for i = 1:sbpface.numnodes
+      for j = 1:sbpface.stencilsize
+        perm = sbpface.perm[j, face]
+        for q = 1:size(dfdu,2)
+          for p = 1:size(dfdu,1)
+            dfdu_face[p,q,i,perm] += (sbpface.interp[j,i]*
+                                   dfdu[p,q,perm])
+          end
+        end
+      end
+    end
+end
+=#
+
+function boundaryFaceInterpolate_jac!(sbpface::SparseFace{Tsbp},
+                                      face::Integer,
+                                      dfdu::AbstractArray{Tsol,4},
+                                      dfdu_face::AbstractArray{Tsol,4}
+                                      ) where {Tsbp,Tsol}
+  @asserts_enabled begin
+    @assert( size(dfdu_face,3) == sbpface.numnodes )
+    @assert( size(dfdu,3) == size(dfdu,4) == size(dfdu_face,4) )
+    @assert( size(dfdu,1) == size(dfdu,2) == size(dfdu_face,1) ==
+             size(dfdu_face,2) )
+  end
+  # loop over the volume variables that we are differentiating w.r.t.
+  for k = 1:size(dfdu,4)
+    # loop over the face nodes
+    for i = 1:sbpface.numnodes
+      for q = 1:size(dfdu,2)
+        for p = 1:size(dfdu,1)
+          dfdu_face[p,q,i,k] = dfdu[p,q,sbpface.perm[i,face],k]
+        end
+      end
+    end
+  end
+end
+
+
 
 function boundaryFaceInterpolate_jac!(sbpface::DenseFace{Tsbp},
                                       face::Integer,
@@ -199,6 +252,44 @@ function interiorFaceInterpolate_jac!(sbpface::DenseFace{Tsbp},
   end
 end
 
+#=
+function interiorFaceInterpolate_jac!(sbpface::DenseFace{Tsbp},
+                                      iface::Interface,
+                                      dfduL::AbstractArray{Tsol,3},
+                                      dfduR::AbstractArray{Tsol,3},
+                                      dfduL_face::AbstractArray{Tsol,4},
+                                      dfduR_face::AbstractArray{Tsol,4}
+                                      ) where {Tsbp,Tsol}
+  @asserts_enabled begin
+    @assert( size(dfduL_face,3) == size(dfduR_face,3) == size(sbpface.interp,2) )
+    @assert( size(sbpface.interp,1) <= size(dfduL,3)  ==
+             size(dfduR,3) == size(dfduL_face,4) == size(dfduR_face,4) )
+    @assert( size(dfduL,1) == size(dfduL,2) == size(dfduR,1) == size(dfduR,2) ==
+             size(dfduL_face,1) == size(dfduL_face,2) == size(dfduR_face,1) ==
+             size(dfduR_face,2) )
+  end
+  # loop over the volume variables that we are differentiating w.r.t.
+  # loop over the face nodes
+  for i = 1:sbpface.numnodes
+    iR = sbpface.nbrperm[i,iface.orient]
+    # loop over the interpolation stencil
+    for j = 1:sbpface.stencilsize
+      permL = sbpface.perm[j, iface.faceL]
+      permR = sbpface.perm[j, iface.faceR]
+      for q = 1:size(dfduL,2)
+        for p = 1:size(dfduL,1)
+          dfduL_face[p,q,i,permL] += (sbpface.interp[j,i]*
+                                  dfduL[p,q,permL])
+          dfduR_face[p,q,i,permR] += (sbpface.interp[j,iR]*
+                                  dfduR[p,q,permR])
+        end
+      end
+    end
+  end
+end
+=#
+
+
 function interiorFaceInterpolate_jac!(sbpface::SparseFace{Tsbp},
                                       iface::Interface,
                                       dfduL::AbstractArray{Tsol,4},
@@ -228,6 +319,39 @@ function interiorFaceInterpolate_jac!(sbpface::SparseFace{Tsbp},
     end
   end
 end
+
+#=
+function interiorFaceInterpolate_jac!(sbpface::SparseFace{Tsbp},
+                                      iface::Interface,
+                                      dfduL::AbstractArray{Tsol,3},
+                                      dfduR::AbstractArray{Tsol,3},
+                                      dfduL_face::AbstractArray{Tsol,4},
+                                      dfduR_face::AbstractArray{Tsol,4}
+                                      ) where {Tsbp,Tsol}
+  @asserts_enabled begin
+    @assert( size(dfduL_face,3) == size(dfduR_face,3) == sbpface.numnodes )
+    @assert( size(dfduL,3) == size(dfduR,3) == size(dfduL_face,4) == 
+             size(dfduR_face,4) )
+    @assert( size(dfduL,1) == size(dfduL,2) == size(dfduR,1) == size(dfduR,2) ==
+             size(dfduL_face,1) == size(dfduL_face,2) == size(dfduR_face,1) ==
+             size(dfduR_face,2) )
+  end
+  # loop over the volume variables that we are differentiating w.r.t.
+  # loop over the face nodes
+  for i = 1:sbpface.numnodes
+    iR = sbpface.nbrperm[i,iface.orient]
+    permL = sbpface.perm[i, iface.faceL]
+    permR = sbpface.perm[iR, iface.faceR]
+    for q = 1:size(dfduL,2)
+      for p = 1:size(dfduL,1)
+        dfduL_face[p,q,i,permL] += dfduL[p,q,permL]
+        dfduR_face[p,q,i,permR] += dfduR[p,q,permR]
+      end
+    end
+  end
+end
+
+=#
 
 function interiorFaceInterpolate_jac!(sbpface::DenseFace{Tsbp},
                                       iface::Interface,

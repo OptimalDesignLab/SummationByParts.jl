@@ -1076,7 +1076,11 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   xred = Optim.minimizer(results)
   println("xred = ", xred)
   x = xperp + Znull*xred
-    
+
+  spect = SummationByParts.eigenvalueObj(xred, 1, xperp, Znull, w, view(Q,:,:,1))
+  println("condition number for model    = ",Optim.minimum(results))
+  println("spectral radius of x operator = ",spect)
+  
   # gather slice of objective function
   # N = 201
   # obj_slice = zeros(N)
@@ -1111,6 +1115,9 @@ function buildMinConditionOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
   yred = Optim.minimizer(results)
   y = yperp + Znull*yred
 
+  spect = SummationByParts.eigenvalueObj(yred, 1, yperp, Znull, w, view(Q,:,:,2))
+  println("spectral radius of y operator = ",spect)
+  
   #--------------------------------------
   @assert( norm(A*x - bx) < 1e-12)
   @assert( norm(A*y - by) < 1e-12)
@@ -1250,6 +1257,76 @@ function buildMinConditionOperators{T}(cub::TetSymCub{T}, vtx::Array{T,2},
       Q[col,row,2] -= y[offset+col]
       Q[row,col,3] += z[offset+col]
       Q[col,row,3] -= z[offset+col]
+    end
+  end
+  return w, Q
+end
+
+
+"""
+### SummationByParts.buildMinFrobeniusOperators
+
+Construct and return SBP matrix operators that minimize the Frobenius norm of
+the skew-symmetric part.  These operators have diagonal mass and boundary
+operators.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+* `vtx`: vertices of the right simplex
+* `d`: maximum total degree for the Proriol polynomials
+* `vertices`: (optional) if true, include vertices in the operator
+
+**Outputs**
+
+* `w`: the diagonal norm stored as a 1D array
+* `Q`: the stiffness matrices
+
+"""
+function buildMinFrobeniusOperators{T}(cub::TriSymCub{T}, vtx::Array{T,2},
+                                       d::Int; vertices::Bool=true)
+  w = SymCubatures.calcweights(cub)
+  face = getTriFaceForDiagE(d, cub, vtx, vertices=vertices)
+  Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
+  E = zeros(T, (cub.numnodes,cub.numnodes) )
+  SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
+  scale!(Q, 0.5)
+  A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
+
+  # find the weight matrix for the min-norm problem, which is based on the norm
+  # H, and then scale the columns of A
+  #val = SymCubatures.getnodevalences(cub)
+  #val = ones(cub.numnodes)
+  #println("w   = ",w)
+  #println("val = ",val)
+  H = deepcopy(w) #.*val
+  #println("H = ",H)
+  for row = 2:cub.numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      fac = 1.0/sqrt(1.0/H[row]^2 + 1.0/H[col]^2)
+      A[:,offset+col] *= fac
+    end
+  end
+  # solve for the scaled solution
+  Ainv = pinv(A)
+  x = Ainv*bx
+  y = Ainv*by
+  # println("norm(A*x - bx) = ",norm(A*x - bx))
+  # println("norm(A*y - by) = ",norm(A*y - by))
+  @assert( norm(A*x - bx) < 1e-12)
+  @assert( norm(A*y - by) < 1e-12)
+
+  # insert the solution into Q (don't forget to unscale)
+  for row = 2:cub.numnodes
+    offset = convert(Int, (row-1)*(row-2)/2)
+    for col = 1:row-1
+      fac = 1.0/sqrt(1.0/H[row]^2 + 1.0/H[col]^2)
+      Q[row,col,1] += x[offset+col]*fac
+      Q[col,row,1] -= x[offset+col]*fac
+      Q[row,col,2] += y[offset+col]*fac
+      Q[col,row,2] -= y[offset+col]*fac
     end
   end
   return w, Q

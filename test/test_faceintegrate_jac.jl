@@ -8,12 +8,15 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               (getTetSBPGamma,TetFace{Float64},3),
               (getTetSBPOmega,TetFace{Float64},3),
               (getTetSBPDiagE,getTetFaceForDiagE,3))
+    println("TSBP = ", TSBP)
     @eval begin
       context("Testing boundaryFaceIntegrate_jac! ("string($TSBP[1])" vector field method)") do
         for p = 1:4
           # evaluate residual based on randomly selected face and random state
           sbp = ($TSBP[1])(degree=p)
+          println("constructed sbp")
           sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          println("constructed sbpface")
           face = 0
           if size(sbp.Q,3) == 1
             face = rand(1:2)
@@ -73,6 +76,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               u_c[p,i] -= complex(0.0, ceps)
             end
           end
+          println("checking equality")
           # check for equality
           @fact dFdu --> roughly(dFdu_cmplx, atol=1e-15)
 
@@ -108,6 +112,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
                             resjac_5d, op, include_quadrature=include_quad)
 
 
+            println("checking 5D")
             for d=1:dim
               @fact maximum(abs.(resjac_5d[:, :, d, :, :] - resjac_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
             end
@@ -132,6 +137,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
             end
           end
 
+          println("checking 5D again")
           for d=1:dim
             facejac_d = sview(facejac_4d, :, :, :, :, d)
             resjac_d = sview(resjac_4d, :, :, :, :, d)
@@ -143,7 +149,36 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           for d=1:dim
             @fact maximum(abs.(facejac_5d[:, :, d, :, :] - facejac_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
           end
- 
+#=
+          # test 3D method consistency with 4D method
+          if typeof(sbpface) <: DenseFace
+
+            facejacL_4d = zeros(2, 2, sbpface.numnodes, sbp.numnodes)
+            facejacL_3d = zeros(2, 2, sbpface.numnodes, sbp.numnodes)
+            resjacL_4d = rand(2, 2, sbp.numnodes, sbp.numnodes)
+            resjacL_3d = zeros(2, 2, sbp.numnodes)
+
+            for q=1:sbp.numnodes
+              for p=1:sbp.numnodes
+                for j=1:2
+                  for i=1:2
+                    if p == q
+                      resjacL_3d[i, j, p] = resjacL_4d[i, j, p, p]
+                    else
+                      resjacL_4d[i, j, p, q] = 0
+                    end
+                  end
+                end
+              end
+            end
+
+            #boundaryFaceInterpolate_jac!(sbpface, face, resjacL_4d, facejacL_4d)
+
+            #boundaryFaceInterpolate_jac!(sbpface, face, resjacL_3d, facejacL_3d)
+
+            #@fact maximum(abs.(facejacL_4d - facejacL_3d)) --> roughly(0.0, atol=1e-13)
+          end
+=#   
 
         end
       end
@@ -297,7 +332,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
             end
           end  # end include_quad
 
-          # test 5D method consistency with 4D method (faceIntegrate)
+          # test 5D method consistency with 4D method (faceInterpolate)
           facejacL_4d = zeros(2, 2, sbpface.numnodes, sbp.numnodes, dim)
           facejacR_4d = zeros(2, 2, sbpface.numnodes, sbp.numnodes, dim)
           facejacL_5d = zeros(2, 2, dim, sbpface.numnodes, sbp.numnodes)
@@ -336,7 +371,42 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
             @fact maximum(abs.(facejacL_5d[:, :, d, :, :] - facejacL_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
             @fact maximum(abs.(facejacR_5d[:, :, d, :, :] - facejacR_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
           end
-             
+#=
+          # test 3D method consistency with 4D method
+          facejacL_4d = zeros(2, 2, sbpface.numnodes, sbp.numnodes)
+          facejacR_4d = zeros(2, 2, sbpface.numnodes, sbp.numnodes)
+          facejacL_3d = zeros(2, 2, sbpface.numnodes, sbp.numnodes)
+          facejacR_3d = zeros(2, 2, sbpface.numnodes, sbp.numnodes)
+          resjacL_4d = rand(2, 2, sbp.numnodes, sbp.numnodes)
+          resjacR_4d = rand(2, 2, sbp.numnodes, sbp.numnodes)
+          resjacL_3d = zeros(2, 2, sbp.numnodes)
+          resjacR_3d = zeros(2, 2, sbp.numnodes)
+
+          for q=1:sbp.numnodes
+            for p=1:sbp.numnodes
+              for j=1:2
+                for i=1:2
+                  if p == q
+                    resjacL_3d[i, j, p] = resjacL_4d[i, j, p, p]
+                    resjacR_3d[i, j, p] = resjacR_4d[i, j, p, p]
+                  else
+                    resjacL_4d[i, j, p, q] = 0
+                    resjacR_4d[i, j, p, q] = 0
+                  end
+                end
+              end
+            end
+          end
+
+          interiorFaceInterpolate_jac!(sbpface, ifaces[1], resjacL_4d,
+                                       resjacR_4d, facejacL_4d, facejacR_4d)
+
+          interiorFaceInterpolate_jac!(sbpface, ifaces[1], resjacL_3d,
+                                       resjacR_3d, facejacL_3d, facejacR_3d)
+
+          @fact maximum(abs.(facejacL_4d - facejacL_3d)) --> roughly(0.0, atol=1e-13)
+          @fact maximum(abs.(facejacR_4d - facejacR_3d)) --> roughly(0.0, atol=1e-13)
+=#
         end
       end
     end

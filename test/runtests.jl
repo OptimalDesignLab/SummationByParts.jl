@@ -23,6 +23,7 @@ include("test_faceinterpolate.jl")
 include("test_faceinterpolate_rev.jl")
 include("test_faceintegrate.jl")
 include("test_faceintegrate_rev.jl")
+include("test_faceintegrate_jac.jl")
 include("test_facecombined_jac.jl")
 include("test_utils.jl")
 =#
