@@ -2,7 +2,7 @@
 # brought up-to-date
 
 """
-### ODLCommonTools.Boundary
+### Boundary
 
 Used to identify boundary faces in a finite-element grid.
 
@@ -22,7 +22,7 @@ immutable Boundary
 end
 
 """
-### ODLCommonTools.Interface
+### Interface
 
 Used to identify interfaces between elements in a finite-element grid.
 
