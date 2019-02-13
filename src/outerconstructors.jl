@@ -170,8 +170,8 @@ function getTriSBPDiagE(;degree::Int=1, Tsbp::Type=Float64,
                                                          vertices=vertices)
     end
   else
-#    w, Q = SummationByParts.buildMinFrobeniusOperators(cub, vtx, degree,
-#                                                       vertices=vertices)
+    w, Q = SummationByParts.buildMinFrobeniusOperators(cub, vtx, degree,
+                                                       vertices=vertices)
   end
 
   return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
