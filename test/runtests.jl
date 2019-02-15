@@ -4,7 +4,7 @@ using SummationByParts.Cubature
 using SummationByParts.SymCubatures
 using FactCheck
 using ODLCommonTools
-import SummationByParts.Add
+import SummationByParts: Add, Subtract
 
 # runs on Travis take too long, so we run a reduced set of tests
 #=

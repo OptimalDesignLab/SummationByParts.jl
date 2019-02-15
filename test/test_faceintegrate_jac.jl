@@ -229,7 +229,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
                                      view(dFdu_face,:,:,:,:,1), # use left side only
                                      view(dFdu,:,:,:,:,1),
                                      view(dFdu,:,:,:,:,2),
-                                     Add(), include_quadrature=true)
+                                     Add(), Subtract(), true)
           
           # get the Jacobian using complex step
           u_c = complex(u)
@@ -300,7 +300,8 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
             end
           end
 
-          op = SummationByParts.Subtract()
+          opL = SummationByParts.Subtract()
+          opR = SummationByParts.Add()
           for include_quad in [true, false]
             for d=1:dim
               facejacL_d = sview(facejacL_4d, :, :, :, :, d)
@@ -308,11 +309,11 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               resjacL_d = sview(resjacL_4d, :, :, :, :, d)
               resjacR_d = sview(resjacR_4d, :, :, :, :, d)
               interiorFaceIntegrate_jac!(sbpface, ifaces[1], facejacL_d,
-                    facejacR_d, resjacL_d, resjacR_d, op, include_quadrature=include_quad)
+                    facejacR_d, resjacL_d, resjacR_d, opL, opR, include_quad)
             end
 
             interiorFaceIntegrate_jac!(sbpface, ifaces[1], facejacL_5d,
-                    facejacR_5d, resjacL_5d, resjacR_5d, op, include_quadrature=include_quad)
+                    facejacR_5d, resjacL_5d, resjacR_5d, opL, opR, include_quad)
 
 
             for d=1:dim

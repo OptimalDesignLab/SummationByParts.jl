@@ -239,7 +239,8 @@ element nodes, and `nf` is the number of face nodes.
 * `face`: the relevant face (index) of the element
 * `dfduL_face`: Jacobian of function w.r.t. the left state
 * `dfduR_face`: Jacobian of function w.r.t. the right state
-* `±`: PlusFunctor to add to fun, MinusFunctor to subract
+* `opL`: PlusFunctor to add to `dfduL`, MinusFunctor to subract
+* `opR`: same as `opL`, but for `dfduR`
 * `include_quadrature`: apply face quadrature weight if true, do not if false
 
 **In/Outs**
@@ -254,7 +255,8 @@ function interiorFaceIntegrate_jac!(sbpface::DenseFace{Tsbp},
                                     dfduR_face::AbstractArray{Tjac,4},
                                     dfduL::AbstractArray{Tjac,4},
                                     dfduR::AbstractArray{Tjac,4},
-                                    (±)::UnaryFunctor=Add();
+                                    (opL)::UnaryFunctor=Add(),
+                                    (opR)::UnaryFunctor=Subtract(),
                                     include_quadrature::Bool=true
                                     ) where {Tsbp,Tjac}
 #=
@@ -284,9 +286,9 @@ function interiorFaceIntegrate_jac!(sbpface::DenseFace{Tsbp},
           for q = 1:size(dfduL,2)
             for p = 1:size(dfduL,1)
               dfduL[p,q,sbpface.perm[j,iface.faceL],k] +=
-                ±(sbpface.interp[j,i]*sbpface.wface[i]*dfduL_face[p,q,i,k])
-              dfduR[p,q,sbpface.perm[j,iface.faceR],k] -=
-                ±(sbpface.interp[j,iR]*sbpface.wface[iR]*dfduR_face[p,q,i,k])
+                opL(sbpface.interp[j,i]*sbpface.wface[i]*dfduL_face[p,q,i,k])
+              dfduR[p,q,sbpface.perm[j,iface.faceR],k] +=
+                opR(sbpface.interp[j,iR]*sbpface.wface[iR]*dfduR_face[p,q,i,k])
             end
           end
         end
@@ -304,9 +306,9 @@ function interiorFaceIntegrate_jac!(sbpface::DenseFace{Tsbp},
           for q = 1:size(dfduL,2)
             for p = 1:size(dfduL,1)
               dfduL[p,q,sbpface.perm[j,iface.faceL],k] +=
-                ±(sbpface.interp[j,i]*dfduL_face[p,q,i,k])
-              dfduR[p,q,sbpface.perm[j,iface.faceR],k] -=
-                ±(sbpface.interp[j,iR]*dfduR_face[p,q,i,k])
+                opL(sbpface.interp[j,i]*dfduL_face[p,q,i,k])
+              dfduR[p,q,sbpface.perm[j,iface.faceR],k] +=
+                opR(sbpface.interp[j,iR]*dfduR_face[p,q,i,k])
             end
           end
         end
@@ -321,7 +323,8 @@ function interiorFaceIntegrate_jac!(sbpface::SparseFace{Tsbp},
                                     dfduR_face::AbstractArray{Tjac,4},
                                     dfduL::AbstractArray{Tjac,4},
                                     dfduR::AbstractArray{Tjac,4},
-                                    (±)::UnaryFunctor=Add();
+                                    (opL)::UnaryFunctor=Add(),
+                                    (opR)::UnaryFunctor=Subtract(),
                                     include_quadrature::Bool=true
                                     ) where {Tsbp,Tjac}
   @asserts_enabled begin
@@ -341,9 +344,9 @@ function interiorFaceIntegrate_jac!(sbpface::SparseFace{Tsbp},
         for q = 1:size(dfduL,2)
           for p = 1:size(dfduL,1)
             dfduL[p,q,sbpface.perm[i,iface.faceL],k] +=
-              ±(sbpface.wface[i]*dfduL_face[p,q,i,k])
-            dfduR[p,q,sbpface.perm[iR,iface.faceR],k] -=
-              ±(sbpface.wface[i]*dfduR_face[p,q,i,k])
+              opL(sbpface.wface[i]*dfduL_face[p,q,i,k])
+            dfduR[p,q,sbpface.perm[iR,iface.faceR],k] +=
+              opR(sbpface.wface[i]*dfduR_face[p,q,i,k])
           end
         end
       end
@@ -357,8 +360,8 @@ function interiorFaceIntegrate_jac!(sbpface::SparseFace{Tsbp},
         iR = sbpface.nbrperm[i,iface.orient]
         for q = 1:size(dfduL,2)
           for p = 1:size(dfduL,1)
-            dfduL[p,q,sbpface.perm[i,iface.faceL],k] += ±(dfduL_face[p,q,i,k])
-            dfduR[p,q,sbpface.perm[iR,iface.faceR],k] -= ±(dfduR_face[p,q,i,k])
+            dfduL[p,q,sbpface.perm[i,iface.faceL],k] += opL(dfduL_face[p,q,i,k])
+            dfduR[p,q,sbpface.perm[iR,iface.faceR],k] += opR(dfduR_face[p,q,i,k])
           end
         end
       end
@@ -372,7 +375,8 @@ function interiorFaceIntegrate_jac!(sbpface::DenseFace{Tsbp},
                                     dfduR_face::AbstractArray{Tjac,5},
                                     dfduL::AbstractArray{Tjac,5},
                                     dfduR::AbstractArray{Tjac,5},
-                                    (±)::UnaryFunctor=Add();
+                                    (opL)::UnaryFunctor=Add(),
+                                    (opR)::UnaryFunctor=Subtract(),
                                     include_quadrature::Bool=true
                                     ) where {Tsbp,Tjac}
   @asserts_enabled begin
@@ -398,9 +402,9 @@ function interiorFaceIntegrate_jac!(sbpface::DenseFace{Tsbp},
             for q = 1:size(dfduL,2)
               for p = 1:size(dfduL,1)
                 dfduL[p,q,d,sbpface.perm[j,iface.faceL],k] +=
-                  ±(sbpface.interp[j,i]*sbpface.wface[i]*dfduL_face[p,q,d,i,k])
-                dfduR[p,q,d,sbpface.perm[j,iface.faceR],k] -=
-                  ±(sbpface.interp[j,iR]*sbpface.wface[iR]*dfduR_face[p,q,d,i,k])
+                  opL(sbpface.interp[j,i]*sbpface.wface[i]*dfduL_face[p,q,d,i,k])
+                dfduR[p,q,d,sbpface.perm[j,iface.faceR],k] +=
+                  opR(sbpface.interp[j,iR]*sbpface.wface[iR]*dfduR_face[p,q,d,i,k])
               end
             end
           end
@@ -420,9 +424,9 @@ function interiorFaceIntegrate_jac!(sbpface::DenseFace{Tsbp},
             for q = 1:size(dfduL,2)
               for p = 1:size(dfduL,1)
                 dfduL[p,q,d,sbpface.perm[j,iface.faceL],k] +=
-                  ±(sbpface.interp[j,i]*dfduL_face[p,q,d,i,k])
-                dfduR[p,q,d,sbpface.perm[j,iface.faceR],k] -=
-                  ±(sbpface.interp[j,iR]*dfduR_face[p,q,d,i,k])
+                  opL(sbpface.interp[j,i]*dfduL_face[p,q,d,i,k])
+                dfduR[p,q,d,sbpface.perm[j,iface.faceR],k] +=
+                  opR(sbpface.interp[j,iR]*dfduR_face[p,q,d,i,k])
               end
             end
           end
@@ -438,7 +442,8 @@ function interiorFaceIntegrate_jac!(sbpface::SparseFace{Tsbp},
                                     dfduR_face::AbstractArray{Tjac,5},
                                     dfduL::AbstractArray{Tjac,5},
                                     dfduR::AbstractArray{Tjac,5},
-                                    (±)::UnaryFunctor=Add();
+                                    (opL)::UnaryFunctor=Add(),
+                                    (opR)::UnaryFunctor=Subtract(),
                                     include_quadrature::Bool=true
                                     ) where {Tsbp,Tjac}
   @asserts_enabled begin
@@ -461,9 +466,9 @@ function interiorFaceIntegrate_jac!(sbpface::SparseFace{Tsbp},
           for q = 1:size(dfduL,2)
             for p = 1:size(dfduL,1)
               dfduL[p,q,d,sbpface.perm[i,iface.faceL],k] +=
-                ±(sbpface.wface[i]*dfduL_face[p,q,d,i,k])
-              dfduR[p,q,d,sbpface.perm[iR,iface.faceR],k] -=
-                ±(sbpface.wface[i]*dfduR_face[p,q,d,i,k])
+                opL(sbpface.wface[i]*dfduL_face[p,q,d,i,k])
+              dfduR[p,q,d,sbpface.perm[iR,iface.faceR],k] +=
+                opR(sbpface.wface[i]*dfduR_face[p,q,d,i,k])
             end
           end
         end
@@ -479,8 +484,8 @@ function interiorFaceIntegrate_jac!(sbpface::SparseFace{Tsbp},
         for d = 1:size(dfduL,3)
           for q = 1:size(dfduL,2)
             for p = 1:size(dfduL,1)
-              dfduL[p,q,d,sbpface.perm[i,iface.faceL],k] += ±(dfduL_face[p,q,d,i,k])
-              dfduR[p,q,d,sbpface.perm[iR,iface.faceR],k] -= ±(dfduR_face[p,q,d,i,k])
+              dfduL[p,q,d,sbpface.perm[i,iface.faceL],k] += opL(dfduL_face[p,q,d,i,k])
+              dfduR[p,q,d,sbpface.perm[iR,iface.faceR],k] += opR(dfduR_face[p,q,d,i,k])
             end
           end
         end
