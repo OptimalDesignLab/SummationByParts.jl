@@ -144,7 +144,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
             @fact maximum(abs.(facejac_5d[:, :, d, :, :] - facejac_4d[:, :, :, :, d])) --> roughly(0.0, atol=1e-13)
           end
 
-          # test 3D method consistency with 4D method
+            # test 3D method consistency with 4D method
             facejacL_4d = zeros(2, 2, sbpface.numnodes, sbp.numnodes)
             facejacL_3d = zeros(2, 2, sbpface.numnodes, sbp.numnodes)
             resjacL_4d = rand(2, 2, sbp.numnodes, sbp.numnodes)
@@ -169,7 +169,50 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
             boundaryFaceInterpolate_jac!(sbpface, face, resjacL_3d, facejacL_3d)
 
             @fact maximum(abs.(facejacL_4d - facejacL_3d)) --> roughly(0.0, atol=1e-13)
-        end
+
+#            if size(sbp.Q, 3) > 1  # 1D operators don't have stencilsize
+              # test faceToVolume_jac!
+              qvol = rand(Complex128, 2, sbp.numnodes)
+              qface = zeros(Complex128, 2, sbpface.numnodes)
+              dfdq = zeros(2, 2, sbpface.numnodes, sbp.numnodes)
+              dfdq_face = zeros(2, 2, sbpface.numnodes)
+              dfdq2 = zeros(2, 2, sbpface.numnodes, sbp.numnodes)
+
+              for i=1:length(qvol)
+                qvol[i] = real(qvol[i])
+              end
+
+              # complex step the jacobian wrt volume nodes
+              h=1e-20
+              pert = Complex128(0, h)
+              for q=1:sbp.numnodes
+                for j=1:2
+                  qvol[j, q] += pert
+                  boundaryFaceInterpolate!(sbpface, 1, qvol, qface)
+
+                  for p=1:sbpface.numnodes
+                    for i=1:2
+                      dfdq[i, j, p, q] = imag(2*qface[i, p]^2 + qface[i, p] + i)/1e-20
+                    end
+                  end
+                  qvol[j, q] -= pert
+                end
+              end
+
+              # compute jacobian at the face, then apply R^T
+              for p=1:sbpface.numnodes
+                for i=1:2
+                  dfdq_face[i, i, p] = real(4*qface[i, p] + 1)
+                end
+              end
+
+              faceToVolume_jac!(sbpface, 1, dfdq_face, dfdq2)
+
+              @fact maximum(abs.(dfdq - dfdq2)) --> roughly(0.0, atol=1e-13)
+#            end  # end if
+
+
+        end  # end for p=1:4
       end
     end
   end

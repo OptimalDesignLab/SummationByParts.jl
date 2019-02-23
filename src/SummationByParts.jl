@@ -58,7 +58,7 @@ export facenormal!, calcFaceNormals!
 export facenormal_rev!, calcFaceNormals_rev!
 export boundaryinterpolate!, boundaryFaceInterpolate!
 export boundaryinterpolate_rev!, boundaryFaceInterpolate_rev!
-export boundaryFaceInterpolate_jac!
+export boundaryFaceInterpolate_jac!, faceToVolume_jac!
 export interiorfaceinterpolate!, interiorFaceInterpolate!
 export interiorfaceinterpolate_rev!, interiorFaceInterpolate_rev!
 export interiorFaceInterpolate_jac!

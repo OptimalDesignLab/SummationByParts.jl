@@ -494,5 +494,76 @@ function interiorFaceIntegrate_jac!(sbpface::SparseFace{Tsbp},
   end
 end
 
+"""
+Takes the Jacobian of a face and computes the Jacobian with respect to
+the volume nodes.
 
-  
+**Inputs**
+
+* `sbpface`: an SBP AbstractFace type
+* `face`: the relevant face (index) of the element
+* `dfdu_face`: Jacobian at face nodes of some function w.r.t. the face state
+* `±`: PlusFunctor to add to fun, MinusFunctor to subract
+
+**In/Outs**
+
+* `dfdu`: Jacobian afer applying transposed interpolation operator
+
+
+"""
+function faceToVolume_jac!(sbpface::DenseFace{Tsbp},
+                                    face::Integer,
+                                    dfdu_face::AbstractArray{Tjac,3},
+                                    dfdu::AbstractArray{Tjac,4},
+                                    (±)::UnaryFunctor=Add();
+                                    ) where {Tsbp,Tjac}
+  @asserts_enabled begin
+    @assert( size(dfdu_face,3) == size(sbpface.interp,2) == size(dfdu, 3) )
+    @assert( size(sbpface.interp,1) <= size(dfdu,4))
+    @assert( size(dfdu,1) == size(dfdu,2) == size(dfdu_face,1) ==
+             size(dfdu_face,2) )
+  end
+
+  # loop over the volume variables that we are differentiating w.r.t.
+  fill!(dfdu, 0)
+  for k = 1:sbpface.stencilsize
+    # loop over the face nodes
+    for i = 1:sbpface.numnodes
+      for q = 1:size(dfdu,2)
+        for p = 1:size(dfdu,1)
+          dfdu[p,q,i,sbpface.perm[k,face]] = ±(sbpface.interp[k,i]*
+                                                dfdu_face[p,q,i])
+        end
+      end
+    end
+  end
+end
+
+
+function faceToVolume_jac!(sbpface::SparseFace{Tsbp},
+                                    face::Integer,
+                                    dfdu_face::AbstractArray{Tjac,3},
+                                    dfdu::AbstractArray{Tjac,4},
+                                    (±)::UnaryFunctor=Add();
+                                    ) where {Tsbp,Tjac}
+  @asserts_enabled begin
+    @assert( size(dfdu_face,3) == sbpface.numnodes == size(dfdu, 3) )
+    @assert( size(dfdu,1) == size(dfdu,2) == size(dfdu_face,1) ==
+             size(dfdu_face,2) )
+  end
+
+  # loop over the volume variables that we are differentiating w.r.t.
+  fill!(dfdu, 0)
+  for k = 1:size(sbpface.perm, 1)
+    # loop over the face nodes
+    for i = 1:sbpface.numnodes
+      for q = 1:size(dfdu,2)
+        for p = 1:size(dfdu,1)
+          dfdu[p,q,i,sbpface.perm[i,face]] = ±(dfdu_face[p,q,i])
+        end
+      end
+    end
+  end
+end
+
+
