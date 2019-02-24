@@ -525,13 +525,12 @@ function faceToVolume_jac!(sbpface::DenseFace{Tsbp},
   end
 
   # loop over the volume variables that we are differentiating w.r.t.
-  fill!(dfdu, 0)
   for k = 1:sbpface.stencilsize
     # loop over the face nodes
     for i = 1:sbpface.numnodes
       for q = 1:size(dfdu,2)
         for p = 1:size(dfdu,1)
-          dfdu[p,q,i,sbpface.perm[k,face]] = ±(sbpface.interp[k,i]*
+          dfdu[p,q,i,sbpface.perm[k,face]] += ±(sbpface.interp[k,i]*
                                                 dfdu_face[p,q,i])
         end
       end
@@ -553,17 +552,14 @@ function faceToVolume_jac!(sbpface::SparseFace{Tsbp},
   end
 
   # loop over the volume variables that we are differentiating w.r.t.
-  fill!(dfdu, 0)
-  for k = 1:size(sbpface.perm, 1)
     # loop over the face nodes
     for i = 1:sbpface.numnodes
       for q = 1:size(dfdu,2)
         for p = 1:size(dfdu,1)
-          dfdu[p,q,i,sbpface.perm[i,face]] = ±(dfdu_face[p,q,i])
+          dfdu[p,q,i,sbpface.perm[i,face]] += ±(dfdu_face[p,q,i])
         end
       end
     end
-  end
 end
 
 
