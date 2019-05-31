@@ -7,7 +7,7 @@ using ODLCommonTools
 import SummationByParts: Add, Subtract
 
 # runs on Travis take too long, so we run a reduced set of tests
-#=
+
 include("test_weakdifferentiate.jl")
 include("test_weakdifferentiate_rev.jl")
 include("test_weakdifferentiate_jac.jl")
@@ -26,7 +26,7 @@ include("test_faceintegrate_rev.jl")
 include("test_faceintegrate_jac.jl")
 include("test_facecombined_jac.jl")
 include("test_utils.jl")
-=#
+
 include("test_faceintegrate_jac.jl")
 
 #=
