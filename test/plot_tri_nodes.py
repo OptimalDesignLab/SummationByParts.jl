@@ -2,8 +2,8 @@
 Plot the SBP tri nodes
 """
 dump=False # set to True to write a png file
-facecub=False #True # include the face cubature points?
-degree = 4
+facecub=False # include the face cubature points?
+degree = 2
 
 import matplotlib
 if dump:
@@ -27,9 +27,10 @@ ax = fig.add_subplot(111)
 data = open("./nodes.dat")
 #data = open("./p" + str(degree) + "_bndry.dat", 'r')
 #data = open("./p" + str(degree) + "_intr.dat", 'r')
-arrays = [np.array(map(float, line.split())) for line in data]
-x = arrays[0]
-y = arrays[1]
+#arrays = [np.array(map(float, line.split())) for line in data]
+x, y = np.loadtxt(data)
+#x = arrays[0]
+#y = arrays[1]
 #xf = arrays[2]
 #yf = arrays[3]
 #x, y, xf, yf = np.loadtxt(data)
@@ -50,8 +51,8 @@ if label:
         idx += 1
 else:
     if facecub:
-        facenodes, = ax.plot(xf, yf, 'ks', lw=1, ms=5, mec='k', mew=1.0)
-    nodes, = ax.plot(x, y, 'ko', lw=1, mfc='w', ms=5, mec='k', mew=1.0)
+        facenodes = ax.plot(xf, yf, 'ks', lw=1, ms=5, mec='k', mew=1.0)
+    nodes = ax.plot(x, y, 'ko', lw=1, mfc='w', ms=5, mec='k', mew=1.0)
 
 if 1 == 0:
     # Tweak the appeareance of the axes

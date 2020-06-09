@@ -306,11 +306,11 @@ function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   @assert( size(sbpface.interp,1) <= size(uL,1) )
   @assert( size(sbpface.interp,1) <= size(uR,1) )
   @assert( size(sbpface.interp,2) == size(ufaceL,1) == size(ufaceR,1) )
-  for i = 1:sbpface.numnodes
+  @simd for i = 1:sbpface.numnodes
     iR = sbpface.nbrperm[i,iface.orient]
     ufaceL[i] = zero(Tsol)
     ufaceR[i] = zero(Tsol)
-    for j = 1:sbpface.stencilsize
+    @simd for j = 1:sbpface.stencilsize
       ufaceL[i] += sbpface.interp[j,i]*uL[sbpface.perm[j,iface.faceL]]
       ufaceR[i] += sbpface.interp[j,iR]*uR[sbpface.perm[j,iface.faceR]]
     end

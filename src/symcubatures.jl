@@ -1216,6 +1216,60 @@ function getneighbourpermutation{T}(cub::TriSymCub{T})
   return perm
 end
 
+""" 
+### SymCubatures.getnodevalences
+
+Returns 1 for interior, 2 for faces/edges, 6 for vertices/edges
+
+**Inputs**: 
+
+* `cub`: symmetric cubature rule
+
+**Returns**:
+ 
+* `val`: appropriate valences
+
+This function was designed for the buildminfrobeniusoperator().
+
+"""
+function getnodevalences(cub::TriSymCub{T}) where {T}
+  val = zeros(T, (cub.numnodes))
+  ptr = 0
+  if cub.vertices
+    val[1:3] = 6.0
+    ptr = 3
+  end
+  # set mid-edge nodes
+  if cub.midedges
+    val[ptr+1:ptr+3] = 2.0
+    ptr += 3
+  end
+  # set S21 orbit nodes
+  for i = 1:cub.numS21
+    val[ptr+1:ptr+3] = 1.0
+    ptr += 3
+  end
+  # set all nodes with 6-symmetries
+  # set edge nodes
+  for i = 1:cub.numedge
+    val[ptr+1:ptr+6] = 2.0
+    ptr += 6
+  end
+  # set S111 orbit nodes
+  for i = 1:cub.numS111
+    val[ptr+1:ptr+6] = 1.0
+    ptr += 6
+  end
+  # set node with 1-symmetry (i.e. centroid)
+  if cub.centroid
+    val[ptr+1] = 1.0
+    ptr += 1
+  end
+  @assert( ptr == cub.numnodes )
+  return val
+end
+
+
 """
 ### SymCubatures.setparams!
 

@@ -130,16 +130,18 @@ function weakDifferentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
     @assert( di > 0 && di <= size(sbp.Q,3) )
   end
 
-  if trans # apply transposed Q
-    for i = 1:sbp.numnodes
-      for j = 1:sbp.numnodes
-        res[i] += ±(sbp.Q[j,i,di]*flux[j])
+  @inbounds begin
+    if trans # apply transposed Q
+      @simd for i = 1:sbp.numnodes
+        @simd for j = 1:sbp.numnodes
+          res[i] += ±(sbp.Q[j,i,di]*flux[j])
+        end
       end
-    end
-  else # apply Q
-    for i = 1:sbp.numnodes
-      for j = 1:sbp.numnodes
-        res[i] += ±(sbp.Q[i,j,di]*flux[j])
+    else # apply Q
+      for i = 1:sbp.numnodes
+        for j = 1:sbp.numnodes
+          res[i] += ±(sbp.Q[i,j,di]*flux[j])
+        end
       end
     end
   end

@@ -632,6 +632,84 @@ function getTriCubatureOmega(q::Int, T=Float64;
 end
 
 """
+### Cubature.getTriCubatureCSBP{T}
+
+Returns a cubature rule and vertices for C-SBP operators on triangles; These
+operators have p+1 nodes on each edge, and the minimum number of nodes on the
+interior to be 2p exact.
+
+**Inputs**
+
+* `q`: maximum degree of polynomial for which the cubature is exact
+* `T`: the data type used to represent the cubature
+* `tol`: tolerance with which to solve the cubature
+
+**Outputs**
+
+* `cub`: a symmetric cubature for the right triangle
+* `vtx`: vertices for the right triangle
+
+"""
+function getTriCubatureCSBP(q::Int, T=Float64;
+                            tol=10*eps(typeof(real(one(T)))))
+  cub_degree = q
+  mask = zeros(Int64, (0))
+  if q <= 2
+    # P1; 3rd order cubature
+    cub = SymCubatures.TriSymCub{Float64}(vertices=true, numedge=0,
+                                          midedges=false,
+                                          numS21=0, numS111=0, centroid=true)
+    cub_degree = 2
+  elseif q <= 4
+    # P2; 5th order cubature
+    cub = SymCubatures.TriSymCub{Float64}(vertices=true, numedge=0,
+                                          midedges=true,
+                                          numS21=1, numS111=0, centroid=false)
+    SymCubatures.setparams!(cub, Float64[(7-sqrt(13))/9])
+    SymCubatures.setweights!(cub, Float64[0.041080270691865685;
+                                          0.12395099773653304;
+                                          0.5016353982382606])
+    cub_degree = 4
+  elseif q <= 6
+    # P3; 7th order cubature
+    cub = SymCubatures.TriSymCub{Float64}(vertices=true, centroid=false,
+                                          numedge=1,
+                                          numS21=2, numS111=0)
+    SymCubatures.setparams!(cub, Float64[0.23722737279318837;
+                                         0.850680251979494;
+                                         0.6922540583740071])
+    SymCubatures.setweights!(cub, Float64[0.014260718614407725;
+                                          0.20376930605389865;
+                                          0.3303589772911279;
+                                          0.05913883235360917])
+    cub_degree = 6
+  elseif q <= 8
+    # P4; 9th order cubature
+    cub = SymCubatures.TriSymCub{Float64}(vertices=true, centroid=true,
+                                          numedge=1, midedges=true,
+                                          numS21=1, numS111=1)
+    SymCubatures.setparams!(cub, Float64[0.160991838340079;
+                                         0.8003678928805404;
+                                         0.6058255660767282;
+                                         0.2151836435697357])    
+    SymCubatures.setweights!(cub, Float64[0.006036623735434405;
+                                          0.040748592504714784;
+                                          0.09377442432581791;
+                                          0.02798160585550006;
+                                          0.19106553442197333;
+                                          0.2640382366372372])
+    cub_degree = 8
+  else
+    error("polynomial degree must be <= 8 (presently)\n")
+  end
+  mask = SymCubatures.getInternalParamMask(cub)
+  append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
+  vtx = T[-1 -1; 1 -1; -1 1]
+  Cubature.solvecubature!(cub, cub_degree, mask, tol=tol)
+  return cub, vtx
+end
+
+"""
 ### Cubature.getTriCubatureDiagE{T}
 
 Returns a cubature rule and vertices for the SBP DiagE operators on triangles;
@@ -660,7 +738,7 @@ function getTriCubatureDiagE(q::Int, T=Float64; vertices::Bool=true,
     if q <= 0
       cub = SymCubatures.TriSymCub{T}(vertices=true) 
       SymCubatures.setweights!(cub, T[2/3])
-      cub_degree = 1      
+      cub_degree = 1
     elseif q <= 2
       cub = SymCubatures.TriSymCub{T}(midedges=true, centroid=true)
       SymCubatures.setweights!(cub, T[9/10, 1/10, 4/15])

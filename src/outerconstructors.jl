@@ -90,6 +90,28 @@ function getTriSBPOmega(;degree::Int=1, Tsbp::Type=Float64)
 end
 
 """
+### SBP.getTriCSBP
+
+Returns SBP elements designed for CSBP discretizations (similar to SBP-Gamma, but they are forced to have degree 2p cubatures).
+
+**Inputs**
+
+* `degree`: maximum polynomial degree for which the derivatives are exact
+* `Tsbp`: floating point type used for the operators
+
+**Returns**
+
+* `sbp`: an SBP-Omega operator of the appropriate degree
+
+"""
+function getTriCSBP(;degree::Int=1, Tsbp::Type=Float64)
+  cub, vtx = Cubature.getTriCubatureCSBP(2*degree, Tsbp, tol=1e-13)
+  Q = zeros(Tsbp, (cub.numnodes, cub.numnodes, 2))
+  w, Q = SummationByParts.buildoperators(cub, vtx, degree)
+  return TriSBP{Tsbp}(degree, cub, vtx, w, Q)
+end
+
+"""
 ### SBP.getTriSBPDiagE
 
 Returns SBP-DiagE type elements, whose boundary nodes are positioned at cubature

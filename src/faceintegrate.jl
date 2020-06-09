@@ -513,9 +513,9 @@ function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   @assert( size(sbpface.interp,1) <= size(resL,1) )
   @assert( size(sbpface.interp,1) <= size(resR,1) )
   @assert( size(sbpface.interp,2) == size(flux,1) )
-  for i = 1:sbpface.numnodes
+  @simd for i = 1:sbpface.numnodes
     iR = sbpface.nbrperm[i,iface.orient]
-    for j = 1:sbpface.stencilsize
+    @simd for j = 1:sbpface.stencilsize
       resL[sbpface.perm[j,iface.faceL]] += 
       ±(sbpface.interp[j,i]*sbpface.wface[i]*flux[i])
       resR[sbpface.perm[j,iface.faceR]] -=
