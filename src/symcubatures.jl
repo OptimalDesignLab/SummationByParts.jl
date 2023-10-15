@@ -3,6 +3,19 @@ module SymCubatures
 # on various domains
 
 export SymCub, PointSymCub, LineSymCub, TriSymCub, TetSymCub
+export OperType, Omega, Gamma, DiagE
+
+"""
+### SymCubatures.OperType
+
+`OperType` is an abtract type that defines the type of SBP operators
+It has the subtypes Omega, Gamma, and DiagE. 
+
+"""
+abstract type OperType end
+mutable struct Omega <: OperType end
+mutable struct Gamma <: OperType end
+mutable struct DiagE <: OperType end
 
 """
 ### SymCubatures.SymCub
@@ -32,7 +45,7 @@ Defines the trivial point cubature for uniformity across methods.
 * `weights` : values of the unique weights
 
 """
-type PointSymCub{T} <: SymCub{T}
+mutable struct PointSymCub{T} <: SymCub{T} 
   numparams::Int
   numweights::Int
   numnodes::Int
@@ -55,7 +68,7 @@ type PointSymCub{T} <: SymCub{T}
     @assert(numweights == sum(numsym))
     params = zeros(T, numparams)
     weights = zeros(T, numweights)
-    new(numparams, numweights, numnodes, vertices, centroid, numedge, numsym,
+    new{T}(numparams, numweights, numnodes, vertices, centroid, numedge, numsym,
         params, weights)
   end
 end
@@ -79,7 +92,7 @@ Legendre-Gauss-Lobatto (LGL) or Legendre-Gauss (LG) rules.
 * `weights` : values of the unique weights
 
 """
-type LineSymCub{T} <: SymCub{T}
+mutable struct LineSymCub{T} <: SymCub{T}
   numparams::Int
   numweights::Int
   numnodes::Int
@@ -117,7 +130,7 @@ type LineSymCub{T} <: SymCub{T}
     @assert(numweights == sum(numsym))
     params = zeros(T, numparams)
     weights = zeros(T, numweights)
-    new(numparams, numweights, numnodes, vertices, centroid, numedge, numsym,
+    new{T}(numparams, numweights, numnodes, vertices, centroid, numedge, numsym,
         params, weights)
   end
 end
@@ -148,7 +161,7 @@ vertices=true rather than relying on a specific value of a parameter.
 * `weights` : values of the unique weights
 
 """
-type TriSymCub{T} <: SymCub{T}
+mutable struct TriSymCub{T} <: SymCub{T}
   numparams::Int
   numweights::Int
   numnodes::Int
@@ -203,7 +216,7 @@ type TriSymCub{T} <: SymCub{T}
     @assert(numweights == sum(numsym))
     params = zeros(T, numparams)
     weights = zeros(T, numweights)
-    new(numparams, numweights, numnodes, vertices, midedges, centroid,
+    new{T}(numparams, numweights, numnodes, vertices, midedges, centroid,
         numedge, numS21, numS111, numsym, params, weights)
   end
 end
@@ -239,7 +252,7 @@ setting vertices=true rather than relying on a specific value of a parameter.
 * `weights` : values of the unique weights
 
 """
-type TetSymCub{T} <: SymCub{T}
+mutable struct TetSymCub{T} <: SymCub{T}
   numparams::Int
   numweights::Int
   numnodes::Int
@@ -323,7 +336,7 @@ type TetSymCub{T} <: SymCub{T}
     @assert(numweights == sum(numsym))
     params = zeros(T, numparams)
     weights = zeros(T, numweights)
-    new(numparams, numweights, numnodes, vertices, midedges, centroid,
+    new{T}(numparams, numweights, numnodes, vertices, midedges, centroid,
         facecentroid, numedge, numfaceS21, numfaceS111, numS31, numS22, numS211,
         numS1111, numsym, params, weights)
   end
@@ -347,15 +360,15 @@ boundary-node count returned.
 * `numboundary`: number of boundary nodes
 
 """
-function getnumboundarynodes{T}(cub::PointSymCub{T})
+function getnumboundarynodes(cub::PointSymCub{T}) where {T}
   return 1
 end
 
-function getnumboundarynodes{T}(cub::LineSymCub{T})
+function getnumboundarynodes(cub::LineSymCub{T}) where {T}
   cub.vertices ? (return 2) : (return 0)
 end
 
-function getnumboundarynodes{T}(cub::TriSymCub{T})
+function getnumboundarynodes(cub::TriSymCub{T}) where {T}
   numboundary = 0
   cub.vertices ? numboundary += 3 : nothing
   cub.midedges ? numboundary += 3 : nothing
@@ -363,7 +376,7 @@ function getnumboundarynodes{T}(cub::TriSymCub{T})
   return numboundary
 end
 
-function getnumboundarynodes{T}(cub::TetSymCub{T})
+function getnumboundarynodes(cub::TetSymCub{T}) where {T}
   numboundary = 0
   cub.vertices ? numboundary += 4 : nothing
   cub.midedges ? numboundary += 6 : nothing
@@ -388,15 +401,15 @@ Returns the number of nodes on an individual face of the element.
 * `numfacenodes`: number of nodes on a face
 
 """
-function getnumfacenodes{T}(cub::PointSymCub{T})
+function getnumfacenodes(cub::PointSymCub{T}) where {T}
   return 1
 end
 
-function getnumfacenodes{T}(cub::LineSymCub{T})
+function getnumfacenodes(cub::LineSymCub{T}) where {T}
   cub.vertices ? (return 1) : (return 0)
 end
 
-function getnumfacenodes{T}(cub::TriSymCub{T})
+function getnumfacenodes(cub::TriSymCub{T}) where {T}
   numfacenodes = 0
   cub.vertices ? numfacenodes += 2 : nothing
   cub.midedges ? numfacenodes += 1 : nothing
@@ -404,7 +417,7 @@ function getnumfacenodes{T}(cub::TriSymCub{T})
   return numfacenodes
 end
 
-function getnumfacenodes{T}(cub::TetSymCub{T})
+function getnumfacenodes(cub::TetSymCub{T}) where {T}
   numfacenodes = 0
   cub.vertices ? numfacenodes += 3 : nothing
   cub.midedges ? numfacenodes += 3 : nothing
@@ -430,13 +443,13 @@ order.  See getfacenodeindices for a method returns node indices for each face.
 * `bndryindices`: indicies of nodes that lie on boundary
 
 """
-function getbndrynodeindices{T}(cub::PointSymCub{T})
+function getbndrynodeindices(cub::PointSymCub{T}) where {T}
   bndryindices = zeros(Int, getnumboundarynodes(cub))
   bndryindices[:] = [1;]
   return bndryindices
 end
 
-function getbndrynodeindices{T}(cub::LineSymCub{T})
+function getbndrynodeindices(cub::LineSymCub{T}) where {T}
   bndryindices = zeros(Int, getnumboundarynodes(cub))
   # add vertices to the indices
   if cub.vertices
@@ -445,7 +458,7 @@ function getbndrynodeindices{T}(cub::LineSymCub{T})
   return bndryindices
 end
 
-function getbndrynodeindices{T}(cub::TriSymCub{T})
+function getbndrynodeindices(cub::TriSymCub{T}) where {T}
   bndryindices = zeros(Int, getnumboundarynodes(cub))
   ptr = 0
   idxptr = 0
@@ -473,7 +486,7 @@ function getbndrynodeindices{T}(cub::TriSymCub{T})
   return bndryindices
 end
 
-function getbndrynodeindices{T}(cub::TetSymCub{T})  
+function getbndrynodeindices(cub::TetSymCub{T}) where {T}
   bndryindices = zeros(Int, getnumboundarynodes(cub))
   ptr = 0
   idxptr = 0
@@ -483,12 +496,7 @@ function getbndrynodeindices{T}(cub::TetSymCub{T})
     ptr += 4
     idxptr += 4
   end
-  # add face centroids
-  if cub.facecentroid
-    bndryindices[idxptr+1:idxptr+4] = [ptr+1; ptr+2; ptr+3; ptr+4]
-    ptr += 4
-    idxptr += 4
-  end
+  
   # account for S31 orbits
   ptr += 4*cub.numS31
   # add mid-edge nodes
@@ -500,15 +508,6 @@ function getbndrynodeindices{T}(cub::TetSymCub{T})
   end
   # account for S22 nodes
   ptr += 6*cub.numS22
-  # add remaining edge nodes to indices
-  for i = 1:cub.numedge
-    bndryindices[idxptr+1:idxptr+12] = [ptr+1; ptr+2; ptr+3;
-                                        ptr+4; ptr+5; ptr+6;
-                                        ptr+7; ptr+8; ptr+9;
-                                        ptr+10; ptr+11; ptr+12]
-    ptr += 12
-    idxptr += 12
-  end
   # add face nodes corresponding to S21 orbit
   for i = 1:cub.numfaceS21
     bndryindices[idxptr+1:idxptr+12] = [ptr+1; ptr+2; ptr+3;
@@ -518,6 +517,16 @@ function getbndrynodeindices{T}(cub::TetSymCub{T})
     ptr += 12
     idxptr += 12
   end
+  # add remaining edge nodes to indices
+  for i = 1:cub.numedge
+    bndryindices[idxptr+1:idxptr+12] = [ptr+1; ptr+2; ptr+3;
+                                        ptr+4; ptr+5; ptr+6;
+                                        ptr+7; ptr+8; ptr+9;
+                                        ptr+10; ptr+11; ptr+12]
+    ptr += 12
+    idxptr += 12
+  end
+  
   # account for S211 nodes
   ptr += 12*cub.numS211
   # add face nodes corresponding to S111 orbit
@@ -526,6 +535,12 @@ function getbndrynodeindices{T}(cub::TetSymCub{T})
     ptr += 24
     idxptr += 24
   end  
+  # add face centroids
+  if cub.facecentroid
+    bndryindices[idxptr+1:idxptr+4] = [ptr+1; ptr+2; ptr+3; ptr+4]
+    ptr += 4
+    idxptr += 4
+  end
   return bndryindices
 end
 
@@ -543,14 +558,14 @@ Returns the indices of the nodes that are strictly interior.
 * `indices`: indicies of nodes that are strictly interior.
 
 """
-function getinteriornodeindices{T}(cub::PointSymCub{T})
+function getinteriornodeindices(cub::PointSymCub{T}) where {T}
   numinterior = cub.numnodes - getnumboundarynodes(cub)
   @assert( numinterior == 0)
   indices = zeros(Int, numinterior)
   return indices
 end
 
-function getinteriornodeindices{T}(cub::LineSymCub{T})
+function getinteriornodeindices(cub::LineSymCub{T}) where {T}
   numinterior = cub.numnodes - getnumboundarynodes(cub)
   indices = zeros(Int, numinterior)
   ptr = 0
@@ -561,7 +576,7 @@ function getinteriornodeindices{T}(cub::LineSymCub{T})
   return indices
 end
 
-function getinteriornodeindices{T}(cub::TriSymCub{T})
+function getinteriornodeindices(cub::TriSymCub{T}) where {T}
   numinterior = cub.numnodes - getnumboundarynodes(cub)
   indices = zeros(Int, numinterior)
   ptr = 0
@@ -597,17 +612,13 @@ function getinteriornodeindices{T}(cub::TriSymCub{T})
   return indices
 end
 
-function getinteriornodeindices{T}(cub::TetSymCub{T})
+function getinteriornodeindices(cub::TetSymCub{T}) where {T}
   numinterior = cub.numnodes - getnumboundarynodes(cub)
   indices = zeros(Int, numinterior)
   ptr = 0
   idxptr = 0
   # account for vertices
   if cub.vertices
-    ptr += 4
-  end
-  # account for face centroids
-  if cub.facecentroid
     ptr += 4
   end
   # set S31 orbit node indices
@@ -626,10 +637,10 @@ function getinteriornodeindices{T}(cub::TetSymCub{T})
     ptr += 6
     idxptr += 6
   end
-  # account for edge nodes
-  ptr += 12*cub.numedge
   # account for face nodes corresponding to S21 orbit
   ptr += 12*cub.numfaceS21
+  # account for edge nodes
+  ptr += 12*cub.numedge
   # set S211 orbit node indices
   for i = 1:cub.numS211
     indices[idxptr+1:idxptr+12] = [ptr+1:ptr+12;]
@@ -638,6 +649,10 @@ function getinteriornodeindices{T}(cub::TetSymCub{T})
   end
   # account for face nodes corresponding to S111 orbit
   ptr += 24*cub.numfaceS111
+  # account for face centroids
+  if cub.facecentroid
+    ptr += 4
+  end
   # set S1111 oribt node indices
   for i = 1:cub.numS1111
     indices[idxptr+1:idxptr+24] = [ptr+1:ptr+24;]
@@ -668,19 +683,19 @@ building nodes on a given face using Barycentric coordinates
 * `facevtx`: subarray `facevtx[:,f]` lists the vertices of face `f` 
 
 """
-function getfacevertexindices{T}(cub::PointSymCub{T})
+function getfacevertexindices(cub::PointSymCub{T}) where {T}
   return [1]
 end
 
-function getfacevertexindices{T}(cub::LineSymCub{T})
+function getfacevertexindices(cub::LineSymCub{T}) where {T}
   return [1 2]
 end
 
-function getfacevertexindices{T}(cub::TriSymCub{T})
+function getfacevertexindices(cub::TriSymCub{T}) where {T}
   return [1 2 3; 2 3 1]
 end
 
-function getfacevertexindices{T}(cub::TetSymCub{T})
+function getfacevertexindices(cub::TetSymCub{T}) where {T}
   return [1 1 2 1; 2 4 4 3; 3 2 3 4]
 end
 
@@ -700,24 +715,24 @@ for a method that returns a single array of boundary nodes.
   column of indices for each edge/face.
 
 """
-function getfacenodeindices{T}(cub::PointSymCub{T})
+function getfacenodeindices(cub::PointSymCub{T}) where {T}
   numedge = getnumfacenodes(cub)
   bndryindices = zeros(Int, (numedge,1) )
-  bndryindices[:,:] = 1
+  bndryindices[:,:] .= 1
   return bndryindices
 end
 
-function getfacenodeindices{T}(cub::LineSymCub{T})
+function getfacenodeindices(cub::LineSymCub{T}) where {T}
   numedge = getnumfacenodes(cub)
   bndryindices = zeros(Int, (numedge,2) )
   # add vertices to indices
   if cub.vertices
-    bndryindices[:,:] = [1 2]
+    bndryindices[:,:] .= [1 2]
   end
   return bndryindices
 end
 
-function getfacenodeindices{T}(cub::TriSymCub{T})
+function getfacenodeindices(cub::TriSymCub{T}) where {T}
   # get the number of nodes on one edge
   numedge = getnumfacenodes(cub)
   bndryindices = zeros(Int, (numedge,3) )
@@ -748,7 +763,7 @@ function getfacenodeindices{T}(cub::TriSymCub{T})
   return bndryindices
 end
 
-function getfacenodeindices{T}(cub::TetSymCub{T})
+function getfacenodeindices(cub::TetSymCub{T}) where {T}
   # get the number of nodes on one face
   numface = getnumfacenodes(cub)
   bndryindices = zeros(Int, (numface,4) )
@@ -762,12 +777,6 @@ function getfacenodeindices{T}(cub::TetSymCub{T})
     ptr += 4
     idxptr += 3
   end
-  # add face centroids to indices
-  if cub.facecentroid
-    bndryindices[idxptr+1,:] = [ptr+1 ptr+2 ptr+3 ptr+4]
-    ptr += 4
-    idxptr += 1
-  end
   # account for S31 orbits
   ptr += 4*cub.numS31
   # add mid-edge to indices
@@ -780,6 +789,14 @@ function getfacenodeindices{T}(cub::TetSymCub{T})
   end
   # account for S22 orbits
   ptr += 6*cub.numS22
+  # add face S21 orbits to indices
+  for i = 1:cub.numfaceS21
+    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+4 ptr+7 ptr+10;
+                                         ptr+2 ptr+5 ptr+8 ptr+11;
+                                         ptr+3 ptr+6 ptr+9 ptr+12]
+    ptr += 12
+    idxptr += 3
+  end
   # add edge nodes to indices
   for i = 1:cub.numedge
     bndryindices[idxptr+1:idxptr+6,:] = [ptr+1 ptr+7  ptr+9  ptr+6;
@@ -790,14 +807,6 @@ function getfacenodeindices{T}(cub::TetSymCub{T})
                                          ptr+6 ptr+1  ptr+3  ptr+7]
     ptr += 12
     idxptr += 6
-  end
-  # add face S21 orbits to indices
-  for i = 1:cub.numfaceS21
-    bndryindices[idxptr+1:idxptr+3,:] = [ptr+1 ptr+4 ptr+7 ptr+10;
-                                         ptr+2 ptr+5 ptr+8 ptr+11;
-                                         ptr+3 ptr+6 ptr+9 ptr+12]
-    ptr += 12
-    idxptr += 3
   end
   # account for S211 oribts
   ptr += 12*cub.numS211
@@ -812,6 +821,12 @@ function getfacenodeindices{T}(cub::TetSymCub{T})
     ptr += 24
     idxptr += 6
   end    
+  # add face centroids to indices
+  if cub.facecentroid
+    bndryindices[idxptr+1,:] = [ptr+1 ptr+2 ptr+3 ptr+4]
+    ptr += 4
+    idxptr += 1
+  end
   return bndryindices
 end
 
@@ -836,15 +851,15 @@ This function attempts to find the left permultation of rows such that
 * `true` if the permutation exists, `false` otherwise
 
 """
-function findleftperm!{T}(A::AbstractArray{T,2}, permR::AbstractVector{Int},
-                          permL::AbstractVector{Int})
+function findleftperm!(A::AbstractArray{T,2}, permR::AbstractVector{Int},
+                          permL::AbstractVector{Int}) where {T}
   @assert( size(A,1) == length(permL) )
   @assert( size(A,2) == length(permR) )
   rows = [ view(A, i, 1:size(A,2)) for i=1:size(A,1) ]
-  permA = sortperm(rows; order=Base.Lexicographic)
+  permA = sortperm(rows)
   AR = A[:,permR]
   rows = [ view(AR, i, 1:size(AR,2)) for i=1:size(AR,1) ]
-  permAR = sortperm(rows, order=Base.Lexicographic)
+  permAR = sortperm(rows)
   invpermAR = invperm(permAR)
   permL[:] = permA[invpermAR]
   if A[permL,:] == AR
@@ -872,21 +887,21 @@ such that the new nodes have the same order as the old nodes, but relative to
 * `perm`: permutation of the cubature nodes
 
 """
-function getpermutation{T}(cub::PointSymCub{T}, vtxperm::Array{Int,1})
+function getpermutation(cub::PointSymCub{T}, vtxperm::Array{Int,1}) where {T}
   @assert( length(vtxperm) == 1 )
   perm = zeros(Int, (cub.numnodes))
   perm[1] = 1
   return perm
 end
 
-function getpermutation{T}(cub::LineSymCub{T}, vtxperm::Array{Int,1})
+function getpermutation(cub::LineSymCub{T}, vtxperm::Array{Int,1}) where {T}
   @assert( length(vtxperm) == 2 )
   perm = zeros(Int, (cub.numnodes))
   ptr = 0
   # set permutation for nodes with 2-symmetries
   # set vertices
   if cub.vertices
-    perm[ptr+1:ptr+2] = invperm(vtxperm) + ptr
+    perm[ptr+1:ptr+2] = invperm(vtxperm) .+ ptr
     ptr += 2
   end
   # set edge nodes
@@ -894,7 +909,7 @@ function getpermutation{T}(cub::LineSymCub{T}, vtxperm::Array{Int,1})
   permL = zeros(Int, 2)
   @assert( findleftperm!(A, vtxperm, permL) )
   for i = 1:cub.numedge
-    perm[ptr+1:ptr+2] = permL + ptr
+    perm[ptr+1:ptr+2] = permL .+ ptr
     ptr += 2
   end
   # set permutation for node with 1-symmetry
@@ -906,14 +921,14 @@ function getpermutation{T}(cub::LineSymCub{T}, vtxperm::Array{Int,1})
   return perm  
 end
 
-function getpermutation{T}(cub::TriSymCub{T}, vtxperm::AbstractArray{Int,1})
+function getpermutation(cub::TriSymCub{T}, vtxperm::AbstractArray{Int,1}) where {T}
   @assert( length(vtxperm) == 3 )
   perm = zeros(Int, (cub.numnodes))
   ptr = 0
   # set permutation for nodes with 3-symmetries
   # set vertices
   if cub.vertices
-    perm[ptr+1:ptr+3] = invperm(vtxperm) + ptr
+    perm[ptr+1:ptr+3] = invperm(vtxperm) .+ ptr
     ptr += 3
   end
   # mid-edge nodes
@@ -921,7 +936,7 @@ function getpermutation{T}(cub::TriSymCub{T}, vtxperm::AbstractArray{Int,1})
   permL = zeros(Int, 3)
   @assert( findleftperm!(A, vtxperm, permL) )
   if cub.midedges
-    perm[ptr+1:ptr+3] = permL + ptr
+    perm[ptr+1:ptr+3] = permL .+ ptr
     ptr += 3
   end
   # set S21 orbit nodes
@@ -929,7 +944,7 @@ function getpermutation{T}(cub::TriSymCub{T}, vtxperm::AbstractArray{Int,1})
   permL = zeros(Int, 3)
   @assert( findleftperm!(A, vtxperm, permL) )
   for i = 1:cub.numS21
-    perm[ptr+1:ptr+3] = permL + ptr
+    perm[ptr+1:ptr+3] = permL .+ ptr
     ptr += 3
   end
   # set permutation for nodes with 6-symmetries
@@ -938,7 +953,7 @@ function getpermutation{T}(cub::TriSymCub{T}, vtxperm::AbstractArray{Int,1})
   permL = zeros(Int, 6)
   @assert( findleftperm!(A, vtxperm, permL) )
   for i = 1:cub.numedge
-    perm[ptr+1:ptr+6] = permL + ptr
+    perm[ptr+1:ptr+6] = permL .+ ptr
     ptr += 6
   end
   # set S111 orbit nodes
@@ -953,34 +968,26 @@ function getpermutation{T}(cub::TriSymCub{T}, vtxperm::AbstractArray{Int,1})
   permL = zeros(Int, 6)
   @assert( findleftperm!(A, vtxperm, permL) )
   for i = 1:cub.numS111
-    perm[ptr+1:ptr+6] = permL + ptr
+    perm[ptr+1:ptr+6] = permL .+ ptr
     ptr += 6
   end
   # set permutation for node with 1-symmetry
   if cub.centroid
-    perm[ptr+1:ptr+1] = ptr+1
+    perm[ptr+1:ptr+1] .= ptr+1
     ptr += 1
   end
   @assert( ptr == cub.numnodes )  
   return perm
 end
 
-function getpermutation{T}(cub::TetSymCub{T}, vtxperm::AbstractArray{Int,1})
+function getpermutation(cub::TetSymCub{T}, vtxperm::AbstractArray{Int,1}) where {T}
   @assert( length(vtxperm) == 4 )
   perm = zeros(Int, (cub.numnodes))
   ptr = 0
   # set permutation for nodes with 4-symmetries
   # set vertices
   if cub.vertices
-    perm[ptr+1:ptr+4] = invperm(vtxperm) + ptr
-    ptr += 4
-  end
-  # set face centroid
-  A = T[1 1 1 0; 1 1 0 1; 0 1 1 1; 1 0 1 1]
-  permL = zeros(Int, 4)
-  @assert( findleftperm!(A, vtxperm, permL) )
-  if cub.facecentroid
-    perm[ptr+1:ptr+4] = permL + ptr
+    perm[ptr+1:ptr+4] = invperm(vtxperm) .+ ptr
     ptr += 4
   end
   # set S31 orbits
@@ -988,7 +995,7 @@ function getpermutation{T}(cub::TetSymCub{T}, vtxperm::AbstractArray{Int,1})
   permL = zeros(Int, 4)
   @assert( findleftperm!(A, vtxperm, permL) )
   for i = 1:cub.numS31
-    perm[ptr+1:ptr+4] = permL + ptr
+    perm[ptr+1:ptr+4] = permL .+ ptr
     ptr += 4
   end
   # set permutation for nodes with 6-symmetries
@@ -1002,7 +1009,7 @@ function getpermutation{T}(cub::TetSymCub{T}, vtxperm::AbstractArray{Int,1})
   permL = zeros(Int, 6)
   @assert( findleftperm!(A, vtxperm, permL) )
   if cub.midedges
-    perm[ptr+1:ptr+6] = permL + ptr
+    perm[ptr+1:ptr+6] = permL .+ ptr
     ptr += 6
   end
   # set S22 oribt nodes
@@ -1010,8 +1017,27 @@ function getpermutation{T}(cub::TetSymCub{T}, vtxperm::AbstractArray{Int,1})
   permL = zeros(Int, 6)
   findleftperm!(A, vtxperm, permL)
   for i = 1:cub.numS22
-    perm[ptr+1:ptr+6] = permL + ptr
+    perm[ptr+1:ptr+6] = permL .+ ptr
     ptr += 6
+  end
+  # set face nodes corresponding to S21 orbit
+  A = T[0.5 0.5 -1 0; # face 1
+        -1 0.5 0.5 0;
+        0.5 -1 0.5 0;
+        0.5 -1 0 0.5; # face 2
+        -1 0.5 0 0.5;
+        0.5 0.5 0 -1;
+        0 0.5 -1 0.5; # face 3
+        0 -1 0.5 0.5;
+        0 0.5 0.5 -1;
+        0.5 0 0.5 -1; # face 4
+        -1 0 0.5 0.5;
+        0.5 0 -1 0.5]
+  permL = zeros(Int, 12)
+  findleftperm!(A, vtxperm, permL)
+  for i = 1:cub.numfaceS21
+    perm[ptr+1:ptr+12] = permL .+ ptr
+    ptr += 12
   end
   # set all nodes with 12-symmetries
   # set edge nodes
@@ -1030,26 +1056,7 @@ function getpermutation{T}(cub::TetSymCub{T}, vtxperm::AbstractArray{Int,1})
   permL = zeros(Int, 12)
   findleftperm!(A, vtxperm, permL)
   for i = 1:cub.numedge
-    perm[ptr+1:ptr+12] = permL + ptr
-    ptr += 12
-  end
-  # set face nodes corresponding to S21 orbit
-  A = T[0.5 0.5 -1 0; # face 1
-        -1 0.5 0.5 0;
-        0.5 -1 0.5 0;
-        0.5 -1 0 0.5; # face 2
-        -1 0.5 0 0.5;
-        0.5 0.5 0 -1;
-        0 0.5 -1 0.5; # face 3
-        0 -1 0.5 0.5;
-        0 0.5 0.5 -1;
-        0.5 0 0.5 -1; # face 4
-        -1 0 0.5 0.5;
-        0.5 0 -1 0.5]
-  permL = zeros(Int, 12)
-  findleftperm!(A, vtxperm, permL)
-  for i = 1:cub.numfaceS21
-    perm[ptr+1:ptr+12] = permL + ptr
+    perm[ptr+1:ptr+12] = permL .+ ptr
     ptr += 12
   end
   # set S211 oribt nodes
@@ -1069,7 +1076,7 @@ function getpermutation{T}(cub::TetSymCub{T}, vtxperm::AbstractArray{Int,1})
   permL = zeros(Int, 12)
   findleftperm!(A, vtxperm, permL)
   for i = 1:cub.numS211
-    perm[ptr+1:ptr+12] = permL + ptr
+    perm[ptr+1:ptr+12] = permL .+ ptr
     ptr += 12
   end
   # set all nodes with 24-symmetries
@@ -1090,18 +1097,41 @@ function getpermutation{T}(cub::TetSymCub{T}, vtxperm::AbstractArray{Int,1})
   permL = zeros(Int, 24)
   findleftperm!(A, vtxperm, permL)
   for i = 1:cub.numfaceS111
-    perm[ptr+1:ptr+24] = permL + ptr
+    perm[ptr+1:ptr+24] = permL .+ ptr
     ptr += 24
+  end
+  # set face centroid
+  A = T[1 1 1 0; 1 1 0 1; 0 1 1 1; 1 0 1 1]
+  permL = zeros(Int, 4)
+  @assert( findleftperm!(A, vtxperm, permL) )
+  if cub.facecentroid
+    perm[ptr+1:ptr+4] = permL .+ ptr
+    ptr += 4
   end
   # set S1111 orbit nodes
   # ...these use the same permL as the face S111 orbits above
+  alpha = 0.1
+  beta = 0.3
+  gamma = 0.25 # these have gamma = 0, but for permL this is not important
+  Aface = [alpha beta (1-alpha-beta-gamma) gamma;
+           beta alpha (1-alpha-beta-gamma) gamma;
+           (1-alpha-beta-gamma) alpha beta gamma;
+           (1-alpha-beta-gamma) beta alpha gamma;
+           beta (1-alpha-beta-gamma) alpha gamma;
+           alpha (1-alpha-beta-gamma) beta gamma]  
+  A = zeros(24, 4)
+  for face = 1:4
+    A[6*(face-1)+1:6*face,:] = Aface[:,invperm(facevtx[:,face])]
+  end
+  permL = zeros(Int, 24)
+  findleftperm!(A, vtxperm, permL)
   for i = 1:cub.numS1111
-    perm[ptr+1:ptr+24] = permL + ptr
+    perm[ptr+1:ptr+24] = permL .+ ptr
     ptr += 24
   end
   # set node with 1 symmetry (i.e. the centroid)
   if cub.centroid
-    perm[ptr+1:ptr+1] = ptr+1
+    perm[ptr+1:ptr+1] .= ptr+1
     ptr += 1
   end
   @assert( ptr == cub.numnodes )
@@ -1125,13 +1155,13 @@ for volume-to-face interpolation or differentiation.
 * `perm`: permutation of the volume nodes for each face
 
 """
-function getfacebasedpermutation{T}(cub::PointSymCub{T}; faceonly::Bool=false)
+function getfacebasedpermutation(cub::PointSymCub{T}; faceonly::Bool=false) where {T}
   perm = zeros(Int, (cub.numnodes, 1))
   perm[1,1] = 1
   return perm
 end
 
-function getfacebasedpermutation{T}(cub::LineSymCub{T}; faceonly::Bool=false)
+function getfacebasedpermutation(cub::LineSymCub{T}; faceonly::Bool=false) where {T}
   if faceonly
     @assert(cub.vertices) # vertices must be active
     perm = zeros(Int, (getnumfacenodes(cub), 2))
@@ -1144,7 +1174,7 @@ function getfacebasedpermutation{T}(cub::LineSymCub{T}; faceonly::Bool=false)
   return perm
 end
 
-function getfacebasedpermutation{T}(cub::TriSymCub{T}; faceonly::Bool=false)
+function getfacebasedpermutation(cub::TriSymCub{T}; faceonly::Bool=false) where {T}
   if faceonly
     perm = zeros(Int, (getnumfacenodes(cub), 3))
     perm = getfacenodeindices(cub)
@@ -1157,7 +1187,7 @@ function getfacebasedpermutation{T}(cub::TriSymCub{T}; faceonly::Bool=false)
   return perm
 end
 
-function getfacebasedpermutation{T}(cub::TetSymCub{T}; faceonly::Bool=false)
+function getfacebasedpermutation(cub::TetSymCub{T}; faceonly::Bool=false) where {T}
   if faceonly
     perm = zeros(Int, (getnumfacenodes(cub), 4))
     perm = getfacenodeindices(cub)
@@ -1196,19 +1226,19 @@ depends on the face dimension:
 * `perm`: permutation of the interface nodes for each possible orientation
 
 """
-function getneighbourpermutation{T}(cub::PointSymCub{T})
+function getneighbourpermutation(cub::PointSymCub{T}) where {T}
   perm = zeros(Int, (1,1))
   perm[1,1] = 1
   return perm
 end
 
-function getneighbourpermutation{T}(cub::LineSymCub{T})
+function getneighbourpermutation(cub::LineSymCub{T}) where {T}
   perm = zeros(Int, (cub.numnodes, 1))
   perm[:,1] = getpermutation(cub, [2;1])
   return perm
 end
 
-function getneighbourpermutation{T}(cub::TriSymCub{T})
+function getneighbourpermutation(cub::TriSymCub{T}) where {T}
   perm = zeros(Int, (cub.numnodes, 3))
   perm[:,1] = getpermutation(cub, invperm([1;3;2]))
   perm[:,2] = getpermutation(cub, invperm([2;1;3]))
@@ -1230,7 +1260,7 @@ Sets the nodal parameters for any parameterized symmetry orbits in the cubature.
 * `cub`: symmetric cubature rule whose nodal parameters are being updated
 
 """
-function setparams!{T}(cub::SymCub{T}, params::Array{T})
+function setparams!(cub::SymCub{T}, params::Array{T}) where {T}
   @assert( length(params) == cub.numparams )
   cub.params = vec(params)
 end
@@ -1249,7 +1279,7 @@ Sets a cubature's (unique) weights.
 * `cub`: symmetric cubature rule whose weights are being updated
 
 """
-function setweights!{T}(cub::SymCub{T}, weights::Array{T})
+function setweights!(cub::SymCub{T}, weights::Array{T}) where {T}
   @assert( length(weights) == cub.numweights )
   cub.weights = vec(weights)
 end
@@ -1272,16 +1302,16 @@ dimension as the cubature; for example, a line quadrature can be over a line in
 * `x`: cubature's nodal coordinates (potentially in a subspace)
 
 """
-function calcnodes{T}(cub::PointSymCub, vtx::Array{T,2})
+function calcnodes(cub::PointSymCub, vtx::Array{T,2}) where {T}
   @assert(cub.numparams == 0)
   @assert(cub.numnodes == 1)
   @assert(size(vtx,1) == 1)
   x = zeros(T, (size(vtx,2),cub.numnodes))
-  x[:,1] = vtx[:,:].'
+  x[:,1] = vtx[:,:]'
   return x
 end
 
-function calcnodes{T}(cub::LineSymCub, vtx::Array{T,2})
+function calcnodes(cub::LineSymCub, vtx::Array{T,2}) where {T}
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
   @assert(size(vtx,1) == 2)
@@ -1291,7 +1321,7 @@ function calcnodes{T}(cub::LineSymCub, vtx::Array{T,2})
   # set all nodes with 2-symmetries
   # set vertices
   if cub.vertices
-    x[:,1:2] = vtx[:,:].'
+    x[:,1:2] = vtx[:,:]'
     ptr = 2
   end
   # set edge nodes
@@ -1299,7 +1329,7 @@ function calcnodes{T}(cub::LineSymCub, vtx::Array{T,2})
     alpha = cub.params[paramptr+1]
     A = T[alpha (1-alpha);
           (1-alpha) alpha]
-    x[:,ptr+1:ptr+2] = (A*vtx[:,:]).'
+    x[:,ptr+1:ptr+2] = (A*vtx[:,:])'
     ptr += 2
     paramptr += 1
   end
@@ -1312,7 +1342,7 @@ function calcnodes{T}(cub::LineSymCub, vtx::Array{T,2})
   return x
 end
 
-function calcnodes{T}(cub::TriSymCub, vtx::Array{T,2})
+function calcnodes(cub::TriSymCub, vtx::Array{T,2}) where {T}
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
   @assert(size(vtx,1) == 3 && size(vtx,2) >= 2)
@@ -1322,7 +1352,7 @@ function calcnodes{T}(cub::TriSymCub, vtx::Array{T,2})
   # set all nodes with 3-symmetries
   # set vertices
   if cub.vertices
-    x[:,1:3] = vtx.'
+    x[:,1:3] = vtx'
     ptr = 3
   end
   # set mid-edge nodes
@@ -1330,7 +1360,7 @@ function calcnodes{T}(cub::TriSymCub, vtx::Array{T,2})
     A = T[0.5 0.5 0;
           0 0.5 0.5;
           0.5 0 0.5]
-    x[:,ptr+1:ptr+3] = (A*vtx).'
+    x[:,ptr+1:ptr+3] = (A*vtx)'
     ptr += 3
   end
   # set S21 orbit nodes
@@ -1339,7 +1369,7 @@ function calcnodes{T}(cub::TriSymCub, vtx::Array{T,2})
     A = T[alpha alpha (1-2*alpha);
           (1-2*alpha) alpha alpha;
           alpha (1-2*alpha) alpha]
-    x[:,ptr+1:ptr+3] = (A*vtx).'
+    x[:,ptr+1:ptr+3] = (A*vtx)'
     ptr += 3
     paramptr += 1
   end
@@ -1353,7 +1383,7 @@ function calcnodes{T}(cub::TriSymCub, vtx::Array{T,2})
           0 (1-alpha) alpha;
           (1-alpha) 0 alpha;
           alpha 0 (1-alpha)]
-    x[:,ptr+1:ptr+6] = (A*vtx).'
+    x[:,ptr+1:ptr+6] = (A*vtx)'
     ptr += 6
     paramptr += 1
   end
@@ -1367,20 +1397,20 @@ function calcnodes{T}(cub::TriSymCub, vtx::Array{T,2})
           (1-alpha-beta) beta alpha;
           beta (1-alpha-beta) alpha;
           alpha (1-alpha-beta) beta]
-    x[:,ptr+1:ptr+6] = (A*vtx).'
+    x[:,ptr+1:ptr+6] = (A*vtx)'
     ptr += 6
     paramptr += 2
   end
   # set node with 1-symmetry (i.e. centroid)
   if cub.centroid
     A = T[1/3 1/3 1/3]
-    x[:,ptr+1] = (A*vtx).'
+    x[:,ptr+1] = (A*vtx)'
     ptr += 1
   end
   return x
 end
 
-function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
+function calcnodes(cub::TetSymCub, vtx::Array{T,2}) where {T}
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
   @assert(size(vtx,1) == 4 && size(vtx,2) >= 3)
@@ -1390,19 +1420,10 @@ function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
   # set all nodes with 4-symmetries
   # set vertices
   if cub.vertices
-    x[:,ptr+1:ptr+4] = vtx.'
+    x[:,ptr+1:ptr+4] = vtx'
     ptr = 4
   end
-  # set face centroids
-  if cub.facecentroid
-    alpha = (T)(1/3)
-    A = T[alpha alpha alpha 0;
-          alpha alpha 0 alpha;
-          0 alpha alpha alpha;
-          alpha 0 alpha alpha]
-    x[:,ptr+1:ptr+4] = (A*vtx).'
-    ptr += 4
-  end
+ 
   # set S31 orbit nodes
   for i = 1:cub.numS31
     alpha = cub.params[paramptr+1]/3
@@ -1410,7 +1431,7 @@ function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
           alpha alpha (1-3*alpha) alpha;
           (1-3*alpha) alpha alpha alpha;
           alpha (1-3*alpha) alpha alpha]
-    x[:,ptr+1:ptr+4] = (A*vtx).'
+    x[:,ptr+1:ptr+4] = (A*vtx)'
     ptr += 4
     paramptr += 1
   end
@@ -1423,7 +1444,7 @@ function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
           0.5 0 0 0.5;
           0 0.5 0 0.5;
           0 0 0.5 0.5]
-    x[:,ptr+1:ptr+6] = (A*vtx).'
+    x[:,ptr+1:ptr+6] = (A*vtx)'
     ptr += 6
   end
   # set S22 oribt nodes
@@ -1435,11 +1456,26 @@ function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
           (0.5-alpha) alpha alpha (0.5-alpha);
           (0.5-alpha) alpha (0.5-alpha) alpha;
           (0.5-alpha) (0.5-alpha) alpha alpha]
-    x[:,ptr+1:ptr+6] = (A*vtx).'
+    x[:,ptr+1:ptr+6] = (A*vtx)'
     ptr += 6
     paramptr += 1
   end
-  # set all nodes with 12-symmetries
+  # set all nodes with 12-symmetries  
+  # set face nodes corresponding to S21 orbit
+  for i = 1:cub.numfaceS21
+    alpha = 0.5*cub.params[paramptr+1]
+    A = T[alpha alpha (1-2*alpha);
+          (1-2*alpha) alpha alpha;
+          alpha (1-2*alpha) alpha]
+    facevtx = [1 1 2 1;
+                2 4 4 3;
+                3 2 3 4]
+    for face = 1:4
+      x[:,ptr+1:ptr+3] = (A*vtx[facevtx[:,face],:])'
+      ptr += 3
+    end
+    paramptr += 1
+  end
   # set edge nodes
   for i = 1:cub.numedge
     alpha = cub.params[paramptr+1]
@@ -1455,23 +1491,8 @@ function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
           0 (1-alpha) 0 alpha; # edge 5
           0 0 alpha (1-alpha); # edge 6
           0 0 (1-alpha) alpha] # edge 6
-    x[:,ptr+1:ptr+12] = (A*vtx).'
+    x[:,ptr+1:ptr+12] = (A*vtx)'
     ptr += 12
-    paramptr += 1
-  end
-  # set face nodes corresponding to S21 orbit
-  for i = 1:cub.numfaceS21
-    alpha = 0.5*cub.params[paramptr+1]
-    A = T[alpha alpha (1-2*alpha);
-          (1-2*alpha) alpha alpha;
-          alpha (1-2*alpha) alpha]
-    facevtx = [1 1 2 1;
-               2 4 4 3;
-               3 2 3 4]
-    for face = 1:4
-      x[:,ptr+1:ptr+3] = (A*vtx[facevtx[:,face],:]).'
-      ptr += 3
-    end
     paramptr += 1
   end
   # set S211 orbit nodes
@@ -1486,12 +1507,12 @@ function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
                3 2 3 4;
                4 3 1 2]
     for face = 1:4
-      x[:,ptr+1:ptr+3] = (A*vtx[facevtx[:,face],:]).'
+      x[:,ptr+1:ptr+3] = (A*vtx[facevtx[:,face],:])'
       ptr += 3
     end
     paramptr += 2
   end
-  # set all nodes with 24-symmetries
+  # set nodes with 24-symmetries
   # set face nodes corresponding to S111 orbit
   for i = 1:cub.numfaceS111
     alpha = 0.5*cub.params[paramptr+1]
@@ -1506,11 +1527,23 @@ function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
                2 4 4 3;
                3 2 3 4]
     for face = 1:4
-      x[:,ptr+1:ptr+6] = (A*vtx[facevtx[:,face],:]).'
+      x[:,ptr+1:ptr+6] = (A*vtx[facevtx[:,face],:])'
       ptr += 6
     end
     paramptr += 2
   end
+  # set nodes with 4-symmetries
+  # set face centroids
+  if cub.facecentroid
+    alpha = (T)(1/3)
+    A = T[alpha alpha alpha 0;
+          alpha alpha 0 alpha;
+          0 alpha alpha alpha;
+          alpha 0 alpha alpha]
+    x[:,ptr+1:ptr+4] = (A*vtx)'
+    ptr += 4
+  end
+  # set nodes with 24-symmetries
   # set S1111 orbit nodes
   for i = 1:cub.numS1111
     alpha = 0.5*cub.params[paramptr+1]
@@ -1527,7 +1560,7 @@ function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
                3 2 3 4;
                4 3 1 2]
     for face = 1:4
-      x[:,ptr+1:ptr+6] = (A*vtx[facevtx[:,face],:]).'
+      x[:,ptr+1:ptr+6] = (A*vtx[facevtx[:,face],:])'
       ptr += 6
     end
     paramptr += 3
@@ -1535,11 +1568,172 @@ function calcnodes{T}(cub::TetSymCub, vtx::Array{T,2})
   # set node with 1 symmetry (i.e. the centroid)
   if cub.centroid
     A = T[0.25 0.25 0.25 0.25]
-    x[:,ptr+1] = (A*vtx).'
+    x[:,ptr+1] = (A*vtx)'
     ptr += 1
   end
   return x
 end
+
+# function calcnodes(cub::TetSymCub, vtx::Array{T,2}) where {T}
+#   @assert(cub.numparams >= 0)
+#   @assert(cub.numnodes >= 1)
+#   @assert(size(vtx,1) == 4 && size(vtx,2) >= 3)
+#   x = zeros(T, (size(vtx,2),cub.numnodes))
+#   ptr = 0
+#   paramptr = 0
+#   # set all nodes with 4-symmetries
+#   # set vertices
+#   if cub.vertices
+#     x[:,ptr+1:ptr+4] = vtx'
+#     ptr = 4
+#   end
+#   # set face centroids
+#   if cub.facecentroid
+#     alpha = (T)(1/3)
+#     A = T[alpha alpha alpha 0;
+#           alpha alpha 0 alpha;
+#           0 alpha alpha alpha;
+#           alpha 0 alpha alpha]
+#     x[:,ptr+1:ptr+4] = (A*vtx)'
+#     ptr += 4
+#   end
+#   # set S31 orbit nodes
+#   for i = 1:cub.numS31
+#     alpha = cub.params[paramptr+1]/3
+#     A = T[alpha alpha alpha (1-3*alpha);
+#           alpha alpha (1-3*alpha) alpha;
+#           (1-3*alpha) alpha alpha alpha;
+#           alpha (1-3*alpha) alpha alpha]
+#     x[:,ptr+1:ptr+4] = (A*vtx)'
+#     ptr += 4
+#     paramptr += 1
+#   end
+#   # set all nodes with 6-symmetries
+#   # set mid-edge nodes
+#   if cub.midedges
+#     A = T[0.5 0.5 0 0;
+#           0 0.5 0.5 0;
+#           0.5 0 0.5 0;
+#           0.5 0 0 0.5;
+#           0 0.5 0 0.5;
+#           0 0 0.5 0.5]
+#     x[:,ptr+1:ptr+6] = (A*vtx)'
+#     ptr += 6
+#   end
+#   # set S22 oribt nodes
+#   for i = 1:cub.numS22
+#     alpha = 0.5*cub.params[paramptr+1]
+#     A = T[alpha alpha (0.5-alpha) (0.5-alpha);
+#           alpha (0.5-alpha) alpha (0.5-alpha);
+#           alpha (0.5-alpha) (0.5-alpha) alpha;
+#           (0.5-alpha) alpha alpha (0.5-alpha);
+#           (0.5-alpha) alpha (0.5-alpha) alpha;
+#           (0.5-alpha) (0.5-alpha) alpha alpha]
+#     x[:,ptr+1:ptr+6] = (A*vtx)'
+#     ptr += 6
+#     paramptr += 1
+#   end
+#   # set all nodes with 12-symmetries
+#   # set edge nodes
+#   for i = 1:cub.numedge
+#     alpha = cub.params[paramptr+1]
+#     A = T[alpha (1-alpha) 0 0; # edge 1
+#           (1-alpha) alpha 0 0; # edge 1
+#           0 alpha (1-alpha) 0; # edge 2
+#           0 (1-alpha) alpha 0; # edge 2
+#           (1-alpha) 0 alpha 0; # edge 3
+#           alpha 0 (1-alpha) 0; # edge 3
+#           alpha 0 0 (1-alpha); # edge 4
+#           (1-alpha) 0 0 alpha; # edge 4
+#           0 alpha 0 (1-alpha); # edge 5
+#           0 (1-alpha) 0 alpha; # edge 5
+#           0 0 alpha (1-alpha); # edge 6
+#           0 0 (1-alpha) alpha] # edge 6
+#     x[:,ptr+1:ptr+12] = (A*vtx)'
+#     ptr += 12
+#     paramptr += 1
+#   end
+#   # set face nodes corresponding to S21 orbit
+#   for i = 1:cub.numfaceS21
+#     alpha = 0.5*cub.params[paramptr+1]
+#     A = T[alpha alpha (1-2*alpha);
+#           (1-2*alpha) alpha alpha;
+#           alpha (1-2*alpha) alpha]
+#     facevtx = [1 1 2 1;
+#                2 4 4 3;
+#                3 2 3 4]
+#     for face = 1:4
+#       x[:,ptr+1:ptr+3] = (A*vtx[facevtx[:,face],:])'
+#       ptr += 3
+#     end
+#     paramptr += 1
+#   end
+#   # set S211 orbit nodes
+#   for i = 1:cub.numS211
+#     alpha = 0.5*cub.params[paramptr+1]
+#     beta = 0.5*cub.params[paramptr+2]
+#     A = T[alpha alpha (1-2*alpha-beta) beta;
+#           (1-2*alpha-beta) alpha alpha beta;
+#           alpha (1-2*alpha-beta) alpha beta]
+#     facevtx = [1 1 2 1;
+#                2 4 4 3;
+#                3 2 3 4;
+#                4 3 1 2]
+#     for face = 1:4
+#       x[:,ptr+1:ptr+3] = (A*vtx[facevtx[:,face],:])'
+#       ptr += 3
+#     end
+#     paramptr += 2
+#   end
+#   # set all nodes with 24-symmetries
+#   # set face nodes corresponding to S111 orbit
+#   for i = 1:cub.numfaceS111
+#     alpha = 0.5*cub.params[paramptr+1]
+#     beta = 0.5*cub.params[paramptr+2]
+#     A = T[alpha beta (1-alpha-beta);
+#           beta alpha (1-alpha-beta);
+#           (1-alpha-beta) alpha beta;
+#           (1-alpha-beta) beta alpha;
+#           beta (1-alpha-beta) alpha;
+#           alpha (1-alpha-beta) beta]
+#     facevtx = [1 1 2 1;
+#                2 4 4 3;
+#                3 2 3 4]
+#     for face = 1:4
+#       x[:,ptr+1:ptr+6] = (A*vtx[facevtx[:,face],:])'
+#       ptr += 6
+#     end
+#     paramptr += 2
+#   end
+#   # set S1111 orbit nodes
+#   for i = 1:cub.numS1111
+#     alpha = 0.5*cub.params[paramptr+1]
+#     beta = 0.5*cub.params[paramptr+2]
+#     gamma = 0.5*cub.params[paramptr+3]
+#     A = T[alpha beta (1-alpha-beta-gamma) gamma;
+#           beta alpha (1-alpha-beta-gamma) gamma;
+#           (1-alpha-beta-gamma) alpha beta gamma;
+#           (1-alpha-beta-gamma) beta alpha gamma;
+#           beta (1-alpha-beta-gamma) alpha gamma;
+#           alpha (1-alpha-beta-gamma) beta gamma]
+#     facevtx = [1 1 2 1;
+#                2 4 4 3;
+#                3 2 3 4;
+#                4 3 1 2]
+#     for face = 1:4
+#       x[:,ptr+1:ptr+6] = (A*vtx[facevtx[:,face],:])'
+#       ptr += 6
+#     end
+#     paramptr += 3
+#   end
+#   # set node with 1 symmetry (i.e. the centroid)
+#   if cub.centroid
+#     A = T[0.25 0.25 0.25 0.25]
+#     x[:,ptr+1] = (A*vtx)'
+#     ptr += 1
+#   end
+#   return x
+# end
 
 """
 ### SymCubatures.calcjacobianofnodes
@@ -1558,11 +1752,11 @@ Returns the Jacobian of the nodes with respect to the orbit parameters.
 * `Jac`: Jacobian of the mapping from node parameters to nodes
 
 """
-function calcjacobianofnodes{T}(cub::PointSymCub{T}, vtx::Array{T,2})
+function calcjacobianofnodes(cub::PointSymCub{T}, vtx::Array{T,2}) where {T}
   error("SymCubatures.calcjacobianofnodes called with PointSymCub")
 end
 
-function calcjacobianofnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
+function calcjacobianofnodes(cub::TriSymCub{T}, vtx::Array{T,2}) where {T}
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
   @assert( size(vtx,1) == 3 && size(vtx,2) == 2)
@@ -1627,7 +1821,7 @@ function calcjacobianofnodes{T}(cub::TriSymCub{T}, vtx::Array{T,2})
   return Jac
 end
 
-function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
+function calcjacobianofnodes(cub::TetSymCub{T}, vtx::Array{T,2}) where {T}
   @assert(cub.numparams >= 0)
   @assert(cub.numnodes >= 1)
   @assert( size(vtx,1) == 4 && size(vtx,2) == 3)
@@ -1638,9 +1832,6 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
   # set Jacobian for all nodes with 4-symmetries
   if cub.vertices
     ptr += 4 # block of zeros, because the vertices are not parameterized
-  end
-  if cub.facecentroid
-    ptr += 4 # block of zeros, because the face centroids are not parameterized
   end
   # set Jacobian for S31 nodes
   A = T[1 1 1 -3;
@@ -1669,6 +1860,23 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
     ptr += 6
     paramptr += 1
   end
+  # set Jacobian for face nodes corresponding to S21 orbit
+  A = T[0.5 0.5 -1;
+        -1 0.5 0.5;
+        0.5 -1 0.5]
+  facevtx = [1 1 2 1;
+             2 4 4 3;
+             3 2 3 4]
+  for i = 1:cub.numfaceS21
+    for face = 1:4
+      for j = 1:3
+        Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+3,
+            paramptr+1] = A*vtx[facevtx[:,face],j]
+      end
+      ptr += 3
+    end
+    paramptr += 1
+  end
   # set Jacobian for all nodes with 12-symmetries  
   # set Jacobian for edge nodes
   A = T[1 -1 0 0; # edge 1
@@ -1689,23 +1897,6 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
           paramptr+1] = A*vtx[:,j]
     end
     ptr += 12
-    paramptr += 1
-  end
-  # set Jacobian for face nodes corresponding to S21 orbit
-  A = T[0.5 0.5 -1;
-        -1 0.5 0.5;
-        0.5 -1 0.5]
-  facevtx = [1 1 2 1;
-             2 4 4 3;
-             3 2 3 4]
-  for i = 1:cub.numfaceS21
-    for face = 1:4
-      for j = 1:3
-        Jac[(j-1)*cub.numnodes+ptr+1:(j-1)*cub.numnodes+ptr+3,
-            paramptr+1] = A*vtx[facevtx[:,face],j]
-      end
-      ptr += 3
-    end
     paramptr += 1
   end
   # set Jacobian for S211 oribt nodes
@@ -1751,6 +1942,9 @@ function calcjacobianofnodes{T}(cub::TetSymCub{T}, vtx::Array{T,2})
       ptr += 6
     end
     paramptr += 2
+  end
+  if cub.facecentroid
+    ptr += 4 # block of zeros, because the face centroids are not parameterized
   end
   # set Jacobian for S1111 node orbits 
   Aalpha = T[0.5 0 -0.5 0; 0 0.5 -0.5 0; -0.5 0.5 0 0;
@@ -1798,7 +1992,7 @@ Map the unique cubature weights to the weights of all nodes.
 * `w`: cubature's weights at all nodes
 
 """
-function calcweights{T}(cub::PointSymCub{T})
+function calcweights(cub::PointSymCub{T}) where {T}
   @assert(cub.numweights == 1)
   @assert(cub.numnodes == 1)
   w = zeros(T, (cub.numnodes))
@@ -1806,7 +2000,7 @@ function calcweights{T}(cub::PointSymCub{T})
   return w
 end
 
-function calcweights{T}(cub::LineSymCub{T})
+function calcweights(cub::LineSymCub{T}) where {T}
   @assert(cub.numweights >= 0)
   @assert(cub.numnodes >= 1)
   w = zeros(T, (cub.numnodes))
@@ -1815,26 +2009,26 @@ function calcweights{T}(cub::LineSymCub{T})
   # set weights for all nodes with 2-symmetries
   # set vertices weights
   if cub.vertices
-    w[1:2] = cub.weights[wptr+1]
+    w[1:2] .= cub.weights[wptr+1]
     ptr += 2
     wptr += 1
   end
   # set edge weights
   for i = 1:cub.numedge
-    w[ptr+1:ptr+2] = cub.weights[wptr+1]
+    w[ptr+1:ptr+2] .= cub.weights[wptr+1]
     ptr += 2
     wptr += 1
   end
   # set weight for node with 1-symmetry (i.e. centroid)
   if cub.centroid
-    w[ptr+1:ptr+1] = cub.weights[wptr+1]
+    w[ptr+1:ptr+1] .= cub.weights[wptr+1]
     ptr += 1
     wptr += 1
   end
   return w
 end
 
-function calcweights{T}(cub::TriSymCub{T})
+function calcweights(cub::TriSymCub{T}) where {T}
   @assert(cub.numweights >= 0)
   @assert(cub.numnodes >= 1)
 
@@ -1844,45 +2038,45 @@ function calcweights{T}(cub::TriSymCub{T})
   # set weights for all nodes with 3-symmetries
   # set vertices weights
   if cub.vertices
-    w[1:3] = cub.weights[wptr+1]
+    w[1:3] .= cub.weights[wptr+1]
     ptr = 3
     wptr += 1
   end
   # set mid-edge weights
   if cub.midedges
-    w[ptr+1:ptr+3] = cub.weights[wptr+1]
+    w[ptr+1:ptr+3] .= cub.weights[wptr+1]
     ptr += 3
     wptr += 1
   end
   # set S21 orbit weights
   for i = 1:cub.numS21
-    w[ptr+1:ptr+3] = cub.weights[wptr+1]
+    w[ptr+1:ptr+3] .= cub.weights[wptr+1]
     ptr += 3
     wptr += 1
   end
   # set weights for all nodes with 6-symmetries
   # set edge weights
   for i = 1:cub.numedge
-    w[ptr+1:ptr+6] = cub.weights[wptr+1]
+    w[ptr+1:ptr+6] .= cub.weights[wptr+1]
     ptr += 6
     wptr += 1
   end
   # set S111 orbit weights
   for i = 1:cub.numS111
-    w[ptr+1:ptr+6] = cub.weights[wptr+1]
+    w[ptr+1:ptr+6] .= cub.weights[wptr+1]
     ptr += 6
     wptr += 1
   end
   # set weight for node with 1-symmetry (i.e. centroid)
   if cub.centroid
-    w[ptr+1:ptr+1] = cub.weights[wptr+1]
+    w[ptr+1:ptr+1] .= cub.weights[wptr+1]
     ptr += 1
     wptr += 1
   end
   return w
 end
 
-function calcweights{T}(cub::TetSymCub{T})
+function calcweights(cub::TetSymCub{T}) where {T}
   @assert(cub.numweights >= 0)
   @assert(cub.numnodes >= 1)
 
@@ -1892,71 +2086,71 @@ function calcweights{T}(cub::TetSymCub{T})
   # set weights for all nodes with 4-symmetries
   # set vertices weights
   if cub.vertices
-    w[1:4] = cub.weights[wptr+1]
+    w[1:4] .= cub.weights[wptr+1]
     ptr = 4
-    wptr += 1
-  end
-  # set face centroid weights
-  if cub.facecentroid
-    w[ptr+1:ptr+4] = cub.weights[wptr+1]
-    ptr += 4
     wptr += 1
   end
   # set S31 orbit weights
   for i = 1:cub.numS31
-    w[ptr+1:ptr+4] = cub.weights[wptr+1]
+    w[ptr+1:ptr+4] .= cub.weights[wptr+1]
     ptr += 4
     wptr += 1
   end
   # set weights for all nodes with 6-symmetries
   # set mid-edge weights
   if cub.midedges
-    w[ptr+1:ptr+6] = cub.weights[wptr+1]
+    w[ptr+1:ptr+6] .= cub.weights[wptr+1]
     ptr += 6
     wptr += 1
   end
   # set S22 orbit weights
   for i = 1:cub.numS22
-    w[ptr+1:ptr+6] = cub.weights[wptr+1]
+    w[ptr+1:ptr+6] .= cub.weights[wptr+1]
     ptr += 6
+    wptr += 1
+  end
+  # set face S21 weights
+  for i = 1:cub.numfaceS21
+    w[ptr+1:ptr+12] .= cub.weights[wptr+1]
+    ptr += 12
     wptr += 1
   end
   # set weights for all nodes with 12-symmetries
   # set edge weights
   for i = 1:cub.numedge
-    w[ptr+1:ptr+12] = cub.weights[wptr+1]
-    ptr += 12
-    wptr += 1
-  end
-  # set face S21 weights
-  for i = 1:cub.numfaceS21
-    w[ptr+1:ptr+12] = cub.weights[wptr+1]
+    w[ptr+1:ptr+12] .= cub.weights[wptr+1]
     ptr += 12
     wptr += 1
   end
   # set S211 orbit weights
   for i = 1:cub.numS211
-    w[ptr+1:ptr+12] = cub.weights[wptr+1]
+    w[ptr+1:ptr+12] .= cub.weights[wptr+1]
     ptr += 12
     wptr += 1
   end
   # set weights for all nodes with 24-symmetries
   # set face S111 weights
   for i = 1:cub.numfaceS111
-    w[ptr+1:ptr+24] = cub.weights[wptr+1]
+    w[ptr+1:ptr+24] .= cub.weights[wptr+1]
     ptr += 24
+    wptr += 1
+  end
+  # set face centroid weights
+  if cub.facecentroid
+    w[ptr+1:ptr+4] .= cub.weights[wptr+1]
+    ptr += 4
     wptr += 1
   end
   # set S1111 orbit weights
   for i = 1:cub.numS1111
-    w[ptr+1:ptr+24] = cub.weights[wptr+1]
+    w[ptr+1:ptr+24] .= cub.weights[wptr+1]
     ptr += 24
     wptr += 1
   end
   # set weight for node with 1-symmetry
   # set centroid weight
   if cub.centroid
-    w[ptr+1:ptr+1] = cub.weights[wptr+1]
+    w[ptr+1:ptr+1] .= cub.weights[wptr+1]
     ptr += 1
     wptr += 1
   end
@@ -1979,11 +2173,11 @@ the mapping from the unique weights to the nodal weights.
 * `Jac`: Jacobian of the mapping from (unique) weights to nodal weights
 
 """
-function calcjacobianofweights{T}(cub::PointSymCub{T})
+function calcjacobianofweights(cub::PointSymCub{T}) where {T}
   error("SymCubatures.calcjacobianofweights called for PointSymCub")
 end
 
-function calcjacobianofweights{T}(quad::LineSymCub{T})
+function calcjacobianofweights(quad::LineSymCub{T}) where {T}
   @assert(quad.numweights >= 0)
   @assert(quad.numnodes >= 1)
 
@@ -2012,7 +2206,7 @@ function calcjacobianofweights{T}(quad::LineSymCub{T})
   return Jac
 end
 
-function calcjacobianofweights{T}(cub::TriSymCub{T})
+function calcjacobianofweights(cub::TriSymCub{T}) where {T}
   @assert(cub.numweights >= 0)
   @assert(cub.numnodes >= 1)
 
@@ -2060,7 +2254,7 @@ function calcjacobianofweights{T}(cub::TriSymCub{T})
   return Jac
 end
 
-function calcjacobianofweights{T}(cub::TetSymCub{T})
+function calcjacobianofweights(cub::TetSymCub{T}) where {T}
   @assert(cub.numweights >= 0)
   @assert(cub.numnodes >= 1)
 
@@ -2072,12 +2266,6 @@ function calcjacobianofweights{T}(cub::TetSymCub{T})
   if cub.vertices
     Jac[1:4,wptr+1] = ones(T, (4,1))
     ptr = 4
-    wptr += 1
-  end
-  # set Jacobian of face centroid weights
-  if cub.facecentroid
-    Jac[ptr+1:ptr+4,wptr+1] = ones(T, (4,1))
-    ptr += 4
     wptr += 1
   end
   # set Jacobian of S31 orbit weights
@@ -2099,15 +2287,15 @@ function calcjacobianofweights{T}(cub::TetSymCub{T})
     ptr += 6
     wptr += 1
   end
-  # set Jacobian for all nodes with 12-symmetries
-  # set Jacobian of edge nodes
-  for i = 1:cub.numedge
+  # set Jacobian of face S21 nodes
+  for i = 1:cub.numfaceS21
     Jac[ptr+1:ptr+12,wptr+1] = ones(T, (12,1))
     ptr += 12
     wptr += 1
   end
-  # set Jacobian of face S21 nodes
-  for i = 1:cub.numfaceS21
+  # set Jacobian for all nodes with 12-symmetries
+  # set Jacobian of edge nodes
+  for i = 1:cub.numedge
     Jac[ptr+1:ptr+12,wptr+1] = ones(T, (12,1))
     ptr += 12
     wptr += 1
@@ -2123,6 +2311,12 @@ function calcjacobianofweights{T}(cub::TetSymCub{T})
   for i = 1:cub.numfaceS111
     Jac[ptr+1:ptr+24,wptr+1] = ones(T, (24,1))
     ptr += 24
+    wptr += 1
+  end
+  # set Jacobian of face centroid weights
+  if cub.facecentroid
+    Jac[ptr+1:ptr+4,wptr+1] = ones(T, (4,1))
+    ptr += 4
     wptr += 1
   end
   # set Jacobian of S1111 nodes
@@ -2160,8 +2354,8 @@ size.
 * `Jac`: Jacobian of the nodal coordinates and weights
 
 """
-function calcjacobian{T}(cub::TriSymCub{T},
-                         vtx::Array{T,2}=T[-1 -1; 1 -1; -1 1])
+function calcjacobian(cub::TriSymCub{T},
+                         vtx::Array{T,2}=T[-1 -1; 1 -1; -1 1]) where {T}
   Jac = zeros(T, (3*cub.numnodes, cub.numparams + cub.numweights) )
   Jac[1:2*cub.numnodes, 1:cub.numparams] =
   SymCubatures.calcjacobianofnodes(cub, vtx)
@@ -2170,8 +2364,8 @@ function calcjacobian{T}(cub::TriSymCub{T},
   return Jac
 end
 
-function calcjacobian{T}(cub::TetSymCub{T},
-                         vtx::Array{T,2}=T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1])
+function calcjacobian(cub::TetSymCub{T},
+                         vtx::Array{T,2}=T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]) where {T}
   Jac = zeros(T, (4*cub.numnodes, cub.numparams + cub.numweights) )
   Jac[1:3*cub.numnodes, 1:cub.numparams] =
   SymCubatures.calcjacobianofnodes(cub, vtx)
@@ -2196,8 +2390,8 @@ and only allow the internal nodes to move.
 * `mask`: integer array of parameter indices associated with internal nodes
 
 """
-function getInternalParamMask{T}(cub::TriSymCub{T})
-  mask = Array{Int64}(0)
+function getInternalParamMask(cub::TriSymCub{T}) where {T}
+  mask = Int64[] #Array{Int64}(0)
   paramptr = 1
   # include S21 orbit parameters
   for i = 1:cub.numS21
@@ -2216,8 +2410,8 @@ function getInternalParamMask{T}(cub::TriSymCub{T})
   return mask
 end
 
-function getInternalParamMask{T}(cub::TetSymCub{T})
-  mask = Array{Int64}(0)
+function getInternalParamMask(cub::TetSymCub{T}) where {T}
+  mask = Int64[] #Array{Int64}(0)
   paramptr = 1
   # include S31 orbit parameters
   for i = 1:cub.numS31
@@ -2229,10 +2423,10 @@ function getInternalParamMask{T}(cub::TetSymCub{T})
     push!(mask, paramptr)
     paramptr += 1
   end
-  # account for edge node parameters (not included in mask)
-  paramptr += cub.numedge
   # account for face S21 orbits (not included in mask)
   paramptr += cub.numfaceS21
+  # account for edge node parameters (not included in mask)
+  paramptr += cub.numedge
   # include S211 orbit parameters
   for i = 1:cub.numS211
     push!(mask, paramptr)
@@ -2254,4 +2448,67 @@ function getInternalParamMask{T}(cub::TetSymCub{T})
   return mask
 end
                                  
+# =================
+"""
+### SymCubatures.calcweights_symgroup
+
+Map the cubature weights of all nodes to the unique weights of their symmetry groups.
+
+**Inputs**
+
+* `cub`: symmetric cubature rule
+
+**Outputs**
+
+* `w`: cubature's weights of the symmetry group
+
+"""
+function calcweights_symgroup(cub::TriSymCub{T}, ws::Array{T}) where {T}
+  @assert(cub.numweights >= 0)
+  @assert(cub.numnodes >= 1)
+
+  w = zeros(T, (cub.numweights))
+  ptr = 1
+  wptr = 0
+  # set weights for all nodes with 3-symmetries
+  # set vertices weights
+  if cub.vertices
+    w[ptr] = ws[wptr+1]
+    ptr += 1
+    wptr += 3
+  end
+  # set mid-edge weights
+  if cub.midedges
+    w[ptr] = ws[wptr+1]
+    ptr += 1
+    wptr += 3
+  end
+  # set S21 orbit weights
+  for i = 1:cub.numS21
+    w[ptr] = ws[wptr+1]
+    ptr += 1
+    wptr += 3
+  end
+  # set weights for all nodes with 6-symmetries
+  # set edge weights
+  for i = 1:cub.numedge
+    w[ptr] = ws[wptr+1]
+    ptr += 1
+    wptr += 6
+  end
+  # set S111 orbit weights
+  for i = 1:cub.numS111
+    w[ptr] = ws[wptr+1]
+    ptr += 1
+    wptr += 6
+  end
+  # set weight for node with 1-symmetry (i.e. centroid)
+  if cub.centroid
+    w[ptr] = ws[wptr+1]
+    ptr += 1
+    wptr += 1
+  end
+  return w
+end
+
 end

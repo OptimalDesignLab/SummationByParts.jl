@@ -28,10 +28,10 @@ Integrates a given scalar (or vector) field over the boundary faces.
 * `fun`: in the case of the scalar version, the functional value is returned
 
 """
-function integratefunctional!{Tsbp,Tflx}(sbpface::DenseFace{Tsbp},
+function integratefunctional!(sbpface::DenseFace{Tsbp},
                                          bndryfaces::AbstractArray{Boundary},
                                          flux::AbstractArray{Tflx,2},
-                                         (±)::UnaryFunctor=Add())
+                                         (±)::UnaryFunctor=Add()) where {Tsbp,Tflx}
   @assert( size(sbpface.interp,2) == size(flux,1) )
   @assert( size(bndryfaces,1) == size(flux,2) )
   fun = zero(Tflx)
@@ -43,11 +43,11 @@ function integratefunctional!{Tsbp,Tflx}(sbpface::DenseFace{Tsbp},
   return fun
 end
 
-function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
+function integratefunctional!(sbpface::DenseFace{Tsbp},
                                               bndryfaces::AbstractArray{Boundary},
                                               flux::AbstractArray{Tflx,3},
                                               fun::AbstractArray{Tfun,1},
-                                              (±)::UnaryFunctor=Add())
+                                              (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tfun}
   @assert( size(sbpface.interp,2) == size(flux,2) )
   @assert( size(flux,1) == size(fun,1) )
   @assert( size(bndryfaces,1) == size(flux,3) )
@@ -60,10 +60,10 @@ function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function integratefunctional!{Tsbp,Tflx}(sbpface::SparseFace{Tsbp},
+function integratefunctional!(sbpface::SparseFace{Tsbp},
                                          bndryfaces::AbstractArray{Boundary},
                                          flux::AbstractArray{Tflx,2},
-                                         (±)::UnaryFunctor=Add())
+                                         (±)::UnaryFunctor=Add()) where {Tsbp,Tflx}
   @assert( size(bndryfaces,1) == size(flux,2) )
   fun = zero(Tflx)
   for (bindex, bndry) in enumerate(bndryfaces)
@@ -74,11 +74,11 @@ function integratefunctional!{Tsbp,Tflx}(sbpface::SparseFace{Tsbp},
   return fun
 end
 
-function integratefunctional!{Tsbp,Tflx,Tfun}(sbpface::SparseFace{Tsbp},
+function integratefunctional!(sbpface::SparseFace{Tsbp},
                                               bndryfaces::AbstractArray{Boundary},
                                               flux::AbstractArray{Tflx,3},
                                               fun::AbstractArray{Tfun,1},
-                                              (±)::UnaryFunctor=Add())
+                                              (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tfun}
   @assert( size(flux,1) == size(fun,1) )
   @assert( size(bndryfaces,1) == size(flux,3) )
   for (bindex, bndry) in enumerate(bndryfaces)
@@ -118,10 +118,10 @@ scalar (or vector) field over the boundary faces.
 * `fun`: in the case of the scalar version, the functional value is returned
 
 """
-function integrateBoundaryFunctional!{Tsbp,Tflx}(sbpface::DenseFace{Tsbp},
+function integrateBoundaryFunctional!(sbpface::DenseFace{Tsbp},
                                                  face::Integer, 
                                                  flux::AbstractArray{Tflx,1},
-                                                 (±)::UnaryFunctor=Add())
+                                                 (±)::UnaryFunctor=Add()) where {Tsbp,Tflx}
   @assert( size(sbpface.interp,2) == size(flux,1) )
   fun = zero(Tflx)
   for i = 1:sbpface.numnodes
@@ -130,10 +130,9 @@ function integrateBoundaryFunctional!{Tsbp,Tflx}(sbpface::DenseFace{Tsbp},
   return fun
 end
 
-function integrateBoundaryFunctional!{
-  Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp}, face::Integer,
+function integrateBoundaryFunctional!(sbpface::DenseFace{Tsbp}, face::Integer,
                   flux::AbstractArray{Tflx,2}, fun::AbstractArray{Tfun,1},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tfun}
   @assert( size(sbpface.interp,2) == size(flux,2) )
   @assert( size(flux,1) == size(fun,1) )
   for i = 1:sbpface.numnodes
@@ -143,10 +142,10 @@ function integrateBoundaryFunctional!{
   end
 end
 
-function integrateBoundaryFunctional!{Tsbp,Tflx}(sbpface::SparseFace{Tsbp},
+function integrateBoundaryFunctional!(sbpface::SparseFace{Tsbp},
                                                  face::Integer, 
                                                  flux::AbstractArray{Tflx,1},
-                                                 (±)::UnaryFunctor=Add())
+                                                 (±)::UnaryFunctor=Add()) where {Tsbp,Tflx}
   fun = zero(Tflx)
   for i = 1:sbpface.numnodes
       fun += ±(sbpface.wface[i]*flux[i])
@@ -154,10 +153,9 @@ function integrateBoundaryFunctional!{Tsbp,Tflx}(sbpface::SparseFace{Tsbp},
   return fun
 end
 
-function integrateBoundaryFunctional!{
-  Tsbp,Tflx,Tfun}(sbpface::SparseFace{Tsbp}, face::Integer,
+function integrateBoundaryFunctional!(sbpface::SparseFace{Tsbp}, face::Integer,
                   flux::AbstractArray{Tflx,2}, fun::AbstractArray{Tfun,1},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tfun}
   @assert( size(flux,1) == size(fun,1) )
   for i = 1:sbpface.numnodes
     for field = 1:size(fun,1)
@@ -199,11 +197,11 @@ index.
   consistent.
 
 """
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function boundaryintegrate!(sbpface::DenseFace{Tsbp},
                                             bndryfaces::AbstractArray{Boundary},
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2},
-                                            (±)::UnaryFunctor=Add())
+                                            (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(res,1) )
   @assert( size(sbpface.interp,2) == size(flux,1) )
   @assert( size(bndryfaces,1) == size(flux,2) )
@@ -218,11 +216,11 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function boundaryintegrate!(sbpface::DenseFace{Tsbp},
                                             bndryfaces::AbstractArray{Boundary},
                                             flux::AbstractArray{Tflx,3},
                                             res::AbstractArray{Tres,3},
-                                            (±)::UnaryFunctor=Add())
+                                            (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(res,2) )
   @assert( size(sbpface.interp,2) == size(flux,2) )
   @assert( size(bndryfaces,1) == size(flux,3) )
@@ -242,11 +240,11 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function boundaryintegrate!(sbpface::SparseFace{Tsbp},
                                             bndryfaces::AbstractArray{Boundary},
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2},
-                                            (±)::UnaryFunctor=Add())
+                                            (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(bndryfaces,1) == size(flux,2) )
   for (bindex, bndry) in enumerate(bndryfaces)
     for i = 1:sbpface.numnodes
@@ -256,11 +254,11 @@ function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-function boundaryintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function boundaryintegrate!(sbpface::SparseFace{Tsbp},
                                             bndryfaces::AbstractArray{Boundary},
                                             flux::AbstractArray{Tflx,3},
                                             res::AbstractArray{Tres,3},
-                                            (±)::UnaryFunctor=Add())
+                                            (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(bndryfaces,1) == size(flux,3) )
   for (bindex, bndry) in enumerate(bndryfaces)
     for i = 1:sbpface.numnodes
@@ -300,11 +298,11 @@ scalar case, the only dimension) is for the element-local node index.
 * `res`: where the result of the integration is stored
 
 """
-function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function boundaryFaceIntegrate!(sbpface::DenseFace{Tsbp},
                                                 face::Integer,
                                                 flux::AbstractArray{Tflx,1},
                                                 res::AbstractArray{Tres,1},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(res,1) )
   @assert( size(sbpface.interp,2) == size(flux,1) )
   for i = 1:sbpface.numnodes
@@ -315,11 +313,11 @@ function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function boundaryFaceIntegrate!(sbpface::DenseFace{Tsbp},
                                                 face::Integer,
                                                 flux::AbstractArray{Tflx,2},
                                                 res::AbstractArray{Tres,2},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(res,2) )
   @assert( size(sbpface.interp,2) == size(flux,2) )
   @assert( size(flux,1) == size(res,1) )
@@ -336,21 +334,21 @@ function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function boundaryFaceIntegrate!(sbpface::SparseFace{Tsbp},
                                                 face::Integer,
                                                 flux::AbstractArray{Tflx,1},
                                                 res::AbstractArray{Tres,1},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   for i = 1:sbpface.numnodes
     res[sbpface.perm[i,face]] += ±(sbpface.wface[i]*flux[i])
   end
 end
 
-function boundaryFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function boundaryFaceIntegrate!(sbpface::SparseFace{Tsbp},
                                                 face::Integer,
                                                 flux::AbstractArray{Tflx,2},
                                                 res::AbstractArray{Tres,2},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(flux,1) == size(res,1) )
   for i = 1:sbpface.numnodes
     for field = 1:size(res,1)
@@ -392,11 +390,11 @@ index.
   consistent.
 
 """
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function interiorfaceintegrate!(sbpface::DenseFace{Tsbp},
                                                 ifaces::AbstractArray{Interface},
                                                 flux::AbstractArray{Tflx,2},
                                                 res::AbstractArray{Tres,2},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(res,1) )
   @assert( size(sbpface.interp,2) == size(flux,1) )
   @assert( size(ifaces,1) == size(flux,2) )
@@ -413,11 +411,11 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function interiorfaceintegrate!(sbpface::DenseFace{Tsbp},
                                                 ifaces::AbstractArray{Interface},
                                                 flux::AbstractArray{Tflx,3},
                                                 res::AbstractArray{Tres,3},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(res,1) == size(flux,1) )  
   @assert( size(sbpface.interp,1) <= size(res,2) )
   @assert( size(sbpface.interp,2) == size(flux,2) )
@@ -437,11 +435,11 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function interiorfaceintegrate!(sbpface::SparseFace{Tsbp},
                                                 ifaces::AbstractArray{Interface},
                                                 flux::AbstractArray{Tflx,2},
                                                 res::AbstractArray{Tres,2},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(ifaces,1) == size(flux,2) )
   for (findex, face) in enumerate(ifaces)
     for i = 1:sbpface.numnodes
@@ -454,11 +452,11 @@ function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-function interiorfaceintegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function interiorfaceintegrate!(sbpface::SparseFace{Tsbp},
                                                 ifaces::AbstractArray{Interface},
                                                 flux::AbstractArray{Tflx,3},
                                                 res::AbstractArray{Tres,3},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(res,1) == size(flux,1) )  
   @assert( size(ifaces,1) == size(flux,3) )
   for (findex, face) in enumerate(ifaces)
@@ -504,12 +502,12 @@ index.
 * `resR`: where the result of the integration is stored for the *right* element
 
 """
-function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function interiorFaceIntegrate!(sbpface::DenseFace{Tsbp},
                                                 iface::Interface,
                                                 flux::AbstractArray{Tflx,1},
                                                 resL::AbstractArray{Tres,1},
                                                 resR::AbstractArray{Tres,1},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(resL,1) )
   @assert( size(sbpface.interp,1) <= size(resR,1) )
   @assert( size(sbpface.interp,2) == size(flux,1) )
@@ -524,12 +522,12 @@ function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function interiorFaceIntegrate!(sbpface::DenseFace{Tsbp},
                                                 iface::Interface,
                                                 flux::AbstractArray{Tflx,2},
                                                 resL::AbstractArray{Tres,2},
                                                 resR::AbstractArray{Tres,2},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(resL,1) == size(resR,1) == size(flux,1) )  
   @assert( size(sbpface.interp,1) <= size(resL,2) )
   @assert( size(sbpface.interp,1) <= size(resR,2) )
@@ -547,12 +545,12 @@ function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function interiorFaceIntegrate!(sbpface::SparseFace{Tsbp},
                                                 iface::Interface,
                                                 flux::AbstractArray{Tflx,1},
                                                 resL::AbstractArray{Tres,1},
                                                 resR::AbstractArray{Tres,1},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   for i = 1:sbpface.numnodes
     iR = sbpface.nbrperm[i,iface.orient]
     resL[sbpface.perm[i,iface.faceL]] += ±(sbpface.wface[i]*flux[i])
@@ -560,12 +558,12 @@ function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-function interiorFaceIntegrate!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function interiorFaceIntegrate!(sbpface::SparseFace{Tsbp},
                                                 iface::Interface,
                                                 flux::AbstractArray{Tflx,2},
                                                 resL::AbstractArray{Tres,2},
                                                 resR::AbstractArray{Tres,2},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(resL,1) == size(resR,1) == size(flux,1) )  
   for i = 1:sbpface.numnodes
     iR = sbpface.nbrperm[i,iface.orient]

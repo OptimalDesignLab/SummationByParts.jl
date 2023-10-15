@@ -25,10 +25,10 @@ the third dimension for the element index (boundary index).
 * `uface`: field data interpolated to the faces
 
 """
-function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
+function boundaryinterpolate!(sbpface::DenseFace{Tsbp},
                                          bndryfaces::AbstractArray{Boundary},
                                          uvol::AbstractArray{Tsol,2},
-                                         uface::AbstractArray{Tsol,2})
+                                         uface::AbstractArray{Tsol,2}) where {Tsbp,Tsol}
   @assert( size(sbpface.interp,1) <= size(uvol,1) )
   @assert( size(sbpface.interp,2) == size(uface,1) )
   for (bindex, bndry) in enumerate(bndryfaces)
@@ -42,10 +42,10 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
+function boundaryinterpolate!(sbpface::DenseFace{Tsbp},
                                          bndryfaces::AbstractArray{Boundary},
                                          uvol::AbstractArray{Tsol,3},
-                                         uface::AbstractArray{Tsol,3})
+                                         uface::AbstractArray{Tsol,3}) where {Tsbp,Tsol}
   @assert( size(uvol,1) == size(uface,1) )
   @assert( size(sbpface.interp,1) <= size(uvol,2) )
   @assert( size(sbpface.interp,2) == size(uface,2) )
@@ -64,10 +64,10 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+function boundaryinterpolate!(sbpface::SparseFace{Tsbp},
                                          bndryfaces::AbstractArray{Boundary},
                                          uvol::AbstractArray{Tsol,2},
-                                         uface::AbstractArray{Tsol,2})
+                                         uface::AbstractArray{Tsol,2}) where {Tsbp,Tsol}
   for (bindex, bndry) in enumerate(bndryfaces)
     for i = 1:sbpface.numnodes
       uface[i,bindex] = uvol[sbpface.perm[i,bndry.face],bndry.element]
@@ -75,10 +75,10 @@ function boundaryinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
   end
 end
 
-function boundaryinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+function boundaryinterpolate!(sbpface::SparseFace{Tsbp},
                                          bndryfaces::AbstractArray{Boundary},
                                          uvol::AbstractArray{Tsol,3},
-                                         uface::AbstractArray{Tsol,3})
+                                         uface::AbstractArray{Tsol,3}) where {Tsbp,Tsol}
   @assert( size(uvol,1) == size(uface,1) )
   for (bindex, bndry) in enumerate(bndryfaces)
     for i = 1:sbpface.numnodes
@@ -113,10 +113,10 @@ node index.
   * `uface`: field data interpolated to the faces
   
 """
-function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
+function boundaryFaceInterpolate!(sbpface::DenseFace{Tsbp},
                                              face::Integer,
                                              uvol::AbstractArray{Tsol,1},
-                                             uface::AbstractArray{Tsol,1})
+                                             uface::AbstractArray{Tsol,1}) where {Tsbp,Tsol}
   @assert( size(sbpface.interp,1) <= size(uvol,1) )
   @assert( size(sbpface.interp,2) == size(uface,1) )
   for i = 1:sbpface.numnodes
@@ -127,10 +127,10 @@ function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
+function boundaryFaceInterpolate!(sbpface::DenseFace{Tsbp},
                                              face::Integer,
                                              uvol::AbstractArray{Tsol,2},
-                                             uface::AbstractArray{Tsol,2})
+                                             uface::AbstractArray{Tsol,2}) where {Tsbp,Tsol}
   @assert( size(uvol,1) == size(uface,1) )
   @assert( size(sbpface.interp,1) <= size(uvol,2) )
   @assert( size(sbpface.interp,2) == size(uface,2) )
@@ -146,19 +146,19 @@ function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+function boundaryFaceInterpolate!(sbpface::SparseFace{Tsbp},
                                              face::Integer,
                                              uvol::AbstractArray{Tsol,1},
-                                             uface::AbstractArray{Tsol,1})
+                                             uface::AbstractArray{Tsol,1}) where {Tsbp,Tsol}
   for i = 1:sbpface.numnodes
     uface[i] = uvol[sbpface.perm[i,face]]
   end
 end
 
-function boundaryFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+function boundaryFaceInterpolate!(sbpface::SparseFace{Tsbp},
                                              face::Integer,
                                              uvol::AbstractArray{Tsol,2},
-                                             uface::AbstractArray{Tsol,2})
+                                             uface::AbstractArray{Tsol,2}) where {Tsbp,Tsol}
   @assert( size(uvol,1) == size(uface,1) )
   for i = 1:sbpface.numnodes
     for field=1:size(uvol, 1)
@@ -191,10 +191,10 @@ set of faces.  Different methods are available depending on the rank of `uvol`:
 * `uface`: field data interpolated to the faces
 
 """
-function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
+function interiorfaceinterpolate!(sbpface::DenseFace{Tsbp},
                                              ifaces::AbstractArray{Interface},
                                              uvol::AbstractArray{Tsol,2},
-                                             uface::AbstractArray{Tsol,3})
+                                             uface::AbstractArray{Tsol,3}) where {Tsbp,Tsol}
   @assert( size(sbpface.interp,1) <= size(uvol,1) )
   @assert( size(sbpface.interp,2) == size(uface,2) )
   for (findex, face) in enumerate(ifaces)
@@ -212,10 +212,10 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
+function interiorfaceinterpolate!(sbpface::DenseFace{Tsbp},
                                              ifaces::AbstractArray{Interface},
                                              uvol::AbstractArray{Tsol,3},
-                                             uface::AbstractArray{Tsol,4})
+                                             uface::AbstractArray{Tsol,4}) where {Tsbp,Tsol}
   @assert( size(uvol,1) == size(uface,1) )
   @assert( size(sbpface.interp,1) <= size(uvol,2) )
   @assert( size(sbpface.interp,2) == size(uface,3) )
@@ -238,10 +238,10 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+function interiorfaceinterpolate!(sbpface::SparseFace{Tsbp},
                                              ifaces::AbstractArray{Interface},
                                              uvol::AbstractArray{Tsol,2},
-                                             uface::AbstractArray{Tsol,3})
+                                             uface::AbstractArray{Tsol,3}) where {Tsbp,Tsol}
   for (findex, face) in enumerate(ifaces)
     for i = 1:sbpface.numnodes
       iR = sbpface.nbrperm[i,face.orient]     
@@ -251,10 +251,10 @@ function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
   end
 end
 
-function interiorfaceinterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+function interiorfaceinterpolate!(sbpface::SparseFace{Tsbp},
                                              ifaces::AbstractArray{Interface},
                                              uvol::AbstractArray{Tsol,3},
-                                             uface::AbstractArray{Tsol,4})
+                                             uface::AbstractArray{Tsol,4}) where {Tsbp,Tsol}
   @assert( size(uvol,1) == size(uface,1) )
   for (findex, face) in enumerate(ifaces)
     for i = 1:sbpface.numnodes
@@ -297,12 +297,12 @@ left.  Different methods are available depending on the rank of `uvol`:
 * `ufaceR`: field data from `uR` interpolated to the face
 
 """
-function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
+function interiorFaceInterpolate!(sbpface::DenseFace{Tsbp},
                                              iface::Interface,
                                              uL::AbstractArray{Tsol,1},
                                              uR::AbstractArray{Tsol,1},
                                              ufaceL::AbstractArray{Tsol,1},
-                                             ufaceR::AbstractArray{Tsol,1})
+                                             ufaceR::AbstractArray{Tsol,1}) where {Tsbp,Tsol}
   @assert( size(sbpface.interp,1) <= size(uL,1) )
   @assert( size(sbpface.interp,1) <= size(uR,1) )
   @assert( size(sbpface.interp,2) == size(ufaceL,1) == size(ufaceR,1) )
@@ -317,12 +317,12 @@ function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
+function interiorFaceInterpolate!(sbpface::DenseFace{Tsbp},
                                              iface::Interface,
                                              uL::AbstractArray{Tsol,2},
                                              uR::AbstractArray{Tsol,2},
                                              ufaceL::AbstractArray{Tsol,2},
-                                             ufaceR::AbstractArray{Tsol,2})
+                                             ufaceR::AbstractArray{Tsol,2}) where {Tsbp,Tsol}
   @assert( size(uL,1) == size(ufaceL,1) == size(uR,1) == size(ufaceR,1) )
   @assert( size(sbpface.interp,1) <= size(uL,2) )
   @assert( size(sbpface.interp,1) <= size(uR,2) )
@@ -344,12 +344,12 @@ function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+function interiorFaceInterpolate!(sbpface::SparseFace{Tsbp},
                                              iface::Interface,
                                              uL::AbstractArray{Tsol,1},
                                              uR::AbstractArray{Tsol,1},
                                              ufaceL::AbstractArray{Tsol,1},
-                                             ufaceR::AbstractArray{Tsol,1})
+                                             ufaceR::AbstractArray{Tsol,1}) where {Tsbp,Tsol}
   @assert( size(ufaceL,1) == size(ufaceR,1) )
   for i = 1:sbpface.numnodes
     iR = sbpface.nbrperm[i,iface.orient]
@@ -358,12 +358,12 @@ function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
   end
 end
 
-function interiorFaceInterpolate!{Tsbp,Tsol}(sbpface::SparseFace{Tsbp},
+function interiorFaceInterpolate!(sbpface::SparseFace{Tsbp},
                                              iface::Interface,
                                              uL::AbstractArray{Tsol,2},
                                              uR::AbstractArray{Tsol,2},
                                              ufaceL::AbstractArray{Tsol,2},
-                                             ufaceR::AbstractArray{Tsol,2})
+                                             ufaceR::AbstractArray{Tsol,2}) where {Tsbp,Tsol}
   @assert( size(uL,1) == size(ufaceL,1) == size(uR,1) == size(ufaceR,1) )
   @assert( size(ufaceL,2) == size(ufaceR,2) )
   for i = 1:sbpface.numnodes

@@ -1,5 +1,7 @@
 # This file gathers together a hodge-podge of functions that are not easily
 # categorized
+using Printf
+using LinearAlgebra
 
 """
 ### SummationByParts.getNumFaceNodes
@@ -15,7 +17,7 @@ Returns the number of SBP element nodes on a face.
 * `numfacenodes`: number of nodes on (one) face of the element
 
 """
-function getNumFaceNodes{T}(sbp::AbstractSBP{T})
+function getNumFaceNodes(sbp::AbstractSBP{T}) where {T}
   return SymCubatures.getnumfacenodes(sbp.cub)
 end
 
@@ -36,7 +38,7 @@ Returns the face-node index on `face.faceR` equivalent to index `i` on
 * `j`: face-node index on `face.faceR`
 
 """
-function getnbrnodeindex{T}(sbp::TriSBP{T}, face::Interface, i::Int)
+function getnbrnodeindex(sbp::TriSBP{T}, face::Interface, i::Int) where {T}
   return [2; 1; sbp.numfacenodes:-1:3][i]
 end
 
@@ -68,7 +70,7 @@ element mapping is linear, i.e. edges are lines.
   x[:,:,2] = calcnodes(sbp, vtx)
 ```
 """
-function calcnodes{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx) 
+function calcnodes(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx) where {T}
   return SymCubatures.calcnodes(sbp.cub, vtx)
 end
 
@@ -87,12 +89,34 @@ Returns the minimum distance between distinct nodes on an element with straight 
 * `mindist`: the minimum distance between distinct nodes
 
 """
-function calcminnodedistance{T}(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx)
+function calcminnodedistance(sbp::AbstractSBP{T}, vtx::Array{T}=sbp.vtx) where {T}
   x = SymCubatures.calcnodes(sbp.cub, vtx)
   mindist = convert(T, Inf)
   for i = 1:size(x,2)
     for j = i+1:size(x,2)
-      mindist = min(mindist, norm(x[:,i] - x[:,j]))
+      mindist = min(mindist, norm(x[:,i] - x[:,j],2))
+    end
+  end
+  return mindist
+end
+
+function calcminnodedistance(cub::TriSymCub{T}, vtx::Array{T}) where {T}
+  x = SymCubatures.calcnodes(cub, vtx)
+  mindist = convert(T, Inf)
+  for i = 1:size(x,2)
+    for j = i+1:size(x,2)
+      mindist = min(mindist, norm(x[:,i] - x[:,j],2))
+    end
+  end
+  return mindist
+end
+
+function calcminnodedistance(cub::TetSymCub{T}, vtx::Array{T}) where {T}
+  x = SymCubatures.calcnodes(cub, vtx)
+  mindist = convert(T, Inf)
+  for i = 1:size(x,2)
+    for j = i+1:size(x,2)
+      mindist = min(mindist, norm(x[:,i] - x[:,j],2))
     end
   end
   return mindist
@@ -115,8 +139,8 @@ to an auxlliary set of nodes.
 * `R`: the interpolation operator, size = [numpoints, sbp.numnodes]
 
 """
-function buildinterpolation{T}(sbp::LineSegSBP{T}, xinterp::AbstractArray{T,2};
-                               d::Int=sbp.degree)
+function buildinterpolation(sbp::LineSegSBP{T}, xinterp::AbstractArray{T,2};
+                               d::Int=sbp.degree) where {T}
   # evaluate the basis at the SBP nodes and the interpolation points
   @assert size(xinterp, 1) == 1
   N = convert(Int, d+1 )
@@ -129,12 +153,12 @@ function buildinterpolation{T}(sbp::LineSegSBP{T}, xinterp::AbstractArray{T,2};
     Pinterp[:,ptr] = OrthoPoly.jacobipoly(vec(xinterp[1,:]), 0.0, 0.0, i)
     ptr += 1
   end
-  R = (pinv(Psbp.')*Pinterp.').'
+  R = (pinv(Psbp')*Pinterp')'
   return R
 end
 
-function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2};
-                               d::Int=sbp.degree)
+function buildinterpolation(sbp::TriSBP{T}, xinterp::AbstractArray{T,2};
+                               d::Int=sbp.degree) where {T}
   # evaluate the basis at the SBP nodes and the interpolation points
   @assert size(xinterp, 1) == 2
   N = convert(Int, (d+1)*(d+2)/2 )
@@ -151,12 +175,12 @@ function buildinterpolation{T}(sbp::TriSBP{T}, xinterp::AbstractArray{T,2};
       ptr += 1
     end
   end
-  R = (pinv(Psbp.')*Pinterp.').'
+  R = (pinv(Psbp')*Pinterp')'
   return R
 end
 
-function buildinterpolation{T}(sbp::TetSBP{T}, xinterp::AbstractArray{T,2};
-                               d::Int=sbp.degree)
+function buildinterpolation(sbp::TetSBP{T}, xinterp::AbstractArray{T,2};
+                               d::Int=sbp.degree) where {T}
   # evaluate the basis at the SBP nodes and the interpolation points
   @assert size(xinterp, 1) == 3
   N = convert(Int, (d+1)*(d+2)*(d+3)/6)
@@ -178,7 +202,7 @@ function buildinterpolation{T}(sbp::TetSBP{T}, xinterp::AbstractArray{T,2};
       end
     end
   end
-  R = (pinv(Psbp.')*Pinterp.').'
+  R = (pinv(Psbp')*Pinterp')'
   return R
 end
 
@@ -202,15 +226,15 @@ Interface.  Methods are available for scalar and vector fields.
            The permutation is applied to the second array dimension for the 
            3D case or the first dimension in the 2D case.
 """
-function permuteinterface!{Tsbp, Tsol}(sbpface::AbstractFace{Tsbp}, 
+function permuteinterface!(sbpface::AbstractFace{Tsbp}, 
                                        ifaces::AbstractArray{Interface}, 
-                                       uface::AbstractArray{Tsol, 3})
+                                       uface::AbstractArray{Tsol, 3}) where {Tsbp, Tsol}
   @assert length(ifaces) == size(uface, 3)
   @assert sbpface.numnodes == size(uface, 2)
 
   dofpernode, numfacenodes, numfaces = size(uface)
   # temporary array needed during permutation
-  workarr = Array{Tsol}(dofpernode, numfacenodes)
+  workarr = Array{Tsol}(undef, dofpernode, numfacenodes)
 
   for iface =1:length(ifaces)
     orient = ifaces[iface].orient
@@ -222,15 +246,15 @@ function permuteinterface!{Tsbp, Tsol}(sbpface::AbstractFace{Tsbp},
   return nothing
 end
 
-function permuteinterface!{Tsbp, Tsol}(sbpface::AbstractFace{Tsbp}, 
+function permuteinterface!(sbpface::AbstractFace{Tsbp}, 
                                        ifaces::AbstractArray{Interface}, 
-                                       uface::AbstractArray{Tsol, 2})
+                                       uface::AbstractArray{Tsol, 2}) where {Tsbp, Tsol}
   @assert length(ifaces) == size(uface, 2)
   @assert sbpface.numnodes == size(uface, 1)
 
   numfacenodes, numfaces = size(uface)
   # temporary array needed during permutation
-  workarr = Array{Tsol}(numfacenodes)
+  workarr = Array{Tsol}(undef, numfacenodes)
 
   for iface =1:length(ifaces)
     orient = ifaces[iface].orient
@@ -259,9 +283,9 @@ This function applys a permutation to the data on a particular face.
               for N=2 and the first dimension if N=1.  N > 2 is not
               currently supported
 """
-function permuteface!{Ti <: Integer, Tsol}(permvec::AbstractArray{Ti, 1},
+function permuteface!(permvec::AbstractArray{Ti, 1},
                                            workarr::AbstractArray{Tsol, 2},
-                                           facedata::AbstractArray{Tsol, 2})
+                                           facedata::AbstractArray{Tsol, 2}) where {Ti <: Integer, Tsol}
   # copy to temporary array, applying permutation
   for i=1:size(facedata, 2)  # loop over nodes on the face
     idx = permvec[i]
@@ -278,9 +302,9 @@ function permuteface!{Ti <: Integer, Tsol}(permvec::AbstractArray{Ti, 1},
   return nothing
 end
 
-function permuteface!{Ti <: Integer, Tsol}(permvec::AbstractArray{Ti, 1},
+function permuteface!(permvec::AbstractArray{Ti, 1},
                                            workarr::AbstractArray{Tsol, 1},
-                                           facedata::AbstractArray{Tsol, 1})
+                                           facedata::AbstractArray{Tsol, 1}) where {Ti <: Integer, Tsol}
   # copy to temporary array, applying permutation
   for i=1:size(facedata, 1)  # loop over nodes on the face
     idx = permvec[i]
@@ -317,7 +341,7 @@ sparse using the alternating direction method of multipliers (ADMM).
 
 **Notes**
 
-This is a direct translation of Boyd et al.'s Matlab implementation of ADMM for
+This is a direct translation of Boyd et al's Matlab implementation of ADMM for
 basis pursuit.  This method is not well suited to high-accuracy solutions, so,
 for our purposes, it is best used as a means of identifying the sparsity
 pattern.
@@ -336,14 +360,14 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
     return norm(x,1)    
   end
   function shrinkage(a, kappa)
-    return max.(0, a-kappa) - max.(0, -a-kappa)
+    return max.(0, a .- kappa) .- max.(0, -a .- kappa)
   end
 
   maxiter = 10000
   (m, n) = size(A)
   fill!(x, 0.0)
-  z = zeros(x)
-  u = zeros(x)
+  z = zeros(size(x))
+  u = zeros(size(x))
   
   if hist
     @printf("%10s %10s %10s %10s %10s %10s\n", "iter", "r norm", "eps pri",
@@ -351,11 +375,11 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
   end
 
   # precompute some static variables for x-update (projection on to Ax=b)
-  #AAt = A*A.'
-  #P = eye(n,n) - A.'*(AAt\A) # eye(n) - V*V.' where V are the right sing. vecs
-  #q = A.'*(AAt \ b)
+  #AAt = A*A'
+  #P = eye(n,n) - A'*(AAt\A) # eye(n) - V*V' where V are the right sing. vecs
+  #q = A'*(AAt \ b)
   Ainv = pinv(A)
-  P = eye(n,n) - Ainv*A
+  P = I(n) - Ainv*A
   q = Ainv*b
 
   for k = 1:maxiter
@@ -445,16 +469,16 @@ eigenvalue matrix.
 * `Aabs`: matrix where the absolute value is stored
 
 """
-function absMatrix!{T}(A::AbstractArray{T,2}, Aabs::AbstractArray{T,2})
+function absMatrix!(A::AbstractArray{T,2}, Aabs::AbstractArray{T,2}) where {T}
   @assert( size(A) == size(Aabs) )
   n = size(A,1)
   Aabs[:,:] = A[:,:]
-  F = eigfact(Symmetric(Aabs))
+  F = eigen(Symmetric(Aabs))
   fill!(Aabs, zero(T))
   for i = 1:n
     for j = 1:n
       for k = 1:n
-        Aabs[i,j] += F[:vectors][i,k]*abs(F[:values][k])*F[:vectors][j,k]
+        Aabs[i,j] += F.vectors[i,k]*abs(F.values[k])*F.vectors[j,k]
       end
     end
   end
@@ -468,7 +492,7 @@ function compareEigs(x::Float64, y::Float64)
   end
 end
 
-function compareEigs(x::Complex128, y::Complex128)
+function compareEigs(x::Complex, y::Complex)
   if abs(abs(x) - abs(y)) < 10*eps(Float64)
     # moduli are close, sort by imaginary part
     if imag(x) < imag(y)
@@ -499,16 +523,16 @@ basically a front end for `eigfact`.
 * `λ`: eigenvalues of `A` sorted in increasing modulus
 
 """
-function calcMatrixEigs!{T}(A::AbstractArray{T,2},
-                            λ::AbstractVector{T})
+function calcMatrixEigs!(A::AbstractArray{T,2},
+                            λ::AbstractVector{T}) where {T}
   @assert( size(A,1) == size(A,2) )
   @assert( length(λ) == size(A,1) )
   n = size(A,1)  
-  fac = eigfact(A)
+  fac = eigvals(A)
   idx = zeros(Int,n)
-  sortperm!(idx, fac[:values], lt=compareEigs)
+  sortperm!(idx, fac, lt=compareEigs)
   for i = 1:n
-    λ[i] = fac[:values][idx[i]]
+    λ[i] = fac[idx[i]]
   end
 end
 
@@ -530,20 +554,20 @@ results for forward and reverse mode algorithmic differentiation."
 * `A_bar`: derivatives ∂f/∂A
 
 """
-function calcMatrixEigs_rev!{T}(A::AbstractArray{T,2},
+function calcMatrixEigs_rev!(A::AbstractArray{T,2},
                                 λ::AbstractVector{T},
                                 λ_bar::AbstractVector{T},
-                                A_bar::AbstractArray{T,2})
+                                A_bar::AbstractArray{T,2}) where {T}
   @assert( size(A,1) == size(A,2) == size(A_bar,1) == size(A_bar,2) )
   @assert( length(λ) == length(λ_bar) == size(A,1) )
   n = size(A,1)  
-  fac = eigfact(A)
+  fac = eigen(A)
   idx = zeros(Int,n)
-  sortperm!(idx, fac[:values], lt=compareEigs)
+  sortperm!(idx, fac.values, lt=compareEigs)
   for i = 1:n
-    λ[i] = fac[:values][idx[i]]
+    λ[i] = fac.values[idx[i]]
   end
-  A_bar[:,:] = (fac[:vectors][:,idx]')\(diagm(λ_bar)*fac[:vectors][:,idx]') 
+  A_bar[:,:] = (fac.vectors[:,idx]')\(diagm(λ_bar)*fac.vectors[:,idx]') 
 end
 
 """
@@ -635,7 +659,7 @@ function conditionObjGrad!(xred::AbstractVector{Float64}, p,
   @assert( length(g) == length(xred) )
   @assert( p >= 1.0 )
   n = size(E,1)
-  x = zeros(xperp)
+  x = zeros(size(xperp))
   x = Znull*xred + xperp
   # insert into (S + 1/2 |E|)
   A = zeros(n,n)
@@ -662,7 +686,7 @@ function conditionObjGrad!(xred::AbstractVector{Float64}, p,
   end
 
   # start reverse sweep
-  S_bar = zeros(S)
+  S_bar = zeros(size(S))
   #return (S[1] + (1/p)*log(maxKS/n))*(1/S[end] + (1/p)*log(minKS/n))
   maxKS_bar = (1/S[end] + (1/p)*log(minKS/n))/(p*maxKS)
   minKS_bar = (S[1] + (1/p)*log(maxKS/n))/(p*minKS)
@@ -678,7 +702,7 @@ function conditionObjGrad!(xred::AbstractVector{Float64}, p,
   end
   A_bar = U*diagm(S_bar)*V'
 
-  x_bar = zeros(x)
+  x_bar = zeros(size(x))
   for i = 2:n
     offset = convert(Int, (i-1)*(i-2)/2)
     for j = 1:i-1
@@ -688,7 +712,7 @@ function conditionObjGrad!(xred::AbstractVector{Float64}, p,
     end
   end
   # x = Znull*xred + xperp
-  g[:] = Znull.'*x_bar
+  g[:] = Znull'*x_bar
 end
 
 # """
@@ -750,7 +774,7 @@ end
 #   get the sensitivity of the singular values to the matrix A
 #   dSdA = zeros(n,n,n)
 #   for i = 1:n
-#     dSdA[:,:,i] = U[:,i]*V[:,i].'
+#     dSdA[:,:,i] = U[:,i]*V[:,i]'
 #   end
 
 #   get the Hessian of the objective w.r.t. the singular values
@@ -788,7 +812,7 @@ end
 #     end
 #   end
 #   x = Znull*xred + xperp
-#   g[:] = Znull.'*x_bar
+#   g[:] = Znull'*x_bar
 # end
 
 """
@@ -826,7 +850,7 @@ function eigenvalueObj(xred::AbstractVector{Float64}, p::Int,
   n = size(E,1)
   x = Znull*xred + xperp
   # insert into H^-1(S + 1/2 |E|)
-  A = zeros(Complex128, (n,n))
+  A = zeros(ComplexF64, (n,n))
   for i = 1:n
     for j = 1:n
       A[i,j] = complex(abs(E[i,j]), 0.0)
@@ -840,13 +864,13 @@ function eigenvalueObj(xred::AbstractVector{Float64}, p::Int,
     end
   end
   for i = 1:n
-    fac = 1./w[i]
+    fac = 1.0/w[i]
     for j = 1:n
       A[i,j] *= fac
     end
   end
   # compute the (sorted) eigenvalues of A, and the objective
-  λ = zeros(Complex128, n)
+  λ = zeros(ComplexF64, n)
   calcMatrixEigs!(A, λ)
   return abs(λ[end])
 end
@@ -883,10 +907,10 @@ function eigenvalueObjGrad!(xred::AbstractVector{Float64}, p::Int,
   @assert( length(g) == length(xred) )
   @assert( p >= 1 )
   n = size(E,1)
-  x = zeros(xperp)
+  x = zeros(size(xperp))
   x = Znull*xred + xperp
   # insert into H^-1(S + 1/2 |E|)
-  A = zeros(Complex128, (n,n))
+  A = zeros(ComplexF64, (n,n))
   for i = 1:n
     for j = 1:n
       A[i,j] = complex(abs(E[i,j]), 0.0)
@@ -900,27 +924,27 @@ function eigenvalueObjGrad!(xred::AbstractVector{Float64}, p::Int,
     end
   end
   for i = 1:n
-    fac = 1./w[i]
+    fac = 1.0/w[i]
     for j = 1:n
       A[i,j] *= fac
     end
   end
   # compute the (sorted) eigenvalues of A and the objective
-  λ = zeros(Complex128, n)
+  λ = zeros(ComplexF64, n)
   calcMatrixEigs!(A, λ)
 
-  λ_bar = zeros(λ)
+  λ_bar = zeros(eltype(λ),size(λ))
   λ_bar[end] = λ[end]/abs(λ[end])  
-  A_bar = zeros(A)
+  A_bar = zeros(eltype(A), size(A))
   calcMatrixEigs_rev!(A, λ, λ_bar, A_bar)
   for i = 1:n
-    fac = 1./w[i]
+    fac = 1.0/w[i]
     for j = 1:n
       A_bar[i,j] *= fac
     end
   end
   # place A_bar into x_bar
-  x_bar = zeros(x)
+  x_bar = zeros(size(x))
   for i = 2:n
     offset = convert(Int, (i-1)*(i-2)/2)
     for j = 1:i-1
@@ -930,5 +954,415 @@ function eigenvalueObjGrad!(xred::AbstractVector{Float64}, p::Int,
     end
   end
   # x = Znull*xred + xperp
-  g[:] = Znull.'*x_bar
+  g[:] = Znull'*x_bar
+end
+
+"""
+### SummationByParts.truncErr
+
+This function computes the truncation error from the derivative operator.
+
+**Inputs**
+
+* `d`: the degree of the operator
+* `x`: the coordinates of the quadrature points
+* `w`: the weights of the quadrature rule
+* `Q`: the weak differentiation matrices
+
+**In/Outs**
+* `trunc_err`: the truncation error
+"""
+function truncErr(d::Int, x::Array{T}, w::Array{T}, Q::Array{T}) where T
+  
+  numnodes = size(w, 1)
+  dim = size(x,1)
+  m = binomial(dim+d, dim)
+  d1 = d+1
+  n = binomial(dim+d1, dim)
+
+  D = zeros(size(Q))
+  for i=1:dim
+    D[:,:,i] = diagm(1 ./w)*Q[:,:,i]
+  end
+
+  V = zeros(T, (numnodes, n))
+  Vdx = zeros(T, (numnodes, n))
+  Vdy = zeros(T, (numnodes, n))
+  Vdz = zeros(T, (numnodes, n))
+  Vd = []
+  if dim==2
+    V, Vdx, Vdy = OrthoPoly.vandermonde(d1,vec(x[1,:]), vec(x[2,:]),compute_grad=true)
+    Vd = [Vdx, Vdy]
+  elseif dim==3
+    V, Vdx, Vdy, Vdz = OrthoPoly.vandermonde(d1,vec(x[1,:]), vec(x[2,:]), vec(x[3,:]),compute_grad=true)
+    Vd = [Vdx, Vdy, Vdz]
+  end
+
+  trunc_err = 0.0
+  for j = 1:dim
+    err = D[:,:,j]*V - Vd[j]
+    for i = 1:n
+      trunc_err += sqrt(sum(err[:,i].*(w.*err[:,i])))
+    end
+  end
+
+  return trunc_err
+end
+
+"""
+### SummationByParts.computeConditionNumber
+
+This function computes the condition number of A=S+E for operators on triangular elements.
+
+**Inputs**
+
+* `p`: the degree of the operator
+* `opertype`: the SBP operator family type
+* `vtx`: the vertices of the 
+* `vertices`: indicates whether vertices are included
+
+**In/Outs**
+* `condA`: the condition number of A=S+E
+"""
+function computeConditionNumber(p::Int, opertype::Symbol, vtx::Array{T,2}; vertices::Bool=true) where {T}
+  
+  oper = TriSBP{T}
+  if opertype==:Omega
+    oper = SummationByParts.getTriSBPOmega(degree=p)
+  elseif opertype==:DiagE
+    oper = SummationByParts.getTriSBPDiagE(degree=p,vertices=vertices)
+  elseif opertype==:Gamma
+    oper = SummationByParts.getTriSBPGamma(degree=p)
+  end
+  face = TriFace{T}(p, oper.cub, vtx, vertices=vertices)
+  E = zeros(T, (oper.cub.numnodes,oper.cub.numnodes,2) )
+  SummationByParts.boundaryoperator!(face, 1, view(E,:,:,1))
+  SummationByParts.boundaryoperator!(face, 2, view(E,:,:,2))
+
+  S = zeros(T, (oper.cub.numnodes,oper.cub.numnodes,2) )
+  S[:,:,1] = oper.Q[:,:,1] - 0.5 .* E[:,:,1]
+  S[:,:,2] = oper.Q[:,:,2] - 0.5 .* E[:,:,2]
+
+  A = zeros(T, oper.cub.numnodes,oper.cub.numnodes)
+  for i = 1:2
+    A += S[:,:,i] + E[:,:,i]
+  end
+  condA = norm(A)*norm(inv(A))
+  return condA
+end
+
+"""
+### SummationByParts.pocs_sparse_s
+
+This function uses the Projection Onto Convex Sets (POCS) algorithm
+to construct a sparse skew-symmetric S matrix.
+
+**Inputs**
+
+* `S`: the skew-symmetric matrix
+* `H`: the norm/mass matrix
+* `E`: the boundary integration matrix
+* `V`: the Vandermonde matrix
+* `Vdx`: the gradient of the Vandermonde matrix
+
+**In/Outs**
+* `S`: the sparsified skew-symmetric matrix
+"""
+function pocs_sparse_s(S::Array{T},H::Array{T},E::Array{T},V::Array{T},Vdx::Array{T}) where T
+  tol = 5e-14
+  err1 = 1.0
+  err2 = 1.0
+  nnodes = size(S[:,:,1],1)
+  zz = 3
+
+  while ((err1 > tol) || (err2 > tol))
+      S[:,:,1] = 0.5.*(S[:,:,1]-S[:,:,1]')
+      S[:,:,1] = S[:,:,1]+(H*Vdx - 0.5.* E[:,:,1]*V - S[:,:,1]*V) * pinv(V)
+      # for i=1:nnodes
+      #     for j=1:nnodes
+      #         if abs(S[i,j]) < 1.9e-4
+      #             S[i,j,1]=0.0
+      #             S[j,i,1]=0.0
+      #         end
+      #     end
+      # end
+
+      i = 1
+      while i <= nnodes
+        j = nnodes-zz + i
+        while j <= nnodes
+            S[i,j] = 0
+            S[j,i] = 0
+            j += 1
+        end
+        i+=1
+      end
+      
+      err1 = norm(S[:,:,1] + Matrix(S[:,:,1]'))
+      err2 = norm(S[:,:,1]*V - H*Vdx + 0.5 .* E[:,:,1]*V)
+      println("err1: ", err1, "   ", "err2: ", err2)
+  end
+
+  return S
+end
+
+"""
+### SummationByParts.quadTruncErr
+
+This function computes the integration truncation error of the quadrature rule
+on the right triangle.
+
+**Inputs**
+
+* `cub`: a symmetric cubature for the right triangle
+* `q`: the quadarature degree
+
+**In/Outs**
+* `quadTruncErr`: the quadature truncation error
+"""
+function quadTruncErr(cub::TriSymCub{T}, q::Int) where {T}
+  # compute the nodes and weights defined by cub
+  vtx = T[-1 -1; 1 -1; -1 1]
+  x = SymCubatures.calcnodes(cub, vtx)
+  w = SymCubatures.calcweights(cub)
+  q += 1
+  num_eq = convert(Int, (q+1)*(q+2)/2)
+
+  # loop over orthogonal polynomials of degree r <= q and form conditions
+  F = zeros(T, (num_eq) )
+  F[1] = -2.0/sqrt(2.0)
+
+  V,_,_ = OrthoPoly.vandermonde(q, x[1,:], x[2,:], compute_grad=false)
+  trunc_err = norm(V'*w + F,Inf)
+
+  return trunc_err
+end
+
+"""
+### SummationByParts.quadTruncErr
+
+This function computes the integration truncation error of the quadrature rule 
+on the right tetrahedron.
+
+**Inputs**
+
+* `cub`: a symmetric cubature for the right tetrahedron
+* `q`: the quadarature degree
+
+**In/Outs**
+* `quadTruncErr`: the quadature truncation error
+"""
+function quadTruncErr(cub::TetSymCub{T}, q::Int) where {T}
+  # compute the nodes and weights defined by cub
+  vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
+  x = SymCubatures.calcnodes(cub, vtx)
+  w = SymCubatures.calcweights(cub)
+  q += 1
+  num_eq = convert(Int, (q+1)*(q+2)*(q+3)/6)
+
+  # loop over orthogonal polynomials of degree r <= q and form conditions
+  F = zeros(T, (num_eq) )
+  F[1] = -2.0/sqrt(3.0)
+
+  V,_,_ = OrthoPoly.vandermonde(q, x[1,:], x[2,:], x[3,:],compute_grad=false)
+  trunc_err = norm(V'*w + F,Inf)
+
+  return trunc_err
+end
+
+"""
+### SummationByParts.checkInteriorNodeLocaton
+
+This function checks if all interior nodes are within the interior of the
+right triangle; i.e., not outside or on the boundaries.
+
+**Inputs**
+
+* `cub`: a symmetric cubature for the right triangle
+* `vtx`: the vertices of the triangle
+
+**Note**: The vertex is assumed to be on [-1,1] interval in each dimension
+
+"""
+function checkInteriorNodeLocaton(cub::TriSymCub{T}; vtx::Array{T,2}=T[-1 -1; 1 -1; -1 1]) where {T}
+  # This function assumes the vertices are as given in the default
+  # Must change the if conditions to check node location for other vertices 
+  @assert(cub.numparams >= 0)
+  @assert(cub.numnodes >= 1)
+  @assert(size(vtx,1) == 3 && size(vtx,2) >= 2)
+  x = zeros(T, (size(vtx,2),cub.numnodes))
+  ptr = 0
+  paramptr = 0
+
+  # set all nodes with 3-symmetries
+  # set S21 orbit nodes
+  for i = 1:cub.numS21
+    alpha = 0.5*cub.params[paramptr+1]
+    A = T[alpha alpha (1-2*alpha);
+          (1-2*alpha) alpha alpha;
+          alpha (1-2*alpha) alpha]
+    x[:,ptr+1:ptr+3] = (A*vtx)'
+    ptr += 3
+    paramptr += 1
+  end
+  # set all nodes with 6-symmetries
+  # set edge nodes
+  for i = 1:cub.numedge
+    paramptr += 1
+  end
+  # set S111 orbit nodes
+  for i = 1:cub.numS111
+    alpha = 0.5*cub.params[paramptr+1]
+    beta = 0.5*cub.params[paramptr+2]
+    A = T[alpha beta (1-alpha-beta);
+          beta alpha (1-alpha-beta);
+          (1-alpha-beta) alpha beta;
+          (1-alpha-beta) beta alpha;
+          beta (1-alpha-beta) alpha;
+          alpha (1-alpha-beta) beta]
+    x[:,ptr+1:ptr+6] = (A*vtx)'
+    ptr += 6
+    paramptr += 2
+  end
+  # set node with 1-symmetry (i.e. centroid)
+  if cub.centroid
+    A = T[1/3 1/3 1/3]
+    x[:,ptr+1] = (A*vtx)'
+    ptr += 1
+  end
+
+  tol = 1e-10 
+  if (any(a -> a <= -1.0+tol, x) || any(a ->a >=tol, x[1,:]+x[2,:]))
+    println("minimum x = ", minimum(x))
+    println("maximum x+y= ", maximum(x[1,:]+x[2,:]))
+    error("Some interior nodes are on the boundary or outside the domain")
+  else
+    println("Success: All interior nodes are in the interior of the domain.")
+  end
+  
+  return
+end
+
+"""
+### SummationByParts.checkInteriorNodeLocaton
+
+This function checks if all interior nodes are within the interior of the
+right tetrahedron; i.e., not outside or on the boundaries.
+
+**Inputs**
+
+* `cub`: a symmetric cubature for the right tetrahedron
+* `vtx`: the vertices of the tetrahedron
+
+**Note**: The vertex is assumed to be on [-1,1] interval in each dimension
+
+"""
+function checkInteriorNodeLocaton(cub::TetSymCub{T}; vtx::Array{T,2}= T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]) where {T}
+  # This function assumes the vertices are as given in the default
+  # Must change the if conditions to check node location for other vertices 
+  @assert(cub.numparams >= 0)
+  @assert(cub.numnodes >= 1)
+  @assert(size(vtx,1) == 4 && size(vtx,2) >= 3)
+  x = zeros(T, (size(vtx,2),cub.numnodes))
+  ptr = 0
+  paramptr = 0
+
+  # set all nodes with 4-symmetries
+  # set S31 orbit nodes
+  for i = 1:cub.numS31
+    alpha = cub.params[paramptr+1]/3
+    A = T[alpha alpha alpha (1-3*alpha);
+          alpha alpha (1-3*alpha) alpha;
+          (1-3*alpha) alpha alpha alpha;
+          alpha (1-3*alpha) alpha alpha]
+    x[:,ptr+1:ptr+4] = (A*vtx)'
+    ptr += 4
+    paramptr += 1
+  end
+  # set all nodes with 6-symmetries
+  # set S22 oribt nodes
+  for i = 1:cub.numS22
+    alpha = 0.5*cub.params[paramptr+1]
+    A = T[alpha alpha (0.5-alpha) (0.5-alpha);
+          alpha (0.5-alpha) alpha (0.5-alpha);
+          alpha (0.5-alpha) (0.5-alpha) alpha;
+          (0.5-alpha) alpha alpha (0.5-alpha);
+          (0.5-alpha) alpha (0.5-alpha) alpha;
+          (0.5-alpha) (0.5-alpha) alpha alpha]
+    x[:,ptr+1:ptr+6] = (A*vtx)'
+    ptr += 6
+    paramptr += 1
+  end
+  # set all nodes with 12-symmetries  
+  # set face nodes corresponding to S21 orbit
+  for i = 1:cub.numfaceS21
+    paramptr += 1
+  end
+  # set edge nodes
+  for i = 1:cub.numedge
+    paramptr += 1
+  end
+  # set S211 orbit nodes
+  for i = 1:cub.numS211
+    alpha = 0.5*cub.params[paramptr+1]
+    beta = 0.5*cub.params[paramptr+2]
+    A = T[alpha alpha (1-2*alpha-beta) beta;
+          (1-2*alpha-beta) alpha alpha beta;
+          alpha (1-2*alpha-beta) alpha beta]
+    facevtx = [1 1 2 1;
+               2 4 4 3;
+               3 2 3 4;
+               4 3 1 2]
+    for face = 1:4
+      x[:,ptr+1:ptr+3] = (A*vtx[facevtx[:,face],:])'
+      ptr += 3
+    end
+    paramptr += 2
+  end
+  # set nodes with 24-symmetries
+  # set face nodes corresponding to S111 orbit
+  for i = 1:cub.numfaceS111
+    paramptr += 2
+  end
+  # set nodes with 4-symmetries
+  # set S1111 orbit nodes
+  for i = 1:cub.numS1111
+    alpha = 0.5*cub.params[paramptr+1]
+    beta = 0.5*cub.params[paramptr+2]
+    gamma = 0.5*cub.params[paramptr+3]
+    A = T[alpha beta (1-alpha-beta-gamma) gamma;
+          beta alpha (1-alpha-beta-gamma) gamma;
+          (1-alpha-beta-gamma) alpha beta gamma;
+          (1-alpha-beta-gamma) beta alpha gamma;
+          beta (1-alpha-beta-gamma) alpha gamma;
+          alpha (1-alpha-beta-gamma) beta gamma]
+    facevtx = [1 1 2 1;
+               2 4 4 3;
+               3 2 3 4;
+               4 3 1 2]
+    for face = 1:4
+      x[:,ptr+1:ptr+6] = (A*vtx[facevtx[:,face],:])'
+      ptr += 6
+    end
+    paramptr += 3
+  end
+  # set node with 1 symmetry (i.e. the centroid)
+  if cub.centroid
+    A = T[0.25 0.25 0.25 0.25]
+    x[:,ptr+1] = (A*vtx)'
+    ptr += 1
+  end
+  x = x[:,1:ptr]
+
+  tol = 1e-10 
+  if (any(a -> a <= -1.0+tol, x) || any(a ->a >=-1-tol, x[1,:]+x[2,:]+x[3,:]))
+    println("minimum x = ", minimum(x))
+    println("maximum x+y+z= ", maximum(x[1,:]+x[2,:]+x[3,:]))
+    println(x)
+    error("Some interior nodes are on the boundary or outside the domain")
+  else
+    println("Success: All interior nodes are in the interior of the domain.")
+  end
+  
+  return
 end

@@ -30,10 +30,10 @@ operator sbp.
 * `res`: where the result of applying H to u is stored
 
 """
-function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
+function volumeintegrate!(sbp::AbstractSBP{Tsbp},
                                           u::AbstractArray{Tsol,2},
                                           res::AbstractArray{Tres,2},
-                                          (±)::UnaryFunctor=Add())
+                                          (±)::UnaryFunctor=Add()) where {Tsbp,Tsol,Tres}
   @assert( sbp.numnodes == size(u,1) && sbp.numnodes == size(res,1) )
   @assert( length(u) == length(res) )
   H = sbp.w
@@ -44,10 +44,10 @@ function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
   end
 end
 
-function volumeintegrate!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
+function volumeintegrate!(sbp::AbstractSBP{Tsbp},
                                           u::AbstractArray{Tsol,3},
                                           res::AbstractArray{Tres,3},
-                                          (±)::UnaryFunctor=Add())
+                                          (±)::UnaryFunctor=Add()) where {Tsbp,Tsol,Tres}
   @assert( sbp.numnodes == size(u,2) && sbp.numnodes == size(res,2) )
   @assert( length(u) == length(res) )
   H = sbp.w
@@ -87,10 +87,10 @@ operator sbp.
 * `res`: where the result of applying H to u is stored
 
 """
-function volumeIntegrateElement!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
+function volumeIntegrateElement!(sbp::AbstractSBP{Tsbp},
                                                  u::AbstractArray{Tsol,1},
                                                  res::AbstractArray{Tres,1},
-                                                 (±)::UnaryFunctor=Add())
+                                                 (±)::UnaryFunctor=Add()) where {Tsbp,Tsol,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(u,1) == size(res,1) )
   end
@@ -100,10 +100,10 @@ function volumeIntegrateElement!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
   end
 end
 
-function volumeIntegrateElement!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
+function volumeIntegrateElement!(sbp::AbstractSBP{Tsbp},
                                                  u::AbstractArray{Tsol,2},
                                                  res::AbstractArray{Tres,2},
-                                                 (±)::UnaryFunctor=Add())
+                                                 (±)::UnaryFunctor=Add()) where {Tsbp,Tsol,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(u,2) == size(res,2) )
     @assert( length(u) == length(res) )

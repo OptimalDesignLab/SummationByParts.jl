@@ -21,6 +21,12 @@
 *.txt
 *screen*
 
+**/.DS_Store
+**/*.gz
+
 # coverage files
 *.cov
 *.mem
+*.vscode
+examples/.ipynb_checkpoints
+src/minimizenodes.jl

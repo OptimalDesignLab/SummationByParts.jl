@@ -35,12 +35,11 @@ operator sbp.
 * `dresdu`: stores Q[:,:,di]*diag(dfluxdu) or Q[:,:,di]'*diag(dfluxdu)
 
 """
-function weakDifferentiateElement_jac!{
-  Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function weakDifferentiateElement_jac!(sbp::AbstractSBP{Tsbp}, di::Int,
                   dfluxdu::AbstractArray{Tflx,1},
                   dresdu::AbstractArray{Tres,2},
                   (±)::UnaryFunctor=Add(),
-                  trans::Bool=false)
+                  trans::Bool=false) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(dfluxdu,1) == size(dresdu,1) ==
              size(dresdu,2) )
@@ -63,12 +62,11 @@ function weakDifferentiateElement_jac!{
   end
 end
 
-function weakDifferentiateElement_jac!{
-  Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function weakDifferentiateElement_jac!(sbp::AbstractSBP{Tsbp}, di::Int,
                   dfluxdu::AbstractArray{Tflx,3},
                   dresdu::AbstractArray{Tres,4},
                   (±)::UnaryFunctor=Add(),
-                  trans::Bool=false)
+                  trans::Bool=false) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( size(dfluxdu,1) == size(dfluxdu,2) == size(dresdu,1) ==
              size(dresdu,2) )

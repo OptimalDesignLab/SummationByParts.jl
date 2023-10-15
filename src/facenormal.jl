@@ -23,12 +23,12 @@ for TFACE = (TriFace, TriSparseFace)
     * `nrm`: scaled face-normal at the sbpface nodes; [component, sbp node, face]
     
     """    
-    function calcFaceNormals!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
+    function calcFaceNormals!(sbpface::($TFACE){Tsbp},
                                          mapdegree::Int,
                                          xref::AbstractArray{Tsbp,2},
                                          xlag::AbstractArray{Tmsh,3},
                                          xsbp::AbstractArray{Tmsh,3},
-                                         nrm::AbstractArray{Tmsh,3})
+                                         nrm::AbstractArray{Tmsh,3}) where {Tsbp,Tmsh}
       @assert( size(xlag,1) == size(xsbp,1) == size(nrm,1) == 2 )
       @assert( size(xref,1) == 1 )
       @assert( size(xsbp,2) == size(nrm,2) )
@@ -80,12 +80,12 @@ end
 
 for TFACE = (TetFace, TetSparseFace)
   @eval begin
-    function calcFaceNormals!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
+    function calcFaceNormals!(sbpface::($TFACE){Tsbp},
                                          mapdegree::Int,
                                          xref::AbstractArray{Tsbp,2},
                                          xlag::AbstractArray{Tmsh,3},
                                          xsbp::AbstractArray{Tmsh,3},
-                                         nrm::AbstractArray{Tmsh,3})
+                                         nrm::AbstractArray{Tmsh,3}) where {Tsbp,Tmsh}
       @assert( size(xlag,1) == size(xsbp,1) == size(nrm,1) == 3 )
       @assert( size(xref,1) == 2 )
       @assert( size(xsbp,2) == size(nrm,2) )
@@ -180,12 +180,12 @@ for TFACE = (TriFace, TriSparseFace)
     * `nrm`: scaled face-normal at the sbpface nodes
       
     """
-    function facenormal!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
+    function facenormal!(sbpface::($TFACE){Tsbp},
                                     mapdegree::Int,
                                     xref::AbstractArray{Tsbp,2},
                                     xlag::AbstractArray{Tmsh,2},
                                     xsbp::AbstractArray{Tmsh,2},
-                                    nrm::AbstractArray{Tmsh,2})
+                                    nrm::AbstractArray{Tmsh,2}) where {Tsbp,Tmsh}
       @assert( size(xlag,1) == size(xsbp,1) == size(nrm,1) == 2 )
       @assert( size(xref,1) == 1 )
       @assert( size(xsbp,2) == size(nrm,2) )
@@ -197,7 +197,7 @@ for TFACE = (TriFace, TriSparseFace)
         V[:,i+1] = OrthoPoly.jacobipoly(vec(xref[1,:]), 0.0, 0.0, i)
       end
       coeff = zeros(Tmsh, (numdof,2))
-      coeff = V\(xlag.')
+      coeff = V\(xlag')
       # Step 2: compute the mapped SBP nodes and the analytical normal at sbp nodes
       x = SymCubatures.calcnodes(sbpface.cub, sbpface.vtx) # <-- SBP nodes, ref. spc
       fill!(nrm, zero(Tmsh))
@@ -218,12 +218,12 @@ end
 
 for TFACE = (TetFace, TetSparseFace)
   @eval begin
-    function facenormal!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
+    function facenormal!(sbpface::($TFACE){Tsbp},
                                     mapdegree::Int,
                                     xref::AbstractArray{Tsbp,2},
                                     xlag::AbstractArray{Tmsh,2},
                                     xsbp::AbstractArray{Tmsh,2},
-                                    nrm::AbstractArray{Tmsh,2})
+                                    nrm::AbstractArray{Tmsh,2}) where {Tsbp,Tmsh}
       @assert( size(xlag,1) == size(xsbp,1) == size(nrm,1) == 3 )
       @assert( size(xref,1) == 2 )
       @assert( size(xsbp,2) == size(nrm,2) )
@@ -240,7 +240,7 @@ for TFACE = (TetFace, TetSparseFace)
         end
       end
       coeff = zeros(Tmsh, (numdof,3))
-      coeff = V\(xlag.')
+      coeff = V\(xlag')
       # Step 2: compute the mapped SBP nodes and the tangent vectors at sbp nodes
       x = SymCubatures.calcnodes(sbpface.cub, sbpface.vtx) # <-- SBP nodes, ref. spc
       fill!(xsbp, zero(Tmsh))

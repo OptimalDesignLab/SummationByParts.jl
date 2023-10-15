@@ -1,4 +1,4 @@
-facts("Testing SummationByParts Module (Jacobian of face integration methods)...") do
+@testset "Testing SummationByParts Module (Jacobian of face integration methods)..." begin
 
   for TSBP = ((getLineSegSBPLobbato,getLineSegFace,1),
               (getLineSegSBPLegendre,getLineSegFace,1),
@@ -9,11 +9,18 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               (getTetSBPOmega,TetFace{Float64},3),
               (getTetSBPDiagE,getTetFaceForDiagE,3))
     @eval begin
-      context("Testing boundaryFaceIntegrate_jac! ("string($TSBP[1])" scalar field method)") do
+      @testset "Testing boundaryFaceIntegrate_jac! ($(string($TSBP[1])) scalar field method)" begin
         for p = 1:4
           # evaluate residual based on randomly selected face and random state
-          sbp = ($TSBP[1])(degree=p)
-          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          # sbp = ($TSBP[1])(degree=p)
+          # sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          if $TSBP == (getTetSBPDiagE,getTetFaceForDiagE,3)
+            sbp = ($TSBP[1])(degree=p, faceopertype=:Omega)
+            sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
+          else
+            sbp = ($TSBP[1])(degree=p)
+            sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          end
           face = 0
           if size(sbp.Q,3) == 1
             face = rand(1:2)
@@ -38,9 +45,9 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           # get the Jacobian using complex step
           u_c = complex(u)
           uface_c = complex(uface)
-          flux_c = zeros(Complex128, (sbpface.numnodes))
-          res_c = zeros(u_c)
-          dRdu_cmplx = zeros(dRdu)
+          flux_c = zeros(ComplexF64, (sbpface.numnodes))
+          res_c = zeros(ComplexF64, size(u_c))
+          dRdu_cmplx = zeros(size(dRdu))
           ceps = 1e-60
           for i = 1:sbp.numnodes
             u_c[i] += complex(0.0, ceps)
@@ -51,14 +58,14 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               flux_c[j] = cos(uface_c[j]*uface_c[j])
             end
             # get residuals
-            fill!(res_c, zero(Complex128))
+            fill!(res_c, zero(ComplexF64))
             boundaryFaceIntegrate!(sbpface, face, flux_c, res_c)
             dRdu_cmplx[:,i] = imag(res_c[:,1])/ceps
             u_c[i] -= complex(0.0, ceps)
           end
 
           # check for equality
-          @fact dRdu --> roughly(dRdu_cmplx, atol=1e-15)
+          @test ≈(dRdu, dRdu_cmplx, atol=1e-13)
         end
       end
     end
@@ -73,11 +80,18 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               (getTetSBPOmega,TetFace{Float64},3),
               (getTetSBPDiagE,getTetFaceForDiagE,3))
     @eval begin
-      context("Testing boundaryFaceIntegrate_jac! ("string($TSBP[1])" vector field method)") do
+      @testset "Testing boundaryFaceIntegrate_jac! ($(string($TSBP[1])) vector field method)" begin
         for p = 1:4
           # evaluate residual based on randomly selected face and random state
-          sbp = ($TSBP[1])(degree=p)
-          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          # sbp = ($TSBP[1])(degree=p)
+          # sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          if $TSBP == (getTetSBPDiagE,getTetFaceForDiagE,3)
+            sbp = ($TSBP[1])(degree=p, faceopertype=:Omega)
+            sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
+          else
+            sbp = ($TSBP[1])(degree=p)
+            sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          end
           face = 0
           if size(sbp.Q,3) == 1
             face = rand(1:2)
@@ -105,9 +119,9 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           # get the Jacobian using complex step
           u_c = complex(u)
           uface_c = complex(uface)
-          flux_c = zeros(Complex128, (2, sbpface.numnodes))
-          res_c = zeros(u_c)
-          dRdu_cmplx = zeros(dRdu)
+          flux_c = zeros(ComplexF64, (2, sbpface.numnodes))
+          res_c = zeros(ComplexF64, size(u_c))
+          dRdu_cmplx = zeros(size(dRdu))
           ceps = 1e-60
           for i = 1:sbp.numnodes
             for p = 1:2
@@ -121,7 +135,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
                 flux_c[2,j] = uface_c[1,j]*uface_c[1,j]*sin(uface_c[2,j])
               end
               # get residuals
-              fill!(res_c, zero(Complex128))
+              fill!(res_c, zero(ComplexF64))
               boundaryFaceIntegrate!(sbpface, face, flux_c, res_c)
               dRdu_cmplx[:,p,:,i] = imag(res_c[:,:])/ceps
               u_c[p,i] -= complex(0.0, ceps)
@@ -129,7 +143,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           end
 
           # check for equality
-          @fact dRdu --> roughly(dRdu_cmplx, atol=1e-15)
+          @test ≈(dRdu, dRdu_cmplx, atol=1e-12)
         end
       end
     end
@@ -144,12 +158,19 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               (getTetSBPOmega,TetFace{Float64},3),
               (getTetSBPDiagE,getTetFaceForDiagE,3))
     @eval begin
-      context("Testing interiorFaceIntegrate_jac! ("string($TSBP[1])" scalar field method)") do
+      @testset "Testing interiorFaceIntegrate_jac! ($(string($TSBP[1])) scalar field method)" begin
         for p = 1:4
           # create a two element mesh with random orientation
-          sbp = ($TSBP[1])(degree=p)
-          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
-          ifaces = Array{Interface}(1)
+          # sbp = ($TSBP[1])(degree=p)
+          # sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          if $TSBP == (getTetSBPDiagE,getTetFaceForDiagE,3)
+            sbp = ($TSBP[1])(degree=p, faceopertype=:Omega)
+            sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
+          else
+            sbp = ($TSBP[1])(degree=p)
+            sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          end
+          ifaces = Array{Interface}(undef, 1)
           if size(sbp.Q,3) == 1
             ifaces[1] = Interface(1,2,rand(1:2),rand(1:2),1)
           elseif size(sbp.Q,3) == 2
@@ -175,9 +196,9 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
             flux_jac2[i] = cos(uface[i,1])*cos(uface[i,2])
           end
           dR1du1 = zeros(Float64, (sbp.numnodes, sbp.numnodes))
-          dR1du2 = zeros(dR1du1)
-          dR2du1 = zeros(dR1du1)
-          dR2du2 = zeros(dR1du1)
+          dR1du2 = zeros(size(dR1du1))
+          dR2du1 = zeros(size(dR1du1))
+          dR2du2 = zeros(size(dR1du1))
           interiorFaceIntegrate_jac!(sbpface, ifaces[1],
                                      flux_jac1, flux_jac2,
                                      dR1du1, dR1du2, dR2du1, dR2du2)
@@ -185,12 +206,12 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           # get the Jacobians using complex step
           u_c = complex(u)
           uface_c = complex(uface)
-          flux_c = zeros(Complex128, (sbpface.numnodes))
-          res_c = zeros(u_c)
-          dR1du1_cmplx = zeros(dR1du1)
-          dR1du2_cmplx = zeros(dR1du1)
-          dR2du1_cmplx = zeros(dR1du1)
-          dR2du2_cmplx = zeros(dR1du1)
+          flux_c = zeros(ComplexF64, (sbpface.numnodes))
+          res_c = zeros(ComplexF64, size(u_c))
+          dR1du1_cmplx = zeros(size(dR1du1))
+          dR1du2_cmplx = zeros(size(dR1du1))
+          dR2du1_cmplx = zeros(size(dR1du1))
+          dR2du2_cmplx = zeros(size(dR1du1))
           ceps = 1e-60
           for e = 1:2
             for i = 1:sbp.numnodes
@@ -206,7 +227,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
                 flux_c[j] = cos(uface_c[j,1])*sin(uface_c[j,2])
               end
               # get residuals
-              fill!(res_c, zero(Complex128))
+              fill!(res_c, zero(ComplexF64))
               interiorFaceIntegrate!(sbpface, ifaces[1], flux_c,
                                      view(res_c,:,ifaces[1].elementL),
                                      view(res_c,:,ifaces[1].elementR))
@@ -222,10 +243,10 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           end
 
           # check for equality
-          @fact dR1du1 --> roughly(dR1du1_cmplx, atol=1e-15)
-          @fact dR1du2 --> roughly(dR1du2_cmplx, atol=1e-15)
-          @fact dR2du1 --> roughly(dR2du1_cmplx, atol=1e-15)
-          @fact dR2du2 --> roughly(dR2du2_cmplx, atol=1e-15)          
+          @test ≈(dR1du1, dR1du1_cmplx, atol=1e-13)
+          @test ≈(dR1du2, dR1du2_cmplx, atol=1e-13)
+          @test ≈(dR2du1, dR2du1_cmplx, atol=1e-13)
+          @test ≈(dR2du2, dR2du2_cmplx, atol=1e-13)          
         end
       end
     end
@@ -240,12 +261,19 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
               (getTetSBPOmega,TetFace{Float64},3),
               (getTetSBPDiagE,getTetFaceForDiagE,3))
     @eval begin
-      context("Testing interiorFaceIntegrate_jac! ("string($TSBP[1])" vector field method)") do
+      @testset "Testing interiorFaceIntegrate_jac! ($(string($TSBP[1])) vector field method)" begin
         for p = 1:4
           # create a two element mesh with random orientation
-          sbp = ($TSBP[1])(degree=p)
-          sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
-          ifaces = Array{Interface}(1)
+          # sbp = ($TSBP[1])(degree=p)
+          # sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          if $TSBP == (getTetSBPDiagE,getTetFaceForDiagE,3)
+            sbp = ($TSBP[1])(degree=p, faceopertype=:Omega)
+            sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
+          else
+            sbp = ($TSBP[1])(degree=p)
+            sbpface = ($TSBP[2])(p, sbp.cub, sbp.vtx)
+          end
+          ifaces = Array{Interface}(undef, 1)
           if size(sbp.Q,3) == 1
             ifaces[1] = Interface(1,2,rand(1:2),rand(1:2),1)
           elseif size(sbp.Q,3) == 2
@@ -286,9 +314,9 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
                                               - u2/(uface[2,i,1] + uface[2,i,2]))
           end
           dR1du1 = zeros(Float64, (2, 2, sbp.numnodes, sbp.numnodes))
-          dR1du2 = zeros(dR1du1)
-          dR2du1 = zeros(dR1du1)
-          dR2du2 = zeros(dR1du1)
+          dR1du2 = zeros(size(dR1du1))
+          dR2du1 = zeros(size(dR1du1))
+          dR2du2 = zeros(size(dR1du1))
           interiorFaceIntegrate_jac!(sbpface, ifaces[1],
                                      flux_jac1, flux_jac2,
                                      dR1du1, dR1du2, dR2du1, dR2du2)
@@ -296,12 +324,12 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           # get the Jacobians using complex step
           u_c = complex(u)
           uface_c = complex(uface)
-          flux_c = zeros(Complex128, (2,sbpface.numnodes))
-          res_c = zeros(u_c)
-          dR1du1_cmplx = zeros(dR1du1)
-          dR1du2_cmplx = zeros(dR1du1)
-          dR2du1_cmplx = zeros(dR1du1)
-          dR2du2_cmplx = zeros(dR1du1)
+          flux_c = zeros(ComplexF64, (2,sbpface.numnodes))
+          res_c = zeros(ComplexF64, size(u_c))
+          dR1du1_cmplx = zeros(size(dR1du1))
+          dR1du2_cmplx = zeros(size(dR1du1))
+          dR2du1_cmplx = zeros(size(dR1du1))
+          dR2du2_cmplx = zeros(size(dR1du1))
           ceps = 1e-60
           for e = 1:2
             for i = 1:sbp.numnodes
@@ -325,7 +353,7 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
                   flux_c[2,j] = u1*u1*sin(u2)
                 end
                 # get residuals
-                fill!(res_c, zero(Complex128))
+                fill!(res_c, zero(ComplexF64))
                 interiorFaceIntegrate!(sbpface, ifaces[1], flux_c,
                                        view(res_c,:,:,ifaces[1].elementL),
                                        view(res_c,:,:,ifaces[1].elementR))
@@ -342,10 +370,10 @@ facts("Testing SummationByParts Module (Jacobian of face integration methods)...
           end
 
           # check for equality
-          @fact dR1du1 --> roughly(dR1du1_cmplx, atol=1e-15)
-          @fact dR1du2 --> roughly(dR1du2_cmplx, atol=1e-15)
-          @fact dR2du1 --> roughly(dR2du1_cmplx, atol=1e-15)
-          @fact dR2du2 --> roughly(dR2du2_cmplx, atol=1e-15)          
+          @test ≈(dR1du1, dR1du1_cmplx, atol=1e-8)
+          @test ≈(dR1du2, dR1du2_cmplx, atol=1e-8)
+          @test ≈(dR2du1, dR2du1_cmplx, atol=1e-8)
+          @test ≈(dR2du2, dR2du2_cmplx, atol=1e-8)          
         end
       end
     end

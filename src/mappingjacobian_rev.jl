@@ -32,11 +32,10 @@ See `calcMappingJacobian!` for an explanation of `Eone`; it is only needed in
 the 3D case, but Eone_bar needs to be supplied in both 2D and 3D.
 
 """
-function calcMappingJacobian_rev!{
-  Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
+function calcMappingJacobian_rev!(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
              xlag::AbstractArray{Tmsh,3}, xlag_bar::AbstractArray{Tmsh,3},
              xsbp_bar::AbstractArray{Tmsh,3}, dξdx_bar::AbstractArray{Tmsh,4},
-             jac_bar::AbstractArray{Tmsh,2}, Eone_bar::AbstractArray{Tmsh,3})
+             jac_bar::AbstractArray{Tmsh,2}, Eone_bar::AbstractArray{Tmsh,3}) where {Tsbp,Tmsh}
   @assert( sbp.numnodes == size(xsbp_bar,2) == size(dξdx_bar,3) ==
            size(jac_bar,1) == size(Eone_bar,1) )
   @assert( size(xlag,1) == size(xlag_bar,1) == size(xref,1) == size(xsbp_bar,1)
@@ -148,11 +147,10 @@ function calcMappingJacobian_rev!{
   end # loop over elements
 end
 
-function calcMappingJacobian_rev!{
-  Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
+function calcMappingJacobian_rev!(sbp::TetSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
              xlag::AbstractArray{Tmsh,3}, xlag_bar::AbstractArray{Tmsh,3},
              xsbp_bar::AbstractArray{Tmsh,3}, dξdx_bar::AbstractArray{Tmsh,4},
-             jac_bar::AbstractArray{Tmsh,2}, Eone_bar::AbstractArray{Tmsh,3})
+             jac_bar::AbstractArray{Tmsh,2}, Eone_bar::AbstractArray{Tmsh,3}) where {Tsbp,Tmsh}
   @assert( sbp.numnodes == size(xsbp_bar,2) == size(dξdx_bar,3) ==
            size(jac_bar,1) == size(Eone_bar,1) )
   @assert( size(xlag,1) == size(xlag_bar,1) == size(xref,1) == size(xsbp_bar,1)
@@ -202,10 +200,10 @@ function calcMappingJacobian_rev!{
   dxdξ_bar = zeros(Tmsh, (3,3,sbp.numnodes))
   dξdx_targ_bar = zeros(Tmsh, (3,3,sbp.numnodes))
   Qt = zeros(Tsbp, (sbp.numnodes, 3*sbp.numnodes) )
-  Qt = [sbp.Q[:,:,1].' sbp.Q[:,:,2].' sbp.Q[:,:,3].']
+  Qt = [sbp.Q[:,:,1]' sbp.Q[:,:,2]' sbp.Q[:,:,3]']
   Qtinv = pinv(Qt)
   targ_bar = zeros(Tmsh, (3*sbp.numnodes))
-  sol_bar = zeros(targ_bar)
+  sol_bar = zeros(size(targ_bar))
   # loop over each element...
   for e = 1:size(xlag,3)
     # unlike the 2D case, the jacobian terms dξdx depend nonlinearly on dxdξ, so
@@ -352,11 +350,11 @@ output order of the arguments follows that used in `mappingjacobian!`.
 * `x_bar`: gradient w.r.t. SBP nodes; [coord, Lagrangian node, element]
 
   """
-function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
+function mappingjacobian_rev!(sbp::TriSBP{Tsbp},
                                          x::AbstractArray{Tmsh,3},
                                          x_bar::AbstractArray{Tmsh,3},
                                          dξdx_bar::AbstractArray{Tmsh,4},
-                                         jac_bar::AbstractArray{Tmsh,2})
+                                         jac_bar::AbstractArray{Tmsh,2}) where {Tsbp,Tmsh}
   @assert( sbp.numnodes == size(x,2) == size(x_bar,2) == size(dξdx_bar,3)
            == size(jac_bar,1) )
   @assert( size(x,3) == size(x_bar,3) == size(dξdx_bar,4) == size(jac_bar,2) )
@@ -401,11 +399,11 @@ function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
 end
 
 
-function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
+function mappingjacobian_rev!(sbp::TetSBP{Tsbp},
                                          x::AbstractArray{Tmsh,3},
                                          x_bar::AbstractArray{Tmsh,3},
                                          dξdx_bar::AbstractArray{Tmsh,4},
-                                         jac_bar::AbstractArray{Tmsh,2})
+                                         jac_bar::AbstractArray{Tmsh,2}) where {Tsbp,Tmsh}
   @assert( sbp.numnodes == size(x,2) == size(x_bar,2) == size(dξdx_bar,3)
            == size(jac_bar,1) )
   @assert( size(x,3) == size(x_bar,3) == size(dξdx_bar,4) == size(jac_bar,2) )
@@ -413,7 +411,7 @@ function mappingjacobian_rev!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
            == 3 )
   work = zeros(Tmsh, (3,sbp.numnodes,3))
   dxdξ = zeros(Tmsh, (3,3,sbp.numnodes))
-  dxdξ_bar = zeros(dxdξ)
+  dxdξ_bar = zeros(size(dxdξ))
   for elem = 1:size(x,3)
     # compute the coordinate derivatives
     fill!(work, zero(Tmsh))

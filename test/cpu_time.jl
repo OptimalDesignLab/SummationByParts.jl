@@ -2,12 +2,12 @@ using SummationByParts
 using SummationByParts.OrthoPoly
 using SummationByParts.Cubature
 using SummationByParts.SymCubatures
-using FactCheck
+# using FactCheck
 using ArrayViews
 
 facts("Checking run time of various operations...") do
-
-if true
+test_time = true
+if test_time
   context("Timing SummationByParts.weakdifferentiate! (TriSBP, scalar field method)") do
     # warm-up 
     sbp = TriSBP{Float64}(degree=1)

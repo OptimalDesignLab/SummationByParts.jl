@@ -1,4 +1,5 @@
 # This file gathers together functions used to build the SBP face operators
+using LinearAlgebra
 
 """
 ### SummationByParts.buildfacereconstruction
@@ -21,8 +22,8 @@ applied on all the faces.
 * `perm`: a permutation array that allows `R` to be applied on all faces
 
 """
-function buildfacereconstruction{T}(facecub::PointSymCub{T}, cub::LineSymCub{T},
-                                    vtx::Array{T,2}, d::Int)
+function buildfacereconstruction(facecub::PointSymCub{T}, cub::LineSymCub{T},
+                                    vtx::Array{T,2}, d::Int) where {T}
   # first, decide whether or not to use volume nodes or just face nodes
   if SymCubatures.getnumfacenodes(cub) == 1
     perm = SymCubatures.getfacebasedpermutation(cub, faceonly=true)
@@ -42,19 +43,19 @@ function buildfacereconstruction{T}(facecub::PointSymCub{T}, cub::LineSymCub{T},
     ptr += 1
   end
   if SymCubatures.getnumfacenodes(cub) == 1
-    A = kron(Pv.',eye(facecub.numnodes))
+    A = kron(Pv',I(facecub.numnodes))
     b = vec(Pf)
     R = zeros(facecub.numnodes*size(perm,1))
     SummationByParts.calcSparseSolution!(A, b, R)
     R = reshape(R, (facecub.numnodes,size(perm,1)))
   else
-    R = (pinv(Pv.')*Pf.').'
+    R = Matrix((pinv(Pv')*Pf')')
   end
   return R, perm
 end
 
-function buildfacereconstruction{T}(facecub::LineSymCub{T}, cub::TriSymCub{T},
-                                    vtx::Array{T,2}, d::Int)
+function buildfacereconstruction(facecub::LineSymCub{T}, cub::TriSymCub{T},
+                                    vtx::Array{T,2}, d::Int) where {T}
   # first, decide whether or not to use volume nodes or just face nodes
   if SymCubatures.getnumfacenodes(cub) >= (d+1)
     perm = SymCubatures.getfacebasedpermutation(cub, faceonly=true)
@@ -78,14 +79,14 @@ function buildfacereconstruction{T}(facecub::LineSymCub{T}, cub::TriSymCub{T},
     end
   end
   #R = Pf/Pv
-  #R = (pinv(Pv.')*Pf.').'
+  #R = (pinv(Pv')*Pf')'
   # notes on sparse solution:
   # A = kron(eye(size(perm,1)),Pv)
   # b = vec(Pf)
   # use basis pursuit on A x = b
   # find dominant entries and resolve for R
   if SymCubatures.getnumfacenodes(cub) >= (d+1)
-    A = kron(Pv.',eye(facecub.numnodes))
+    A = kron(Pv', I(facecub.numnodes))
     #println("size(A) = ",size(A))
     #println("rank(A) = ",rank(A))
     b = vec(Pf)
@@ -94,13 +95,13 @@ function buildfacereconstruction{T}(facecub::LineSymCub{T}, cub::TriSymCub{T},
     SummationByParts.calcSparseSolution!(A, b, R)
     R = reshape(R, (facecub.numnodes,size(perm,1)))
   else
-    R = (pinv(Pv.')*Pf.').'
+    R = (pinv(Pv')*Pf')'
   end
   return R, perm
 end
 
-function buildfacereconstruction{T}(facecub::TriSymCub{T}, cub::TetSymCub{T},
-                                    vtx::Array{T,2}, d::Int)
+function buildfacereconstruction(facecub::TriSymCub{T}, cub::TetSymCub{T},
+                                    vtx::Array{T,2}, d::Int; faceopertype::Symbol=:Omega) where {T}
   # first, decide whether or not to use volume nodes or just face nodes
   if SymCubatures.getnumfacenodes(cub) >= (d+1)
     perm = SymCubatures.getfacebasedpermutation(cub, faceonly=true)
@@ -129,7 +130,13 @@ function buildfacereconstruction{T}(facecub::TriSymCub{T}, cub::TetSymCub{T},
     end
   end
   #R = Pf/Pv
-  R = (pinv(Pv.')*Pf.').'
+  # R = (pinv(Pv')*Pf')'
+  if faceopertype == :DiagE
+    R = 1.0*I(facecub.numnodes)
+  else
+    R = (pinv(Pv')*Pf')'
+  end
+
   return R, perm
 end
 
@@ -159,8 +166,8 @@ the same operators to be applied on all the faces.
 * `perm`: a permutation array that allows `D` to be applied on all faces
 
 """
-function buildfacederivatives{T}(facecub::PointSymCub{T}, cub::LineSymCub{T},
-                                 vtx::Array{T,2}, d::Int)
+function buildfacederivatives(facecub::PointSymCub{T}, cub::LineSymCub{T},
+                                 vtx::Array{T,2}, d::Int) where {T}
   perm = SymCubatures.getfacebasedpermutation(cub)
   # evaluate the basis at the volume and face cubature points
   N = d+1
@@ -174,14 +181,14 @@ function buildfacederivatives{T}(facecub::PointSymCub{T}, cub::LineSymCub{T},
     dPdx[:,ptr] = OrthoPoly.diffjacobipoly(vec(xf[1,:]), 0.0, 0.0, i)
     ptr += 1
   end
-  A = pinv(Pv.')
+  A = pinv(Pv')
   D = zeros(cub.numnodes, facecub.numnodes, 1)
-  D[:,:,1] = A*dPdx.'
+  D[:,:,1] = A*dPdx'
   return D, perm
 end
 
-function buildfacederivatives{T}(facecub::LineSymCub{T}, cub::TriSymCub{T},
-                                 vtx::Array{T,2}, d::Int)
+function buildfacederivatives(facecub::LineSymCub{T}, cub::TriSymCub{T},
+                                 vtx::Array{T,2}, d::Int) where {T}
   perm = SymCubatures.getfacebasedpermutation(cub)
   # evaluate the basis at the volume and face cubature points
   N = convert(Int, (d+1)*(d+2)/2 )
@@ -201,9 +208,9 @@ function buildfacederivatives{T}(facecub::LineSymCub{T}, cub::TriSymCub{T},
       ptr += 1
     end
   end
-  A = pinv(Pv.')
+  A = pinv(Pv')
   D = zeros(cub.numnodes, facecub.numnodes, 2)
-  D[:,:,1] = A*dPdx.'
-  D[:,:,2] = A*dPdy.'
+  D[:,:,1] = A*dPdx'
+  D[:,:,2] = A*dPdy'
   return D, perm
 end

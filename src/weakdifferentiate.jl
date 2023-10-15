@@ -32,11 +32,11 @@ operator sbp.
 * `res`: where the result of applying Q[:,:,di] to u is stored
 
 """
-function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int, 
+function weakdifferentiate!(sbp::AbstractSBP{Tsbp}, di::Int, 
                                             flux::AbstractArray{Tflx,2},
                                             res::AbstractArray{Tres,2},
                                             (±)::UnaryFunctor=Add();
-                                            trans::Bool=false)
+                                            trans::Bool=false) where {Tsbp,Tflx,Tres}
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -59,11 +59,11 @@ function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   end
 end
 
-function weakdifferentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function weakdifferentiate!(sbp::AbstractSBP{Tsbp}, di::Int,
                                             flux::AbstractArray{Tflx,3},
                                             res::AbstractArray{Tres,3},
                                             (±)::UnaryFunctor=Add();
-                                            trans::Bool=false)
+                                            trans::Bool=false) where {Tsbp,Tflx,Tres}
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -119,12 +119,12 @@ operator sbp.
 * `res`: where the result of applying Q[:,:,di] to u is stored
 
 """
-function weakDifferentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
+function weakDifferentiateElement!(sbp::AbstractSBP{Tsbp},
                                                    di::Int,
                                                    flux::AbstractArray{Tflx,1},
                                                    res::AbstractArray{Tres,1},
                                                    (±)::UnaryFunctor=Add(),
-                                                   trans::Bool=false)
+                                                   trans::Bool=false) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(flux,1) == size(res,1) )
     @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -145,12 +145,12 @@ function weakDifferentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
   end
 end
 
-function weakDifferentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp},
+function weakDifferentiateElement!(sbp::AbstractSBP{Tsbp},
                                                    di::Int,
                                                    flux::AbstractArray{Tflx,2},
                                                    res::AbstractArray{Tres,2},
                                                    (±)::UnaryFunctor=Add(),
-                                                   trans::Bool=false)
+                                                   trans::Bool=false) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(flux,2) == size(res,2) )
     @assert( length(flux) == length(res) )
