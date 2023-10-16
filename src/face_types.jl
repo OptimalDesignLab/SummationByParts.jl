@@ -16,7 +16,7 @@ Used to identify boundary faces in a finite-element grid.
 To mark face 2 of element 7 to be a boundary face, use `Boundary(7,2)`
 
 """
-immutable Boundary
+struct Boundary
   element::UInt32
   face::UInt8
 end
@@ -42,7 +42,7 @@ orientation 1 relative to element 1 (defintion of orientation TBD).  This can be
 indicated as `Interface(2,5,1,3,1)`
 
 """
-immutable Interface
+struct Interface
   elementL::UInt32
   elementR::UInt32
   faceL::UInt8

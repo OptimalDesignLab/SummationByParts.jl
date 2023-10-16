@@ -1,6 +1,6 @@
-facts("Testing SummationByParts Module (edge-stabilization methods)...") do
+@testset "Testing SummationByParts Module (edge-stabilization methods)..." begin
 
-  context("Testing SummationByParts.edgestabilize! (TriFace, scalar field method)") do
+  @testset "Testing SummationByParts.edgestabilize! (TriFace, scalar field method)" begin
     # build a two element grid, and verify that polynomials of degree p or less
     # vanish when edgestabilize is applied
     for p = 1:4
@@ -13,7 +13,7 @@ facts("Testing SummationByParts Module (edge-stabilization methods)...") do
       x[:,:,2] = SummationByParts.SymCubatures.calcnodes(sbp.cub, vtx)
       dξdx = zeros(Float64, (2,2,sbpface.numnodes,2,1))
       jac = zeros(Float64, (sbpface.numnodes,2,1))
-      ifaces = Array{Interface}(1)
+      ifaces = Array{Interface}(undef, 1)
       ifaces[1] = Interface(1,2,2,3,1)
       mappingjacobian!(sbpface, ifaces, x, dξdx, jac)
       # build the normal vector to the face; (<dξdx,dηdx> , <dηdx,dηdx>)
@@ -33,9 +33,9 @@ facts("Testing SummationByParts Module (edge-stabilization methods)...") do
         for j = 0:d
           i = d-j
           u[:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)
-          res = zeros(u)
+          res = zeros(size(u))
           edgestabilize!(sbpface, ifaces, dirvec, tau, u, res)
-          @fact res --> roughly(zeros(res), atol=1e-10) # !!! note the size of atol
+          @test ≈(res, zeros(size(res)), atol=1e-10) # !!! note the size of atol
         end
       end
     end

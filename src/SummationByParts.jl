@@ -1,37 +1,47 @@
 __precompile__(false)
 module SummationByParts
 
-using Optim, LineSearches
+using Optim
+using LineSearches
 #using ArrayViews
 #using ODLCommonTools
 #import ODLCommonTools.sview
 
-"""
-    getComplexStep(T)
+# """
+#     getComplexStep(T)
 
-returns an appropriate complex-step size for the given type
-"""
-getComplexStep{T <: Float32}(::Type{T}) = 1f-20
-getComplexStep{T <: Float64}(::Type{T}) = 1e-60
-getComplexStep{T <: Complex64}(::Type{T}) = 1f-20
-getComplexStep{T <: Complex128}(::Type{T}) = 1e-60
+# returns an appropriate complex-step size for the given type
+# """
+# getComplexStep{T <: Float32}(::Type{T}) = 1f-20
+# getComplexStep{T <: Float64}(::Type{T}) = 1e-60
+# getComplexStep{T <: Complex64}(::Type{T}) = 1f-20
+# getComplexStep{T <: Complex128}(::Type{T}) = 1e-60
+
+# getComplexstep(::Type{T}) where {T<:Float32} = 1f-20
+# getComplexstep(::Type{T}) where {T<:Float64} = 1e-60
+# getComplexstep(::Type{T}) where {T<:Complex{Float64}} = 1e-60
 
 include("compile_time.jl")
 include("face_types.jl")
 include("orthopoly.jl")
 include("symcubatures.jl")
+include("optimizer.jl")
 include("cubature.jl")
+include("../quadrature_data/write_quad_file.jl")
+include("../visual/plot_nodes.jl")
+include("../visual/plot_nodes_web.jl")
 
 using .OrthoPoly
 using .SymCubatures
 using .Cubature
+using .Optimizer
 
 export AbstractSBP
 export LineSegSBP
 export TriSBP, SparseTriSBP
 export TetSBP, SparseTetSBP
 export getLineSegSBPLobbato, getLineSegSBPLegendre
-export getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE
+export getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE, getTriCubatureForTetFaceDiagE
 export getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE
 export AbstractFace
 export DenseFace, LineSegFace, TriFace, TetFace
@@ -39,7 +49,9 @@ export SparseFace, TriSparseFace, TetSparseFace
 export getLineSegFace, getTriFaceForDiagE, getTetFaceForDiagE
 export Boundary, Interface
 
-export calcnodes, calcminnodedistance, getNumFaceNodes
+export plotly_tri_nodes, plotly_tet_nodes, write_tri_data, write_tet_data, plot_tri_nodes, plot_tet_nodes
+export pso, levenberg_marquardt, rosenbrock, rastrigin
+export calcnodes, calcminnodedistance, getNumFaceNodes, truncErr, quadTruncErr, checkInteriorNodeLocaton
 export weakdifferentiate!, weakDifferentiateElement!
 export weakdifferentiate_rev!, weakDifferentiateElement_rev!
 export weakDifferentiateElement_jac!
@@ -66,6 +78,8 @@ export interiorfaceintegrate_rev!, interiorFaceIntegrate_rev!
 export interiorFaceIntegrate_jac!
 export edgestabilize!, permuteinterface!
 
+export minTriCubatureDiagE, minTriCubatureOmega
+
 """
 ### SBP.UnaryFunctor
 
@@ -82,7 +96,7 @@ abstract type UnaryFunctor end
 UnaryFunctor.
 
 """
-type Add <: UnaryFunctor
+mutable struct Add <: UnaryFunctor
 end
 function (update::Add)(scalar)
   return scalar
@@ -94,7 +108,7 @@ end
 `Subtract` is used to negate values, which is useful in residual updates
 
 """
-type Subtract <: UnaryFunctor
+mutable struct Subtract <: UnaryFunctor
 end
 function (update::Subtract)(scalar)
   return -scalar
@@ -123,5 +137,6 @@ include("faceintegrate_rev.jl") #<--- reverse mode of faceintegrate.jl
 include("faceintegrate_jac.jl") #<--- Jacobians for combined face operations
 include("edgestabilize.jl") #<--- functions related to edge stabilization
 include("utils.jl") # <--- miscellaneous functions
+include("derivecubature.jl") # <--- functions to derive cubature rules
 
 end # module

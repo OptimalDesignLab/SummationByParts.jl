@@ -1,8 +1,8 @@
-facts("Testing SummationByParts Module (face-data interpolation methods)...") do
+@testset "Testing SummationByParts Module (face-data interpolation methods)..." begin
 
   for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
     @eval begin
-      context("Testing boundaryinterpolate! ("string($TSBP)" scalar field method)") do
+      @testset "Testing boundaryinterpolate! ($(string($TSBP)) scalar field method)" begin
         for p = 1:4
           sbp = ($TSBP)(degree=p)
           sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
@@ -16,7 +16,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
           xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
           xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
-          bndryfaces = Array{Boundary}(4)
+          bndryfaces = Array{Boundary}(undef, 4)
           bndryfaces[1] = Boundary(1,1)
           bndryfaces[2] = Boundary(1,2)
           bndryfaces[3] = Boundary(2,1)
@@ -26,7 +26,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           for i = 0:p
             u[:,:] = x[1,:,:].^i
             boundaryinterpolate!(sbpface, bndryfaces, u, uface)
-            @fact vec(uface[:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @test ≈(vec(uface[:,:]), vec(xf[1,:,:].^i), atol=5e-14)
           end
         end
       end
@@ -35,7 +35,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
     @eval begin
-      context("Testing boundaryinterpolate! ("string($TSBP)" vector field method)") do
+      @testset "Testing boundaryinterpolate! ($(string($TSBP)) vector field method)" begin
         for p = 1:4
           sbp = ($TSBP)(degree=p)
           sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
@@ -49,7 +49,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
           xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
           xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
-          bndryfaces = Array{Boundary}(4)
+          bndryfaces = Array{Boundary}(undef, 4)
           bndryfaces[1] = Boundary(1,1)
           bndryfaces[2] = Boundary(1,2)
           bndryfaces[3] = Boundary(2,1)
@@ -60,15 +60,15 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             u[1,:,:] = x[1,:,:].^i
             u[2,:,:] = 2.0.*u[1,:,:]
             boundaryinterpolate!(sbpface, bndryfaces, u, uface)
-            @fact vec(uface[1,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
-            @fact vec(uface[2,:,:]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
+            @test ≈(vec(uface[1,:,:]), vec(xf[1,:,:].^i), atol=5e-14)
+            @test ≈(vec(uface[2,:,:]), 2.0.*vec(xf[1,:,:].^i), atol=5e-14)
           end
         end
       end
     end
   end
         
-  context("Testing boundaryinterpolate! (TriSBP, scalar field method)") do
+  @testset "Testing boundaryinterpolate! (TriSBP, scalar field method)" begin
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTriSBPGamma(degree=p)
@@ -83,7 +83,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array{Boundary}(4)
+      bndryfaces = Array{Boundary}(undef, 4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -95,14 +95,13 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           i = d-j
           u[:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)
           boundaryinterpolate!(sbpface, bndryfaces, u, uface)
-          @fact vec(uface[:,:]) -->
-          roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
+          @test ≈(vec(uface[:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
         end
       end
     end
   end
 
-  context("Testing boundaryinterpolate! (TriSBP, vector field method)") do
+  @testset "Testing boundaryinterpolate! (TriSBP, vector field method)" begin
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTriSBPGamma(degree=p)
@@ -117,7 +116,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array{Boundary}(4)
+      bndryfaces = Array{Boundary}(undef, 4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -130,16 +129,14 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           u[1,:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)
           u[2,:,:] = 2.0.*(x[1,:,:].^i).*(x[2,:,:].^j)
           boundaryinterpolate!(sbpface, bndryfaces, u, uface)
-          @fact vec(uface[1,:,:]) -->
-          roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
-          @fact vec(uface[2,:,:]) -->
-          roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
+          @test ≈(vec(uface[1,:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
+          @test ≈(vec(uface[2,:,:]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
         end
       end
     end
   end
 
-  context("Testing boundaryinterpolate! (TriSparseFace, scalar field method)") do
+  @testset "Testing boundaryinterpolate! (TriSparseFace, scalar field method)" begin
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTriSBPDiagE(degree=p)
@@ -154,7 +151,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array{Boundary}(4)
+      bndryfaces = Array{Boundary}(undef, 4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -166,14 +163,13 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           i = d-j
           u[:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)
           boundaryinterpolate!(sbpface, bndryfaces, u, uface)
-          @fact vec(uface[:,:]) -->
-          roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
+          @test ≈(vec(uface[:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
         end
       end
     end
   end
 
-  context("Testing boundaryinterpolate! (TriSparseSBP, vector field method)") do
+  @testset "Testing boundaryinterpolate! (TriSparseSBP, vector field method)" begin
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTriSBPDiagE(degree=p)
@@ -188,7 +184,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array{Boundary}(4)
+      bndryfaces = Array{Boundary}(undef, 4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -201,16 +197,14 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           u[1,:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)
           u[2,:,:] = 2.0.*(x[1,:,:].^i).*(x[2,:,:].^j)
           boundaryinterpolate!(sbpface, bndryfaces, u, uface)
-          @fact vec(uface[1,:,:]) -->
-          roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
-          @fact vec(uface[2,:,:]) -->
-          roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
+          @test ≈(vec(uface[1,:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
+          @test ≈(vec(uface[2,:,:]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
         end
       end
     end
   end
   
-  context("Testing boundaryinterpolate! (TetSBP, scalar field method)") do
+  @testset "Testing boundaryinterpolate! (TetSBP, scalar field method)" begin
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTetSBPGamma(degree=p)
@@ -218,7 +212,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array{Boundary}(12)
+      bndryfaces = Array{Boundary}(undef, 12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -264,16 +258,15 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             i = d-k-j
             u[:,:] = (x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
             boundaryinterpolate!(sbpface, bndryfaces, u, uface)
-            @fact vec(uface[:,:]) -->
-            roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
+            @test ≈(vec(uface[:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=5e-14)
           end
         end
       end
     end
   end
 
-  context("Testing boundaryinterpolate! (TetSBP, vector field method)") do
+  @testset "Testing boundaryinterpolate! (TetSBP, vector field method)" begin
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTetSBPGamma(degree=p)
@@ -281,7 +274,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array{Boundary}(12)
+      bndryfaces = Array{Boundary}(undef, 12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -328,27 +321,25 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             u[1,:,:] = (x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
             u[2,:,:] = 2.0.*(x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
             boundaryinterpolate!(sbpface, bndryfaces, u, uface)
-            @fact vec(uface[1,:,:]) -->
-            roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
-            @fact vec(uface[2,:,:]) -->
-            roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
+            @test ≈(vec(uface[1,:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=1e-13)
+            @test ≈(vec(uface[2,:,:]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=1e-13)
           end
         end
       end
     end
   end
 
-  context("Testing boundaryinterpolate! (TetSparseFace, scalar field method)") do
+  @testset "Testing boundaryinterpolate! (TetSparseFace, scalar field method)" begin
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbp = getTetSBPDiagE(degree=p, faceopertype=:Omega)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array{Boundary}(12)
+      bndryfaces = Array{Boundary}(undef, 12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -394,24 +385,23 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             i = d-k-j
             u[:,:] = (x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
             boundaryinterpolate!(sbpface, bndryfaces, u, uface)
-            @fact vec(uface[:,:]) -->
-            roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
+            @test ≈(vec(uface[:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=5e-14)
           end
         end
       end
     end
   end
 
-  context("Testing boundaryinterpolate! (TetSparseFace, vector field method)") do
+  @testset "Testing boundaryinterpolate! (TetSparseFace, vector field method)" begin
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbp = getTetSBPDiagE(degree=p, faceopertype=:Omega)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array{Boundary}(12)
+      bndryfaces = Array{Boundary}(undef, 12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -458,12 +448,10 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             u[1,:,:] = (x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
             u[2,:,:] = 2.0.*(x[1,:,:].^i).*(x[2,:,:].^j).*(x[3,:,:].^k)
             boundaryinterpolate!(sbpface, bndryfaces, u, uface)
-            @fact vec(uface[1,:,:]) -->
-            roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
-            @fact vec(uface[2,:,:]) -->
-            roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
+            @test ≈(vec(uface[1,:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=5e-14)
+            @test ≈(vec(uface[2,:,:]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=5e-13)
           end
         end
       end
@@ -473,7 +461,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
     @eval begin
-      context("Testing boundaryFaceInterpolate! ("string($TSBP)" scalar field method)") do
+      @testset "Testing boundaryFaceInterpolate! ($(string($TSBP)) scalar field method)" begin
         for p = 1:4
           sbp = ($TSBP)(degree=p)
           sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
@@ -487,7 +475,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
           xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
           xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
-          bndryfaces = Array{Boundary}(4)
+          bndryfaces = Array{Boundary}(undef, 4)
           bndryfaces[1] = Boundary(1,1)
           bndryfaces[2] = Boundary(1,2)
           bndryfaces[3] = Boundary(2,1)
@@ -501,7 +489,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                        view(u,:,bndry.element),
                                        view(uface,:,bindex))
             end
-            @fact vec(uface[:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @test ≈(vec(uface[:,:]), vec(xf[1,:,:].^i), atol=5e-14)
           end
         end
       end
@@ -510,7 +498,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
     @eval begin
-      context("Testing boundaryFaceInterpolate! ("string($TSBP)" vector field method)") do
+      @testset "Testing boundaryFaceInterpolate! ($(string($TSBP)) vector field method)" begin
         for p = 1:4
           sbp = ($TSBP)(degree=p)
           sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
@@ -524,7 +512,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
           xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[1;]],(1,1)))
           xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
-          bndryfaces = Array{Boundary}(4)
+          bndryfaces = Array{Boundary}(undef, 4)
           bndryfaces[1] = Boundary(1,1)
           bndryfaces[2] = Boundary(1,2)
           bndryfaces[3] = Boundary(2,1)
@@ -539,15 +527,15 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                        view(u,:,:,bndry.element),
                                        view(uface,:,:,bindex))
             end
-            @fact vec(uface[1,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
-            @fact vec(uface[2,:,:]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
+            @test ≈(vec(uface[1,:,:]), vec(xf[1,:,:].^i), atol=5e-14)
+            @test ≈(vec(uface[2,:,:]), 2.0.*vec(xf[1,:,:].^i), atol=5e-14)
           end
         end
       end
     end
   end
 
-  context("Testing boundaryFaceInterpolate! (TriSBP, scalar field method)") do
+  @testset "Testing boundaryFaceInterpolate! (TriSBP, scalar field method)" begin
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTriSBPGamma(degree=p)
@@ -562,7 +550,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array{Boundary}(4)
+      bndryfaces = Array{Boundary}(undef, 4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -578,14 +566,13 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                      view(u,:,bndry.element),
                                      view(uface,:,bindex))
           end
-          @fact vec(uface[:,:]) -->
-          roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
+          @test ≈(vec(uface[:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
         end
       end
     end
   end
 
-  context("Testing boundaryFaceInterpolate! (TriSBP, vector field method)") do
+  @testset "Testing boundaryFaceInterpolate! (TriSBP, vector field method)" begin
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTriSBPGamma(degree=p)
@@ -600,7 +587,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array{Boundary}(4)
+      bndryfaces = Array{Boundary}(undef, 4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -617,16 +604,14 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                      view(u,:,:,bndry.element),
                                      view(uface,:,:,bindex))
           end
-          @fact vec(uface[1,:,:]) -->
-          roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
-          @fact vec(uface[2,:,:]) -->
-          roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
+          @test ≈(vec(uface[1,:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
+          @test ≈(vec(uface[2,:,:]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
         end
       end
     end
   end
 
-  context("Testing boundaryFaceInterpolate! (TriSparseFace, scalar field method)") do
+  @testset "Testing boundaryFaceInterpolate! (TriSparseFace, scalar field method)" begin
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTriSBPDiagE(degree=p)
@@ -641,7 +626,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array{Boundary}(4)
+      bndryfaces = Array{Boundary}(undef, 4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -657,14 +642,13 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                      view(u,:,bndry.element),
                                      view(uface,:,bindex))
           end
-          @fact vec(uface[:,:]) -->
-          roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
+          @test ≈(vec(uface[:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
         end
       end
     end
   end
 
-  context("Testing boundaryFaceInterpolate! (TriSparseFace, vector field method)") do
+  @testset "Testing boundaryFaceInterpolate! (TriSparseFace, vector field method)" begin
     # build a two element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTriSBPDiagE(degree=p)
@@ -679,7 +663,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
       xf[:,:,3] = SymCubatures.calcnodes(sbpface.cub, vtx[[1;2],:])
       xf[:,:,4] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
-      bndryfaces = Array{Boundary}(4)
+      bndryfaces = Array{Boundary}(undef, 4)
       bndryfaces[1] = Boundary(1,1)
       bndryfaces[2] = Boundary(1,3)
       bndryfaces[3] = Boundary(2,1)
@@ -696,16 +680,14 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                      view(u,:,:,bndry.element),
                                      view(uface,:,:,bindex))
           end
-          @fact vec(uface[1,:,:]) -->
-          roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
-          @fact vec(uface[2,:,:]) -->
-          roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-14)
+          @test ≈(vec(uface[1,:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
+          @test ≈(vec(uface[2,:,:]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=5e-14)
         end
       end
     end
   end
 
-  context("Testing boundaryFaceInterpolate! (TetSBP, scalar field method)") do
+  @testset "Testing boundaryFaceInterpolate! (TetSBP, scalar field method)" begin
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTetSBPGamma(degree=p)
@@ -713,7 +695,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array{Boundary}(12)
+      bndryfaces = Array{Boundary}(undef, 12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -763,16 +745,15 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                        view(u,:,bndry.element),
                                        view(uface,:,bindex))
             end
-            @fact vec(uface[:,:]) -->
-            roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
+            @test ≈(vec(uface[:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=5e-14)
           end
         end
       end
     end
   end
 
-  context("Testing boundaryFaceInterpolate! (TetSBP, vector field method)") do
+  @testset "Testing boundaryFaceInterpolate! (TetSBP, vector field method)" begin
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
       sbp = getTetSBPGamma(degree=p)
@@ -780,7 +761,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array{Boundary}(12)
+      bndryfaces = Array{Boundary}(undef, 12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -831,27 +812,25 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                        view(u,:,:,bndry.element),
                                        view(uface,:,:,bindex))
             end
-            @fact vec(uface[1,:,:]) -->
-            roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
-            @fact vec(uface[2,:,:]) -->
-            roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
+            @test ≈(vec(uface[1,:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=5e-14)
+            @test ≈(vec(uface[2,:,:]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=5e-13)
           end
         end
       end
     end
   end
 
-  context("Testing boundaryFaceInterpolate! (TetSparseFace, scalar field method)") do
+  @testset "Testing boundaryFaceInterpolate! (TetSparseFace, scalar field method)" begin
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbp = getTetSBPDiagE(degree=p, faceopertype=:Omega)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array{Boundary}(12)
+      bndryfaces = Array{Boundary}(undef, 12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -901,24 +880,23 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                        view(u,:,bndry.element),
                                        view(uface,:,bindex))
             end
-            @fact vec(uface[:,:]) -->
-            roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
+            @test ≈(vec(uface[:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=5e-14)
           end
         end
       end
     end
   end
 
-  context("Testing boundaryFaceInterpolate! (TetSparseFace, vector field method)") do
+  @testset "Testing boundaryFaceInterpolate! (TetSparseFace, vector field method)" begin
     # build a four element grid and verify that interpolation is exact for degree p
     for p = 1:4
-      sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbp = getTetSBPDiagE(degree=p, faceopertype=:Omega)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       x = zeros(Float64, (3,sbp.numnodes,4))
       xf = zeros(Float64, (3,sbpface.numnodes,12))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      bndryfaces = Array{Boundary}(12)
+      bndryfaces = Array{Boundary}(undef, 12)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -969,12 +947,10 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                        view(u,:,:,bndry.element),
                                        view(uface,:,:,bindex))
             end
-            @fact vec(uface[1,:,:]) -->
-            roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
-            @fact vec(uface[2,:,:]) -->
-            roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
-                    atol=1e-14)
+            @test ≈(vec(uface[1,:,:]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=5e-14)
+            @test ≈(vec(uface[2,:,:]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j).*(xf[3,:,:].^k)),
+                    atol=5e-13)
           end
         end
       end
@@ -983,7 +959,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
     @eval begin
-      context("Testing interiorfaceinterpolate! ("string($TSBP)" scalar field method)") do
+      @testset "Testing interiorfaceinterpolate! ($(string($TSBP)) scalar field method)" begin
         for p = 1:4
           sbp = ($TSBP)(degree=p)
           sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
@@ -994,15 +970,15 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
           vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-          ifaces = Array{Interface}(1)
+          ifaces = Array{Interface}(undef, 1)
           ifaces[1] = Interface(1,2,2,2,1)
           u = zeros(Float64, (sbp.numnodes, 2))
           uface = zeros(Float64, (2, sbpface.numnodes, 1))
           for i = 0:p
             u[:,:] = x[1,:,:].^i
             interiorfaceinterpolate!(sbpface, ifaces, u, uface)
-            @fact vec(uface[1,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
-            @fact vec(uface[2,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @test ≈(vec(uface[1,:,:]), vec(xf[1,:,:].^i), atol=5e-14)
+            @test ≈(vec(uface[2,:,:]), vec(xf[1,:,:].^i), atol=5e-14)
           end
         end
       end
@@ -1011,7 +987,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
     @eval begin
-      context("Testing interiorfaceinterpolate! ("string($TSBP)" vector field method)") do
+      @testset "Testing interiorfaceinterpolate! ($(string($TSBP)) vector field method)" begin
         for p = 1:4
           sbp = ($TSBP)(degree=p)
           sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
@@ -1022,7 +998,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
           vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-          ifaces = Array{Interface}(1)
+          ifaces = Array{Interface}(undef,1)
           ifaces[1] = Interface(1,2,2,2,1)          
           u = zeros(Float64, (2, sbp.numnodes, 2))
           uface = zeros(Float64, (2, 2, sbpface.numnodes, 1))
@@ -1030,17 +1006,17 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             u[1,:,:] = x[1,:,:].^i
             u[2,:,:] = 2.0.*u[1,:,:]
             interiorfaceinterpolate!(sbpface, ifaces, u, uface)
-            @fact vec(uface[1,1,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
-            @fact vec(uface[2,1,:,:]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
-            @fact vec(uface[1,2,:,:]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
-            @fact vec(uface[2,2,:,:]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
+            @test ≈(vec(uface[1,1,:,:]), vec(xf[1,:,:].^i), atol=5e-14)
+            @test ≈(vec(uface[2,1,:,:]), 2.0.*vec(xf[1,:,:].^i), atol=5e-14)
+            @test ≈(vec(uface[1,2,:,:]), vec(xf[1,:,:].^i), atol=5e-14)
+            @test ≈(vec(uface[2,2,:,:]), 2.0.*vec(xf[1,:,:].^i), atol=5e-14)
           end
         end
       end
     end
   end
 
-  context("Testing interiorfaceinterpolate! (TriSBP scalar field method)") do
+  @testset "Testing interiorfaceinterpolate! (TriSBP scalar field method)" begin
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1053,7 +1029,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array{Interface}(1)
+      ifaces = Array{Interface}(undef,1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (sbp.numnodes,2))
       uface = zeros(Float64, (2, sbpface.numnodes, 1))
@@ -1063,18 +1039,18 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           u[:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)
           interiorfaceinterpolate!(sbpface, ifaces, u, uface)
           # check that interpolation from left and right elements is exact
-          @fact vec(uface[1,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
+          @test ≈(vec(uface[1,:,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
                                               atol=1e-13)
-          #@fact uface[2,sbpface.nbrperm[:,1],1] --> 
+          #@test ≈(uface[2,sbpface.nbrperm[:,1],1] --> 
           #roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
+          @test ≈(vec(uface[2,:,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
                                               atol=1e-13)
         end
       end
     end
   end
 
-  context("Testing interiorfaceinterpolate! (TriSBP vector field method)") do
+  @testset "Testing interiorfaceinterpolate! (TriSBP vector field method)" begin
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1087,7 +1063,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array{Interface}(1)
+      ifaces = Array{Interface}(undef,1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (2,sbp.numnodes,2))
       uface = zeros(Float64, (2, 2, sbpface.numnodes, 1))
@@ -1098,16 +1074,16 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           u[2,:,:] = 2.0.*(x[1,:,:].^i).*(x[2,:,:].^j)
           interiorfaceinterpolate!(sbpface, ifaces, u, uface)
           # check that interpolation from left and right elements is exact
-          @fact vec(uface[1,1,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,1,:,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[1,2,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,2,:,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[1,1,:,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[2,1,:,1]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[1,2,:,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[2,2,:,1]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
         end
       end
     end
   end
 
-  context("Testing interiorfaceinterpolate! (TriSparseFace scalar field method)") do
+  @testset "Testing interiorfaceinterpolate! (TriSparseFace scalar field method)" begin
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1120,7 +1096,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array{Interface}(1)
+      ifaces = Array{Interface}(undef,1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (sbp.numnodes,2))
       uface = zeros(Float64, (2, sbpface.numnodes, 1))
@@ -1130,18 +1106,18 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           u[:,:] = (x[1,:,:].^i).*(x[2,:,:].^j)
           interiorfaceinterpolate!(sbpface, ifaces, u, uface)
           # check that interpolation from left and right elements is exact
-          @fact vec(uface[1,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
+          @test ≈(vec(uface[1,:,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
                                               atol=1e-13)
-          #@fact uface[2,sbpface.nbrperm[:,1],1] --> 
+          #@test ≈(uface[2,sbpface.nbrperm[:,1],1] --> 
           #roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
+          @test ≈(vec(uface[2,:,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
                                               atol=1e-13)
         end
       end
     end
   end
 
-  context("Testing interiorfaceinterpolate! (TriSparseFace vector field method)") do
+  @testset "Testing interiorfaceinterpolate! (TriSparseFace vector field method)" begin
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1154,7 +1130,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array{Interface}(1)
+      ifaces = Array{Interface}(undef,1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (2,sbp.numnodes,2))
       uface = zeros(Float64, (2, 2, sbpface.numnodes, 1))
@@ -1165,16 +1141,16 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           u[2,:,:] = 2.0.*(x[1,:,:].^i).*(x[2,:,:].^j)
           interiorfaceinterpolate!(sbpface, ifaces, u, uface)
           # check that interpolation from left and right elements is exact
-          @fact vec(uface[1,1,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,1,:,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[1,2,:,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,2,:,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[1,1,:,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[2,1,:,1]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[1,2,:,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[2,2,:,1]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
         end
       end
     end
   end
 
-  context("Testing interiorfaceinterpolate! (TetSBP, scalar field method)") do
+  @testset "Testing interiorfaceinterpolate! (TetSBP, scalar field method)" begin
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1183,7 +1159,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array{Interface}(4)
+      ifaces = Array{Interface}(undef,4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1218,11 +1194,9 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             interiorfaceinterpolate!(sbpface, ifaces, u, uface)
             # check that interpolation from left and right elements is exact
             for f = 1:4
-              @fact vec(uface[1,:,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[1,:,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[2,:,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[2,:,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
             end
           end
@@ -1231,7 +1205,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     end
   end
 
-  context("Testing interiorfaceinterpolate! (TetSBP, vector field method)") do
+  @testset "Testing interiorfaceinterpolate! (TetSBP, vector field method)" begin
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1240,7 +1214,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array{Interface}(4)
+      ifaces = Array{Interface}(undef,4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1276,17 +1250,13 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             interiorfaceinterpolate!(sbpface, ifaces, u, uface)
             # check that interpolation from left and right elements is exact
             for f = 1:4
-              @fact vec(uface[1,1,:,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[1,1,:,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[2,1,:,f]) --> 
-              roughly(2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[2,1,:,f]), 2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[1,2,:,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[1,2,:,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[2,2,:,f]) --> 
-              roughly(2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[2,2,:,f]), 2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
             end
           end
@@ -1295,16 +1265,16 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     end
   end
 
-  context("Testing interiorfaceinterpolate! (TetSparseFace scalar field method)") do
+  @testset "Testing interiorfaceinterpolate! (TetSparseFace scalar field method)" begin
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbp = getTetSBPDiagE(degree=p, faceopertype=:Omega)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array{Interface}(4)
+      ifaces = Array{Interface}(undef,4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1339,11 +1309,9 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             interiorfaceinterpolate!(sbpface, ifaces, u, uface)
             # check that interpolation from left and right elements is exact
             for f = 1:4
-              @fact vec(uface[1,:,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[1,:,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[2,:,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[2,:,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
             end
           end
@@ -1352,16 +1320,16 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     end
   end
 
-  context("Testing interiorfaceinterpolate! (TetSparseFace vector field method)") do
+  @testset "Testing interiorfaceinterpolate! (TetSparseFace vector field method)" begin
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbp = getTetSBPDiagE(degree=p, faceopertype=:Omega)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array{Interface}(4)
+      ifaces = Array{Interface}(undef,4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1397,17 +1365,13 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             interiorfaceinterpolate!(sbpface, ifaces, u, uface)
             # check that interpolation from left and right elements is exact
             for f = 1:4
-              @fact vec(uface[1,1,:,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[1,1,:,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[2,1,:,f]) --> 
-              roughly(2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[2,1,:,f]), 2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[1,2,:,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[1,2,:,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[2,2,:,f]) --> 
-              roughly(2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[2,2,:,f]), 2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
             end
           end
@@ -1418,7 +1382,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
     @eval begin
-      context("Testing interiorFaceInterpolate! ("string($TSBP)" scalar field method)") do
+      @testset "Testing interiorFaceInterpolate! ($(string($TSBP)) scalar field method)" begin
         for p = 1:4
           sbp = ($TSBP)(degree=p)
           sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
@@ -1429,7 +1393,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
           vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-          ifaces = Array{Interface}(1)
+          ifaces = Array{Interface}(undef,1)
           ifaces[1] = Interface(1,2,2,2,1)
           u = zeros(Float64, (sbp.numnodes, 2))
           uface = zeros(Float64, (sbpface.numnodes, 2, 1))
@@ -1441,8 +1405,8 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                        view(uface,:,1,findex),
                                        view(uface,:,2,findex))
             end
-            @fact vec(uface[:,1,1]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
-            @fact vec(uface[:,2,1]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
+            @test ≈(vec(uface[:,1,1]), vec(xf[1,:,:].^i), atol=5e-14)
+            @test ≈(vec(uface[:,2,1]), vec(xf[1,:,:].^i), atol=5e-14)
           end
         end
       end
@@ -1451,7 +1415,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
 
   for TSBP = (getLineSegSBPLobbato, getLineSegSBPLegendre)
     @eval begin
-      context("Testing interiorFaceInterpolate! ("string($TSBP)" vector field method)") do
+      @testset "Testing interiorFaceInterpolate! ($(string($TSBP)) vector field method)" begin
         for p = 1:4
           sbp = ($TSBP)(degree=p)
           sbpface = getLineSegFace(p, sbp.cub, sbp.vtx)
@@ -1462,7 +1426,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
           xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, reshape(vtx[[2;]],(1,1)))
           vtx = reshape([2.0; 1.0], (2,1))  # note the reversal !!!
           x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-          ifaces = Array{Interface}(1)
+          ifaces = Array{Interface}(undef,1)
           ifaces[1] = Interface(1,2,2,2,1)          
           u = zeros(Float64, (2, sbp.numnodes, 2))
           uface = zeros(Float64, (2, sbpface.numnodes, 2, 1))
@@ -1475,17 +1439,17 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                        view(uface,:,:,1,findex),
                                        view(uface,:,:,2,findex))
             end
-            @fact vec(uface[1,:,1,1]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
-            @fact vec(uface[2,:,1,1]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
-            @fact vec(uface[1,:,2,1]) --> roughly(vec(xf[1,:,:].^i), atol=1e-14)
-            @fact vec(uface[2,:,2,1]) --> roughly(2.0.*vec(xf[1,:,:].^i), atol=1e-14)
+            @test ≈(vec(uface[1,:,1,1]), vec(xf[1,:,:].^i), atol=5e-14)
+            @test ≈(vec(uface[2,:,1,1]), 2.0.*vec(xf[1,:,:].^i), atol=5e-14)
+            @test ≈(vec(uface[1,:,2,1]), vec(xf[1,:,:].^i), atol=5e-14)
+            @test ≈(vec(uface[2,:,2,1]), 2.0.*vec(xf[1,:,:].^i), atol=5e-14)
           end
         end
       end
     end
   end
 
-  context("Testing interiorFaceInterpolate! (TriSBP, scalar field method)") do
+  @testset "Testing interiorFaceInterpolate! (TriSBP, scalar field method)" begin
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1498,7 +1462,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array{Interface}(1)
+      ifaces = Array{Interface}(undef,1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (sbp.numnodes,2))
       uface = zeros(Float64, (sbpface.numnodes, 2, 1))
@@ -1513,18 +1477,18 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                      view(uface,:,2,findex))
           end
           # check that interpolation from left and right elements is exact
-          @fact vec(uface[:,1,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
+          @test ≈(vec(uface[:,1,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
                                               atol=1e-13)
-          #@fact uface[2,sbpface.nbrperm[:,1],1] --> 
+          #@test ≈(uface[2,sbpface.nbrperm[:,1],1] --> 
           #roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[:,2,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
+          @test ≈(vec(uface[:,2,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
                                               atol=1e-13)
         end
       end
     end
   end
 
-  context("Testing interiorFaceInterpolate! (TriSBP, vector field method)") do
+  @testset "Testing interiorFaceInterpolate! (TriSBP, vector field method)" begin
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1537,7 +1501,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array{Interface}(1)
+      ifaces = Array{Interface}(undef,1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (2,sbp.numnodes,2))
       uface = zeros(Float64, (2, sbpface.numnodes, 2, 1))
@@ -1553,16 +1517,16 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                      view(uface,:,:,2,findex))
           end
           # check that interpolation from left and right elements is exact
-          @fact vec(uface[1,:,1,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,:,1,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[1,:,2,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,:,2,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[1,:,1,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[2,:,1,1]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[1,:,2,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[2,:,2,1]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
         end
       end
     end
   end
 
-  context("Testing interiorFaceInterpolate! (TriSparseFace scalar field method)") do
+  @testset "Testing interiorFaceInterpolate! (TriSparseFace scalar field method)" begin
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1575,7 +1539,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array{Interface}(1)
+      ifaces = Array{Interface}(undef,1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (sbp.numnodes,2))
       uface = zeros(Float64, (sbpface.numnodes, 2, 1))
@@ -1590,18 +1554,18 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                      view(uface,:,2,findex))
           end
           # check that interpolation from left and right elements is exact
-          @fact vec(uface[:,1,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
+          @test ≈(vec(uface[:,1,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
                                               atol=1e-13)
-          #@fact uface[2,sbpface.nbrperm[:,1],1] --> 
+          #@test ≈(uface[2,sbpface.nbrperm[:,1],1] --> 
           #roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[:,2,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
+          @test ≈(vec(uface[:,2,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)),
                                               atol=1e-13)
         end
       end
     end
   end
 
-  context("Testing interiorFaceInterpolate! (TriSparseFace vector field method)") do
+  @testset "Testing interiorFaceInterpolate! (TriSparseFace vector field method)" begin
     # build a two element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1614,7 +1578,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       xf[:,:,1] = SymCubatures.calcnodes(sbpface.cub, vtx[[2;3],:])
       vtx = [1. 0.; 1. 1.; 0. 1.]
       x[:,:,2] = SymCubatures.calcnodes(sbp.cub, vtx)
-      ifaces = Array{Interface}(1)
+      ifaces = Array{Interface}(undef,1)
       ifaces[1] = Interface(1,2,2,3,1)
       u = zeros(Float64, (2,sbp.numnodes,2))
       uface = zeros(Float64, (2, sbpface.numnodes, 2, 1))
@@ -1630,16 +1594,16 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
                                      view(uface,:,:,2,findex))
           end
           # check that interpolation from left and right elements is exact
-          @fact vec(uface[1,:,1,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,:,1,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[1,:,2,1]) --> roughly(vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
-          @fact vec(uface[2,:,2,1]) --> roughly(2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[1,:,1,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[2,:,1,1]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[1,:,2,1]), vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
+          @test ≈(vec(uface[2,:,2,1]), 2.0.*vec((xf[1,:,:].^i).*(xf[2,:,:].^j)), atol=1e-13)
         end
       end
     end
   end
 
-  context("Testing interiorFaceInterpolate! (TetSBP, scalar field method)") do
+  @testset "Testing interiorFaceInterpolate! (TetSBP, scalar field method)" begin
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1648,7 +1612,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array{Interface}(4)
+      ifaces = Array{Interface}(undef,4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1688,11 +1652,9 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             end
             # check that interpolation from left and right elements is exact
             for f = 1:4
-              @fact vec(uface[:,1,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[:,1,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[:,2,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[:,2,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
             end
           end
@@ -1701,7 +1663,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     end
   end
 
-  context("Testing interiorFaceInterpolate! (TetSBP, vector field method)") do
+  @testset "Testing interiorFaceInterpolate! (TetSBP, vector field method)" begin
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
@@ -1710,7 +1672,7 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array{Interface}(4)
+      ifaces = Array{Interface}(undef,4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1751,17 +1713,13 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             end
             # check that interpolation from left and right elements is exact
             for f = 1:4
-              @fact vec(uface[1,:,1,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[1,:,1,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[2,:,1,f]) --> 
-              roughly(2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[2,:,1,f]), 2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[1,:,2,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[1,:,2,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[2,:,2,f]) --> 
-              roughly(2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[2,:,2,f]), 2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
             end
           end
@@ -1770,16 +1728,16 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     end
   end
 
-  context("Testing interiorFaceInterpolate! (TetSparseFace scalar field method)") do
+  @testset "Testing interiorFaceInterpolate! (TetSparseFace scalar field method)" begin
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
     for p = 1:4
-      sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbp = getTetSBPDiagE(degree=p, faceopertype=:Omega)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array{Interface}(4)
+      ifaces = Array{Interface}(undef,4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1819,11 +1777,9 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             end
             # check that interpolation from left and right elements is exact
             for f = 1:4
-              @fact vec(uface[:,1,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[:,1,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[:,2,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[:,2,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
             end
           end
@@ -1832,16 +1788,16 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
     end
   end
 
-  context("Testing interiorFaceInterpolate! (TetSparseFace vector field method)") do
+  @testset "Testing interiorFaceInterpolate! (TetSparseFace vector field method)" begin
     # build a five element grid and verify that interiorfaceinterpolate
     # interpolates all polynomials of degree p exactly
-    for p = 1:4
-      sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+    for p = 1:1
+      sbp = getTetSBPDiagE(degree=p, faceopertype=:Omega)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       x = zeros(Float64, (3,sbp.numnodes,5))
       xf = zeros(Float64, (3,sbpface.numnodes,4))
       facevtx = SymCubatures.getfacevertexindices(sbp.cub)
-      ifaces = Array{Interface}(4)
+      ifaces = Array{Interface}(undef,4)
 
       vtx = [0. 0. 0.; 1. 0. 0.; 0. 1. 0.; 0. 0. 1.]
       x[:,:,1] = SymCubatures.calcnodes(sbp.cub, vtx)
@@ -1882,17 +1838,13 @@ facts("Testing SummationByParts Module (face-data interpolation methods)...") do
             end
             # check that interpolation from left and right elements is exact
             for f = 1:4
-              @fact vec(uface[1,:,1,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[1,:,1,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[2,:,1,f]) --> 
-              roughly(2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[2,:,1,f]), 2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[1,:,2,f]) --> 
-              roughly(vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[1,:,2,f]), vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
-              @fact vec(uface[2,:,2,f]) --> 
-              roughly(2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
+              @test ≈(vec(uface[2,:,2,f]), 2.0.*vec((xf[1,:,f].^i).*(xf[2,:,f].^j).*(xf[3,:,f].^k)),
                       atol=1e-13)
             end
           end

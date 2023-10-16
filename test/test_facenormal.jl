@@ -1,6 +1,6 @@
-facts("Testing SummationByParts Module (face-normal methods)...") do
+@testset "Testing SummationByParts Module (face-normal methods)..." begin
 
-  context("Testing SummationByParts.calcFaceNormals! (TriFace method)") do
+  @testset "Testing SummationByParts.calcFaceNormals! (TriFace method)" begin
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
@@ -33,12 +33,12 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
         divfree[1] += dot(vec(nrm[1,:,f]),sbpface.wface)
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
       end
-      @fact divfree[1] --> roughly(0.0, atol=1e-15)
-      @fact divfree[2] --> roughly(0.0, atol=1e-15)
+      @test ≈(divfree[1], 0.0, atol=1e-15)
+      @test ≈(divfree[2], 0.0, atol=1e-15)
     end
   end
 
-  context("Testing SummationByParts.calcFaceNormals! (TriSparseFace method)") do
+  @testset "Testing SummationByParts.calcFaceNormals! (TriSparseFace method)" begin
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
@@ -71,12 +71,12 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
         divfree[1] += dot(vec(nrm[1,:,f]),sbpface.wface)
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
       end
-      @fact divfree[1] --> roughly(0.0, atol=1e-15)
-      @fact divfree[2] --> roughly(0.0, atol=1e-15)
+      @test ≈(divfree[1], 0.0, atol=1e-15)
+      @test ≈(divfree[2], 0.0, atol=1e-15)
     end
   end
 
-  context("Testing SummationByParts.calcFaceNormals! (TetFace method)") do
+  @testset "Testing SummationByParts.calcFaceNormals! (TetFace method)" begin
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
@@ -120,18 +120,18 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
         divfree[3] += dot(vec(nrm[3,:,f]),sbpface.wface)
       end
-      @fact divfree[1] --> roughly(0.0, atol=5e-15)
-      @fact divfree[2] --> roughly(0.0, atol=5e-15)
-      @fact divfree[3] --> roughly(0.0, atol=5e-15)
+      @test ≈(divfree[1], 0.0, atol=5e-15)
+      @test ≈(divfree[2], 0.0, atol=5e-15)
+      @test ≈(divfree[3], 0.0, atol=5e-15)
     end
   end
 
-  context("Testing SummationByParts.calcFaceNormals! (TetSparseFace method)") do
+  @testset "Testing SummationByParts.calcFaceNormals! (TetSparseFace method)" begin
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       function mapping(ξ)
         x = 1 - (1 - 0.5*(ξ[1]+1))^(p+1)
         y = 1 - (1 - 0.5*(ξ[2]+1))^(p+1)
@@ -170,13 +170,13 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
         divfree[3] += dot(vec(nrm[3,:,f]),sbpface.wface)
       end
-      @fact divfree[1] --> roughly(0.0, atol=5e-15)
-      @fact divfree[2] --> roughly(0.0, atol=5e-15)
-      @fact divfree[3] --> roughly(0.0, atol=5e-15)
+      @test ≈(divfree[1], 0.0, atol=5e-15)
+      @test ≈(divfree[2], 0.0, atol=5e-15)
+      @test ≈(divfree[3], 0.0, atol=5e-15)
     end
   end
 
-  context("Testing SummationByParts.facenormal! (TriFace method)") do
+  @testset "Testing SummationByParts.facenormal! (TriFace method)" begin
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
@@ -210,12 +210,12 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
         divfree[1] += dot(vec(nrm[1,:,f]),sbpface.wface)
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
       end
-      @fact divfree[1] --> roughly(0.0, atol=1e-15)
-      @fact divfree[2] --> roughly(0.0, atol=1e-15)
+      @test ≈(divfree[1], 0.0, atol=1e-15)
+      @test ≈(divfree[2], 0.0, atol=1e-15)
     end
   end
 
-  context("Testing SummationByParts.facenormal! (TriSparseFace method)") do
+  @testset "Testing SummationByParts.facenormal! (TriSparseFace method)" begin
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
@@ -249,12 +249,12 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
         divfree[1] += dot(vec(nrm[1,:,f]),sbpface.wface)
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
       end
-      @fact divfree[1] --> roughly(0.0, atol=1e-15)
-      @fact divfree[2] --> roughly(0.0, atol=1e-15)
+      @test ≈(divfree[1], 0.0, atol=1e-15)
+      @test ≈(divfree[2], 0.0, atol=1e-15)
     end
   end
 
-  context("Testing SummationByParts.facenormal! (TetFace method)") do
+  @testset "Testing SummationByParts.facenormal! (TetFace method)" begin
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
@@ -299,18 +299,18 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
         divfree[3] += dot(vec(nrm[3,:,f]),sbpface.wface)
       end
-      @fact divfree[1] --> roughly(0.0, atol=1e-15)
-      @fact divfree[2] --> roughly(0.0, atol=1e-15)
-      @fact divfree[3] --> roughly(0.0, atol=1e-15)
+      @test ≈(divfree[1], 0.0, atol=1e-15)
+      @test ≈(divfree[2], 0.0, atol=1e-15)
+      @test ≈(divfree[3], 0.0, atol=1e-15)
     end
   end
 
-  context("Testing SummationByParts.facenormal! (TetSparseFace method)") do
+  @testset "Testing SummationByParts.facenormal! (TetSparseFace method)" begin
     # build a curvilinear element, and verify that the geometric conservation
     # law holds
     for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       function mapping(ξ)
         x = 1 - (1 - 0.5*(ξ[1]+1))^(p+1)
         y = 1 - (1 - 0.5*(ξ[2]+1))^(p+1)
@@ -350,9 +350,9 @@ facts("Testing SummationByParts Module (face-normal methods)...") do
         divfree[2] += dot(vec(nrm[2,:,f]),sbpface.wface)
         divfree[3] += dot(vec(nrm[3,:,f]),sbpface.wface)
       end
-      @fact divfree[1] --> roughly(0.0, atol=1e-15)
-      @fact divfree[2] --> roughly(0.0, atol=1e-15)
-      @fact divfree[3] --> roughly(0.0, atol=1e-15)
+      @test ≈(divfree[1], 0.0, atol=1e-15)
+      @test ≈(divfree[2], 0.0, atol=1e-15)
+      @test ≈(divfree[3], 0.0, atol=1e-15)
     end
   end
 

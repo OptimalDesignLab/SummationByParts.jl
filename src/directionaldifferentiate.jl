@@ -22,10 +22,10 @@ input field `u` is for **a single element**, not a collection of elements.
 * `Ddir`: derivative of `u` in direction `dir`
 
 """
-function directionalDifferentiateElement!{Tsbp,Tmsh,Tsol}(sbp::AbstractSBP{Tsbp},
+function directionalDifferentiateElement!(sbp::AbstractSBP{Tsbp},
                                                           dir::Array{Tmsh,1},
                                                           u::AbstractArray{Tsol,1},
-                                                          i::Int)
+                                                          i::Int) where {Tsbp,Tmsh,Tsol}
   @asserts_enabled begin
     @assert( size(sbp.Q, 3) == size(dir,1) )
   end
@@ -41,17 +41,17 @@ function directionalDifferentiateElement!{Tsbp,Tmsh,Tsol}(sbp::AbstractSBP{Tsbp}
   return Ddir
 end
 
-function directionalDifferentiateElement!{Tsbp,Tmsh,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
+function directionalDifferentiateElement!(sbp::AbstractSBP{Tsbp},
                                                                dir::Array{Tmsh,1}, 
                                                                u::AbstractArray{Tsol,2},
                                                                i::Int,
-                                                               Ddir::Array{Tres,1})
+                                                               Ddir::Array{Tres,1}) where {Tsbp,Tmsh,Tsol,Tres}
   @asserts_enabled begin
     @assert( size(sbp.Q, 3) == size(dir,1) )
   end
 
   for di = 1:size(sbp.Q, 3)
-    tmp = zeros(Ddir)
+    tmp = zeros(size(Ddir))
     for j = 1:sbp.numnodes
       for field = 1:size(u,1)
         tmp[field] += sbp.Q[i,j,di]*u[field,j]

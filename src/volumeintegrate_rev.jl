@@ -19,10 +19,10 @@ differentiated with respect to the primal version's `u` variable.
 * `u_bar`: the result of the vector matrix product between H and `res_bar`
 
 """
-function volumeintegrate_rev!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
+function volumeintegrate_rev!(sbp::AbstractSBP{Tsbp},
                                               u_bar::AbstractArray{Tsol,2},
                                               res_bar::AbstractArray{Tres,2},
-                                              (±)::UnaryFunctor=Add())
+                                              (±)::UnaryFunctor=Add()) where {Tsbp,Tsol,Tres}
   @assert( sbp.numnodes == size(u_bar,1) && sbp.numnodes == size(res_bar,1) )
   @assert( length(u_bar) == length(res_bar) )
   H = sbp.w
@@ -34,10 +34,10 @@ function volumeintegrate_rev!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
   end
 end
 
-function volumeintegrate_rev!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
+function volumeintegrate_rev!(sbp::AbstractSBP{Tsbp},
                                               u_bar::AbstractArray{Tsol,3},
                                               res_bar::AbstractArray{Tres,3},
-                                              (±)::UnaryFunctor=Add())
+                                              (±)::UnaryFunctor=Add()) where {Tsbp,Tsol,Tres}
   @assert( sbp.numnodes == size(u_bar,2) && sbp.numnodes == size(res_bar,2) )
   @assert( length(u_bar) == length(res_bar) )
   H = sbp.w
@@ -69,10 +69,10 @@ differentiated with respect to the primal version's `u` variable.
 * `u_bar`: the result of the vector matrix product between H and `res_bar`
 
 """
-function volumeIntegrateElement_rev!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
+function volumeIntegrateElement_rev!(sbp::AbstractSBP{Tsbp},
                                                      u_bar::AbstractArray{Tsol,1},
                                                      res_bar::AbstractArray{Tres,1},
-                                                     (±)::UnaryFunctor=Add())
+                                                     (±)::UnaryFunctor=Add()) where {Tsbp,Tsol,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(u_bar,1) == size(res_bar,1) )
   end
@@ -83,10 +83,10 @@ function volumeIntegrateElement_rev!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
   end
 end
 
-function volumeIntegrateElement_rev!{Tsbp,Tsol,Tres}(sbp::AbstractSBP{Tsbp},
+function volumeIntegrateElement_rev!(sbp::AbstractSBP{Tsbp},
                                                      u_bar::AbstractArray{Tsol,2},
                                                      res_bar::AbstractArray{Tres,2},
-                                                     (±)::UnaryFunctor=Add())
+                                                     (±)::UnaryFunctor=Add()) where {Tsbp,Tsol,Tres}
 
   @asserts_enabled begin
     @assert( sbp.numnodes == size(u_bar,2) == size(res_bar,2) )

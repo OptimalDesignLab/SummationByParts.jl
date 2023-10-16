@@ -1,8 +1,8 @@
-facts("Testing SummationByParts Module (directional differentiate methods)...") do
+@testset "Testing SummationByParts Module (directional differentiate methods)..." begin
 
   for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE)
     @eval begin
-      context("Testing directionalDifferentiateElement! ("string($TSBP)" scalar field method)") do
+      @testset "Testing directionalDifferentiateElement! ($(string($TSBP)) scalar field method)" begin
         # build a single element grid, define u = x+y, and verify that Ddir = 2
         for p = 1:4 
           sbp = ($TSBP)(degree=p)
@@ -14,7 +14,7 @@ facts("Testing SummationByParts Module (directional differentiate methods)...") 
           dir = [1.;1.]
           for i = 1:sbp.numnodes
             Ddir = directionalDifferentiateElement!(sbp, dir, u, i)
-            @fact Ddir --> roughly(2.0, atol=1e-13)
+            @test ≈(Ddir, 2.0, atol=1e-12)
           end
         end
       end
@@ -23,7 +23,7 @@ facts("Testing SummationByParts Module (directional differentiate methods)...") 
 
   for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
-      context("Testing directionalDifferentiateElement! ("string($TSBP)" scalar field method)") do
+      @testset "Testing directionalDifferentiateElement! ($(string($TSBP)) scalar field method)" begin
         # build a single element grid, define u = x+y+z, and verify that Ddir = 3.0
         for p = 1:4 
           sbp = ($TSBP)(degree=p)
@@ -35,7 +35,7 @@ facts("Testing SummationByParts Module (directional differentiate methods)...") 
           dir = [1.;1.;1.]
           for i = 1:sbp.numnodes
             Ddir = directionalDifferentiateElement!(sbp, dir, u, i)
-            @fact Ddir --> roughly(3.0, atol=1e-13)
+            @test ≈(Ddir, 3.0, atol=1e-11)
           end
         end
       end
@@ -44,7 +44,7 @@ facts("Testing SummationByParts Module (directional differentiate methods)...") 
 
   for TSBP = (getTriSBPGamma, getTriSBPOmega, getTriSBPDiagE)
     @eval begin
-      context("Testing directionalDifferentiateElement! ("string($TSBP)" vector field method)") do
+      @testset "Testing directionalDifferentiateElement! ($(string($TSBP)) vector field method)" begin
         # build a single element grid, define u = x+y, and verify that Ddir = 2
         for p = 1:4 
           sbp = ($TSBP)(degree=p)
@@ -59,8 +59,8 @@ facts("Testing SummationByParts Module (directional differentiate methods)...") 
           for i = 1:sbp.numnodes
             fill!(Ddir, 0.0)
             directionalDifferentiateElement!(sbp, dir, u, i, Ddir)
-            @fact Ddir[1] --> roughly(2.0, atol=1e-13)
-            @fact Ddir[2] --> roughly(-2.0, atol=1e-13)
+            @test ≈(Ddir[1], 2.0, atol=1e-12)
+            @test ≈(Ddir[2], -2.0, atol=1e-12)
           end
         end
       end
@@ -69,7 +69,7 @@ facts("Testing SummationByParts Module (directional differentiate methods)...") 
 
   for TSBP = (getTetSBPGamma, getTetSBPOmega, getTetSBPDiagE)
     @eval begin
-      context("Testing directionalDifferentiateElement! ("string($TSBP)" vector field method)") do
+      @testset "Testing directionalDifferentiateElement! ($(string($TSBP)) vector field method)" begin
         # build a single element grid, define u = x+y+z, and verify that Ddir = 3.0
         for p = 1:4 
           sbp = ($TSBP)(degree=p)
@@ -84,8 +84,8 @@ facts("Testing SummationByParts Module (directional differentiate methods)...") 
           for i = 1:sbp.numnodes
             fill!(Ddir, 0.0)
             directionalDifferentiateElement!(sbp, dir, u, i, Ddir)
-            @fact Ddir[1] --> roughly(3.0, atol=1e-13)
-            @fact Ddir[2] --> roughly(-3.0, atol=1e-13)
+            @test ≈(Ddir[1], 3.0, atol=1e-11)
+            @test ≈(Ddir[2], -3.0, atol=1e-11)
           end
         end
       end

@@ -1,6 +1,6 @@
-facts("Testing SummationByParts Module (reverse diff of face-normal methods)...") do
+@testset "Testing SummationByParts Module (reverse diff of face-normal methods)..." begin
 
-  context("Testing SummationByParts.calcFaceNormals_rev! (TriFace method)") do
+  @testset "Testing SummationByParts.calcFaceNormals_rev! (TriFace method)" begin
     # build a curvilinear element, differentiate xsbp and nrm with using complex
     # step, and then compare with reverse mode
     for p = 1:4
@@ -30,9 +30,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       calcFaceNormals!(sbpface, p+1, xref, xlag, xsbp, nrm)
 
       # set vector that multiplies from the left
-      xsbp_bar = rand(size(xsbp))
-      nrm_bar = rand(size(nrm))
-      xlag_bar_cmplx = zeros(size(xlag))
+      xsbp_bar = rand(2,sbpface.numnodes,3)
+      nrm_bar = rand(2,sbpface.numnodes,3)
+      xlag_bar_cmplx = zeros(2,p+2,3)
       
       # differentiate with respect to the Lagrangian nodes using complex step
       xlag_cmplx = complex.(xlag, 0.0)
@@ -53,11 +53,11 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       end
       xlag_bar = zeros(size(xlag))
       calcFaceNormals_rev!(sbpface, p+1, xref, xlag, xlag_bar, xsbp_bar, nrm_bar)
-      @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
+      @test ≈(xlag_bar, xlag_bar_cmplx, atol=1e-14)
     end
   end
 
-  context("Testing SummationByParts.calcFaceNormals_rev! (TriSparseFace method)") do
+  @testset "Testing SummationByParts.calcFaceNormals_rev! (TriSparseFace method)" begin
     # build a curvilinear element, differentiate xsbp and nrm with using complex
     # step, and then compare with reverse mode
     for p = 1:4
@@ -87,9 +87,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       calcFaceNormals!(sbpface, p+1, xref, xlag, xsbp, nrm)
 
       # set vector that multiplies from the left
-      xsbp_bar = rand(size(xsbp))
-      nrm_bar = rand(size(nrm))
-      xlag_bar_cmplx = zeros(size(xlag))
+      xsbp_bar = rand(2,sbpface.numnodes,3)
+      nrm_bar = rand(2,sbpface.numnodes,3)
+      xlag_bar_cmplx = zeros(2,p+2,3)
       
       # differentiate with respect to the Lagrangian nodes using complex step
       xlag_cmplx = complex.(xlag, 0.0)
@@ -110,11 +110,11 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       end
       xlag_bar = zeros(size(xlag))
       calcFaceNormals_rev!(sbpface, p+1, xref, xlag, xlag_bar, xsbp_bar, nrm_bar)
-      @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
+      @test ≈(xlag_bar, xlag_bar_cmplx, atol=1e-13)
     end
   end
 
-  context("Testing SummationByParts.calcFaceNormals_rev! (TetFace method)") do
+  @testset "Testing SummationByParts.calcFaceNormals_rev! (TetFace method)" begin
     # build a curvilinear element, differentiate xsbp and nrm with using complex
     # step, and then compare with reverse mode
     for p = 1:4
@@ -154,9 +154,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       calcFaceNormals!(sbpface, p+1, xref, xlag, xsbp, nrm)
 
       # set vector that multiplies from the left
-      xsbp_bar = rand(size(xsbp))
-      nrm_bar = rand(size(nrm))
-      xlag_bar_cmplx = zeros(size(xlag))
+      xsbp_bar = rand(3,sbpface.numnodes,4)
+      nrm_bar = rand(3,sbpface.numnodes,4)
+      xlag_bar_cmplx = zeros(3,numdof,4)
       
       # differentiate with respect to the Lagrangian nodes using complex step
       xlag_cmplx = complex.(xlag, 0.0)
@@ -177,16 +177,16 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       end
       xlag_bar = zeros(size(xlag))
       calcFaceNormals_rev!(sbpface, p+1, xref, xlag, xlag_bar, xsbp_bar, nrm_bar)
-      @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
+      @test ≈(xlag_bar, xlag_bar_cmplx, atol=5e-13)
     end
   end
 
-  context("Testing SummationByParts.calcFaceNormals_rev! (TetSparseFace method)") do
+  @testset "Testing SummationByParts.calcFaceNormals_rev! (TetSparseFace method)" begin
     # build a curvilinear element, differentiate xsbp and nrm with using complex
     # step, and then compare with reverse mode
     for p = 1:4
-      sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbp = getTetSBPDiagE(degree=p, faceopertype=:Omega)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       function mapping(ξ)
         x = 1 - (1 - 0.5*(ξ[1]+1))^(p+1)
         y = 1 - (1 - 0.5*(ξ[2]+1))^(p+1)
@@ -221,9 +221,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       calcFaceNormals!(sbpface, p+1, xref, xlag, xsbp, nrm)
 
       # set vector that multiplies from the left
-      xsbp_bar = rand(size(xsbp))
-      nrm_bar = rand(size(nrm))
-      xlag_bar_cmplx = zeros(size(xlag))
+      xsbp_bar = rand(3,sbpface.numnodes,4)
+      nrm_bar = rand(3,sbpface.numnodes,4)
+      xlag_bar_cmplx = zeros(3,numdof,4)
       
       # differentiate with respect to the Lagrangian nodes using complex step
       xlag_cmplx = complex.(xlag, 0.0)
@@ -244,11 +244,11 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       end
       xlag_bar = zeros(size(xlag))
       calcFaceNormals_rev!(sbpface, p+1, xref, xlag, xlag_bar, xsbp_bar, nrm_bar)
-      @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
+      @test ≈(xlag_bar, xlag_bar_cmplx, atol=5e-13)
     end
   end
 
-  context("Testing SummationByParts.facenormal_rev! (TriFace method)") do
+  @testset "Testing SummationByParts.facenormal_rev! (TriFace method)" begin
     # build a curvilinear element, differentiate xsbp and nrm with using complex
     # step, and then compare with reverse mode
     for p = 1:4
@@ -281,9 +281,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       end
       
       # set vector that multiplies from the left
-      xsbp_bar = rand(size(xsbp))
-      nrm_bar = rand(size(nrm))
-      xlag_bar_cmplx = zeros(size(xlag))
+      xsbp_bar = rand(2,sbpface.numnodes,3)
+      nrm_bar = rand(2,sbpface.numnodes,3)
+      xlag_bar_cmplx = zeros(2,p+2,3)
       
       # differentiate with respect to the Lagrangian nodes using complex step
       xlag_cmplx = complex.(xlag, 0.0)
@@ -310,11 +310,11 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
                         view(xlag_bar,:,:,f), view(xsbp_bar,:,:,f),
                         view(nrm_bar,:,:,f))
       end
-      @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
+      @test ≈(xlag_bar, -xlag_bar_cmplx, atol=5e-14)
     end
   end
 
-  context("Testing SummationByParts.facenormal_rev! (TriSparseFace method)") do
+  @testset "Testing SummationByParts.facenormal_rev! (TriSparseFace method)" begin
     # build a curvilinear element, differentiate xsbp and nrm with using complex
     # step, and then compare with reverse mode
     for p = 1:4
@@ -347,9 +347,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
       end
       
       # set vector that multiplies from the left
-      xsbp_bar = rand(size(xsbp))
-      nrm_bar = rand(size(nrm))
-      xlag_bar_cmplx = zeros(size(xlag))
+      xsbp_bar = rand(2,sbpface.numnodes,3)
+      nrm_bar = rand(2,sbpface.numnodes,3)
+      xlag_bar_cmplx = zeros(2,p+2,3)
       
       # differentiate with respect to the Lagrangian nodes using complex step
       xlag_cmplx = complex.(xlag, 0.0)
@@ -376,11 +376,11 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
                         view(xlag_bar,:,:,f), view(xsbp_bar,:,:,f),
                         view(nrm_bar,:,:,f))
       end
-      @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
+      @test ≈(xlag_bar, -xlag_bar_cmplx, atol=1e-13)
     end
   end
 
-  context("Testing SummationByParts.facenormal_rev! (TetFace method)") do
+  @testset "Testing SummationByParts.facenormal_rev! (TetFace method)" begin
     # build a curvilinear element, differentiate xsbp and nrm with using complex
     # step, and then compare with reverse mode
     for p = 1:4
@@ -422,9 +422,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
                     view(nrm,:,:,f))
       end
       # set vector that multiplies from the left
-      xsbp_bar = rand(size(xsbp))
-      nrm_bar = rand(size(nrm))
-      xlag_bar_cmplx = zeros(size(xlag))
+      xsbp_bar = rand(3,sbpface.numnodes,4)
+      nrm_bar = rand(3,sbpface.numnodes,4)
+      xlag_bar_cmplx = zeros(3,numdof,4)
       
       # differentiate with respect to the Lagrangian nodes using complex step
       xlag_cmplx = complex.(xlag, 0.0)
@@ -451,16 +451,16 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
                         view(xlag_bar,:,:,f), view(xsbp_bar,:,:,f),
                         view(nrm_bar,:,:,f))
       end
-      @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
+      @test ≈(xlag_bar, -xlag_bar_cmplx, atol=1e-13)
     end
   end
 
-  context("Testing SummationByParts.facenormal_rev! (TetSparseFace method)") do
+  @testset "Testing SummationByParts.facenormal_rev! (TetSparseFace method)" begin
     # build a curvilinear element, differentiate xsbp and nrm with using complex
     # step, and then compare with reverse mode
     for p = 1:4
       sbp = getTetSBPDiagE(degree=p)
-      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx)
+      sbpface = getTetFaceForDiagE(p, sbp.cub, sbp.vtx, faceopertype=:Omega)
       function mapping(ξ)
         x = 1 - (1 - 0.5*(ξ[1]+1))^(p+1)
         y = 1 - (1 - 0.5*(ξ[2]+1))^(p+1)
@@ -497,9 +497,9 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
                     view(nrm,:,:,f))
       end
       # set vector that multiplies from the left
-      xsbp_bar = rand(size(xsbp))
-      nrm_bar = rand(size(nrm))
-      xlag_bar_cmplx = zeros(size(xlag))
+      xsbp_bar = rand(3,sbpface.numnodes,4)
+      nrm_bar = rand(3,sbpface.numnodes,4)
+      xlag_bar_cmplx = zeros(3,numdof,4)
       
       # differentiate with respect to the Lagrangian nodes using complex step
       xlag_cmplx = complex.(xlag, 0.0)
@@ -513,7 +513,7 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
             facenormal!(sbpface, p+1, xref, view(xlag_cmplx,:,:,f),
                         view(xsbp_cmplx,:,:,f), view(nrm_cmplx,:,:,f))
             xlag_bar_cmplx[di,i,f] = (sum(xsbp_bar[:,:,f].*
-                                          imag(xsbp_cmplx[:,:,f])) +
+                                          imag(xsbp_cmplx[:,:,f])) .+
                                       sum(nrm_bar[:,:,f].*
                                           imag(nrm_cmplx[:,:,f])))./ceps
             xlag_cmplx[di,i,f] -= complex(0.0, ceps)
@@ -526,7 +526,7 @@ facts("Testing SummationByParts Module (reverse diff of face-normal methods)..."
                         view(xlag_bar,:,:,f), view(xsbp_bar,:,:,f),
                         view(nrm_bar,:,:,f))
       end
-      @fact xlag_bar --> roughly(xlag_bar_cmplx, atol=1e-15)
+      @test ≈(xlag_bar, -xlag_bar_cmplx, atol=1e-13)
     end
   end
   

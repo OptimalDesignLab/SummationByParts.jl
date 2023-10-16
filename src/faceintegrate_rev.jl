@@ -19,11 +19,11 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: result of the vector-Jacobian product.
 
 """
-function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
+function integratefunctional_rev!(sbpface::DenseFace{Tsbp},
                                                   bndryfaces::AbstractArray{Boundary},
                                                   flux_bar::AbstractArray{Tflx,3},
                                                   fun_bar::AbstractArray{Tfun,1},
-                                                  (±)::UnaryFunctor=Add())
+                                                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tfun}
   @assert( size(sbpface.interp,2) == size(flux_bar,2) )
   @assert( size(flux_bar,1) == size(fun_bar,1) )
   @assert( size(bndryfaces,1) == size(flux_bar,3) )
@@ -37,11 +37,11 @@ function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function integratefunctional_rev!{Tsbp,Tflx,Tfun}(sbpface::SparseFace{Tsbp},
+function integratefunctional_rev!(sbpface::SparseFace{Tsbp},
                                                   bndryfaces::AbstractArray{Boundary},
                                                   flux_bar::AbstractArray{Tflx,3},
                                                   fun_bar::AbstractArray{Tfun,1},
-                                                  (±)::UnaryFunctor=Add())
+                                                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tfun}
   @assert( size(flux_bar,1) == size(fun_bar,1) )
   @assert( size(bndryfaces,1) == size(flux_bar,3) )
   for (bindex, bndry) in enumerate(bndryfaces)
@@ -73,10 +73,9 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: result of the vector-Jacobian product.
 
 """
-function integrateBoundaryFunctional_rev!{
-  Tsbp,Tflx,Tfun}(sbpface::DenseFace{Tsbp}, face::Integer,
+function integrateBoundaryFunctional_rev!(sbpface::DenseFace{Tsbp}, face::Integer,
                   flux_bar::AbstractArray{Tflx,2}, fun_bar::AbstractArray{Tfun,1},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tfun}
   @assert( size(sbpface.interp,2) == size(flux_bar,2) )
   @assert( size(flux_bar,1) == size(fun_bar,1) )
   for i = 1:sbpface.numnodes
@@ -87,10 +86,9 @@ function integrateBoundaryFunctional_rev!{
   end
 end
 
-function integrateBoundaryFunctional_rev!{
-  Tsbp,Tflx,Tfun}(sbpface::SparseFace{Tsbp}, face::Integer,
+function integrateBoundaryFunctional_rev!(sbpface::SparseFace{Tsbp}, face::Integer,
                   flux_bar::AbstractArray{Tflx,2}, fun_bar::AbstractArray{Tfun,1},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tfun}
   @assert( size(flux_bar,1) == size(fun_bar,1) )
   for i = 1:sbpface.numnodes
     for field = 1:size(fun_bar,1)
@@ -119,11 +117,11 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: result of the vector matrix product between (R^T*B) and `res_bar`
 
 """
-function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function boundaryintegrate_rev!(sbpface::DenseFace{Tsbp},
                                                 bndryfaces::AbstractArray{Boundary},
                                                 flux_bar::AbstractArray{Tflx,2},
                                                 res_bar::AbstractArray{Tres,2},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(res_bar,1) )
   @assert( size(sbpface.interp,2) == size(flux_bar,1) )
   @assert( size(bndryfaces,1) == size(flux_bar,2) )
@@ -142,11 +140,11 @@ function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function boundaryintegrate_rev!(sbpface::DenseFace{Tsbp},
                                             bndryfaces::AbstractArray{Boundary},
                                             flux_bar::AbstractArray{Tflx,3},
                                             res_bar::AbstractArray{Tres,3},
-                                            (±)::UnaryFunctor=Add())
+                                            (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(res_bar,2) )
   @assert( size(sbpface.interp,2) == size(flux_bar,2) )
   @assert( size(bndryfaces,1) == size(flux_bar,3) )
@@ -171,11 +169,11 @@ function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function boundaryintegrate_rev!(sbpface::SparseFace{Tsbp},
                                                 bndryfaces::AbstractArray{Boundary},
                                                 flux_bar::AbstractArray{Tflx,2},
                                                 res_bar::AbstractArray{Tres,2},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(bndryfaces,1) == size(flux_bar,2) )
   for (bindex, bndry) in enumerate(bndryfaces)
     for i = 1:sbpface.numnodes
@@ -187,11 +185,11 @@ function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-function boundaryintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function boundaryintegrate_rev!(sbpface::SparseFace{Tsbp},
                                             bndryfaces::AbstractArray{Boundary},
                                             flux_bar::AbstractArray{Tflx,3},
                                             res_bar::AbstractArray{Tres,3},
-                                            (±)::UnaryFunctor=Add())
+                                            (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(bndryfaces,1) == size(flux_bar,3) )
   for (bindex, bndry) in enumerate(bndryfaces)
     for i = 1:sbpface.numnodes
@@ -225,11 +223,11 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: result of the vector matrix product between (R^T*B) and `res_bar`
 
 """
-function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
+function boundaryFaceIntegrate_rev!(sbpface::AbstractFace{Tsbp},
                                                     face::Integer,
                                                     flux_bar::AbstractArray{Tflx,1},
                                                     res_bar::AbstractArray{Tres,1},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(res_bar,1) )
   @assert( size(sbpface.interp,2) == size(flux_bar,1) )
   for i = 1:sbpface.numnodes
@@ -243,11 +241,11 @@ function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::AbstractFace{Tsbp},
   end
 end
 
-function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function boundaryFaceIntegrate_rev!(sbpface::DenseFace{Tsbp},
                                                     face::Integer,
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     res_bar::AbstractArray{Tres,2},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(res_bar,2) )
   @assert( size(sbpface.interp,2) == size(flux_bar,2) )
   @assert( size(flux_bar,1) == size(res_bar,1) )
@@ -268,22 +266,22 @@ function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function boundaryFaceIntegrate_rev!(sbpface::SparseFace{Tsbp},
                                                     face::Integer,
                                                     flux_bar::AbstractArray{Tflx,1},
                                                     res_bar::AbstractArray{Tres,1},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   for i = 1:sbpface.numnodes
     # res[sbpface.perm[i,face]] += ±(sbpface.wface[i]*flux[i])
     flux_bar[i] += ±(sbpface.wface[i]*res_bar[sbpface.perm[i,face]])
   end
 end
 
-function boundaryFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function boundaryFaceIntegrate_rev!(sbpface::SparseFace{Tsbp},
                                                     face::Integer,
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     res_bar::AbstractArray{Tres,2},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(flux_bar,1) == size(res_bar,1) )
   for i = 1:sbpface.numnodes
     for field = 1:size(res_bar,1)
@@ -313,11 +311,11 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: result of the vector matrix product between (R^T*B) and `res_bar`
 
 """
-function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function interiorfaceintegrate_rev!(sbpface::DenseFace{Tsbp},
                                                     ifaces::AbstractArray{Interface},
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     res_bar::AbstractArray{Tres,2},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(res_bar,1) )
   @assert( size(sbpface.interp,2) == size(flux_bar,1) )
   @assert( size(ifaces,1) == size(flux_bar,2) )
@@ -338,11 +336,11 @@ function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function interiorfaceintegrate_rev!(sbpface::DenseFace{Tsbp},
                                                 ifaces::AbstractArray{Interface},
                                                 flux_bar::AbstractArray{Tflx,3},
                                                 res_bar::AbstractArray{Tres,3},
-                                                (±)::UnaryFunctor=Add())
+                                                (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(res_bar,1) == size(flux_bar,1) )  
   @assert( size(sbpface.interp,1) <= size(res_bar,2) )
   @assert( size(sbpface.interp,2) == size(flux_bar,2) )
@@ -368,11 +366,11 @@ function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function interiorfaceintegrate_rev!(sbpface::SparseFace{Tsbp},
                                                     ifaces::AbstractArray{Interface},
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     res_bar::AbstractArray{Tres,2},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(ifaces,1) == size(flux_bar,2) )
   for (findex, face) in enumerate(ifaces)
     for i = 1:sbpface.numnodes
@@ -389,11 +387,11 @@ function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-function interiorfaceintegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function interiorfaceintegrate_rev!(sbpface::SparseFace{Tsbp},
                                                     ifaces::AbstractArray{Interface},
                                                     flux_bar::AbstractArray{Tflx,3},
                                                     res_bar::AbstractArray{Tres,3},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(res_bar,1) == size(flux_bar,1) )  
   @assert( size(ifaces,1) == size(flux_bar,3) )
   for (findex, face) in enumerate(ifaces)
@@ -435,12 +433,12 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: result of the vector-matrix product
 
 """
-function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function interiorFaceIntegrate_rev!(sbpface::DenseFace{Tsbp},
                                                     iface::Interface,
                                                     flux_bar::AbstractArray{Tflx,1},
                                                     resL_bar::AbstractArray{Tres,1},
                                                     resR_bar::AbstractArray{Tres,1},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(sbpface.interp,1) <= size(resL_bar,1) )
   @assert( size(sbpface.interp,1) <= size(resR_bar,1) )
   @assert( size(sbpface.interp,2) == size(flux_bar,1) )
@@ -459,12 +457,12 @@ function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
+function interiorFaceIntegrate_rev!(sbpface::DenseFace{Tsbp},
                                                     iface::Interface,
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     resL_bar::AbstractArray{Tres,2},
                                                     resR_bar::AbstractArray{Tres,2},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(resL_bar,1) == size(resR_bar,1) == size(flux_bar,1) )  
   @assert( size(sbpface.interp,1) <= size(resL_bar,2) )
   @assert( size(sbpface.interp,1) <= size(resR_bar,2) )
@@ -486,12 +484,12 @@ function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp},
   end
 end
 
-function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function interiorFaceIntegrate_rev!(sbpface::SparseFace{Tsbp},
                                                     iface::Interface,
                                                     flux_bar::AbstractArray{Tflx,1},
                                                     resL_bar::AbstractArray{Tres,1},
                                                     resR_bar::AbstractArray{Tres,1},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   for i = 1:sbpface.numnodes
     iR = sbpface.nbrperm[i,iface.orient]
     # resL[sbpface.perm[i,iface.faceL]] += ±(sbpface.wface[i]*flux[i])
@@ -501,12 +499,12 @@ function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
   end
 end
 
-function interiorFaceIntegrate_rev!{Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp},
+function interiorFaceIntegrate_rev!(sbpface::SparseFace{Tsbp},
                                                     iface::Interface,
                                                     flux_bar::AbstractArray{Tflx,2},
                                                     resL_bar::AbstractArray{Tres,2},
                                                     resR_bar::AbstractArray{Tres,2},
-                                                    (±)::UnaryFunctor=Add())
+                                                    (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( size(resL_bar,1) == size(resR_bar,1) == size(flux_bar,1) )  
   for i = 1:sbpface.numnodes
     iR = sbpface.nbrperm[i,iface.orient]

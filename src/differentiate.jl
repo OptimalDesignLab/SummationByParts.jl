@@ -31,14 +31,14 @@ operator sbp.
 * `res`: where the result of applying inv(H)*Q[:,:,di] to u is stored
 
 """
-function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function differentiate!(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux::AbstractArray{Tflx,2},
                                         res::AbstractArray{Tres,2},
-                                        (±)::UnaryFunctor=Add())
+                                        (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
-  Hinv = 1./sbp.w
+  Hinv = 1.0 ./sbp.w
   for elem = 1:size(flux,2)
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
@@ -49,14 +49,14 @@ function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   end
 end
 
-function differentiate!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function differentiate!(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux::AbstractArray{Tflx,3},
                                         res::AbstractArray{Tres,3},
-                                        (±)::UnaryFunctor=Add())
+                                        (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
-  Hinv = 1./sbp.w
+  Hinv = 1.0 ./sbp.w
   for elem = 1:size(flux,3)
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
@@ -100,11 +100,11 @@ operator sbp.
 * `res`: where the result of applying inv(H)*Q[:,:,di] to u is stored
 
 """
-function differentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function differentiateElement!(sbp::AbstractSBP{Tsbp}, di::Int,
                                                flux::AbstractArray{Tflx,1},
                                                res::AbstractArray{Tres,1},
                                                (±)::UnaryFunctor=Add(),
-                                               trans::Bool=false)
+                                               trans::Bool=false) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(flux,1) == size(res,1) )
     @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -126,11 +126,11 @@ function differentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   end
 end
 
-function differentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function differentiateElement!(sbp::AbstractSBP{Tsbp}, di::Int,
                                                flux::AbstractArray{Tflx,2},
                                                res::AbstractArray{Tres,2},
                                                (±)::UnaryFunctor=Add(),
-                                               trans::Bool=false)
+                                               trans::Bool=false) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(flux,2) == size(res,2) )
     @assert( length(flux) == length(res) )
@@ -140,7 +140,7 @@ function differentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   if trans # apply transposed D
     Hinvflux = zeros(Tres, (size(flux,1)))
     for i = 1:sbp.numnodes
-      Hinv = 1./sbp.w[i]
+      Hinv = 1.0 /sbp.w[i]
       for field = 1:size(flux,1)
         Hinvflux[field] = Hinv*flux[field,i]
       end
@@ -157,7 +157,7 @@ function differentiateElement!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
           res[field,i] += ±(sbp.Q[i,j,di]*flux[field,j])
         end
       end
-      Hinv = 1./sbp.w[i]
+      Hinv = 1.0/sbp.w[i]
       for field = 1:size(flux,1)
         res[field,i] *= Hinv
       end

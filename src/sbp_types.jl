@@ -23,21 +23,23 @@ Defines diagonal-norm SBP first-derivative operators on a line segment.
 * `w` : cubature weights, i.e. the diagonal SBP norm, stored as an array
 * `Q[:,:,1]` : discrete stiffness matrix operator
   """
-immutable LineSegSBP{T} <: AbstractSBP{T}
+struct LineSegSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
   cub::LineSymCub{T}
   vtx::Array{T,2}
   w::Array{T,1}
   Q::Array{T,3}
+  E::Array{T,3}
 
   # inner constructor
   function LineSegSBP{T}(degree::Int, cub::LineSymCub{T}, vtx::Array{T,2},
-                         w::Array{T,1}, Q::Array{T,3}) where T
+                         w::Array{T,1}, Q::Array{T,3}, E::Array{T,3}) where T
     numnodes = cub.numnodes
     @assert( size(Q,1) == size(Q,2) == size(w,1) == numnodes )
     @assert( size(Q,3) == 1 )
-    new(degree, numnodes, cub, vtx, w, Q)
+    @assert( size(E,3) == 1 )
+    new{T}(degree, numnodes, cub, vtx, w, Q, E)
   end
 end
 
@@ -57,22 +59,24 @@ Defines diagonal-norm SBP first-derivative operators on a right-triangle.
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """
-immutable TriSBP{T} <: AbstractSBP{T}
+struct TriSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
   cub::TriSymCub{T}
   vtx::Array{T,2}
   w::Array{T,1}
   Q::Array{T,3}
+  E::Array{T,3}
 
   # inner constructor
   function TriSBP{T}(degree::Int, cub::TriSymCub{T}, vtx::Array{T,2},
-                     w::Array{T,1}, Q::Array{T,3}) where T
-    @assert( degree >= 1 && degree <= 4)
+                     w::Array{T,1}, Q::Array{T,3}, E::Array{T,3}) where T
+    @assert( degree >= 1 && degree <= 10)
     numnodes = cub.numnodes
     @assert( size(Q,1) == size(Q,2) == size(w,1) == numnodes )
     @assert( size(Q,3) == 2 )
-    new(degree, numnodes, cub, vtx, w, Q)
+    @assert( size(E,3) == 2 )
+    new{T}(degree, numnodes, cub, vtx, w, Q, E)
   end
 end
 
@@ -93,7 +97,7 @@ in the SBP operator that is used to make a sparse S.
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """
-immutable SparseTriSBP{T} <: AbstractSBP{T}
+struct SparseTriSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
   cub::TriSymCub{T}
@@ -112,7 +116,7 @@ immutable SparseTriSBP{T} <: AbstractSBP{T}
     numnodes = cub.numnodes
     Q = zeros(T, (numnodes, numnodes, 2))
     w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)
-    new(degree, numnodes, cub, vtx, w, Q)
+    new{T}(degree, numnodes, cub, vtx, w, Q)
   end
 end
 
@@ -131,22 +135,24 @@ Defines diagonal-norm SBP first-derivative operators on a right-tetrahedron.
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """
-immutable TetSBP{T} <: AbstractSBP{T}
+struct TetSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
   cub::TetSymCub{T}
   vtx::Array{T,2}
   w::Array{T,1}
   Q::Array{T,3}
+  E::Array{T,3}
   
   # inner constructor
   function TetSBP{T}(degree::Int, cub::TetSymCub{T}, vtx::Array{T,2},
-                     w::Array{T,1}, Q::Array{T,3}) where T
-    @assert( degree >= 1 && degree <= 4)
+                     w::Array{T,1}, Q::Array{T,3}, E::Array{T,3}) where T
+    @assert( degree >= 1 && degree <= 5)
     numnodes = cub.numnodes
     @assert( size(Q,1) == size(Q,2) == size(w,1) == numnodes )
     @assert( size(Q,3) == 3 )
-    new(degree, numnodes, cub, vtx, w, Q)
+    @assert( size(E,3) == 3 )
+    new{T}(degree, numnodes, cub, vtx, w, Q, E)
   end
 end
 
@@ -167,7 +173,7 @@ flexiblity in the SBP operator that is used to make a sparse S.
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
 
 """
-immutable SparseTetSBP{T} <: AbstractSBP{T}
+struct SparseTetSBP{T} <: AbstractSBP{T}
   degree::Int
   numnodes::Int
   cub::TetSymCub{T}
@@ -186,7 +192,7 @@ immutable SparseTetSBP{T} <: AbstractSBP{T}
     numnodes = cub.numnodes
     Q = zeros(T, (numnodes, numnodes, 3))
     w, Q = SummationByParts.buildsparseoperators(cub, vtx, degree)
-    new(degree, numnodes, cub, vtx, w, Q)
+    new{T}(degree, numnodes, cub, vtx, w, Q)
   end
 end
 
@@ -232,7 +238,7 @@ Defines a "face" between two LineSegSBP operators with the same cubature nodes.
 * `nbrperm[:,:]` : permutation for face nodes on neighbour element
 
 """
-immutable LineSegFace{T} <: DenseFace{T}
+struct LineSegFace{T} <: DenseFace{T}
   degree::Int
   numnodes::Int
   stencilsize::Int
@@ -255,12 +261,12 @@ immutable LineSegFace{T} <: DenseFace{T}
     @assert( degree >= 1 )
     numnodes = facecub.numnodes
     @assert( size(interp,2) == size(deriv,2) == numnodes )
-    normal = T[-1; 1].'
+    normal = T[-1; 1]'
     nbrperm = SymCubatures.getneighbourpermutation(facecub)
     wface = SymCubatures.calcweights(facecub)
     stencilsize = size(interp,1)
     dstencilsize = size(deriv,1)
-    new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, facevtx, 
+    new{T}(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, facevtx, 
         wface, normal, interp, perm, deriv, dperm, nbrperm)
   end
 end
@@ -286,7 +292,7 @@ Defines a face between two TriSBP operators with the same cubature nodes
 * `nbrperm[:,:]` : permutation for face nodes on neighbour element
 
 """
-immutable TriFace{T} <: DenseFace{T}
+struct TriFace{T} <: DenseFace{T}
   degree::Int
   numnodes::Int
   stencilsize::Int
@@ -305,15 +311,15 @@ immutable TriFace{T} <: DenseFace{T}
   function TriFace{T}(degree::Int, facecub::LineSymCub{T}, facevtx::Array{T,2},
                       interp::Array{T,2}, perm::Array{Int,2},
                       deriv::Array{T,3}, dperm::Array{Int,2}) where T
-    @assert( degree >= 1 && degree <= 5 )
+    @assert( degree >= 1 && degree <= 10 )
     numnodes = facecub.numnodes
     @assert( size(interp,2) == size(deriv,2) == numnodes )
-    normal = T[0 -1; 1 1; -1 0].'
+    normal = T[0 -1; 1 1; -1 0]'
     nbrperm = SymCubatures.getneighbourpermutation(facecub)
     wface = SymCubatures.calcweights(facecub)
     stencilsize = size(interp,1)
     dstencilsize = size(deriv,1)
-    new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, facevtx, 
+    new{T}(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, facevtx, 
         wface, normal, interp, perm, deriv, dperm, nbrperm)
   end
 end
@@ -339,7 +345,7 @@ Defines a face between two TetSBP operators with the same cubature nodes
 * `nbrperm[:,:]` : permutation for face nodes on neighbour element
 
 """
-immutable TetFace{T} <: DenseFace{T}
+struct TetFace{T} <: DenseFace{T}
   degree::Int
   numnodes::Int
   stencilsize::Int
@@ -357,14 +363,14 @@ immutable TetFace{T} <: DenseFace{T}
   # inner constructor
   function TetFace{T}(degree::Int, facecub::TriSymCub{T}, facevtx::Array{T,2},
                       interp::Array{T,2}, perm::Array{Int,2}) where T
-    @assert( degree >= 1 && degree <= 4 )
+    @assert( degree >= 1 && degree <= 5 )
     numnodes = facecub.numnodes
     @assert( size(interp,2) == numnodes )
-    normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'
+    normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0]'
     nbrperm = SymCubatures.getneighbourpermutation(facecub)
     wface = SymCubatures.calcweights(facecub)
     stencilsize = size(interp,1)
-    new(degree, numnodes, stencilsize, facecub, facevtx, wface, normal, interp,
+    new{T}(degree, numnodes, stencilsize, facecub, facevtx, wface, normal, interp,
         perm, nbrperm)
   end
 end
@@ -401,7 +407,7 @@ operators).
 * `nbrperm[:,:]` : permutation for face nodes on neighbour element
 
 """
-immutable TriSparseFace{T} <: SparseFace{T}
+struct TriSparseFace{T} <: SparseFace{T}
   degree::Int
   numnodes::Int
   dstencilsize::Int
@@ -421,11 +427,11 @@ immutable TriSparseFace{T} <: SparseFace{T}
     # @assert( degree >= 1 && degree <= 5 )
     numnodes = facecub.numnodes
     @assert( size(deriv,2) == numnodes )
-    normal = T[0 -1; 1 1; -1 0].'
+    normal = T[0 -1; 1 1; -1 0]'
     nbrperm = SymCubatures.getneighbourpermutation(facecub)
     wface = SymCubatures.calcweights(facecub)
     dstencilsize = size(deriv,1)
-    new(degree, facecub.numnodes, dstencilsize, facecub, facevtx, wface, normal,
+    new{T}(degree, facecub.numnodes, dstencilsize, facecub, facevtx, wface, normal,
         perm, deriv, dperm, nbrperm)
   end
 end
@@ -451,7 +457,7 @@ operators).
 * `nbrperm[:,:]` : permutation for face nodes on neighbour element
 
 """
-immutable TetSparseFace{T} <: SparseFace{T}
+struct TetSparseFace{T} <: SparseFace{T}
   degree::Int
   numnodes::Int
   #dstencilsize::Int
@@ -467,11 +473,11 @@ immutable TetSparseFace{T} <: SparseFace{T}
   # inner constructor
   function TetSparseFace{T}(degree::Int, facecub::TriSymCub{T},
                             facevtx::Array{T,2}, perm::Array{Int,2}) where T
-    @assert( degree >= 1 && degree <= 4 )
+    @assert( degree >= 1 && degree <= 5 )
     numnodes = facecub.numnodes
-    normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0].'
+    normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0]'
     nbrperm = SymCubatures.getneighbourpermutation(facecub)
     wface = SymCubatures.calcweights(facecub)
-    new(degree, numnodes, facecub, facevtx, wface, normal, perm, nbrperm)
+    new{T}(degree, numnodes, facecub, facevtx, wface, normal, perm, nbrperm)
   end
 end

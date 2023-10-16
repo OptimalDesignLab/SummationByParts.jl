@@ -35,14 +35,13 @@ define the metric invariants.  *They are not needed by the 2-dimensional code*,
 and so this array can be passed empty in that case.
 
 """
-function calcMappingJacobian!{Tsbp,Tmsh, T2}(sbp::TriSBP{Tsbp}, mapdegree::Int,
+function calcMappingJacobian!(sbp::TriSBP{Tsbp}, mapdegree::Int,
                                          xref::AbstractArray{T2, 2},
                                          xlag::AbstractArray{Tmsh,3},
                                          xsbp::AbstractArray{Tmsh,3},
                                          dξdx::AbstractArray{Tmsh,4},
-                                         jac::AbstractArray{Tmsh,2},
-                                         Eone::AbstractArray{Tmsh,3}=
-                                             Array{Tmsh}(0,0,0))
+                                         jac::AbstractArray{Tmsh,2};
+                                         Eone::AbstractArray{Tmsh,3}= zeros(Tmsh,0,0,0)) where {Tsbp,Tmsh, T2}
   @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) )
   @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
            == size(dξdx,2) == 2 )
@@ -113,13 +112,13 @@ function calcMappingJacobian!{Tsbp,Tmsh, T2}(sbp::TriSBP{Tsbp}, mapdegree::Int,
   end
 end
 
-function calcMappingJacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int,
+function calcMappingJacobian!(sbp::TetSBP{Tsbp}, mapdegree::Int,
                                          xref::AbstractMatrix,
                                          xlag::AbstractArray{Tmsh,3},
                                          xsbp::AbstractArray{Tmsh,3},
                                          dξdx::AbstractArray{Tmsh,4},
                                          jac::AbstractArray{Tmsh,2},
-                                         Eone::AbstractArray{Tmsh,3})
+                                         Eone::AbstractArray{Tmsh,3}) where {Tsbp,Tmsh}
   @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) 
            == size(Eone,1) )
   @assert( size(xlag,1) == size(xref,1) == size(xsbp,1) == size(dξdx,1) 
@@ -167,12 +166,12 @@ function calcMappingJacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int,
   fill!(xsbp, zero(Tmsh))
   coeff = zeros(Tmsh, (numdof,3))
   dxdξ = zeros(Tmsh, (3,3,sbp.numnodes))
-  dξdx_targ = zeros(dxdξ)
+  dξdx_targ = zeros(eltype(dxdξ),size(dxdξ))
   Qt = zeros(Tsbp, (sbp.numnodes, 3*sbp.numnodes) )
-  Qt = [sbp.Q[:,:,1].' sbp.Q[:,:,2].' sbp.Q[:,:,3].']
+  Qt = [sbp.Q[:,:,1]' sbp.Q[:,:,2]' sbp.Q[:,:,3]']
   Qtinv = pinv(Qt)
   targ = zeros(Tmsh, (3*sbp.numnodes))
-  sol = zeros(targ)
+  sol = zeros(size(targ))
   # loop over each element...  
   for e = 1:size(xlag,3)
     # find the coefficents of the polynomial mapping using xlag and Vinv
@@ -271,11 +270,10 @@ define the metric invariants.  *They are not needed by the 2-dimensional code,
 and so this array can be passed empty in that case*.
 
 """
-function calcMappingJacobianElement!{
-  Tsbp,Tmsh}(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
+function calcMappingJacobianElement!(sbp::TriSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2},
              xlag::AbstractArray{Tmsh,2}, xsbp::AbstractArray{Tmsh,2},
              dξdx::AbstractArray{Tmsh,3}, jac::AbstractArray{Tmsh},
-             Eone::AbstractArray{Tmsh,2}=Array{Tmsh}(0,0))
+             Eone::AbstractArray{Tmsh,2}=zeros(Tmsh,0,0)) where {Tsbp,Tmsh}
   numdof = binomial(mapdegree+2,2)
   @asserts_enabled begin
     @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) )
@@ -295,7 +293,7 @@ function calcMappingJacobianElement!{
     end
   end
   coeff = zeros(Tmsh, (numdof,2))
-  coeff = V\(xlag.')
+  coeff = V\(xlag')
   # Step 2: compute the mapped SBP nodes and the analytical Jacobian at sbp nodes
   x = calcnodes(sbp) # <-- SBP nodes in reference space
   dxdξ = zeros(Tmsh, (2,2,sbp.numnodes))
@@ -326,11 +324,10 @@ function calcMappingJacobianElement!{
   end
 end
 
-function calcMappingJacobianElement!{
-  Tsbp,Tmsh}(sbp::TetSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2}, 
+function calcMappingJacobianElement!(sbp::TetSBP{Tsbp}, mapdegree::Int, xref::AbstractArray{Tmsh,2}, 
              xlag::AbstractArray{Tmsh,2}, xsbp::AbstractArray{Tmsh,2},
              dξdx::AbstractArray{Tmsh,3}, jac::AbstractArray{Tmsh},
-             Eone::AbstractArray{Tmsh,2})
+             Eone::AbstractArray{Tmsh,2}) where {Tsbp,Tmsh}
   numdof = binomial(mapdegree+3,3)
   @asserts_enabled begin
     @assert( sbp.numnodes == size(xsbp,2) == size(dξdx,3) == size(jac,1) 
@@ -353,7 +350,7 @@ function calcMappingJacobianElement!{
     end
   end
   coeff = zeros(Tmsh, (numdof,3))
-  coeff = V\(xlag.')
+  coeff = V\(xlag')
   # Step 2: compute the mapped SBP nodes and the analytical Jacobian at sbp nodes
   x = calcnodes(sbp) # <-- SBP nodes in reference space
   dxdξ = zeros(Tmsh, (3,3,sbp.numnodes))
@@ -379,7 +376,7 @@ function calcMappingJacobianElement!{
     end
   end
   # Step 3: find the minimum-norm solution that satisfies the metric invariants
-  dξdx_targ = zeros(dxdξ)  
+  dξdx_targ = zeros(size(dxdξ))
   for i = 1:sbp.numnodes
     for di = 1:3
       it1 = mod(di,3)+1
@@ -399,10 +396,10 @@ function calcMappingJacobianElement!{
                         dxdξ[1,3,i]*dxdξ[2,2,i]*dxdξ[3,1,i])
   end
   Qt = zeros(Tsbp, (sbp.numnodes, 3*sbp.numnodes) )
-  Qt = [sbp.Q[:,:,1].' sbp.Q[:,:,2].' sbp.Q[:,:,3].']
+  Qt = [sbp.Q[:,:,1]' sbp.Q[:,:,2]' sbp.Q[:,:,3]']
   Qtinv = pinv(Qt)
   targ = zeros(Tmsh, (3*sbp.numnodes))
-  sol = zeros(targ)
+  sol = zeros(size(targ))
   for di = 1:3
     for di2 = 1:3
       for i = 1:sbp.numnodes      
@@ -437,11 +434,11 @@ physical coordinates, as well as the determinant of the Jacobian.
 * `jac`: the determinant in [face node, L/R, face] format
 
 """
-function mappingjacobian!{Tsbp,Tmsh}(sbpface::AbstractFace{Tsbp},
+function mappingjacobian!(sbpface::AbstractFace{Tsbp},
                                      ifaces::Array{Interface},
                                      x::AbstractArray{Tmsh,3},
                                      dξdx::AbstractArray{Tmsh,5},
-                                     jac::AbstractArray{Tmsh,3})
+                                     jac::AbstractArray{Tmsh,3}) where {Tsbp,Tmsh}
   @assert( size(ifaces,1) == size(dξdx,5) == size(jac,3) )
   @assert( size(dξdx,4) == size(jac,2) == 2 )
   @assert( size(dξdx,3) == size(jac,1) == sbpface.numnodes )
@@ -508,10 +505,10 @@ frame use the scaled Jacobian.
 * `jac`: the determinant of the Jacobian; 1st dim = node, 2nd dim = elem
 
 """
-function mappingjacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
+function mappingjacobian!(sbp::TriSBP{Tsbp},
                                      x::AbstractArray{Tmsh,3},
                                      dξdx::AbstractArray{Tmsh,4},
-                                     jac::AbstractArray{Tmsh,2})
+                                     jac::AbstractArray{Tmsh,2}) where {Tsbp,Tmsh}
   @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
   @assert( size(x,3) == size(dξdx,4) )
   @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
@@ -544,10 +541,10 @@ function mappingjacobian!{Tsbp,Tmsh}(sbp::TriSBP{Tsbp},
   # check for negative jac here?
 end
 
-function mappingjacobian!{Tsbp,Tmsh}(sbp::SparseTriSBP{Tsbp},
+function mappingjacobian!(sbp::SparseTriSBP{Tsbp},
                                      x::AbstractArray{Tmsh,3},
                                      dξdx::AbstractArray{Tmsh,4},
-                                     jac::AbstractArray{Tmsh,2})
+                                     jac::AbstractArray{Tmsh,2}) where {Tsbp,Tmsh}
   @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
   @assert( size(x,3) == size(dξdx,4) )
   @assert( size(x,1) == 2 && size(dξdx,1) == 2 && size(dξdx,2) == 2 )
@@ -580,10 +577,10 @@ function mappingjacobian!{Tsbp,Tmsh}(sbp::SparseTriSBP{Tsbp},
   # check for negative jac here?
 end
 
-function mappingjacobian!{Tsbp,Tmsh}(sbp::TetSBP{Tsbp},
+function mappingjacobian!(sbp::TetSBP{Tsbp},
                                      x::AbstractArray{Tmsh,3},
                                      dξdx::AbstractArray{Tmsh,4},
-                                     jac::AbstractArray{Tmsh,2})
+                                     jac::AbstractArray{Tmsh,2}) where {Tsbp,Tmsh}
   @assert( sbp.numnodes == size(x,2) && sbp.numnodes == size(dξdx,3) )
   @assert( size(x,3) == size(dξdx,4) )
   @assert( size(x,1) == 3 && size(dξdx,1) == 3 && size(dξdx,2) == 3 )

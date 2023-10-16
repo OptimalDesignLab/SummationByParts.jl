@@ -19,10 +19,10 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: the result of the vector matrix product between D and `res_bar`
 
 """
-function differentiate_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function differentiate_rev!(sbp::AbstractSBP{Tsbp}, di::Int,
                                             flux_bar::AbstractArray{Tflx,2},
                                             res_bar::AbstractArray{Tres,2},
-                                            (±)::UnaryFunctor=Add())
+                                            (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(flux_bar,1) && sbp.numnodes == size(res_bar,1) )
     @assert( length(flux_bar) == length(res_bar) )
@@ -42,10 +42,10 @@ function differentiate_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   end
 end
 
-function differentiate_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function differentiate_rev!(sbp::AbstractSBP{Tsbp}, di::Int,
                                         flux_bar::AbstractArray{Tflx,3},
                                         res_bar::AbstractArray{Tres,3},
-                                        (±)::UnaryFunctor=Add())
+                                        (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(flux_bar,2) && sbp.numnodes == size(res_bar,2) )
     @assert( length(flux_bar) == length(res_bar) )
@@ -56,7 +56,7 @@ function differentiate_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
   tmp_bar = zeros(Tres, size(flux_bar,1))
   for elem = 1:size(flux_bar,3)
     for i = 1:sbp.numnodes
-      Hinv = 1./sbp.w[i]
+      Hinv = 1.0/sbp.w[i]
       for field = 1:size(flux_bar,1)
         tmp_bar[field] = Hinv*res_bar[field,i,elem]
       end      
@@ -89,10 +89,10 @@ differentiated with respect to the primal version's `flux` variable.
 * `flux_bar`: the result of the vector matrix product between D and `res_bar`
 
 """
-function differentiateElement_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function differentiateElement_rev!(sbp::AbstractSBP{Tsbp}, di::Int,
                                                flux_bar::AbstractArray{Tflx,1},
                                                res_bar::AbstractArray{Tres,1},
-                                               (±)::UnaryFunctor=Add())
+                                               (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(flux_bar,1) == size(res_bar,1) )
     @assert( di > 0 && di <= size(sbp.Q,3) )
@@ -109,10 +109,10 @@ function differentiateElement_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::I
   end
 end
 
-function differentiateElement_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::Int,
+function differentiateElement_rev!(sbp::AbstractSBP{Tsbp}, di::Int,
                                                flux_bar::AbstractArray{Tflx,2},
                                                res_bar::AbstractArray{Tres,2},
-                                               (±)::UnaryFunctor=Add())
+                                               (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( sbp.numnodes == size(flux_bar,2) == size(res_bar,2) )
     @assert( length(flux_bar) == length(res_bar) )
@@ -122,7 +122,7 @@ function differentiateElement_rev!{Tsbp,Tflx,Tres}(sbp::AbstractSBP{Tsbp}, di::I
   Hinv = zero(Tsbp)
   tmp_bar = zeros(Tres, size(flux_bar,1))
   for i = 1:sbp.numnodes
-    Hinv = 1./sbp.w[i]
+    Hinv = 1.0/sbp.w[i]
     for field = 1:size(flux_bar,1)
       #res[field,i] *= Hinv
       tmp_bar[field] = Hinv*res_bar[field,i]

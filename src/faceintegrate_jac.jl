@@ -33,11 +33,10 @@ dimensions are of size `sbp.numnodes`.
 * `dresdu`: Jacobian of element residual w.r.t. the state
 
 """
-function boundaryFaceIntegrate_jac!{
-  Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, face::Integer,
+function boundaryFaceIntegrate_jac!(sbpface::DenseFace{Tsbp}, face::Integer,
                   dfluxdu::AbstractArray{Tflx,1},
                   dresdu::AbstractArray{Tres,2},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( size(sbpface.interp,1) <= size(dresdu,1) )
     @assert( size(sbpface.interp,2) == size(dfluxdu,1) )
@@ -58,11 +57,10 @@ function boundaryFaceIntegrate_jac!{
   end
 end
 
-function boundaryFaceIntegrate_jac!{
-  Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, face::Integer,
+function boundaryFaceIntegrate_jac!(sbpface::DenseFace{Tsbp}, face::Integer,
                   dfluxdu::AbstractArray{Tflx,3},
                   dresdu::AbstractArray{Tres,4},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( size(sbpface.interp,1) <= size(dresdu,3) )
     @assert( size(sbpface.interp,2) == size(dfluxdu,3) )
@@ -89,11 +87,10 @@ function boundaryFaceIntegrate_jac!{
   end
 end
 
-function boundaryFaceIntegrate_jac!{
-  Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp}, face::Integer,
+function boundaryFaceIntegrate_jac!(sbpface::SparseFace{Tsbp}, face::Integer,
                   dfluxdu::AbstractArray{Tflx,1},
                   dresdu::AbstractArray{Tres,2},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( size(dresdu,1) == size(dresdu,2) )
   end
@@ -105,11 +102,10 @@ function boundaryFaceIntegrate_jac!{
   end
 end
 
-function boundaryFaceIntegrate_jac!{
-  Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp}, face::Integer,
+function boundaryFaceIntegrate_jac!(sbpface::SparseFace{Tsbp}, face::Integer,
                   dfluxdu::AbstractArray{Tflx,3},
                   dresdu::AbstractArray{Tres,4},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( size(dresdu,3) == size(dresdu,4) ) 
     @assert( size(dfluxdu,1) == size(dfluxdu,2) ==
@@ -164,15 +160,14 @@ size(dfluxduL,1), while the third and fourth dimensions are of size
 * `dresRduR`: Jacobian of right residual w.r.t. right state
 
 """
-function interiorFaceIntegrate_jac!{
-  Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, iface::Interface,
+function interiorFaceIntegrate_jac!(sbpface::DenseFace{Tsbp}, iface::Interface,
                   dfluxduL::AbstractArray{Tflx,1},
                   dfluxduR::AbstractArray{Tflx,1},
                   dresLduL::AbstractArray{Tres,2},
                   dresLduR::AbstractArray{Tres,2},
                   dresRduL::AbstractArray{Tres,2},
                   dresRduR::AbstractArray{Tres,2},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( size(sbpface.interp,1) <= size(dresLduL,1) )
     @assert( size(sbpface.interp,2) == size(dfluxduL,1) == size(dfluxduR,1) )
@@ -206,15 +201,14 @@ function interiorFaceIntegrate_jac!{
   end
 end
 
-function interiorFaceIntegrate_jac!{
-  Tsbp,Tflx,Tres}(sbpface::DenseFace{Tsbp}, iface::Interface,
+function interiorFaceIntegrate_jac!(sbpface::DenseFace{Tsbp}, iface::Interface,
                   dfluxduL::AbstractArray{Tflx,3},
                   dfluxduR::AbstractArray{Tflx,3},
                   dresLduL::AbstractArray{Tres,4},
                   dresLduR::AbstractArray{Tres,4},
                   dresRduL::AbstractArray{Tres,4},
                   dresRduR::AbstractArray{Tres,4},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( size(sbpface.interp,1) <= size(dresLduL,3) )
     @assert( size(sbpface.interp,2) == size(dfluxduL,3) == size(dfluxduR,3) )
@@ -258,15 +252,14 @@ function interiorFaceIntegrate_jac!{
   end
 end
 
-function interiorFaceIntegrate_jac!{
-  Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp}, iface::Interface,
+function interiorFaceIntegrate_jac!(sbpface::SparseFace{Tsbp}, iface::Interface,
                   dfluxduL::AbstractArray{Tflx,1},
                   dfluxduR::AbstractArray{Tflx,1},
                   dresLduL::AbstractArray{Tres,2},
                   dresLduR::AbstractArray{Tres,2},
                   dresRduL::AbstractArray{Tres,2},
                   dresRduR::AbstractArray{Tres,2},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( size(dresLduL,1) == size(dresLduL,2) ==
              size(dresLduR,1) == size(dresLduR,2) ==
@@ -287,15 +280,14 @@ function interiorFaceIntegrate_jac!{
   end
 end
 
-function interiorFaceIntegrate_jac!{
-  Tsbp,Tflx,Tres}(sbpface::SparseFace{Tsbp}, iface::Interface,
+function interiorFaceIntegrate_jac!(sbpface::SparseFace{Tsbp}, iface::Interface,
                   dfluxduL::AbstractArray{Tflx,3},
                   dfluxduR::AbstractArray{Tflx,3},
                   dresLduL::AbstractArray{Tres,4},
                   dresLduR::AbstractArray{Tres,4},
                   dresRduL::AbstractArray{Tres,4},
                   dresRduR::AbstractArray{Tres,4},
-                  (±)::UnaryFunctor=Add())
+                  (±)::UnaryFunctor=Add()) where {Tsbp,Tflx,Tres}
   @asserts_enabled begin
     @assert( size(dresLduL,3) == size(dresLduL,4) ==
              size(dresLduR,3) == size(dresLduR,4) ==

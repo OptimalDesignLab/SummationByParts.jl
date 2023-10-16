@@ -20,20 +20,20 @@ specified by `dirvec`, and scaling by the `tau` field.
 * `res`: where the result is stored in [vol node, element] format
 
 """
-function edgestabilize!{Tsbp,Tmsh,Tsol}(sbpface::AbstractFace{Tsbp},
+function edgestabilize!(sbpface::AbstractFace{Tsbp},
                                         ifaces::Array{Interface},
                                         dirvec::Array{Tmsh,4},
                                         tau::Array{Tmsh,2},
                                         u::Array{Tsol,2},
                                         res::Array{Tsol,2},
-                                        (±)::UnaryFunctor=Add())
+                                        (±)::UnaryFunctor=Add()) where {Tsbp,Tmsh,Tsol}
   @assert( size(u) == size(res) )
   @assert( size(ifaces,1) == size(dirvec,4) == size(tau,2) )
   @assert( size(dirvec,2) == size(tau,1) == sbpface.numnodes )
   @assert( size(dirvec,3) == 2 )
   dudξ = zeros(Tsol, (2))
-  const left = 1
-  const right = 1
+  left = 1
+  right = 1
   for (findex, face) in enumerate(ifaces)
     for i = 1:sbpface.numnodes
       iR = sbpface.nbrperm[i,face.orient]

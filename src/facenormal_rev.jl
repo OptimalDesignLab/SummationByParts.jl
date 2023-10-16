@@ -27,13 +27,13 @@ for TFACE = (TriFace, TriSparseFace)
     * `xlag_bar`: result of vector Jacobian product; [coord, Lag node, face]
       
     """
-    function calcFaceNormals_rev!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
+    function calcFaceNormals_rev!(sbpface::($TFACE){Tsbp},
                                              mapdegree::Int,
                                              xref::AbstractArray{Tmsh,2},
                                              xlag::AbstractArray{Tmsh,3},
                                              xlag_bar::AbstractArray{Tmsh,3},
                                              xsbp_bar::AbstractArray{Tmsh,3},
-                                             nrm_bar::AbstractArray{Tmsh,3})
+                                             nrm_bar::AbstractArray{Tmsh,3}) where {Tsbp,Tmsh}
       @assert( size(xlag,1) == size(xlag_bar,1) == size(xsbp_bar,1) ==
                size(nrm_bar,1) == 2 )
       @assert( size(xref,1) == 1 )
@@ -92,13 +92,13 @@ end
 
 for TFACE = (TetFace, TetSparseFace)
   @eval begin
-    function calcFaceNormals_rev!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
+    function calcFaceNormals_rev!(sbpface::($TFACE){Tsbp},
                                              mapdegree::Int,
                                              xref::AbstractArray{Tmsh,2},
                                              xlag::AbstractArray{Tmsh,3},
                                              xlag_bar::AbstractArray{Tmsh,3},
                                              xsbp_bar::AbstractArray{Tmsh,3},
-                                             nrm_bar::AbstractArray{Tmsh,3})
+                                             nrm_bar::AbstractArray{Tmsh,3}) where {Tsbp,Tmsh}
       @assert( size(xlag,1) == size(xlag_bar,1) == size(xsbp_bar,1) ==
                size(nrm_bar,1) == 3 )
       @assert( size(xref,1) == 2 )
@@ -229,13 +229,13 @@ for TFACE = (TriFace, TriSparseFace)
     * `xlag_bar`: result of vector Jacobian product; [coord, Lagrangian node]
 
     """
-    function facenormal_rev!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
+    function facenormal_rev!(sbpface::($TFACE){Tsbp},
                                         mapdegree::Int,
                                         xref::AbstractArray{Tmsh,2},
                                         xlag::AbstractArray{Tmsh,2},
                                         xlag_bar::AbstractArray{Tmsh,2},
                                         xsbp_bar::AbstractArray{Tmsh,2},
-                                        nrm_bar::AbstractArray{Tmsh,2})
+                                        nrm_bar::AbstractArray{Tmsh,2}) where {Tsbp,Tmsh}
       @assert( size(xlag,1) == size(xlag_bar,1) == size(xsbp_bar,1) ==
                size(nrm_bar,1) == 2 )
       @assert( size(xref,1) == 1 )
@@ -265,20 +265,20 @@ for TFACE = (TriFace, TriSparseFace)
           coeff_bar[i+1,1] -= nrm_bar[2,nd]*dPdξ[nd]
         end
       end
-      xlag_bar[:,:] += ((V.')\coeff_bar).'
+      xlag_bar[:,:] += ((V')\coeff_bar)'
     end
   end
 end
 
 for TFACE = (TetFace, TetSparseFace)
   @eval begin
-    function facenormal_rev!{Tsbp,Tmsh}(sbpface::($TFACE){Tsbp},
+    function facenormal_rev!(sbpface::($TFACE){Tsbp},
                                         mapdegree::Int,
                                         xref::AbstractArray{Tmsh,2},
                                         xlag::AbstractArray{Tmsh,2},
                                         xlag_bar::AbstractArray{Tmsh,2},
                                         xsbp_bar::AbstractArray{Tmsh,2},
-                                        nrm_bar::AbstractArray{Tmsh,2})
+                                        nrm_bar::AbstractArray{Tmsh,2}) where {Tsbp,Tmsh}
       @assert( size(xlag,1) == size(xlag_bar,1) == size(xsbp_bar,1) ==
                size(nrm_bar,1) == 3 )
       @assert( size(xref,1) == 2 )
@@ -296,7 +296,7 @@ for TFACE = (TetFace, TetSparseFace)
         end
       end
       coeff = zeros(Tmsh, (numdof,3))
-      coeff = V\(xlag.')
+      coeff = V\(xlag')
       # compute the mapped SBP nodes and the tangent vectors at sbp nodes
       x = SymCubatures.calcnodes(sbpface.cub, sbpface.vtx)
       # unlike faces in 2D, the normals of the faces in 3D depend nonlinearly on
@@ -355,7 +355,7 @@ for TFACE = (TetFace, TetSparseFace)
         end
       end
       # compute xlag_bar = coeff_bar*d(coeff)/d(xlag)
-      xlag_bar[:,:] += ((V.')\coeff_bar).'
+      xlag_bar[:,:] += ((V')\coeff_bar)'
     end
   end
 end
