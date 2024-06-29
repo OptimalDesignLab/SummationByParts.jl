@@ -30,3 +30,4 @@
 *.vscode
 examples/.ipynb_checkpoints
 src/minimizenodes.jl
+examples/sandbox.ipynb

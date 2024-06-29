@@ -25,7 +25,7 @@
     cub = SymCubatures.TriSymCub{Float64}(vertices=false, centroid=true)
     SymCubatures.setweights!(cub, [0.5])
     mask = 1:(cub.numparams+cub.numweights)
-    Cubature.solvecubature!(cub, 1, mask, tol=1e-14)
+    Cubature.solvecubature!(cub, 1, mask, tol=1e-15)
     w = SymCubatures.calcweights(cub)
     @test ≈(w,[2]; atol=1e-14)
 
@@ -33,7 +33,7 @@
     cub = SymCubatures.TriSymCub{Float64}()
     SymCubatures.setweights!(cub, [0.5])
     mask = 1:(cub.numparams+cub.numweights)
-    Cubature.solvecubature!(cub, 1, mask, tol=1e-14)
+    Cubature.solvecubature!(cub, 1, mask, tol=1e-15)
     w = SymCubatures.calcweights(cub)
     @test ≈(w,[2/3, 2/3, 2/3]; atol=1e-15)
 
@@ -50,7 +50,7 @@
     cub = SymCubatures.TriSymCub{Float64}(midedges=true, centroid=true)
     SymCubatures.setweights!(cub, [0.5, 0.5, 0.5])
     mask = 1:(cub.numparams+cub.numweights)
-    Cubature.solvecubature!(cub, 3, mask, tol=1e-14)
+    Cubature.solvecubature!(cub, 3, mask, tol=1e-15)
     w = SymCubatures.calcweights(cub)
     @test ≈(w, [1/10, 1/10, 1/10, 4/15, 4/15, 4/15, 18/20]; atol=1e-15)
 
@@ -59,7 +59,7 @@
     SymCubatures.setweights!(cub, [0.5, 0.5, 0.5])
     SymCubatures.setparams!(cub, [0.25, 0.25])
     mask = 1:(cub.numparams+cub.numweights)
-    Cubature.solvecubature!(cub, 5, mask, tol=1e-14)
+    Cubature.solvecubature!(cub, 5, mask, tol=1e-15)
     w  = SymCubatures.calcweights(cub)
     @test ≈(w, [0.029745826049641155,0.029745826049641155,0.029745826049641155,0.44155411568082154,0.44155411568082154,0.44155411568082154,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102,0.097683362468102]; atol=1e-15)
   end
@@ -69,7 +69,7 @@
     cub = SymCubatures.TetSymCub{Float64}()
     SymCubatures.setweights!(cub, [0.5])
     mask = 1:(cub.numparams+cub.numweights)
-    Cubature.solvecubature!(cub, 1, mask, tol=1e-14)
+    Cubature.solvecubature!(cub, 1, mask, tol=1e-15)
     w = SymCubatures.calcweights(cub)
     @test ≈(w, [1/3, 1/3, 1/3, 1/3]; atol=1e-15)
 
@@ -77,7 +77,7 @@
     cub = SymCubatures.TetSymCub{Float64}(vertices=true, centroid=true)
     SymCubatures.setweights!(cub, [0.1 0.1])
     mask = 1:(cub.numparams+cub.numweights)
-    Cubature.solvecubature!(cub, 2, mask, tol=1e-14)
+    Cubature.solvecubature!(cub, 2, mask, tol=1e-15)
     w = SymCubatures.calcweights(cub)
     @test ≈(w, [4/60, 4/60, 4/60, 4/60, 16/15]; atol=1e-14)
 

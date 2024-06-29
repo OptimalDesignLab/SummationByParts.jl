@@ -429,22 +429,22 @@ Levenberg-Marquardt Algorithm (LMA) optimizer
 * `iter`: number of itrations
 """
 function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::AbstractArray{Int64,1}; xinit::Array{T}=[], 
-    xL::T=convert(T, 0.0), xR::T=convert(T, 2.0), nu=1000.0, maxiter::Int64=1000, tol=10*eps(typeof(real(one(T)))), verbose=0) where{T}
+    xL::T=convert(T, 0.0), xR::T=convert(T, 3.0), nu=1000.0, maxiter::Int64=1000, tol=10*eps(typeof(real(one(T)))), verbose=0) where{T}
 
     Jac = SymCubatures.calcjacobian(cub)
 
     # compute accuracy for initial guess 
     F, dF = fun(cub, q, compute_grad=true)
     res = norm(F)
+    res_lst = T[]
     res_old = res
     verbose==1 ? print("solvecubature!:\n") : nothing
     verbose==1 ? print("res norm = ",res,"\n") : nothing
-    # verbose==1 ? print("\titer ",0,": res norm = ",res,"\n") : nothing
     if (res < tol)
         v = zeros(T, (cub.numparams + cub.numweights))
         v[1:cub.numparams] = cub.params
         v[cub.numparams+1:end] = cub.weights
-        return res, v, 0
+        return res, v, 0, res_lst 
     end
 
     # initialize the parameter vector
@@ -455,67 +455,33 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
         v = xinit
     end
 
+    v_old = copy(v)
     alpha = 1.0
-    res_lst = []
     iter_break = 1000
     dv = zeros(size(v))
-    # P = Optimizer.preconditioner(Matrix(dF'))
     iter = 0
     for k = 1:maxiter
         J = dF*Jac
         JtJ = J'*J
+        # nu = 10*(1/norm(diag(JtJ)))*(norm(F)^2)
         H = JtJ + nu*diagm(diag(JtJ))
         g = -J'*F
 
         # solve only for those parameters and weights that are in mask
         fill!(dv, zero(T))
         Hred = H[mask,mask]
-        # dv[mask] = Hred\g[mask]
-        dv[mask] = pinv(Hred,1e-14)*g[mask]
-        # U,S,Vt=svd(Hred,full=true,alg=LinearAlgebra.QRIteration())
-        # invS = zeros(length(S),length(S))
-        # for i=1:length(axes(S,1))
-        #     if abs(S[i])>1e-10
-        #         invS[i,i] = 1.0/S[i]
-        #     end
-        # end 
-        # pinvHred = Vt*invS*U'
-        # dv[mask] = pinvHred*g[mask]
+        dv[mask] = Hred\(g[mask])
+        xx = dv[mask]
+        bb = g[mask]
+        if !(any(isnan, Hred) || any(isinf, Hred) || det(Hred)==0 || any(isnan,bb) || any(isinf, bb))
+            xx = Hred\bb 
+        end
+        dv[mask] = xx
 
         # update cubature definition and check for convergence
         v += dv
 
-        SymCubatures.setparams!(cub, v[1:cub.numparams])
-        SymCubatures.setweights!(cub, v[cub.numparams+1:end])
-        F, dF = fun(cub, q, compute_grad=true)
-        res = norm(F)
-        # print(res)
-        # verbose==1 ? print("\titer ",k,": res norm = ",res,"\n") : nothing
-
-        iter_show = 100
-        if verbose==1
-            if mod(k,iter_show)==0
-                print("\titer ",k,": res norm = ",res,"\n")
-            end
-        end
-
-        if res < tol
-            return res, v, k
-        end
-
-        # trust-region like update
-        if res > res_old
-            v -= dv
-            SymCubatures.setparams!(cub, v[1:cub.numparams])
-            SymCubatures.setweights!(cub, v[cub.numparams+1:end])
-            F, dF = fun(cub, q, compute_grad=true)
-            nu *= 2.0
-        else
-            nu /= 2.0
-            res_old = res
-        end
-
-        eps = 1e-4 
+        eps = 1e-6
         for i=1:length(axes(v,1))
             if v[i]<xL
                 v -= alpha*dv
@@ -527,22 +493,142 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
                 v += alpha*dv
             end
         end
-        alpha=1.0
-        iter+=1
 
+        if typeof(cub)==TriSymCub{T}
+            vg = copy(v[1:cub.numparams])
+            ng = 0
+            vS21 = vg[1:cub.numS21]
+            for i = 1:length(vS21)                
+                if (v[ng+i] >= 1.0)
+                    alphaS21 = copy(alpha)
+                    while (v[ng+i] >= 1.0 && alphaS21>0)
+                        v -= alphaS21*dv
+                        alphaS21 = 0.5*alphaS21
+                        v += alphaS21*dv
+                    end
+                end
+            end
+            ng+=cub.numS21 
+
+            vS111 = vg[ng+1:ng+cub.numS111]
+            for i = 1:2:length(vS111)
+                if ((v[ng+i]+v[ng+i+1])/2 >= 1.0)
+                    alphaS111 = copy(alpha)
+                    while ((v[ng+i]+v[ng+i+1])/2 >= 1.0 && alphaS111>0)
+                        v -= alphaS111*dv
+                        alphaS111 = 0.5*alphaS111 
+                        v += alphaS111*dv
+                    end
+                end
+            end
+            ng+=cub.numS111  
+        end
+
+        if typeof(cub)==TetSymCub{T}
+            vg = copy(v[1:cub.numparams])
+            ng = 0
+            vS31 = vg[1:cub.numS31]
+            for i = 1:length(vS31)                
+                if (v[ng+i] >= 1.0)
+                    alphaS31 = copy(alpha)
+                    while (v[ng+i] >= 1.0&& alphaS31>0)
+                        v -= alphaS31*dv
+                        alphaS31 = 0.5*alphaS31
+                        v += alphaS31*dv
+                    end
+                end
+            end
+            ng+=cub.numS31 
+
+            vS22 = vg[ng+1:ng+cub.numS22]
+            for i = 1:length(vS22)
+                if (v[ng+i] >= 1.0)
+                    alphaS22 = copy(alpha)
+                    while (v[ng+i] >= 1.0 && alphaS22>0)
+                        v -= alphaS22*dv
+                        alphaS22 = 0.5*alphaS22 
+                        v += alphaS22*dv
+                    end
+                end
+            end
+            ng+=cub.numS22 
+            ng+=cub.numfaceS21 
+            ng+=cub.numedge
+
+            vS211 = vg[ng+1:ng+2*cub.numS211]
+            for i = 1:2:length(vS211)
+                if ((v[ng+i]+v[ng+i+1]/2)>= 1.0)
+                    alphaS211 = copy(alpha)
+                    while ((v[ng+i]+v[ng+i+1]/2)>= 1.0 && alphaS211>0)
+                        v -= alphaS211*dv
+                        alphaS211 = 0.5*alphaS211
+                        v += alphaS211*dv
+                    end
+                end
+            end
+            ng+=2*cub.numS211 
+            ng+=2*cub.numfaceS111
+
+            vS1111 = vg[ng+1:ng+3*cub.numS1111] 
+            for i = 1:3:length(vS1111)
+                if ((v[ng+i]+v[ng+i+1]+v[ng+i+2])/2 >= 1.0)
+                    alphaS1111 = copy(alpha)
+                    while ((v[ng+i]+v[ng+i+1]+v[ng+i+2])/2 >= 1.0 && alphaS1111>0)
+                        v -= alphaS1111*dv
+                        alphaS1111 = 0.5*alphaS1111
+                        v += alphaS1111*dv
+                    end
+                end
+            end     
+        end
+
+        SymCubatures.setparams!(cub, v[1:cub.numparams])
+        SymCubatures.setweights!(cub, v[cub.numparams+1:end])
+        F, dF = fun(cub, q, compute_grad=true)
+        res = norm(F)
+        
+        iter_show = 1
         if mod(k,iter_show)==0
             push!(res_lst,res)
         end
+
+        if verbose==1
+            if mod(k,iter_show)==0 
+                print("\titer ",k,": res norm = ",res,"\n")
+            end
+        end
+
+        if res < tol 
+            return res, v, k, res_lst
+        end
+
+        if (res > 1e3 || isnan(res))
+            return res_old, v_old, 0, res_lst
+        end
+
+        # trust-region like update
+        if res > res_old
+            v -= dv
+            SymCubatures.setparams!(cub, v[1:cub.numparams])
+            SymCubatures.setweights!(cub, v[cub.numparams+1:end])
+            F, dF = fun(cub, q, compute_grad=true)
+            nu *= 5.0
+        else
+            nu /= 5.0
+            res_old = res
+        end
+        alpha=1.0
+        iter+=1
+
         if mod(k,iter_break)==0
             res_break = res_lst[end-2:end] .- res
-            if maximum(abs.(res_break)) < 1e-12
-                break
+            if maximum(abs.(res_break))< 1e-14 && norm(res)< 1e-14
+                return res, v, iter, res_lst
             end
-            iter_break += 1000
+            iter_break += 50
         end
 
     end
-    # error("solvecubature failed to find solution in ",maxiter," iterations")
     return res, v, iter
 end
 
