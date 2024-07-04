@@ -228,8 +228,7 @@ Returns a trival face for line-segment elements.
 """
 function getLineSegFace(degree::Int, volcub::LineSymCub{T}, vtx::Array{T,2}) where {T}
   facecub, facevtx = SummationByParts.Cubature.pointCubature()
-  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,
-                                                     degree)
+  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx, degree)
   D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx, degree)
   wface = SymCubatures.calcweights(facecub)
   stencilsize = size(R,2)
@@ -298,18 +297,17 @@ function getTriFaceForDiagE(degree::Int, volcub::TriSymCub{T},
   #@assert( degree >= 1 && degree <= 4 )
   if vertices
     facecub, facevtx = SummationByParts.Cubature.quadrature(2*degree, T, internal=false)
-    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx, degree+1)
+    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx, degree+1, opertype=:DiagE)
   else
     facecub, facevtx = SummationByParts.Cubature.quadrature(2*degree, T, internal=true)
-    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx, degree)
+    R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx, degree, opertype=:DiagE)
   end
   perm_red = zeros(Int, (facecub.numnodes,3))
   for i = 1:facecub.numnodes
     node = argmax(R[i,:])
     perm_red[i,:] = perm[node,:]
   end  
-  D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
-                                                   degree)
+  D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx, degree)
   nbrperm = SymCubatures.getneighbourpermutation(facecub)
   wface = SymCubatures.calcweights(facecub)
   return TriSparseFace{T}(degree, facecub, facevtx, perm_red, D, Dperm)
@@ -347,7 +345,7 @@ function (::Type{TetFace{T}})(degree::Int, volcub::TetSymCub{T},
   end
   
   normal = T[0 0 -1; 0 -1 0; 1 1 1; -1 0 0]'
-  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx, degree, faceopertype=faceopertype)
+  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx, degree, opertype=faceopertype)
   #D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
   #                                                 degree)
   nbrperm = SymCubatures.getneighbourpermutation(facecub)
@@ -391,7 +389,7 @@ function getTetFaceForDiagE(degree::Int, volcub::TetSymCub{T},
   #SymCubatures.setparams!(facecub, T[0.9055050463303657])
   #SymCubatures.setweights!(facecub, T[(1+sqrt(21))/60;(39+sqrt(21))/60])
   #facevtx = T[-1 -1; 1 -1; -1 1]
-  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx, degree, faceopertype=faceopertype)
+  R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx, degree, opertype=faceopertype)
   #println("TEMP change in getTriFaceForDiagE!!!!")
   #facecub, facevtx = quadrature(2*degree, T, internal=true)
   #R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx,

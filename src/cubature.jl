@@ -389,6 +389,49 @@ function solvecubatureweights!(cub::SymCub{T}, q::Int;
   error("solvecubatureweights failed to find solution in ",maxiter," iterations")
 end
 
+function solvecubaturelma!(cub::SymCub{T}, q::Int, mask::AbstractArray{Int64,1};
+  tol=10*eps(typeof(real(one(T)))),hist::Bool=false, maxiter::Int=100, verbose::Bool=false, xinit=[],
+  nu::T=1e3) where {T}
+  @assert( length(mask) <= cub.numparams + cub.numweights )
+
+  n = cub.numparams + cub.numweights
+  v = zeros(T, n)
+  v[1:cub.numparams] = cub.params
+  v[cub.numparams+1:end] = cub.weights
+
+  if xinit==[]
+    xinit = copy(v)
+  end
+  k=0
+  
+  if xinit!=[]
+    SymCubatures.setparams!(cub, xinit[1:cub.numparams])
+    SymCubatures.setweights!(cub, xinit[cub.numparams+1:end])
+    xinit[1:cub.numparams] = cub.params
+    xinit[cub.numparams+1:end] = cub.weights
+  end
+
+  iter_lma = 0
+  fmin,v,k= Optimizer.levenberg_marquardt(Cubature.cubatureresidual,cub,q,mask, xL=0.0, xR=3.0, xinit=xinit, maxiter=maxiter, tol=tol, nu=nu, verbose=verbose)
+  iter_lma+=k
+
+  if (fmin<5e-14) && (minimum(v)>0.0)
+    if verbose
+      println(v)
+    end
+  end
+
+  SymCubatures.setparams!(cub, v[1:cub.numparams])
+  SymCubatures.setweights!(cub, v[cub.numparams+1:end])
+  F, _ = Cubature.cubatureresidual(cub, q)
+  res = norm(F)
+  hist ? println("----------------------------------------------------------------------------------------------") : nothing
+  hist ? println("iter_lma = ",iter_lma, ":  res norm = ",res) : nothing
+  hist ? println("----------------------------------------------------------------------------------------------") : nothing
+  return res
+
+end
+
 """
 ### Cubature.pointCubature
 
@@ -625,7 +668,7 @@ function getTriCubatureGamma(q::Int, T=Float64;
   end
   mask = 1:(cub.numparams+cub.numweights)
   vtx = T[-1 -1; 1 -1; -1 1]
-  Cubature.solvecubature!(cub, cub_degree, mask, tol=tol)
+  Cubature.solvecubaturelma!(cub, cub_degree, mask, tol=tol)
   return cub, vtx
 end
 
@@ -746,7 +789,7 @@ function getTriCubatureOmega(q::Int, T=Float64;
   end
   mask = 1:(cub.numparams+cub.numweights)
   vtx = T[-1 -1; 1 -1; -1 1]
-  Cubature.solvecubature!(cub, cub_degree, mask, tol=tol)
+  Cubature.solvecubaturelma!(cub, cub_degree, mask, tol=tol)
   return cub, vtx
 end
 
@@ -880,7 +923,7 @@ function getTriCubatureForTetFaceDiagE(q::Int, T=Float64; faceopertype::Symbol=:
   mask = SymCubatures.getInternalParamMask(cub)
   append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
   vtx = T[-1 -1; 1 -1; -1 1]
-  Cubature.solvecubature!(cub, cub_degree, mask, tol=tol)
+  Cubature.solvecubaturelma!(cub, cub_degree, mask, tol=tol)
   return cub, vtx
 end
 
@@ -1611,7 +1654,7 @@ function getTriCubatureDiagE(q::Int, T=Float64; vertices::Bool=true,
   mask = SymCubatures.getInternalParamMask(cub)
   append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
   vtx = T[-1 -1; 1 -1; -1 1]
-  Cubature.solvecubature!(cub, cub_degree, mask, tol=tol)
+  Cubature.solvecubaturelma!(cub, cub_degree, mask, tol=tol)
   return cub, vtx
 end
 
@@ -1798,7 +1841,7 @@ function getTetCubatureGamma(q::Int, T=Float64;
   end
   mask = 1:(cub.numparams+cub.numweights)
   vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
-  Cubature.solvecubature!(cub, cub_degree, mask, tol=tol)
+  Cubature.solvecubaturelma!(cub, cub_degree, mask, tol=tol)
   return cub, vtx
 end
 
@@ -1907,7 +1950,7 @@ function getTetCubatureOmega(q::Int, T=Float64;
   end
   mask = 1:(cub.numparams+cub.numweights)
   vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
-  Cubature.solvecubature!(cub, cub_degree, mask, tol=tol)
+  Cubature.solvecubaturelma!(cub, cub_degree, mask, tol=tol)
   return cub, vtx
 end
 
@@ -1992,7 +2035,7 @@ function getTetCubatureDiagE(q::Int, T=Float64; faceopertype::Symbol = :DiagE, t
       SymCubatures.setweights!(cub, T[0.011702201915075788,0.007003762166809546,0.02826881609586945,0.005737494407876313,0.009215129850744767,0.001683701003412158,0.019901864184903844,0.0455776334197571,0.0008896293665706435,0.08215560123254996])
       
       cub_degree = 8
-      tol = 1e-14      
+      tol = 1e-14 
     else
       error("polynomial degree must be <= 4 (presently)\n")
     end
@@ -2226,7 +2269,7 @@ function getTetCubatureDiagE(q::Int, T=Float64; faceopertype::Symbol = :DiagE, t
   mask = SymCubatures.getInternalParamMask(cub)
   append!(mask, (cub.numparams+1):(cub.numparams+cub.numweights))
   vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
-  Cubature.solvecubature!(cub, cub_degree, mask, tol=tol, hist=false)
+  Cubature.solvecubaturelma!(cub, cub_degree, mask, tol=tol, hist=false)
   return cub, vtx
 end
   

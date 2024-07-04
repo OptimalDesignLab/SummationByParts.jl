@@ -503,4 +503,69 @@
     end
   end
 
+  @testset "Testing SummationByParts.getfaceextrapolation function" begin
+    opertypes = [:DiagE,:Omega,:Gamma]
+    for ioptype=2:length(opertypes)-1
+      for id = 2:3
+        for ip =1:4
+          q = 2*ip-1
+          opertype=opertypes[ioptype]
+          faceopertype=:Omega
+          vertices=true
+          if faceopertype==:Omega || faceopertype==:Gamma 
+            vertices=false 
+          end
+          T = Float64
+          if opertype==:Omega 
+            if id==2
+              volcub, volvtx = getTriCubatureOmega(q, T)
+            elseif id==3 
+              volcub, volvtx = getTetCubatureOmega(q, T)
+            end
+          elseif opertype==:Gamma 
+            if id==2
+              volcub, volvtx = getTriCubatureGamma(q, T)
+            elseif id==3 
+              volcub, volvtx = getTetCubatureGamma(q, T)
+            end
+          elseif opertype==:DiagE 
+            if id==2
+              volcub, volvtx = getTriCubatureDiagE(q, T, vertices=vertices)
+            elseif id==3
+              volcub, volvtx = getTetCubatureDiagE(q, T, faceopertype=faceopertype)
+            end
+          end
+          if id==2
+            facecub, facevtx = SummationByParts.Cubature.quadrature(2*ip, T, internal=!vertices)  
+          elseif id==3
+            if opertype==:DiagE 
+              facecub, facevtx = getTriCubatureForTetFaceDiagE(2*ip, T, faceopertype=faceopertype)  
+            else 
+              facecub, facevtx = getTriCubatureOmega(2*ip, T)
+            end
+          end
+
+          Rs = SummationByParts.getfaceextrapolation(ip, q, id, opertype=opertype, faceopertype=faceopertype)
+          if id==2
+            xf1 = SymCubatures.calcnodes(facecub, volvtx[[1;2],:])
+            xf2 = SymCubatures.calcnodes(facecub, volvtx[[2;3],:])
+            xf3 = SymCubatures.calcnodes(facecub, volvtx[[3;1],:])
+            xfs = [xf1, xf2, xf3]
+          elseif id==3
+            xf1 = SymCubatures.calcnodes(facecub, volvtx[[1;2;3],:])
+            xf2 = SymCubatures.calcnodes(facecub, volvtx[[1;4;2],:])
+            xf3 = SymCubatures.calcnodes(facecub, volvtx[[2;3;4],:])
+            xf4 = SymCubatures.calcnodes(facecub, volvtx[[1;3;4],:])
+            xfs = [xf1, xf2, xf3, xf4]
+          end
+
+          xv = SymCubatures.calcnodes(volcub, volvtx)
+          for ifacet=1:id+1
+            @test ≈(Rs[:,:,ifacet]*xv', xfs[ifacet]', atol=1e-13)
+          end
+        end
+      end
+    end
+  end
+
 end
