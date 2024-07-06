@@ -54,52 +54,85 @@ function write_tri_data(;quad_degree=nothing, vertices::Bool=true, print_only::B
             pad_len = 10
             pad_len2 = 50
             open(file_compact,"w") do file_compact 
-                write(file_compact, string(rpad("vertices",pad_len), rpad("midedges",pad_len), rpad("numS21",pad_len), rpad("numedge",pad_len), rpad("numS111",pad_len),
-                                rpad("centroid",pad_len),"\n"))
+                write(file_compact, string(rpad("vertices",pad_len), rpad("midedges",pad_len), rpad("numS21",pad_len), rpad("numedge",pad_len), rpad("numS111",pad_len),rpad("centroid",pad_len),"\n"))
                 write(file_compact, string(rpad("$vert_node",pad_len), rpad("$midedges_node",pad_len), rpad("$numS21_node",pad_len), rpad("$numedge_node",pad_len), 
-                                rpad("$numS111_node",pad_len), rpad("$centroid_node",pad_len),"\n\n"))
+                                rpad("$numS111_node",pad_len),rpad("$centroid_node",pad_len),"\n\n"))
                 
                 kp = 0
                 kw = 0
+                if cub.vertices
+                    write(file_compact, "\nVertices \n")
+                end
                 if vert_node
                     w_vert = weights[1]
                     write(file_compact, string(rpad("[0.0]",pad_len2), rpad("$w_vert",pad_len2),"\n"))
                     kw+=1
-                    kp+=1
+                end
+
+                if cub.midedges
+                    write(file_compact, "\nMidedges \n")
                 end
                 if midedges_node
                     w_mid = weights[kw+1]
                     write(file_compact, string(rpad("[0.5]",pad_len2), rpad("$w_mid",pad_len2),"\n"))
                     kw+=1
-                    kp+=1
                 end
+
+                if cub.numS21 != 0
+                    write(file_compact, "\nS21 \n")
+                end
+                cnt=0
                 for i=kw+1:kw+numS21_node
                     w_S21 = weights[i]
-                    par1 = params[i-kp]
+                    par1 = params[kp+1+cnt]./2
                     p_S21 = string("[", "$par1","]")
                     write(file_compact, string(rpad(p_S21,pad_len2), rpad("$w_S21",pad_len2),"\n"))
-                end
-                kw+=numS21_node
-                
-                for i=kw+1:kw+numedge_node
-                    w_edge = weights[i]
-                    par1 = params[i-kp]
-                    p_edge = string("[","$par1","]")
-                    write(file_compact, string(rpad(p_edge,pad_len2), rpad("$w_edge",pad_len2),"\n"))
-                end
-                kw+=numedge_node
-                
-                cnt=0
-                for i=kw+1:2:kw+2*numS111_node
-                    w_S111 = weights[kw+1+cnt]
-                    par1 = params[i-kp]
-                    par2 = params[i+1-kp]
-                    p_S111 = string("[","$par1",", ","$par2","]")
-                    write(file_compact, string(rpad(p_S111,pad_len2), rpad("$w_S111",pad_len2),"\n"))
+                    if (2*par1)>=1.0
+                        error("Invalid quadrature, problem with S21 orbit.")
+                    end
                     cnt+=1
                 end
+                kw+=numS21_node
+                kp+=numS21_node 
+                
+                if cub.numedge != 0
+                    write(file_compact, "\nEdge \n")
+                end
+                cnt=0
+                for i=kw+1:kw+numedge_node
+                    w_edge = weights[i]
+                    par1 = params[kp+1+cnt]
+                    p_edge = string("[","$par1","]")
+                    write(file_compact, string(rpad(p_edge,pad_len2), rpad("$w_edge",pad_len2),"\n"))
+                    if (par1)>=1.0
+                        error("Invalid quadrature, problem with edge orbit.")
+                    end
+                    cnt+=1
+                end
+                kw+=numedge_node
+                kp+=numedge_node
+                
+                if cub.numS111 != 0
+                    write(file_compact, "\nS111 \n")
+                end
+                cnt=0
+                for i=kw+1:kw+numS111_node
+                    w_S111 = weights[i]
+                    par1 = params[kp+1+cnt]./2
+                    par2 = params[kp+2+cnt]./2
+                    p_S111 = string("[","$par1",", ","$par2","]")
+                    write(file_compact, string(rpad(p_S111,pad_len2), rpad("$w_S111",pad_len2),"\n"))
+                    cnt+=2
+                    if (par1+par2)>=1.0
+                        error("Invalid quadrature, problem with S111 orbit.")
+                    end
+                end
                 kw+=numS111_node
+                kp+=2*numS111_node
 
+                if cub.centroid
+                    write(file_compact, "\nCentroid \n")
+                end
                 if centroid_node
                     w_cent = weights[end]
                     par1 = 1.0/3.0
@@ -110,10 +143,10 @@ function write_tri_data(;quad_degree=nothing, vertices::Bool=true, print_only::B
             end
             open(file_expanded,"w") do file_expanded
                 pad_len = 12
-                write(file_expanded, string(rpad("vertices",pad_len), rpad("midedges",pad_len), rpad("numS21",pad_len), rpad("numedge",pad_len), rpad("numS111",pad_len),
-                                rpad("centroid",pad_len),"\n"))
-                write(file_expanded, string(rpad("$vert_node (3)",pad_len), rpad("$midedges_node (3)",pad_len), rpad("$numS21_node (3)",pad_len), rpad("$numedge_node (6)",pad_len), 
-                                rpad("$numS111_node (6)",pad_len), rpad("$centroid_node (1)",pad_len),"\n\n"))
+                write(file_expanded, string(rpad("centroid",pad_len),rpad("vertices",pad_len), rpad("midedges",pad_len), rpad("numS21",pad_len), rpad("numedge",pad_len), 
+                                    rpad("numS111",pad_len), "\n"))
+                write(file_expanded, string(rpad("$centroid_node (1)",pad_len),rpad("$vert_node (3)",pad_len), rpad("$midedges_node (3)",pad_len), rpad("$numS21_node (3)",pad_len), rpad("$numedge_node (6)",pad_len), 
+                                    rpad("$numS111_node (6)",pad_len), "\n\n"))
                 
                 xy = SymCubatures.calcnodes(cub, vtx)
                 ws = SymCubatures.calcweights(cub)
@@ -206,95 +239,161 @@ function write_tet_data(;quad_degree=nothing, print_only::Bool=false)
                 
                 kp = 0
                 kw = 0
+                if cub.vertices != 0
+                    write(file_compact, "\nVertices \n")
+                end
                 if vert_node
                     w = weights[1]
                     write(file_compact, string(rpad("[0.0]",pad_len2), rpad("$w",pad_len2),"\n"))
                     kw+=1
-                    kp+=1
                 end
 
+                if cub.numS31 != 0
+                    write(file_compact, "\nS31 \n")
+                end
+                cnt=0
                 for i=kw+1:kw+numS31_node
                     w = weights[i]
-                    par1 = params[i-kp]
+                    par1 = params[kp+1+cnt]./3
                     par = string("[", "$par1","]")
                     write(file_compact, string(rpad(par,pad_len2), rpad("$w",pad_len2),"\n"))
+                    if (3*par1)>=1.0
+                        error("Invalid quadrature, problem with S31 orbit.")
+                    end
+                    cnt+=1
                 end
                 kw+=numS31_node
+                kp+=numS31_node 
 
+                if cub.midedges != 0
+                    write(file_compact, "\nMidedges \n")
+                end
                 if midedges_node
                     w = weights[kw+1]
                     write(file_compact, string(rpad("[0.5]",pad_len2), rpad("$w",pad_len2),"\n"))
                     kw+=1
-                    kp+=1
                 end
 
+                if cub.numS22 != 0
+                    write(file_compact, "\nS22 \n")
+                end
+                cnt=0
                 for i=kw+1:kw+numS22_node
                     w = weights[i]
-                    par1 = params[i-kp]
+                    par1 = params[kp+1+cnt]./2
                     par = string("[", "$par1","]")
                     write(file_compact, string(rpad(par,pad_len2), rpad("$w",pad_len2),"\n"))
+                    if (2*par1)>=1.0
+                        error("Invalid quadrature, problem with S22 orbit.")
+                    end
+                    cnt+=1
                 end
                 kw+=numS22_node
+                kp+=numS22_node
 
+                if cub.numfaceS21 != 0
+                    write(file_compact, "\nFaceS21 \n")
+                end
+                cnt=0
                 for i=kw+1:kw+numfaceS21_node
                     w = weights[i]
-                    par1 = params[i-kp]
+                    par1 = params[kp+1+cnt]./2
                     par = string("[", "$par1","]")
                     write(file_compact, string(rpad(par,pad_len2), rpad("$w",pad_len2),"\n"))
+                    if (2*par1)>=1.0
+                        error("Invalid quadrature, problem with S21 orbit.")
+                    end
+                    cnt+=1
                 end
                 kw+=numfaceS21_node
+                kp+=numfaceS21_node 
                 
+                if cub.numedge != 0
+                    write(file_compact, "\nEdge \n")
+                end
+                cnt=0
                 for i=kw+1:kw+numedge_node
                     w = weights[i]
-                    par1 = params[i-kp]
+                    par1 = params[kp+1+cnt]
                     par = string("[","$par1","]")
                     write(file_compact, string(rpad(par,pad_len2), rpad("$w",pad_len2),"\n"))
+                    if (par1)>=1.0
+                        error("Invalid quadrature, problem with edge orbit.")
+                    end
+                    cnt+=1
                 end
                 kw+=numedge_node
+                kp+=numedge_node
                 
+                if cub.numS211 != 0
+                    write(file_compact, "\nS211 \n")
+                end
                 cnt=0
-                for i=kw+1:2:kw+2*numS211_node
-                    w = weights[kw+1+cnt]
-                    par1 = params[i-kp]
-                    par2 = params[i+1-kp]
+                for i=kw+1:kw+numS211_node
+                    w = weights[i]
+                    par1 = params[kp+1+cnt]./2
+                    par2 = params[kp+2+cnt]./2
                     par = string("[","$par1",", ","$par2","]")
                     write(file_compact, string(rpad(par,pad_len2), rpad("$w",pad_len2),"\n"))
-                    cnt+=1
+                    cnt+=2
+                    if (2*par1+par2)>=1.0
+                        error("Invalid quadrature, problem with S211 orbit.")
+                    end
                 end
                 kw+=numS211_node
-
-                cnt=0
-                for i=kw+1:3:kw+3*numS1111_node
-                    w = weights[kw+1+cnt]
-                    par1 = params[i-kp]
-                    par2 = params[i+1-kp]
-                    par3 = params[i+2-kp]
-                    par = string("[","$par1",", ","$par2",", ","$par3","]")
-                    write(file_compact, string(rpad(par,pad_len2), rpad("$w",pad_len2),"\n"))
-                    cnt+=1
-                end
-                kw+=numS1111_node
+                kp+=2*numS211_node
                 
+                if cub.numfaceS111 != 0
+                    write(file_compact, "\nFaceS111 \n")
+                end
+                cnt=0
+                for i=kw+1:kw+numfaceS111_node
+                    w_faceS111 = weights[i]
+                    par1 = params[kp+1+cnt]./2
+                    par2 = params[kp+2+cnt]./2
+                    p_faceS111 = string("[","$par1",", ","$par2","]")
+                    write(file_compact, string(rpad(p_faceS111,pad_len2), rpad("$w_faceS111",pad_len2),"\n"))
+                    cnt+=2
+                    if (par1+par2)>=1.0
+                        error("Invalid quadrature, problem with S111 orbit.")
+                    end
+                end
+                kw+=numfaceS111_node
+                kp+=2*numfaceS111_node
+                
+                if cub.facecentroid
+                    write(file_compact, "\nFacecentroid \n")
+                end
                 if facetcentroid_node
-                    w = weights[end]
+                    w = weights[kw+1]
                     par1 = 1.0/3.0
                     par = string("[", "$par1","]")
                     write(file_compact, string(rpad(par,pad_len2), rpad("$w",pad_len2),"\n"))
                     kw+=1
-                    kp+=1
                 end
 
+                if cub.numS1111 != 0
+                    write(file_compact, "\nS1111 \n")
+                end
                 cnt=0
-                for i=kw+1:2:kw+2*numfaceS111_node
-                    w = weights[kw+1+cnt]
-                    par1 = params[i-kp]
-                    par2 = params[i+1-kp]
-                    par = string("[","$par1",", ","$par2","]")
+                for i=kw+1:kw+numS1111_node
+                    w = weights[i]
+                    par1 = params[kp+1+cnt]./2
+                    par2 = params[kp+2+cnt]./2
+                    par3 = params[kp+3+cnt]./2
+                    par = string("[","$par1",", ","$par2",", ","$par3","]")
                     write(file_compact, string(rpad(par,pad_len2), rpad("$w",pad_len2),"\n"))
-                    cnt+=1
+                    cnt+=3
+                    if (par1+par2+par3)>=1.0
+                        error("Invalid quadrature, problem with S1111 orbit.")
+                    end
                 end
-                kw+=numfaceS111_node
+                kw+=numS1111_node
+                kp+=3*numS1111_node
 
+                if cub.centroid
+                    write(file_compact, "\nCentroid \n")
+                end
                 if centroid_node
                     w = weights[end]
                     par1 = 1.0/4.0
@@ -361,9 +460,9 @@ function write_tet_data(;quad_degree=nothing, print_only::Bool=false)
             pad_len2 = 50
             open(file_compact,"a") do file_compact 
                 write(file_compact, string("\n\n"))
-                write(file_compact, string("=======================================================================================\n"))
+                write(file_compact, string("===========================================================================================\n"))
                 write(file_compact, string("   Facet quadrature data (degree $qf quadrature on a triangle with $numnodes nodes)\n"))
-                write(file_compact, string("=======================================================================================\n"))
+                write(file_compact, string("===========================================================================================\n"))
                 write(file_compact, string(rpad("vertices",pad_len), rpad("midedges",pad_len), rpad("numS21",pad_len), rpad("numedge",pad_len), rpad("numS111",pad_len),
                                 rpad("centroid",pad_len),"\n"))
                 write(file_compact, string(rpad("$vert_node",pad_len), rpad("$midedges_node",pad_len), rpad("$numS21_node",pad_len), rpad("$numedge_node",pad_len), 
@@ -371,45 +470,79 @@ function write_tet_data(;quad_degree=nothing, print_only::Bool=false)
                 
                 kp = 0
                 kw = 0
+                if cub.vertices
+                    write(file_compact, "\nVertices \n")
+                end
                 if vert_node
                     w_vert = weights[kw+1]
                     write(file_compact, string(rpad("[0.0]",pad_len2), rpad("$w_vert",pad_len2),"\n"))
                     kw+=1
-                    kp+=1
+                end
+
+                if cub.midedges
+                    write(file_compact, "\nMidedges \n")
                 end
                 if midedges_node
                     w_mid = weights[kw+1]
                     write(file_compact, string(rpad("[0.5]",pad_len2), rpad("$w_mid",pad_len2),"\n"))
                     kw+=1
-                    kp+=1
                 end
+
+                if cub.numS21 != 0
+                    write(file_compact, "\nS21 \n")
+                end
+                cnt=0
                 for i=kw+1:kw+numS21_node
                     w_S21 = weights[i]
-                    par1 = params[i-kp]
+                    par1 = params[kp+1+cnt]./2
                     p_S21 = string("[", "$par1","]")
                     write(file_compact, string(rpad(p_S21,pad_len2), rpad("$w_S21",pad_len2),"\n"))
-                end
-                kw+=numS21_node
-                
-                for i=kw+1:kw+numedge_node
-                    w_edge = weights[i]
-                    par1 = params[i-kp]
-                    p_edge = string("[","$par1","]")
-                    write(file_compact, string(rpad(p_edge,pad_len2), rpad("$w_edge",pad_len2),"\n"))
-                end
-                kw+=numedge_node
-                
-                cnt=0
-                for i=kw+1:2:kw+2*numS111_node
-                    w_S111 = weights[kw+1+cnt]
-                    par1 = params[i-kp]
-                    par2 = params[i+1-kp]
-                    p_S111 = string("[","$par1",", ","$par2","]")
-                    write(file_compact, string(rpad(p_S111,pad_len2), rpad("$w_S111",pad_len2),"\n"))
+                    if (2*par1)>=1.0
+                        error("Invalid quadrature, problem with S21 orbit.")
+                    end
                     cnt+=1
                 end
+                kw+=numS21_node
+                kp+=numS21_node 
+                
+                if cub.numedge != 0
+                    write(file_compact, "\nEdge \n")
+                end
+                cnt=0
+                for i=kw+1:kw+numedge_node
+                    w_edge = weights[i]
+                    par1 = params[kp+1+cnt]
+                    p_edge = string("[","$par1","]")
+                    write(file_compact, string(rpad(p_edge,pad_len2), rpad("$w_edge",pad_len2),"\n"))
+                    if (par1)>=1.0
+                        error("Invalid quadrature, problem with edge orbit.")
+                    end
+                    cnt+=1
+                end
+                kw+=numedge_node
+                kp+=numedge_node
+                
+                if cub.numS111 != 0
+                    write(file_compact, "\nS111 \n")
+                end
+                cnt=0
+                for i=kw+1:kw+numS111_node
+                    w_S111 = weights[i]
+                    par1 = params[kp+1+cnt]./2
+                    par2 = params[kp+2+cnt]./2
+                    p_S111 = string("[","$par1",", ","$par2","]")
+                    write(file_compact, string(rpad(p_S111,pad_len2), rpad("$w_S111",pad_len2),"\n"))
+                    cnt+=2
+                    if (par1+par2)>=1.0
+                        error("Invalid quadrature, problem with S111 orbit.")
+                    end
+                end
                 kw+=numS111_node
+                kp+=2*numS111_node
 
+                if cub.centroid
+                    write(file_compact, "\nCentroid \n")
+                end
                 if centroid_node
                     w_cent = weights[end]
                     par1 = 1.0/3.0
@@ -458,5 +591,5 @@ function write_tet_data(;quad_degree=nothing, print_only::Bool=false)
 
 end
 
-# write_tri_data(quad_degree=9, vertices=false, print_only=true)
-# write_tet_data(quad_degree=10,print_only=true)
+# write_tri_data(quad_degree=nothing, vertices=true, print_only=true)
+# write_tet_data(quad_degree=nothing,print_only=true)

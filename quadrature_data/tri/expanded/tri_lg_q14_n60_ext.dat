@@ -1,5 +1,5 @@
-vertices    midedges    numS21      numedge     numS111     centroid    
-false (3)   false (3)   6 (3)       4 (6)       3 (6)       false (1)   
+centroid    vertices    midedges    numS21      numedge     numS111     
+false (1)   false (3)   false (3)   6 (3)       4 (6)       3 (6)       
 
 -0.6561401305592651      0.3122802611185303       0.0545425277430946       
 -0.6561401305592651      -0.6561401305592651      0.0545425277430946       

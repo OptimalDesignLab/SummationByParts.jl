@@ -266,8 +266,32 @@ function buildfacederivatives(facecub::LineSymCub{T}, cub::TriSymCub{T},
   return D, perm
 end
 
+"""
+### SummationByParts.buildfacederivatives
+Constructs the extrapolation operator on all facets of the reference element. 
+
+**Inputs**
+* `p`: the polynomial degree of the operator 
+* `q`: the volume quadrature accuracy for the derivative operator 
+* `dim`: the dimension, 2 or 3
+* `opertype`: (optional) the volume operator type, can be :Omega (default), :DiagE, or :Gamma
+* `facetopertype`: (optional) the operator type on the facet, can be :Omega (default), :DiagE
+
+**Returns**
+* `Rcube`: a cube containing the R matrices on each facet on the reference simplex
+"""
 function getfaceextrapolation(p::Int,q::Int,dim::Int; opertype::Symbol=:Omega,faceopertype::Symbol=:Omega, T=Float64) 
 
+  if (opertype==:Omega || opertype==:Gamma)
+    if faceopertype!=:Omega 
+      error("Unsupported face operator type. It must be set to :Omega.")
+    end
+  elseif opertype==:DiagE 
+    if faceopertype==:Gamma 
+      error("Unsupported face operator type. It must be set to either :Omega or :DiagE.")
+    end
+  end
+  
   vertices=true
   if faceopertype==:Omega || faceopertype==:Gamma 
     vertices=false 

@@ -405,7 +405,7 @@ function pso(fun::Function, ne::Int, cub::SymCub{T}, q::Int, mask::AbstractArray
 end
 
 """
-### SummationByParts.pso
+### SummationByParts.levenberg_marquardt
 
 Levenberg-Marquardt Algorithm (LMA) optimizer
 
@@ -712,23 +712,5 @@ function preconditioner_shannon(V::Array{Float64})
     P = F.V*inv(diagm(F.S))
     return P
 end
-
-# function preconditioner(P::Array{Float64})
-#     for k=1:length(axes(P,1))
-#         indx = argmax(abs.(P))
-#         i = indx[1]
-#         j = indx[2]
-
-#         n = size(P, 1)
-#         for r=1:n
-#             if r != i
-#                 ratio = P[r, j] / P[i, j]
-#                 P[r, :] -= ratio * P[i, :]
-#             end
-#         end
-#         P[i,:] ./= P[i,j]
-#     end
-#     return P
-# end
 
 end
