@@ -20,7 +20,9 @@ This package focuses on multidimensional SBP operators for the triangle and tetr
 
 ## Using the Package
 
-The following documentation provides a brief overview of how to use the SummationByParts package.  This assumes the user has some familiarity with Julia. 
+For example usage of SummationByPart.jl package, please refer to the [examples](https://github.com/yourusername/yourrepository/tree/main/examples) directory.
+
+<!-- The following documentation provides a brief overview of how to use the SummationByParts package.  This assumes the user has some familiarity with Julia. 
 
 ### Building SBP operators
 
@@ -29,6 +31,7 @@ The construction of an SBP operator is best explained with an example.  The foll
     using SummationByParts
     sbp = TriSBP{Float64}(degree=3)
     
+
 Here is another example, which shows how to construct a degree 2 SBP element on a tetrahedron (in this example, it has been assumed that the `using SummationByParts` statement has already been executed).
 
     sbp = TetSBP{Float64}(degree=2)
@@ -44,6 +47,6 @@ In general, we recommend using the SBP operators with methods provided by the pa
 * `sbp.numnodes` : number of nodes for the operator
 * `sbp.vtx` : vertices of the reference element in computational space
 * `sbp.w` : cubature weights, i.e. the diagonal SBP norm, stored as an array
-* `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction
+* `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate direction -->
 
 
