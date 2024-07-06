@@ -16,6 +16,7 @@ SummationByParts is a [Julia](http://julialang.org) package that implements summ
 
 This package focuses on multidimensional SBP operators for the triangle and tetrahedral.  For the theory behind multidimensional SBP operators please see
 * J. Hicken, D. Del Rey Fernández, and D. Zingg, <a href='http://dx.doi.org/10.1137/15m1038360'>"Multidimensional Summation-by-Parts Operators: General Theory and Application to Simplex Elements,"</a> <em>SIAM Journal on Scientific Computing</em>, July 06, 2016.<br><br>
+* D. Del Rey Fernández, J. Hicken, and D. Zingg, <a href='https://doi.org/10.1007/s10915-017-0523-7'>"Simultaneous Approximation Terms for Multi-dimensional Summation-by-Parts Operators,"</a> <em>Journal of Scientific Computing</em>, 2018.<br><br>
 
 ## Using the Package
 
