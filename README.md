@@ -20,7 +20,7 @@ This package focuses on multidimensional SBP operators for the triangle and tetr
 
 ## Using the Package
 
-For example usage of SummationByPart.jl package, please refer to the [examples](https://github.com/yourusername/yourrepository/tree/main/examples) directory.
+For example usage of SummationByPart.jl package, please refer to the [examples](https://github.com/OptimalDesignLab/SummationByParts.jl/tree/master/examples) directory.
 
 <!-- The following documentation provides a brief overview of how to use the SummationByParts package.  This assumes the user has some familiarity with Julia. 
 
