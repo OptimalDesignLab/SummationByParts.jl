@@ -41,9 +41,9 @@ function plot_tri_nodes(;q::Int=1,n::Int=-1,facet_type::String="lg",x=[])
                 push!(ns,parse(Int,split_name2[1]))
             end
             n = minimum(ns)
-            path_file = string("tri_$facet_type","_q$q","_n$n","_ext.txt")
+            path_file = string("tri_$facet_type","_q$q","_n$n","_ext.dat")
         else
-            path_file = string("tri_$facet_type","_q$q","_n$n","_ext.txt")
+            path_file = string("tri_$facet_type","_q$q","_n$n","_ext.dat")
         end
         path = joinpath(dir,path_file)
 
@@ -122,9 +122,9 @@ function plot_tet_nodes(;q::Int=1,n::Int=-1,x=[])
                 push!(ns,parse(Int,split_name2[1]))
             end
             n = minimum(ns)
-            path_file = string("tet","_q$q","_n$n","_ext.txt")
+            path_file = string("tet","_q$q","_n$n","_ext.dat")
         else
-            path_file = string("tet","_q$q","_n$n","_ext.txt")
+            path_file = string("tet","_q$q","_n$n","_ext.dat")
         end
         path = joinpath(dir,path_file)
 
@@ -170,5 +170,5 @@ function plot_tet_nodes(;q::Int=1,n::Int=-1,x=[])
 end
 
 # plot_tet_nodes(q=10,n=145)
-# plot_tet_nodes(q=3)
+plot_tet_nodes(q=3)
 # plot_tri_nodes(q=20,facet_type="lg")

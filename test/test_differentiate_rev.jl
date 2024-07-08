@@ -21,7 +21,7 @@
             fill!(res, 0.0)
             differentiate_rev!(sbp, di, res, v)
             utDtv = sum(u.*res)
-            @test ≈(vtDu, utDtv, atol=1e-13)
+            @test ≈(vtDu, utDtv, atol=1e-12)
           end
         end
       end

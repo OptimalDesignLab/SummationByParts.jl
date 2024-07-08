@@ -33,3 +33,4 @@ src/minimizenodes.jl
 examples/sandbox.ipynb
 quadrature_data/test
 quadrature_data/old
+src/sandbox.jl

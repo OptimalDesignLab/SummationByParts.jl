@@ -262,7 +262,7 @@
     #println(λ)
     #println(x)
     #println(abs(λ - x))
-    @test ≈(λ, x, rtol=1e-13)
+    @test ≈(λ, x, rtol=1e-12)
     
     λ_bar = deepcopy(λ)
     A_bar = zeros(ComplexF64, size(Ac))

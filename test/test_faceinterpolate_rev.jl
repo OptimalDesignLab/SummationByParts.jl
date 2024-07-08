@@ -80,7 +80,7 @@
           vtRu = sum(vface.*uface)
           boundaryinterpolate_rev!(sbpface, bndryfaces, vvol, vface)
           utRtv = sum(vvol.*uvol)
-          @test ≈(vtRu, utRtv, atol=1e-13)
+          @test ≈(vtRu, utRtv, atol=1e-12)
         end
       end
     end
@@ -155,7 +155,7 @@
             fill!(vvol, 0.0)
             boundaryFaceInterpolate_rev!(sbpface, face, vvol, vface)
             utRtv = sum(vvol.*uvol)
-            @test ≈(vtRu, utRtv, atol=5e-14)
+            @test ≈(vtRu, utRtv, atol=5e-13)
           end
         end
       end

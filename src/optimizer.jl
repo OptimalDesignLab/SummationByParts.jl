@@ -429,7 +429,7 @@ Levenberg-Marquardt Algorithm (LMA) optimizer
 * `iter`: number of itrations
 """
 function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::AbstractArray{Int64,1}; xinit::Array{T}=[], 
-    xL::T=convert(T, 0.0), xR::T=convert(T, 3.0), nu=1000.0, maxiter::Int64=1000, tol=10*eps(typeof(real(one(T)))), verbose=0) where{T}
+    xL::Float64=0.0, xR::Float64=3.0, nu=1000.0, maxiter::Int64=1000, tol=10*eps(typeof(real(one(T)))), verbose=0) where{T}
 
     Jac = SymCubatures.calcjacobian(cub)
 
@@ -470,7 +470,10 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
         # solve only for those parameters and weights that are in mask
         fill!(dv, zero(T))
         Hred = H[mask,mask]
-        dv[mask] = Hred\(g[mask])
+        if !(any(isnan, Hred) || any(isinf, Hred) || det(Hred)==0)
+            dv[mask] = Hred\(g[mask])
+        end
+        # dv[mask]=pinv(Hred,1e-14)*g[mask]
         xx = dv[mask]
         bb = g[mask]
         if !(any(isnan, Hred) || any(isinf, Hred) || det(Hred)==0 || any(isnan,bb) || any(isinf, bb))
@@ -627,7 +630,9 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
             end
             iter_break += 50
         end
-
+        if k==maxiter && norm(res)>1e-12
+            println("No solution found after a $k LMA iterations.")
+        end
     end
     return res, v, iter
 end

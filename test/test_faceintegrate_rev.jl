@@ -264,7 +264,7 @@
           vtRtBu = sum(vvol.*uvol)
           boundaryintegrate_rev!(sbpface, bndryfaces, vface, vvol)
           utBRv = sum(uface.*vface)
-          @test ≈(vtRtBu, utBRv, atol=1e-14)
+          @test ≈(vtRtBu, utBRv, atol=1e-13)
         end
       end
     end

@@ -2,7 +2,7 @@ module Cubature
 # routines for constructing cubatures
 
 using LinearAlgebra
-using LeastSquaresOptim
+#using LeastSquaresOptim
 using ..OrthoPoly
 using ..SymCubatures
 using ..Optimizer
@@ -156,6 +156,9 @@ function cubatureresidual(cub::TetSymCub{T}, q::Int; compute_grad=true) where {T
         F[ptr] += (w'*P)[1]
         if compute_grad
           dPdx, dPdy, dPdz = OrthoPoly.diffproriolpoly(vec(x[1,:]), vec(x[2,:]),vec(x[3,:]), i, j, k)
+          if any(any.(isnan, [dPdx,dPdy,dPdz])) || any(isnan, w)
+            error("Not a number error encountered.")
+          end
           dF[ptr,:] = [w.*dPdx w.*dPdy w.*dPdz P]
         end
         ptr += 1
@@ -386,7 +389,7 @@ end
 
 function solvecubaturelma!(cub::SymCub{T}, q::Int, mask::AbstractArray{Int64,1};
   tol=10*eps(typeof(real(one(T)))),hist::Bool=false, maxiter::Int=100, verbose::Bool=false, xinit=[],
-  nu::T=1e3) where {T}
+  nu::Float64=1e3) where {T}
   @assert( length(mask) <= cub.numparams + cub.numweights )
 
   n = cub.numparams + cub.numweights
@@ -1732,7 +1735,7 @@ function getTriCubatureSparse(q::Int, T=Float64;
     rand_params = params
     rand_params[param_mask] .*= (1.0 + 0.1*randn(size(param_mask)))
     SymCubatures.setparams!(cub, rand_params)
-    try Cubature.solvecubature!(cub, cub_degree, mask, tol=tol, hist=true)
+    try Cubature.solvecubaturelma!(cub, cub_degree, mask, tol=tol, hist=true)
     catch
       success = false
     end
