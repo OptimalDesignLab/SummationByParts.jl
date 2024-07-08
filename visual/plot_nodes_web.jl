@@ -170,5 +170,5 @@ function plot_tet_nodes(;q::Int=1,n::Int=-1,x=[])
 end
 
 # plot_tet_nodes(q=10,n=145)
-plot_tet_nodes(q=3)
+# plot_tet_nodes(q=3)
 # plot_tri_nodes(q=20,facet_type="lg")
