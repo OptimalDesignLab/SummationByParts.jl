@@ -40,6 +40,6 @@ In general, we recommend using the SBP operators with methods provided by the pa
 * `sbp.numnodes` : number of nodes for the operator
 * `sbp.vtx` : vertices of the reference element in computational space
 * `sbp.w` : cubature weights, i.e. the diagonal SBP norm, stored as an array
-* `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate 
+* `sbp.Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate 
 
 For more information on the usage of the SummationByPart.jl package, please refer to the [examples](https://github.com/OptimalDesignLab/SummationByParts.jl/tree/master/examples).
