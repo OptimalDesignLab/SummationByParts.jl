@@ -2,11 +2,11 @@ name: Docs
 on:
   push:
     branches:
-      - master
-    tags: ['*']
+    #   - master
+    # tags: ['*']
   pull_request:
-    branches:
-      - master
+    # branches:
+    #   - master
 jobs:
   build:
     runs-on: ubuntu-latest
