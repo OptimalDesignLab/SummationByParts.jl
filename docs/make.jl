@@ -13,7 +13,9 @@ makedocs(;
     modules = [SummationByParts],
     doctest = false,
     warnonly= true, 
-    format = Documenter.HTML(),
+    format = Documenter.HTML(
+        size_threshold_ignore = ["reference.md"]
+    ),
     pages = [
     "Home" => "index.md",
     "Reference" => "reference.md",
