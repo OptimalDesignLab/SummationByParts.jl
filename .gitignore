@@ -28,6 +28,11 @@
 *.cov
 *.mem
 *.vscode
+
+#Manifest data
+*Manifest.toml
+
+#scratches and old data
 examples/.ipynb_checkpoints
 src/minimizenodes.jl
 examples/sandbox.ipynb
