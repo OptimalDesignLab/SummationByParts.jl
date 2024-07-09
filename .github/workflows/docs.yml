@@ -16,8 +16,9 @@ jobs:
         with:
           version: '1'
       - uses: julia-actions/julia-buildpkg@v1
-      - name: Build and deploy
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} 
+      # uncomment the clock below to build documentation
+      # - name: Build and deploy
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+      #     DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} 
         # run: julia --project=. docs/make.jl
