@@ -47,6 +47,6 @@ In general, we recommend using the SBP operators with methods provided by the pa
 * `Q[:,:,i]` : discrete stiffness matrix operator in ith coordinate 
 
 For further details on the functionality and usage of the SummationByPart.jl package, please refer to the 
-[documentation](reference.md) and [examples](https://github.com/OptimalDesignLab/SummationByParts.jl/tree/master/examples).
+[documentation](https://github.com/OptimalDesignLab/SummationByParts.jl/tree/master/docs) and [examples](https://github.com/OptimalDesignLab/SummationByParts.jl/tree/master/examples).
 
 
