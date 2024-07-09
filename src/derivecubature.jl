@@ -1,3 +1,4 @@
+# This file contains a collection of functions to derive quadrature rules.
 using SummationByParts
 using SummationByParts.OrthoPoly
 using SummationByParts.Cubature
@@ -832,9 +833,9 @@ function deriveTetCubatureGamma(;q::Int=1,
 end
 
 """
-### SummationByParts.deriveTetCubatureOmega
+### SummationByParts.deriveTetCubatureDiagE
 
-This function derives quadrature rules for SBP-Omega operators
+This function derives quadrature rules for SBP diagonal-E operators
 on the tetrahedron.
 
 **Inputs**

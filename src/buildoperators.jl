@@ -1476,6 +1476,7 @@ end
 Construct SBP operators using the Projection Onto Convex Sets (POCS) algorithm 
 
 **Inputs**
+
 * `cub`: symmetric cubature rule
 * `vtx`: vertices of the right simplex
 * `d`: maximum total degree for the Proriol polynomials
@@ -1489,7 +1490,6 @@ Construct SBP operators using the Projection Onto Convex Sets (POCS) algorithm
 * `Q`: the stiffness matrices
 * `S`: the skew-symmetric matrices
 """
-
 function buildoperators_pocs(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int; vertices::Bool=false) where {T}
   w = SymCubatures.calcweights(cub)
   

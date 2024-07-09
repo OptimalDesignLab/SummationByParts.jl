@@ -10,7 +10,7 @@ finite-difference operators.
 abstract type AbstractSBP{T<:Number} end
 
 """
-### SBP.TriSBP
+### SBP.LineSegSBP
 
 Defines diagonal-norm SBP first-derivative operators on a line segment.
 

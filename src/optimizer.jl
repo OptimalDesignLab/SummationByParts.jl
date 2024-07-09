@@ -6,181 +6,181 @@ using Random
 using ..SymCubatures, ..OrthoPoly
 #using IncompleteLU, SparseArrays, IterativeSolvers, Preconditioners
 
-export pso, levenberg_marquardt, rosenbrock, rastrigin
+export pso, levenberg_marquardt #, rosenbrock, rastrigin
 
-"""
-### SummationByParts.pso
+# """
+# ### SummationByParts.pso
 
-Particle Swarm Optimization (PSO) for unconstrained and constrained problems
+# Particle Swarm Optimization (PSO) for unconstrained and constrained problems
 
-**Inputs**
-* `fun`: function to be optimized
-* `n`: number of dimensions (number of parameters to be found)
-* `xinit`: initial guess (for random initial guess)
-* `xL`: lower bound on the parameters 
-* `xR`: upper bound on the parameters 
-* `maxiter`: maximum number of iterations (default is 1000)
-* `tol`: tolerance to stop iteration (default is 1e-14)
+# **Inputs**
+# * `fun`: function to be optimized
+# * `n`: number of dimensions (number of parameters to be found)
+# * `xinit`: initial guess (for random initial guess)
+# * `xL`: lower bound on the parameters 
+# * `xR`: upper bound on the parameters 
+# * `maxiter`: maximum number of iterations (default is 1000)
+# * `tol`: tolerance to stop iteration (default is 1e-14)
 
-**Outputs**
-* `fmin`: the optimized function value
-* `xmin`: the minimizer (solution)
-* `f_all`: all function evaluations
-"""
+# **Outputs**
+# * `fmin`: the optimized function value
+# * `xmin`: the minimizer (solution)
+# * `f_all`: all function evaluations
+# """
 
-function pso(fun::Function, ne; np::Int64=10, xinit=[], 
-    xL::Float64=0.0, xR::Float64=1.0, maxiter::Int64=1000, tol::Float64=1e-4, save_iter=false, verbose=0)
+# function pso(fun::Function, ne; np::Int64=10, xinit=[], 
+#     xL::Float64=0.0, xR::Float64=1.0, maxiter::Int64=1000, tol::Float64=1e-4, save_iter=false, verbose=0)
 
-    # set parameters
-    ne = ne                 # number of elements in each particles
-    np = np                 # number of particles
-    vmax = 0.2*(xR-xL)      # maximum velocity allowed (20% of space range) 
-    c1 = 1.5                # confidence in individual position
-    c2 = 1.5                # confidence in group position
-    w = 0.5                 # inertia weight
+#     # set parameters
+#     ne = ne                 # number of elements in each particles
+#     np = np                 # number of particles
+#     vmax = 0.2*(xR-xL)      # maximum velocity allowed (20% of space range) 
+#     c1 = 1.5                # confidence in individual position
+#     c2 = 1.5                # confidence in group position
+#     w = 0.5                 # inertia weight
 
-    # initialize the particles
-    x = (xR-xL).* rand(np, ne) .+ xL
-    if xinit!=[]
-        x[1,:] = xinit
-    end
+#     # initialize the particles
+#     x = (xR-xL).* rand(np, ne) .+ xL
+#     if xinit!=[]
+#         x[1,:] = xinit
+#     end
 
-    # initialize vectors
-    v = zeros(np,ne)        # velocity vector
-    fp = zeros(np,1)        # personal function values
-    xpb = zeros(np,ne)      # personal best solution parameters
+#     # initialize vectors
+#     v = zeros(np,ne)        # velocity vector
+#     fp = zeros(np,1)        # personal function values
+#     xpb = zeros(np,ne)      # personal best solution parameters
 
-    for i = 1:np
-        fp[i,1] = fun(x[i,:])
-        xpb[i,:] = x[i,:]
-    end
-    fpb = copy(fp)          # personal best function values
-    fgb = minimum(fpb)      # global best function value
-    indx = argmin(fpb)[1]   # index of global best function value
-    xgb = x[indx, :]        # global best solution parameters
-    xp = zeros(np,ne)
-    fgb1 = copy(fgb)
-    cntr_perturb = 0
+#     for i = 1:np
+#         fp[i,1] = fun(x[i,:])
+#         xpb[i,:] = x[i,:]
+#     end
+#     fpb = copy(fp)          # personal best function values
+#     fgb = minimum(fpb)      # global best function value
+#     indx = argmin(fpb)[1]   # index of global best function value
+#     xgb = x[indx, :]        # global best solution parameters
+#     xp = zeros(np,ne)
+#     fgb1 = copy(fgb)
+#     cntr_perturb = 0
 
-    # main PSO routine
-    f_all=[]
-    x_all=[]
-    if save_iter
-        push!(f_all,fun(xgb))
-        push!(x_all,xgb)
-    end
-    iter = 1
-    while (iter <= maxiter && fgb>=tol)
-    # while (iter <= maxiter)
-        for i = 1:np       
-            # calculate velocity
-            v[i,:] = w.*v[i,:] + c1.*rand(ne).*(xpb[i,:] - x[i,:]) + c2.*rand(ne).*(xgb - x[i,:])
+#     # main PSO routine
+#     f_all=[]
+#     x_all=[]
+#     if save_iter
+#         push!(f_all,fun(xgb))
+#         push!(x_all,xgb)
+#     end
+#     iter = 1
+#     while (iter <= maxiter && fgb>=tol)
+#     # while (iter <= maxiter)
+#         for i = 1:np       
+#             # calculate velocity
+#             v[i,:] = w.*v[i,:] + c1.*rand(ne).*(xpb[i,:] - x[i,:]) + c2.*rand(ne).*(xgb - x[i,:])
 
-            # limit the velocity
-            for j = 1:ne
-                if abs(v[i,j]) > vmax
-                    v[i,j] = v[i,j].*vmax/abs(v[i,j])
-                end
-            end
+#             # limit the velocity
+#             for j = 1:ne
+#                 if abs(v[i,j]) > vmax
+#                     v[i,j] = v[i,j].*vmax/abs(v[i,j])
+#                 end
+#             end
              
-            # update position
-            xp[i,:] = x[i,:] + v[i,:]
+#             # update position
+#             xp[i,:] = x[i,:] + v[i,:]
             
-            # enforce left and right bounds
-            for j = 1:ne
-                if (xp[i,j]>xR)
-                    xp[i,j] = (xR-xL)*rand() + xL
-                elseif (xp[i,j]<xL)
-                    xp[i,j] = (xR-xL)*rand() + xL
-                end
-            end 
+#             # enforce left and right bounds
+#             for j = 1:ne
+#                 if (xp[i,j]>xR)
+#                     xp[i,j] = (xR-xL)*rand() + xL
+#                 elseif (xp[i,j]<xL)
+#                     xp[i,j] = (xR-xL)*rand() + xL
+#                 end
+#             end 
             
-            # evaluate objective function for the new particle position
-            fp[i] = fun(xp[i,:])
+#             # evaluate objective function for the new particle position
+#             fp[i] = fun(xp[i,:])
             
-            # check personal best function and position
-            if fp[i] < fpb[i]
-                fpb[i] = fp[i]
-                xpb[i,:] = xp[i,:]
-            end
+#             # check personal best function and position
+#             if fp[i] < fpb[i]
+#                 fpb[i] = fp[i]
+#                 xpb[i,:] = xp[i,:]
+#             end
             
-            # check global best objective function evaluation and position
-            if fp[i] < fgb 
-                fgb = fp[i] 
-                xgb = xp[i,:]
-            end   
-            x[i,:] = xp[i,:]
-        end
+#             # check global best objective function evaluation and position
+#             if fp[i] < fgb 
+#                 fgb = fp[i] 
+#                 xgb = xp[i,:]
+#             end   
+#             x[i,:] = xp[i,:]
+#         end
         
-        if save_iter
-            f_new = fgb; 
-            if f_new < f_all[iter]
-                push!(f_all,f_new)
-                push!(x_all,xgb)
-            else
-                push!(f_all,f_all[iter])
-                push!(x_all,x_all[iter])
-            end
-        end   
+#         if save_iter
+#             f_new = fgb; 
+#             if f_new < f_all[iter]
+#                 push!(f_all,f_new)
+#                 push!(x_all,xgb)
+#             else
+#                 push!(f_all,f_all[iter])
+#                 push!(x_all,x_all[iter])
+#             end
+#         end   
         
-        # check if there is no change in the global best, if so perturb the current solution
-        if mod(iter,round(Int,ne*2/(log10(ne)+1)))==0
-            maxval = abs((fgb - fgb1))
-            m = 1.0/1.0
-            if fgb > 1.0
-                maxval /= abs(fgb)
-            end
-            if (fgb>1e-6 && maxval<=1e-6)
-                if abs(fgb) > 1.0
-                    d = ((fgb^2-1.0)/(fgb^2+1.0))*(xR-xL)/m
-                else
-                    d =fgb*(xR-xL)/m
-                end
-                x += d .* rand(np, ne)
-                for i = 1:np
-                    fp[i,1] = fun(x[i,:])
-                    xpb[i,:] = x[i,:]
-                end
-                fpb = copy(fp)
-                fgb = minimum(fpb)
-            elseif (fgb<=1e-6 && maxval<=1e-10)
-                x += (fgb*(xR-xL)/m) .*rand(np,ne)
-                for i = 1:np
-                    fp[i,1] = fun(x[i,:])
-                    xpb[i,:] = x[i,:]
-                end
-                fpb = copy(fp)
-                fgb = minimum(fpb)
-            end
-            fgb1 = copy(fgb)
-            cntr_perturb += 1
-        end
+#         # check if there is no change in the global best, if so perturb the current solution
+#         if mod(iter,round(Int,ne*2/(log10(ne)+1)))==0
+#             maxval = abs((fgb - fgb1))
+#             m = 1.0/1.0
+#             if fgb > 1.0
+#                 maxval /= abs(fgb)
+#             end
+#             if (fgb>1e-6 && maxval<=1e-6)
+#                 if abs(fgb) > 1.0
+#                     d = ((fgb^2-1.0)/(fgb^2+1.0))*(xR-xL)/m
+#                 else
+#                     d =fgb*(xR-xL)/m
+#                 end
+#                 x += d .* rand(np, ne)
+#                 for i = 1:np
+#                     fp[i,1] = fun(x[i,:])
+#                     xpb[i,:] = x[i,:]
+#                 end
+#                 fpb = copy(fp)
+#                 fgb = minimum(fpb)
+#             elseif (fgb<=1e-6 && maxval<=1e-10)
+#                 x += (fgb*(xR-xL)/m) .*rand(np,ne)
+#                 for i = 1:np
+#                     fp[i,1] = fun(x[i,:])
+#                     xpb[i,:] = x[i,:]
+#                 end
+#                 fpb = copy(fp)
+#                 fgb = minimum(fpb)
+#             end
+#             fgb1 = copy(fgb)
+#             cntr_perturb += 1
+#         end
         
-        iter_show = 1000
-        if verbose==1
-            if mod(iter,iter_show)==0
-                println(fgb)
-            end
-        elseif verbose==2
-            if mod(iter,iter_show)==0
-                println(fgb)
-                println(xgb)
-            end
-        end
+#         iter_show = 1000
+#         if verbose==1
+#             if mod(iter,iter_show)==0
+#                 println(fgb)
+#             end
+#         elseif verbose==2
+#             if mod(iter,iter_show)==0
+#                 println(fgb)
+#                 println(xgb)
+#             end
+#         end
 
-        iter = iter +1      
-    end
+#         iter = iter +1      
+#     end
 
-    fmin = fgb 
-    xmin = xgb
-    return fmin, xmin, f_all, x_all, iter-1, cntr_perturb
+#     fmin = fgb 
+#     xmin = xgb
+#     return fmin, xmin, f_all, x_all, iter-1, cntr_perturb
 
-end
+# end
 
 """
 ### SummationByParts.pso
 
-Particle Swarm Optimization (PSO) for unconstrained and constrained problems
+Particle Swarm Optimization (PSO) Algorithm
 
 **Inputs**
 * `fun`: function to be optimized
@@ -407,7 +407,7 @@ end
 """
 ### SummationByParts.levenberg_marquardt
 
-Levenberg-Marquardt Algorithm (LMA) optimizer
+Levenberg-Marquardt Algorithm (LMA) 
 
 **Inputs**
 * `fun`: function to be optimized
@@ -637,85 +637,85 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
     return res, v, iter
 end
 
-function rosenbrock(x::Array{Float64}; xL::Float64=-Inf, xR::Float64=Inf)
-    n = length(x)
-    for i=1:n
-        if (x[i]<xL || x[i]>xR)
-            ErrorException("Some elements of vector x are not within the interval [xL, xR]")
-        end
-    end
+# function rosenbrock(x::Array{Float64}; xL::Float64=-Inf, xR::Float64=Inf)
+#     n = length(x)
+#     for i=1:n
+#         if (x[i]<xL || x[i]>xR)
+#             ErrorException("Some elements of vector x are not within the interval [xL, xR]")
+#         end
+#     end
 
-    f = 0;
-    for i=1:n-1
-       f = f + 100*(x[i+1] - x[i]^2)^2 + (1 - x[i])^2 
-    end
+#     f = 0;
+#     for i=1:n-1
+#        f = f + 100*(x[i+1] - x[i]^2)^2 + (1 - x[i])^2 
+#     end
 
-    gradf = zeros(n,1)
-    gradf[1,1]= -400*x[1]*(x[2] - x[1]^2) - 2*(1-x[1])
-    for i = 2:n-1
-        gradf[i,1] = 200*(x[i]-x[i-1]^2)-400*x[i]*(x[i+1]-x[i]^2)-2*(1-x[i]);
-    end    
-    gradf[n,1] = 200*(x[n]-x[n-1]^2); 
+#     gradf = zeros(n,1)
+#     gradf[1,1]= -400*x[1]*(x[2] - x[1]^2) - 2*(1-x[1])
+#     for i = 2:n-1
+#         gradf[i,1] = 200*(x[i]-x[i-1]^2)-400*x[i]*(x[i+1]-x[i]^2)-2*(1-x[i]);
+#     end    
+#     gradf[n,1] = 200*(x[n]-x[n-1]^2); 
 
-    return f
-end
+#     return f
+# end
 
-function rastrigin(x::Array{Float64}; xL::Float64=-Inf, xR::Float64=Inf)    
-    n = length(x)
-    for i=1:n
-        if (x[i]<xL || x[i]>xR)
-            ErrorException("Some elements of vector x are not within the interval [xL, xR]")
-        end
-    end
+# function rastrigin(x::Array{Float64}; xL::Float64=-Inf, xR::Float64=Inf)    
+#     n = length(x)
+#     for i=1:n
+#         if (x[i]<xL || x[i]>xR)
+#             ErrorException("Some elements of vector x are not within the interval [xL, xR]")
+#         end
+#     end
      
-    f = 0; 
-    for i = 1:n
-        f = f + (x[i]^2 - 10*cos(2*π*x[i]))
-    end
-    f += 10*n
+#     f = 0; 
+#     for i = 1:n
+#         f = f + (x[i]^2 - 10*cos(2*π*x[i]))
+#     end
+#     f += 10*n
           
-    #gradient of the objective function 
-    gradf = zeros(n,1)
-    for i = 1:n
-        gradf[i,1] = 2*x[i]+20*π*sin(2*π*x[i])
-    end    
+#     #gradient of the objective function 
+#     gradf = zeros(n,1)
+#     for i = 1:n
+#         gradf[i,1] = 2*x[i]+20*π*sin(2*π*x[i])
+#     end    
               
-    return f
-end
+#     return f
+# end
 
-function preconditioner(V::Array{Float64}; ax::Int=1)
-    @assert(ax>=1 && ax <=2)
-    P = zeros(size(V)[ax],size(V)[ax])
-    for i=1:length(axes(V,ax))
-        if ax==1
-            P[i,i] = 1.0/maximum(abs.(V[i,:]))
-        elseif ax==2
-            P[i,i] = 1.0/maximum(abs.(V[:,i]))
-        end
-    end
-    return P
-end
+# function preconditioner(V::Array{Float64}; ax::Int=1)
+#     @assert(ax>=1 && ax <=2)
+#     P = zeros(size(V)[ax],size(V)[ax])
+#     for i=1:length(axes(V,ax))
+#         if ax==1
+#             P[i,i] = 1.0/maximum(abs.(V[i,:]))
+#         elseif ax==2
+#             P[i,i] = 1.0/maximum(abs.(V[:,i]))
+#         end
+#     end
+#     return P
+# end
 
-function preconditioner_saraswat(V::Array{Float64})
-    m = size(V,1)
-    A = zeros(m,1)
-    B = zeros(m,1)
-    for i = 1:m
-        A[i] = norm(V[i,:])
-        B[i] = norm(pinv(V,1e-2)'[i,:])
-    end
-    P = zeros(m,m)
-    for i = 1:m
-        P[i,i] = sqrt(B[i]/A[i])
-    end
+# function preconditioner_saraswat(V::Array{Float64})
+#     m = size(V,1)
+#     A = zeros(m,1)
+#     B = zeros(m,1)
+#     for i = 1:m
+#         A[i] = norm(V[i,:])
+#         B[i] = norm(pinv(V,1e-2)'[i,:])
+#     end
+#     P = zeros(m,m)
+#     for i = 1:m
+#         P[i,i] = sqrt(B[i]/A[i])
+#     end
 
-    return P
-end
+#     return P
+# end
 
-function preconditioner_shannon(V::Array{Float64})
-    F = svd(V)
-    P = F.V*inv(diagm(F.S))
-    return P
-end
+# function preconditioner_shannon(V::Array{Float64})
+#     F = svd(V)
+#     P = F.V*inv(diagm(F.S))
+#     return P
+# end
 
 end

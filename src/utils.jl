@@ -1110,7 +1110,7 @@ end
 ### SummationByParts.quadTruncErr
 
 This function computes the integration truncation error of the quadrature rule
-on the right triangle.
+on the right triangle or tetrahedron.
 
 **Inputs**
 
@@ -1138,20 +1138,6 @@ function quadTruncErr(cub::TriSymCub{T}, q::Int) where {T}
   return trunc_err
 end
 
-"""
-### SummationByParts.quadTruncErr
-
-This function computes the integration truncation error of the quadrature rule 
-on the right tetrahedron.
-
-**Inputs**
-
-* `cub`: a symmetric cubature for the right tetrahedron
-* `q`: the quadarature degree
-
-**In/Outs**
-* `quadTruncErr`: the quadature truncation error
-"""
 function quadTruncErr(cub::TetSymCub{T}, q::Int) where {T}
   # compute the nodes and weights defined by cub
   vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
@@ -1174,7 +1160,7 @@ end
 ### SummationByParts.checkInteriorNodeLocaton
 
 This function checks if all interior nodes are within the interior of the
-right triangle; i.e., not outside or on the boundaries.
+right triangle or tetrahedron; i.e., not outside or on the boundaries.
 
 **Inputs**
 
@@ -1243,20 +1229,6 @@ function checkInteriorNodeLocaton(cub::TriSymCub{T}; vtx::Array{T,2}=T[-1 -1; 1 
   return
 end
 
-"""
-### SummationByParts.checkInteriorNodeLocaton
-
-This function checks if all interior nodes are within the interior of the
-right tetrahedron; i.e., not outside or on the boundaries.
-
-**Inputs**
-
-* `cub`: a symmetric cubature for the right tetrahedron
-* `vtx`: the vertices of the tetrahedron
-
-**Note**: The vertex is assumed to be on [-1,1] interval in each dimension
-
-"""
 function checkInteriorNodeLocaton(cub::TetSymCub{T}; vtx::Array{T,2}= T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]) where {T}
   # This function assumes the vertices are as given in the default
   # Must change the if conditions to check node location for other vertices 
