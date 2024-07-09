@@ -2,6 +2,7 @@
 # ] pkg> activate .
 # ] pkg> instantiate
 # run include("make.jl")
+# or from the root, run in the shell: julia --project=docs docs/make.jl
 
 using Pkg 
 push!(LOAD_PATH,"../../src/")

@@ -255,7 +255,7 @@ Constructors for the SBP operator classes.
 # outerconstructor.jl
 # This file gathers together outer constructors for the SBP operators
 ```
-```docs
+```@docs
 SummationByParts.getLineSegSBPLobbato
 SummationByParts.getLineSegSBPLegendre
 SummationByParts.getTriSBPGamma
