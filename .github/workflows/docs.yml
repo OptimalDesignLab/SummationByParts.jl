@@ -2,11 +2,11 @@ name: Docs
 on:
   push:
     branches:
-    #   - master
-    # tags: ['*']
+      - master
+    tags: ['*']
   pull_request:
-    # branches:
-    #   - master
+    branches:
+      - master
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -20,4 +20,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} 
-        run: julia --project=. docs/make.jl
+        # run: julia --project=. docs/make.jl
