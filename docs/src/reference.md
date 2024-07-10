@@ -272,8 +272,7 @@ SummationByParts.getTetFaceForDiagE
 ```
 
 ## SymCubatures Module
-Types and methods for mapping between symmetry groups and nodes for cubatures.
-on various domains
+Types and methods for mapping between symmetry groups and nodes for cubatures on various domains.
 ```@meta
 # symcubatures.jl
 ```
