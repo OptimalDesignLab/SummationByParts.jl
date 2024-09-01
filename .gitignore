@@ -40,3 +40,4 @@ quadrature_data/test
 quadrature_data/old
 src/sandbox.jl
 docs/build
+clean_env/
