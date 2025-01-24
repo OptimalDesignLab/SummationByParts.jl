@@ -41,3 +41,4 @@ quadrature_data/old
 src/sandbox.jl
 docs/build
 clean_env/
+examples/1d_quadratures.ipynb

@@ -32,7 +32,7 @@ residual, with respect to the quadrature nodes and weights, is also returned.
 * `dF`: derivative of F with respect to x, y, (z,) w, in that order
 
 """
-function cubatureresidual(cub::LineSymCub{T}, q::Int; compute_grad) where {T}
+function cubatureresidual(cub::LineSymCub{T}, q::Int; compute_grad=true) where {T}
   # compute the nodes and weights defined by cub
   vtx = reshape(T[-1; 1], (2,1))
   x = SymCubatures.calcnodes(cub, vtx)
@@ -372,12 +372,16 @@ function solvecubatureweights!(cub::SymCub{T}, q::Int;
     res = norm(F)
     hist ? print("\titer ",k,": res norm = ",res,"\n") : nothing
 
+    if res < tol 
+      return 
+    end
+    
     # trust-region like update
     if res > res_old
       v -= dv
       SymCubatures.setweights!(cub, v)
       F, dF = Cubature.cubatureresidual(cub, q)
-      nu *= 4.0
+      nu *= 2.0
     else
       nu /= 2.0
       res_old = res
