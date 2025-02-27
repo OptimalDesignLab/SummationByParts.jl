@@ -470,9 +470,6 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
         # solve only for those parameters and weights that are in mask
         fill!(dv, zero(T))
         Hred = H[mask,mask]
-        if !(any(isnan, Hred) || any(isinf, Hred) || det(Hred)==0)
-            dv[mask] = Hred\(g[mask])
-        end
         # dv[mask]=pinv(Hred,1e-14)*g[mask]
         xx = dv[mask]
         bb = g[mask]
