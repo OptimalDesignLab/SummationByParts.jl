@@ -1,5 +1,7 @@
+using Pkg
+Pkg.activate(@__DIR__)
 using PlotlyJS
-#using DelimitedFiles
+using DelimitedFiles
 
 """
 ### SummationByParts.plotly_tri_nodes
@@ -42,9 +44,9 @@ function plotly_tri_nodes(;q::Int=1,n::Int=-1,facet_type::String="lg",x=[],save_
                 push!(ns,parse(Int,split_name2[1]))
             end
             n = minimum(ns)
-            path_file = string("tri_$facet_type","_q$q","_n$n","_ext.txt")
+            path_file = string("tri_$facet_type","_q$q","_n$n","_ext.dat")
         else
-            path_file = string("tri_$facet_type","_q$q","_n$n","_ext.txt")
+            path_file = string("tri_$facet_type","_q$q","_n$n","_ext.dat")
         end
         path = joinpath(dir,path_file)
 
@@ -127,9 +129,9 @@ function plotly_tet_nodes(;q::Int=1,n::Int=-1,save_fig::Bool=false)
             push!(ns,parse(Int,split_name2[1]))
         end
         n = minimum(ns)
-        path_file = string("tet","_q$q","_n$n","_ext.txt")
+        path_file = string("tet","_q$q","_n$n","_ext.dat")
     else
-        path_file = string("tet","_q$q","_n$n","_ext.txt")
+        path_file = string("tet","_q$q","_n$n","_ext.dat")
     end
     path = joinpath(dir,path_file)
 

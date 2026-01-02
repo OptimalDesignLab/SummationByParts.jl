@@ -27,8 +27,6 @@ include("symcubatures.jl")
 include("optimizer.jl")
 include("cubature.jl")
 include("../quadrature_data/write_quad_file.jl")
-include("../visual/plot_nodes.jl")
-include("../visual/plot_nodes_web.jl")
 
 using .OrthoPoly
 using .SymCubatures

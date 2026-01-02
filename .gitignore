@@ -35,11 +35,9 @@
 #scratches and old data
 examples/.ipynb_checkpoints
 src/minimizenodes.jl
-examples/sandbox.ipynb
 quadrature_data/test
 quadrature_data/old
 src/sandbox.jl
 docs/build
 clean_env/
-examples/1d_quadratures.ipynb
 **/*scripts
