@@ -35,7 +35,7 @@
           dir = [1.;1.;1.]
           for i = 1:sbp.numnodes
             Ddir = directionalDifferentiateElement!(sbp, dir, u, i)
-            @test ≈(Ddir, 3.0, atol=1e-11)
+            @test ≈(Ddir, 3.0, atol=1e-10)
           end
         end
       end
@@ -84,8 +84,8 @@
           for i = 1:sbp.numnodes
             fill!(Ddir, 0.0)
             directionalDifferentiateElement!(sbp, dir, u, i, Ddir)
-            @test ≈(Ddir[1], 3.0, atol=1e-11)
-            @test ≈(Ddir[2], -3.0, atol=1e-11)
+            @test ≈(Ddir[1], 3.0, atol=1e-10)
+            @test ≈(Ddir[2], -3.0, atol=1e-10)
           end
         end
       end

@@ -1,6 +1,21 @@
 # This file gathers together functions used to build the SBP face operators
 using LinearAlgebra
 
+function _solve_reconstruction(Pv::AbstractMatrix{T}, Pf::AbstractMatrix{T}) where {T}
+  A = Pv'
+  B = Pf'
+  if _supports_svd(T)
+    # Match previous behavior (minimum-norm pseudoinverse).
+    return (pinv(A) * B)'
+  end
+  try
+    return (A \ B)'
+  catch
+    lambda = sqrt(eps(real(one(T))))
+    return (A' * ((A * A' + lambda * I) \ B))'
+  end
+end
+
 """
 ### SummationByParts.buildfacereconstruction
 
@@ -43,13 +58,13 @@ function buildfacereconstruction(facecub::PointSymCub{T}, cub::LineSymCub{T},
     ptr += 1
   end
   if SymCubatures.getnumfacenodes(cub) == 1
-    A = kron(Pv',I(facecub.numnodes))
+    A = kron(Pv', I(facecub.numnodes))
     b = vec(Pf)
-    R = zeros(facecub.numnodes*size(perm,1))
+    R = zeros(T, facecub.numnodes*size(perm,1))
     SummationByParts.calcSparseSolution!(A, b, R)
     R = reshape(R, (facecub.numnodes,size(perm,1)))
   else
-    R = Matrix((pinv(Pv')*Pf')')
+    R = _solve_reconstruction(Pv, Pf)
   end
   return R, perm
 end
@@ -66,10 +81,11 @@ function buildfacereconstruction(facecub::LineSymCub{T}, cub::TriSymCub{T},
   xv = SymCubatures.calcnodes(cub, vtx)
   xf = SymCubatures.calcnodes(facecub, vtx[idx,:])
   if opertype == :DiagE
+    tol = 100 * eps(real(one(T)))
     R = zeros(size(xf,2),size(xv,2))
     for i in axes(R, 2), j in axes(R, 1)
-      if norm(xv[:, i] .- xf[:, j]) <= 1e-14
-          R[j, i] = 1.0
+      if norm(xv[:, i] .- xf[:, j]) <= tol
+          R[j, i] = one(T)
       end
     end
   else
@@ -91,11 +107,11 @@ function buildfacereconstruction(facecub::LineSymCub{T}, cub::TriSymCub{T},
     if SymCubatures.getnumfacenodes(cub) >= (d+1)
       A = kron(Pv', I(facecub.numnodes))
       b = vec(Pf)
-      R = zeros(facecub.numnodes*size(perm,1))
+      R = zeros(T, facecub.numnodes*size(perm,1))
       SummationByParts.calcSparseSolution!(A, b, R)
       R = reshape(R, (facecub.numnodes,size(perm,1)))
     else
-      R = (pinv(Pv')*Pf')'
+      R = _solve_reconstruction(Pv, Pf)
     end
   end
   return R, perm
@@ -185,7 +201,7 @@ function buildfacereconstruction(facecub::TriSymCub{T}, cub::TetSymCub{T},
         end
       end
     end
-    R = (pinv(Pv')*Pf')'
+    R = (_pinv_or_reg(Pv')*Pf')'
   end
 
   return R, perm
@@ -232,8 +248,14 @@ function buildfacederivatives(facecub::PointSymCub{T}, cub::LineSymCub{T},
     dPdx[:,ptr] = OrthoPoly.diffjacobipoly(vec(xf[1,:]), 0.0, 0.0, i)
     ptr += 1
   end
-  A = pinv(Pv')
-  D = zeros(cub.numnodes, facecub.numnodes, 1)
+  # BigFloat-safe left pseudoinverse of Pv' (avoids SVD in pinv).
+  if _supports_svd(T)
+    A = (Pv') \ Matrix{T}(I, size(Pv, 2), size(Pv, 2))
+  else
+    lambda = sqrt(eps(real(one(T))))
+    A = (Pv * Pv' + lambda * I) \ Pv
+  end
+  D = zeros(T, (cub.numnodes, facecub.numnodes, 1))
   D[:,:,1] = A*dPdx'
   return D, perm
 end
@@ -259,8 +281,14 @@ function buildfacederivatives(facecub::LineSymCub{T}, cub::TriSymCub{T},
       ptr += 1
     end
   end
-  A = pinv(Pv')
-  D = zeros(cub.numnodes, facecub.numnodes, 2)
+  # BigFloat-safe left pseudoinverse of Pv' (avoids SVD in pinv).
+  if _supports_svd(T)
+    A = (Pv') \ Matrix{T}(I, size(Pv, 2), size(Pv, 2))
+  else
+    lambda = sqrt(eps(real(one(T))))
+    A = (Pv * Pv' + lambda * I) \ Pv
+  end
+  D = zeros(T, (cub.numnodes, facecub.numnodes, 2))
   D[:,:,1] = A*dPdx'
   D[:,:,2] = A*dPdy'
   return D, perm

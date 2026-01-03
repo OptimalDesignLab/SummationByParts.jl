@@ -1403,7 +1403,8 @@ function calcnodes(cub::TriSymCub, vtx::Array{T,2}) where {T}
   end
   # set node with 1-symmetry (i.e. centroid)
   if cub.centroid
-    A = T[1/3 1/3 1/3]
+    third = one(T) / T(3)
+    A = T[third third third]
     x[:,ptr+1] = (A*vtx)'
     ptr += 1
   end
@@ -1535,7 +1536,7 @@ function calcnodes(cub::TetSymCub, vtx::Array{T,2}) where {T}
   # set nodes with 4-symmetries
   # set face centroids
   if cub.facecentroid
-    alpha = (T)(1/3)
+    alpha = one(T) / T(3)
     A = T[alpha alpha alpha 0;
           alpha alpha 0 alpha;
           0 alpha alpha alpha;

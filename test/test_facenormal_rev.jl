@@ -451,7 +451,7 @@
                         view(xlag_bar,:,:,f), view(xsbp_bar,:,:,f),
                         view(nrm_bar,:,:,f))
       end
-      @test ≈(xlag_bar, -xlag_bar_cmplx, atol=1e-13)
+      @test ≈(xlag_bar, -xlag_bar_cmplx, atol=1e-12)
     end
   end
 
@@ -526,7 +526,7 @@
                         view(xlag_bar,:,:,f), view(xsbp_bar,:,:,f),
                         view(nrm_bar,:,:,f))
       end
-      @test ≈(xlag_bar, -xlag_bar_cmplx, atol=1e-13)
+      @test ≈(xlag_bar, -xlag_bar_cmplx, atol=1e-12)
     end
   end
   

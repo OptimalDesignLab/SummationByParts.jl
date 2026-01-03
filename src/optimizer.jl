@@ -8,175 +8,6 @@ using ..SymCubatures, ..OrthoPoly
 
 export pso, levenberg_marquardt #, rosenbrock, rastrigin
 
-# """
-# ### SummationByParts.pso
-
-# Particle Swarm Optimization (PSO) for unconstrained and constrained problems
-
-# **Inputs**
-# * `fun`: function to be optimized
-# * `n`: number of dimensions (number of parameters to be found)
-# * `xinit`: initial guess (for random initial guess)
-# * `xL`: lower bound on the parameters 
-# * `xR`: upper bound on the parameters 
-# * `maxiter`: maximum number of iterations (default is 1000)
-# * `tol`: tolerance to stop iteration (default is 1e-14)
-
-# **Outputs**
-# * `fmin`: the optimized function value
-# * `xmin`: the minimizer (solution)
-# * `f_all`: all function evaluations
-# """
-
-# function pso(fun::Function, ne; np::Int64=10, xinit=[], 
-#     xL::Float64=0.0, xR::Float64=1.0, maxiter::Int64=1000, tol::Float64=1e-4, save_iter=false, verbose=0)
-
-#     # set parameters
-#     ne = ne                 # number of elements in each particles
-#     np = np                 # number of particles
-#     vmax = 0.2*(xR-xL)      # maximum velocity allowed (20% of space range) 
-#     c1 = 1.5                # confidence in individual position
-#     c2 = 1.5                # confidence in group position
-#     w = 0.5                 # inertia weight
-
-#     # initialize the particles
-#     x = (xR-xL).* rand(np, ne) .+ xL
-#     if xinit!=[]
-#         x[1,:] = xinit
-#     end
-
-#     # initialize vectors
-#     v = zeros(np,ne)        # velocity vector
-#     fp = zeros(np,1)        # personal function values
-#     xpb = zeros(np,ne)      # personal best solution parameters
-
-#     for i = 1:np
-#         fp[i,1] = fun(x[i,:])
-#         xpb[i,:] = x[i,:]
-#     end
-#     fpb = copy(fp)          # personal best function values
-#     fgb = minimum(fpb)      # global best function value
-#     indx = argmin(fpb)[1]   # index of global best function value
-#     xgb = x[indx, :]        # global best solution parameters
-#     xp = zeros(np,ne)
-#     fgb1 = copy(fgb)
-#     cntr_perturb = 0
-
-#     # main PSO routine
-#     f_all=[]
-#     x_all=[]
-#     if save_iter
-#         push!(f_all,fun(xgb))
-#         push!(x_all,xgb)
-#     end
-#     iter = 1
-#     while (iter <= maxiter && fgb>=tol)
-#     # while (iter <= maxiter)
-#         for i = 1:np       
-#             # calculate velocity
-#             v[i,:] = w.*v[i,:] + c1.*rand(ne).*(xpb[i,:] - x[i,:]) + c2.*rand(ne).*(xgb - x[i,:])
-
-#             # limit the velocity
-#             for j = 1:ne
-#                 if abs(v[i,j]) > vmax
-#                     v[i,j] = v[i,j].*vmax/abs(v[i,j])
-#                 end
-#             end
-             
-#             # update position
-#             xp[i,:] = x[i,:] + v[i,:]
-            
-#             # enforce left and right bounds
-#             for j = 1:ne
-#                 if (xp[i,j]>xR)
-#                     xp[i,j] = (xR-xL)*rand() + xL
-#                 elseif (xp[i,j]<xL)
-#                     xp[i,j] = (xR-xL)*rand() + xL
-#                 end
-#             end 
-            
-#             # evaluate objective function for the new particle position
-#             fp[i] = fun(xp[i,:])
-            
-#             # check personal best function and position
-#             if fp[i] < fpb[i]
-#                 fpb[i] = fp[i]
-#                 xpb[i,:] = xp[i,:]
-#             end
-            
-#             # check global best objective function evaluation and position
-#             if fp[i] < fgb 
-#                 fgb = fp[i] 
-#                 xgb = xp[i,:]
-#             end   
-#             x[i,:] = xp[i,:]
-#         end
-        
-#         if save_iter
-#             f_new = fgb; 
-#             if f_new < f_all[iter]
-#                 push!(f_all,f_new)
-#                 push!(x_all,xgb)
-#             else
-#                 push!(f_all,f_all[iter])
-#                 push!(x_all,x_all[iter])
-#             end
-#         end   
-        
-#         # check if there is no change in the global best, if so perturb the current solution
-#         if mod(iter,round(Int,ne*2/(log10(ne)+1)))==0
-#             maxval = abs((fgb - fgb1))
-#             m = 1.0/1.0
-#             if fgb > 1.0
-#                 maxval /= abs(fgb)
-#             end
-#             if (fgb>1e-6 && maxval<=1e-6)
-#                 if abs(fgb) > 1.0
-#                     d = ((fgb^2-1.0)/(fgb^2+1.0))*(xR-xL)/m
-#                 else
-#                     d =fgb*(xR-xL)/m
-#                 end
-#                 x += d .* rand(np, ne)
-#                 for i = 1:np
-#                     fp[i,1] = fun(x[i,:])
-#                     xpb[i,:] = x[i,:]
-#                 end
-#                 fpb = copy(fp)
-#                 fgb = minimum(fpb)
-#             elseif (fgb<=1e-6 && maxval<=1e-10)
-#                 x += (fgb*(xR-xL)/m) .*rand(np,ne)
-#                 for i = 1:np
-#                     fp[i,1] = fun(x[i,:])
-#                     xpb[i,:] = x[i,:]
-#                 end
-#                 fpb = copy(fp)
-#                 fgb = minimum(fpb)
-#             end
-#             fgb1 = copy(fgb)
-#             cntr_perturb += 1
-#         end
-        
-#         iter_show = 1000
-#         if verbose==1
-#             if mod(iter,iter_show)==0
-#                 println(fgb)
-#             end
-#         elseif verbose==2
-#             if mod(iter,iter_show)==0
-#                 println(fgb)
-#                 println(xgb)
-#             end
-#         end
-
-#         iter = iter +1      
-#     end
-
-#     fmin = fgb 
-#     xmin = xgb
-#     return fmin, xmin, f_all, x_all, iter-1, cntr_perturb
-
-# end
-
 """
 ### SummationByParts.pso
 
@@ -207,11 +38,11 @@ Particle Swarm Optimization (PSO) Algorithm
 * `f_all`: all function evaluations
 """
 function pso(fun::Function, ne::Int, cub::SymCub{T}, q::Int, mask::AbstractArray{Int64,1}; np::Int64=10, xinit::Array{T}=[], 
-    xL::T=convert(T, 0.0), xR::T=convert(T, 2.0), delta1::Float64=1e-2, delta2::Float64=1e-2,
+    xL::T=zero(T), xR::T=T(2), delta1::T=T(1e-2), delta2::T=T(1e-2),
     maxiter::Int64=1000, tol=10*eps(typeof(real(one(T)))), save_iter=false, verbose=0) where {T}
     
-    @assert(delta1>0.0 && delta1<1.0 && isa(delta1, Float64), "delta1 must be a positive Float64 in (0,1).")
-    @assert(delta2>0.0 && delta2<1.0 && isa(delta2, Float64), "delta2 must be a positive Float64 in (0,1).")
+    @assert(delta1>zero(T) && delta1<one(T), "delta1 must be in (0,1).")
+    @assert(delta2>zero(T) && delta2<one(T), "delta2 must be in (0,1).")
 
     delta1_in = copy(delta1)
     delta2_in = copy(delta2)
@@ -219,10 +50,10 @@ function pso(fun::Function, ne::Int, cub::SymCub{T}, q::Int, mask::AbstractArray
     # set parameters
     ne = ne                 # number of elements in each particles
     np = np                 # number of particles
-    vmax = 0.2*(xR-xL)      # maximum velocity allowed (20% of space range) 
-    c1 = 1.5                # confidence in individual position
-    c2 = 1.5                # confidence in group position
-    w = 0.6                 # inertia weight
+    vmax = T(0.2)*(xR-xL)      # maximum velocity allowed (20% of space range) 
+    c1 = T(1.5)                # confidence in individual position
+    c2 = T(1.5)                # confidence in group position
+    w = T(0.6)                 # inertia weight
     compute_grad = false
 
     # initialize the particles
@@ -289,7 +120,7 @@ function pso(fun::Function, ne::Int, cub::SymCub{T}, q::Int, mask::AbstractArray
             xp[i,mask] = x[i,mask] + v[i,mask]
             
             # enforce left and right bounds
-            eps = 1e-6
+            eps = T(1e-6)
             for j = 1:ne
                 if (xp[i,j]>xR)
                     xp[i,j] = xR-(100*eps*rand()+eps) #(xR-xL)*rand() + xL
@@ -341,15 +172,15 @@ function pso(fun::Function, ne::Int, cub::SymCub{T}, q::Int, mask::AbstractArray
                 if fgb>1e-1
                     delta2 = 0.5
                 else
-                    delta1 = 0.2
+                    delta1 = T(0.2)
                 end
                 cntr_perturb = 0
             end
 
-            if fgb > 1.0
+            if fgb > one(T)
                 maxval /= abs(fgb)
             end
-            if (fgb>1e-1 && maxval<=1e-4)
+            if (fgb>T(1e-1) && maxval<=T(1e-4))
                 x[:,mask] = (1-delta2) .*x[:,mask] + delta2 .*rand(np, ne)[:,mask]
                 for i = 1:np
                     SymCubatures.setparams!(cub, x[i,:][1:cub.numparams])
@@ -429,7 +260,7 @@ Levenberg-Marquardt Algorithm (LMA)
 * `iter`: number of itrations
 """
 function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::AbstractArray{Int64,1}; xinit::Array{T}=[], 
-    xL::Float64=0.0, xR::Float64=3.0, nu=1000.0, maxiter::Int64=1000, tol=10*eps(typeof(real(one(T)))), verbose=0) where{T}
+    xL::T=zero(T), xR::T=T(3), nu::T=T(1000), maxiter::Int64=1000, tol=10*eps(typeof(real(one(T)))), verbose=0) where{T}
 
     Jac = SymCubatures.calcjacobian(cub)
 
@@ -456,7 +287,7 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
     end
 
     v_old = copy(v)
-    alpha = 1.0
+    alpha = one(T)
     iter_break = 1000
     dv = zeros(size(v))
     iter = 0
@@ -473,15 +304,20 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
         # dv[mask]=pinv(Hred,1e-14)*g[mask]
         xx = dv[mask]
         bb = g[mask]
-        if !(any(isnan, Hred) || any(isinf, Hred) || det(Hred)==0 || any(isnan,bb) || any(isinf, bb))
-            xx = Hred\bb 
+        if !(any(isnan, Hred) || any(isinf, Hred) || any(isnan, bb) || any(isinf, bb))
+            try
+                xx = Hred\bb
+            catch
+                lambda = sqrt(tol)
+                xx = (Hred + lambda * I)\bb
+            end
         end
         dv[mask] = xx
 
         # update cubature definition and check for convergence
         v += dv
 
-        eps = 1e-6
+        eps = T(1e-10)
         for i=1:length(axes(v,1))
             if v[i]<xL
                 v -= alpha*dv
@@ -499,9 +335,9 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
             ng = 0
             vS21 = vg[1:cub.numS21]
             for i = 1:length(vS21)                
-                if (v[ng+i] >= 1.0)
+                if (v[ng+i] >= one(T))
                     alphaS21 = copy(alpha)
-                    while (v[ng+i] >= 1.0 && alphaS21>0)
+                    while (v[ng+i] >= one(T) && alphaS21>0)
                         v -= alphaS21*dv
                         alphaS21 = 0.5*alphaS21
                         v += alphaS21*dv
@@ -512,9 +348,9 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
 
             vS111 = vg[ng+1:ng+cub.numS111]
             for i = 1:2:length(vS111)
-                if ((v[ng+i]+v[ng+i+1])/2 >= 1.0)
+                if ((v[ng+i]+v[ng+i+1])/2 >= one(T))
                     alphaS111 = copy(alpha)
-                    while ((v[ng+i]+v[ng+i+1])/2 >= 1.0 && alphaS111>0)
+                    while ((v[ng+i]+v[ng+i+1])/2 >= one(T) && alphaS111>0)
                         v -= alphaS111*dv
                         alphaS111 = 0.5*alphaS111 
                         v += alphaS111*dv
@@ -529,9 +365,9 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
             ng = 0
             vS31 = vg[1:cub.numS31]
             for i = 1:length(vS31)                
-                if (v[ng+i] >= 1.0)
+                if (v[ng+i] >= one(T))
                     alphaS31 = copy(alpha)
-                    while (v[ng+i] >= 1.0&& alphaS31>0)
+                    while (v[ng+i] >= one(T) && alphaS31>0)
                         v -= alphaS31*dv
                         alphaS31 = 0.5*alphaS31
                         v += alphaS31*dv
@@ -542,9 +378,9 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
 
             vS22 = vg[ng+1:ng+cub.numS22]
             for i = 1:length(vS22)
-                if (v[ng+i] >= 1.0)
+                if (v[ng+i] >= one(T))
                     alphaS22 = copy(alpha)
-                    while (v[ng+i] >= 1.0 && alphaS22>0)
+                    while (v[ng+i] >= one(T) && alphaS22>0)
                         v -= alphaS22*dv
                         alphaS22 = 0.5*alphaS22 
                         v += alphaS22*dv
@@ -557,9 +393,9 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
 
             vS211 = vg[ng+1:ng+2*cub.numS211]
             for i = 1:2:length(vS211)
-                if ((v[ng+i]+v[ng+i+1]/2)>= 1.0)
+                if ((v[ng+i]+v[ng+i+1]/2)>= one(T))
                     alphaS211 = copy(alpha)
-                    while ((v[ng+i]+v[ng+i+1]/2)>= 1.0 && alphaS211>0)
+                    while ((v[ng+i]+v[ng+i+1]/2)>= one(T) && alphaS211>0)
                         v -= alphaS211*dv
                         alphaS211 = 0.5*alphaS211
                         v += alphaS211*dv
@@ -571,9 +407,9 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
 
             vS1111 = vg[ng+1:ng+3*cub.numS1111] 
             for i = 1:3:length(vS1111)
-                if ((v[ng+i]+v[ng+i+1]+v[ng+i+2])/2 >= 1.0)
+                if ((v[ng+i]+v[ng+i+1]+v[ng+i+2])/2 >= one(T))
                     alphaS1111 = copy(alpha)
-                    while ((v[ng+i]+v[ng+i+1]+v[ng+i+2])/2 >= 1.0 && alphaS1111>0)
+                    while ((v[ng+i]+v[ng+i+1]+v[ng+i+2])/2 >= one(T) && alphaS1111>0)
                         v -= alphaS1111*dv
                         alphaS1111 = 0.5*alphaS1111
                         v += alphaS1111*dv
@@ -602,7 +438,7 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
             return res, v, k, res_lst
         end
 
-        if (res > 1e3 || isnan(res))
+        if (res > T(1e3) || isnan(res))
             return res_old, v_old, 0, res_lst
         end
 
@@ -617,102 +453,21 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
             nu /= 5.0
             res_old = res
         end
-        alpha=1.0
+        alpha=one(T)
         iter+=1
 
         if mod(k,iter_break)==0
             res_break = res_lst[end-2:end] .- res
-            if maximum(abs.(res_break))< 1e-14 && norm(res)< 1e-14
+            if maximum(abs.(res_break)) < tol && norm(res) < tol
                 return res, v, iter, res_lst
             end
             iter_break += 50
         end
-        if k==maxiter && norm(res)>1e-12
+        if k==maxiter && norm(res) > tol
             println("No solution found after a $k LMA iterations.")
         end
     end
     return res, v, iter
 end
-
-# function rosenbrock(x::Array{Float64}; xL::Float64=-Inf, xR::Float64=Inf)
-#     n = length(x)
-#     for i=1:n
-#         if (x[i]<xL || x[i]>xR)
-#             ErrorException("Some elements of vector x are not within the interval [xL, xR]")
-#         end
-#     end
-
-#     f = 0;
-#     for i=1:n-1
-#        f = f + 100*(x[i+1] - x[i]^2)^2 + (1 - x[i])^2 
-#     end
-
-#     gradf = zeros(n,1)
-#     gradf[1,1]= -400*x[1]*(x[2] - x[1]^2) - 2*(1-x[1])
-#     for i = 2:n-1
-#         gradf[i,1] = 200*(x[i]-x[i-1]^2)-400*x[i]*(x[i+1]-x[i]^2)-2*(1-x[i]);
-#     end    
-#     gradf[n,1] = 200*(x[n]-x[n-1]^2); 
-
-#     return f
-# end
-
-# function rastrigin(x::Array{Float64}; xL::Float64=-Inf, xR::Float64=Inf)    
-#     n = length(x)
-#     for i=1:n
-#         if (x[i]<xL || x[i]>xR)
-#             ErrorException("Some elements of vector x are not within the interval [xL, xR]")
-#         end
-#     end
-     
-#     f = 0; 
-#     for i = 1:n
-#         f = f + (x[i]^2 - 10*cos(2*π*x[i]))
-#     end
-#     f += 10*n
-          
-#     #gradient of the objective function 
-#     gradf = zeros(n,1)
-#     for i = 1:n
-#         gradf[i,1] = 2*x[i]+20*π*sin(2*π*x[i])
-#     end    
-              
-#     return f
-# end
-
-# function preconditioner(V::Array{Float64}; ax::Int=1)
-#     @assert(ax>=1 && ax <=2)
-#     P = zeros(size(V)[ax],size(V)[ax])
-#     for i=1:length(axes(V,ax))
-#         if ax==1
-#             P[i,i] = 1.0/maximum(abs.(V[i,:]))
-#         elseif ax==2
-#             P[i,i] = 1.0/maximum(abs.(V[:,i]))
-#         end
-#     end
-#     return P
-# end
-
-# function preconditioner_saraswat(V::Array{Float64})
-#     m = size(V,1)
-#     A = zeros(m,1)
-#     B = zeros(m,1)
-#     for i = 1:m
-#         A[i] = norm(V[i,:])
-#         B[i] = norm(pinv(V,1e-2)'[i,:])
-#     end
-#     P = zeros(m,m)
-#     for i = 1:m
-#         P[i,i] = sqrt(B[i]/A[i])
-#     end
-
-#     return P
-# end
-
-# function preconditioner_shannon(V::Array{Float64})
-#     F = svd(V)
-#     P = F.V*inv(diagm(F.S))
-#     return P
-# end
 
 end

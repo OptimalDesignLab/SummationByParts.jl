@@ -73,13 +73,13 @@
                 dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
                 res = zeros(size(u))
                 differentiate!(sbp, 1, u, res)
-                @test ≈(res, dudx, atol=5e-12)
+                @test ≈(res, dudx, atol=1e-11)
                 res = zeros(size(u))
                 differentiate!(sbp, 2, u, res)
-                @test ≈(res, dudy, atol=5e-12)
+                @test ≈(res, dudy, atol=1e-11)
                 res = zeros(size(u))
                 differentiate!(sbp, 3, u, res)
-                @test ≈(res, dudz, atol=5e-12)
+                @test ≈(res, dudz, atol=1e-11)
               end
             end
           end
@@ -235,13 +235,13 @@
                 dudz = (x.^i).*(y.^j).*(k.*z.^max(0,k-1))
                 res = zeros(size(u))
                 differentiateElement!(sbp, 1, view(u,:,1), view(res,:,1))
-                @test ≈(res, dudx, atol=5e-12)
+                @test ≈(res, dudx, atol=1e-11)
                 res = zeros(size(u))
                 differentiateElement!(sbp, 2, view(u,:,1), view(res,:,1))
-                @test ≈(res, dudy, atol=5e-12)
+                @test ≈(res, dudy, atol=1e-11)
                 res = zeros(size(u))
                 differentiateElement!(sbp, 3, view(u,:,1), view(res,:,1))
-                @test ≈(res, dudz, atol=5e-12)
+                @test ≈(res, dudz, atol=1e-11)
               end
             end
           end

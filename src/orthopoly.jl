@@ -44,28 +44,29 @@ Julia version adapted from Matlab code written by Greg von Winckel - 04/17/2004
 Contact: gregvw@chtm.unm.edu
  
 """
-function lglnodes(N, T=Float64)
+function lglnodes(N, T::Type{<:Number}=Float64)
+  Tr = typeof(real(one(T)))
   N1 = N+1
   # Use the Chebyshev-Gauss-Lobatto nodes as an initial guess
-  x = -cos.(π*[0:N;]/N)
+  x = -cos.(Tr(pi) .* (0:N) ./ N)
   # The Legendre Vandermonde Matrix 
-  P = zeros(T, (N1,N1))
+  P = zeros(Tr, (N1,N1))
   # Compute P_(N) using the recursion relation; compute its first and second
   # derivatives and update x using the Newton-Raphson method.
-  xold = (T)(2)
-  iter = 1; maxiter = 100  
-  while maximum(abs, real(x.-xold)) > eps(real(Float64((T)(1)))) && iter < maxiter
+  xold = Tr(2)
+  iter = 1; maxiter = 10000  
+  while maximum(abs, real(x.-xold)) > eps(Tr) && iter < maxiter
     iter += 1
     xold = x
-    P[:,1] .= one(T)
+    P[:,1] .= one(Tr)
     P[:,2] = x
     for k=2:N
       P[:,k+1]= ((2k-1)*x.*P[:,k]-(k-1)*P[:,k-1])/k
     end
     x = xold - ( x.*P[:,N1]-P[:,N] )./( N1*P[:,N1] )           
   end
-  w = 2.0 ./(N*N1*P[:,N1].^2)
-  return x, w
+  w = Tr(2) ./ (Tr(N) * Tr(N1) * P[:,N1].^2)
+  return T.(x), T.(w)
 end
 
 """
@@ -89,32 +90,34 @@ Julia version adapted from Matlab code written by Greg von Winckel - 02/25/2004
 Contact: gregvw@chtm.unm.edu
  
 """
-function lgnodes(N, T=Float64)
+function lgnodes(N, T::Type{<:Number}=Float64)
+  Tr = typeof(real(one(T)))
   Nm1 = N-1; Np1 = N+1
-  N == 1 ? xu = [0.0] : xu = range(-1,stop=1,length=N)
+  N == 1 ? xu = [zero(Tr)] : xu = range(-one(Tr), stop=one(Tr), length=N)
   # initial guess
-  x = -cos.((2*[0:Nm1;] .+ 1)*pi/(2*Nm1+2)) .- (0.27/N)*sin.(pi*xu*Nm1/Np1)
+  x = -cos.((2 .* (0:Nm1) .+ 1) .* Tr(pi) ./ (2 * Nm1 + 2)) .-
+      (Tr(0.27)/Tr(N)) .* sin.(Tr(pi) .* xu .* Tr(Nm1) ./ Tr(Np1))
   # Legendre-Gauss Vandermonde Matrix and its derivative
-  L = zeros(N,Np1)
-  Lp = zeros(N)
+  L = zeros(Tr, N, Np1)
+  Lp = zeros(Tr, N)
   # compute the zeros of the Legendre Polynomial using the recursion relation
   # and Newton's method; loop until new points are uniformly within epsilon of
   # old points
-  xold = (T)(2)
-  iter = 1; maxiter = 30
-  while maximum(abs, real(x .- xold)) > 0.1*eps(real(Float64((T)(1)))) && iter < maxiter
+  xold = Tr(2)
+  iter = 1; maxiter = 10000
+  while maximum(abs, real(x .- xold)) > Tr(0.1)*eps(Tr) && iter < maxiter
     iter += 1
-    L[:,1] .= one(T)
+    L[:,1] .= one(Tr)
     L[:,2] .= x
     for k = 2:N
-      L[:,k+1] = ((2*k-1)*x.*L[:,k]-(k-1)*L[:,k-1])/k
+      L[:,k+1] = Tr.((2*k-1)*x.*L[:,k]-(k-1)*L[:,k-1])/Tr(k)
     end
-    Lp[:] .= (Np1)*(L[:,N] .- x.*L[:,Np1])./(1 .- x.^2)
+    Lp[:] .= Tr.(Np1)*(L[:,N] .- x.*L[:,Np1])./Tr.(1 .- x.^2)
     xold = x
-    x -= L[:,Np1]./Lp
+    x -= Tr.(L[:,Np1])./Tr.(Lp)
   end
-  w = 2.0 ./((1 .- x.^2).*Lp.^2)*(Np1/N)^2
-  return x, w
+  w = Tr(2) ./ ((one(Tr) .- x.^2) .* Lp.^2) .* (Tr(Np1)/Tr(N))^2
+  return T.(x), T.(w)
 end
 
 """
@@ -134,33 +137,38 @@ Warburton's nodal DG book.
 * `P`: the polynomial evaluated at x
 
 """
-function jacobipoly(x::Array{T}, alpha::AbstractFloat, beta::AbstractFloat,
+function jacobipoly(x::Array{T}, alpha::Number, beta::Number,
                        N::Int) where {T<:Number}
-  @assert( alpha + beta != -1 )
-  @assert( alpha > -1 && beta > -1)
+  Tr = typeof(real(one(T)))
+  alphaR = Tr(real(alpha))
+  betaR = Tr(real(beta))
+  if alphaR isa Real && betaR isa Real
+    @assert( alphaR + betaR != -one(Tr) )
+    @assert( alphaR > -one(Tr) && betaR > -one(Tr) )
+  end
   # Initial values P_0(x) and P_1(x)
-  gamma0 = ((2^(alpha+beta+1))/(alpha+beta+1))*gamma(alpha+1)*gamma(beta+1)/
-  gamma(alpha+beta+1)
-  P_0 = ones(size(x))/sqrt(gamma0)
+  gamma0 = ((Tr(2)^(alphaR+betaR+one(Tr)))/(alphaR+betaR+one(Tr)))*
+  gamma(alphaR+one(Tr))*gamma(betaR+one(Tr))/gamma(alphaR+betaR+one(Tr))
+  P_0 = ones(T, size(x))/sqrt(gamma0)
   if (N == 0)
     size(P_0,1) > size(P_0,2) ? (return P_0) : (return P_0')
   end
-  gamma1 = (alpha+1)*(beta+1)*gamma0/(alpha+beta+3)
-  P_1 = 0.5*((alpha+beta+2).*x .+ (alpha-beta))/sqrt(gamma1)
+  gamma1 = (alphaR+one(Tr))*(betaR+one(Tr))*gamma0/(alphaR+betaR+Tr(3))
+  P_1 = Tr(0.5)*((alphaR+betaR+Tr(2)).*x .+ (alphaR-betaR))/sqrt(gamma1)
   if (N == 1)
     size(P_1,1) > size(P_1,2) ? (return P_1) : (return P_1')
   end
   # Henceforth, P_0 denotes P_{i} and P_1 denotes P_{i+1}
   # repeat value in recurrence
-  aold = (2.0/(2+alpha+beta))*sqrt((alpha+1)*(beta+1)/(alpha+beta+3))
-  save = zeros(size(x))
+  aold = (Tr(2)/(Tr(2)+alphaR+betaR))*sqrt((alphaR+one(Tr))*(betaR+one(Tr))/(alphaR+betaR+Tr(3)))
+  save = zeros(T, size(x))
   for i = 1:N-1
-    h1 = 2*i + alpha + beta
-    anew = (2.0/(h1+2))*sqrt((i+1)*(i+1+alpha+beta)*(i+1+alpha)*(i+1+beta)/
-                            ((h1+1)*(h1+3)))
-    bnew = -(alpha^2 - beta^2)/(h1*(h1+2))
+    h1 = Tr(2*i) + alphaR + betaR
+    anew = (Tr(2)/(h1+Tr(2)))*sqrt((i+1)*(i+1+alphaR+betaR)*(i+1+alphaR)*(i+1+betaR)/
+                            ((h1+one(Tr))*(h1+Tr(3))))
+    bnew = -(alphaR^2 - betaR^2)/(h1*(h1+Tr(2)))
     save = P_1
-    P_1 = (1/anew).*(-aold.*P_0 + (x .- bnew).*P_1)
+    P_1 = (one(T)/anew).*(-aold.*P_0 + (x .- bnew).*P_1)
     P_0 = save
     aold = anew
   end
@@ -183,37 +191,42 @@ Evaluate the first derivative of a Jacobi Polynomial at some points.
 * dP - derivative of polynomial evaluated at x
 
 """
-function diffjacobipoly(x::Array{T}, alpha::AbstractFloat, 
-                           beta::AbstractFloat, N::Int) where {T<:Number}
-  @assert( alpha + beta != -1 )
-  @assert( alpha > -1 && beta > -1)
-  DP_0 = zeros(size(x))
+function diffjacobipoly(x::Array{T}, alpha::Number, 
+                           beta::Number, N::Int) where {T<:Number}
+  Tr = typeof(real(one(T)))
+  alphaR = Tr(real(alpha))
+  betaR = Tr(real(beta))
+  if alphaR isa Real && betaR isa Real
+    @assert( alphaR + betaR != -one(Tr) )
+    @assert( alphaR > -one(Tr) && betaR > -one(Tr) )
+  end
+  DP_0 = zeros(T, size(x))
   if (N == 0)
     size(DP_0,1) > size(DP_0,2) ? (return DP_0) : (return DP_0')
   end
-  gamma0 = ((2^(alpha+beta+1))/(alpha+beta+1))*gamma(alpha+1)*gamma(beta+1)/
-  gamma(alpha+beta+1)
-  gamma1 = (alpha+1)*(beta+1)*gamma0/(alpha+beta+3)
-  DP_1 = ones(size(x)).*0.5*(alpha+beta+2)/sqrt(gamma1)
+  gamma0 = ((Tr(2)^(alphaR+betaR+one(Tr)))/(alphaR+betaR+one(Tr)))*
+  gamma(alphaR+one(Tr))*gamma(betaR+one(Tr))/gamma(alphaR+betaR+one(Tr))
+  gamma1 = (alphaR+one(Tr))*(betaR+one(Tr))*gamma0/(alphaR+betaR+Tr(3))
+  DP_1 = ones(T, size(x)).*Tr(0.5)*(alphaR+betaR+Tr(2))/sqrt(gamma1)
   if (N == 1)
     size(DP_1,1) > size(DP_1,2) ? (return DP_1) : (return DP_1')
   end
   # initialize values P_0(x) and P_1(x) for recurrence
-  P_0 = ones(size(x))./sqrt(gamma0)
-  P_1 = 0.5*((alpha+beta+2).*x .+ (alpha-beta))/sqrt(gamma1)
+  P_0 = ones(T, size(x))./sqrt(gamma0)
+  P_1 = Tr(0.5)*((alphaR+betaR+Tr(2)).*x .+ (alphaR-betaR))/sqrt(gamma1)
   # repeat value in recurrence
-  aold = (2.0/(2+alpha+beta))*sqrt((alpha+1)*(beta+1)/(alpha+beta+3))
-  save = zeros(size(x))
+  aold = (Tr(2)/(Tr(2)+alphaR+betaR))*sqrt((alphaR+one(Tr))*(betaR+one(Tr))/(alphaR+betaR+Tr(3)))
+  save = zeros(T, size(x))
   for i = 1:N-1
-    h1 = 2*i + alpha + beta
-    anew = (2.0/(h1+2))*sqrt((i+1)*(i+1+alpha+beta)*(i+1+alpha)*(i+1+beta)/
-                            ((h1+1)*(h1+3)))
-    bnew = -(alpha^2 - beta^2)/(h1*(h1+2))
+    h1 = Tr(2*i) + alphaR + betaR
+    anew = (Tr(2)/(h1+Tr(2)))*sqrt((i+1)*(i+1+alphaR+betaR)*(i+1+alphaR)*(i+1+betaR)/
+                            ((h1+one(Tr))*(h1+Tr(3))))
+    bnew = -(alphaR^2 - betaR^2)/(h1*(h1+Tr(2)))
     save = DP_1
-    DP_1 = (1/anew).*(-aold.*DP_0 .+ P_1 .+ (x .- bnew).*DP_1)
+    DP_1 = (one(T)/anew).*(-aold.*DP_0 .+ P_1 .+ (x .- bnew).*DP_1)
     DP_0 = save
     save = P_1
-    P_1 = (1/anew).*(-aold.*P_0 + (x .- bnew).*P_1)
+    P_1 = (one(T)/anew).*(-aold.*P_0 + (x .- bnew).*P_1)
     P_0 = save
     aold = anew
   end
@@ -240,9 +253,9 @@ function proriolpoly(x::Array{T}, y::Array{T}, i::Int, j::Int) where {T<:Number}
   @assert( i >= 0 && j >= 0 ) 
   xi = zeros(T, size(x))
   for k = 1:length(x)
-    y[k] != 1.0 ? xi[k] = 2.0*(1 + x[k])./(1 - y[k]) -1 : xi[k] = -1
+    y[k] != one(T) ? xi[k] = T(2)*(one(T) + x[k])./(one(T) - y[k]) - one(T) : xi[k] = -1
   end
-  P = sqrt(2).*jacobipoly(xi, 0.0, 0.0, i).*jacobipoly(y, convert(AbstractFloat, 2*i+1), 0.0, j).*((1 .- y).^(i))
+  P = sqrt(T(2)).*jacobipoly(xi, zero(T), zero(T), i).*jacobipoly(y, T(2*i+1), zero(T), j).*((1 .- y).^(i))
   return P
 end
 
@@ -268,12 +281,12 @@ function proriolpoly(x::Array{T}, y::Array{T}, z::Array{T}, i::Int, j::Int,
   xi = zeros(T, size(x))
   eta = zeros(T, size(y))
   for m = 1:length(x)
-    y[m]+z[m] != 0.0 ? xi[m] = -2.0*(1+x[m])./(y[m]+z[m]) - 1 : xi[m] = -1
-    z[m] != 1.0 ? eta[m] = 2.0*(1+y[m])./(1-z[m]) - 1 : eta[m] = -1
+    y[m]+z[m] != zero(T) ? xi[m] = -T(2)*(one(T)+x[m])./(y[m]+z[m]) - one(T) : xi[m] = -1
+    z[m] != one(T) ? eta[m] = T(2)*(one(T)+y[m])./(one(T)-z[m]) - one(T) : eta[m] = -1
   end
-  P = sqrt(8).*jacobipoly(xi, 0.0, 0.0, i).*
-    jacobipoly(eta, convert(AbstractFloat, 2*i+1), 0.0, j).*((1 .- eta).^(i)).*
-    jacobipoly(z, convert(AbstractFloat, 2*i+2*j+2), 0.0, k).*((1 .- z).^(i+j))
+  P = sqrt(T(8)).*jacobipoly(xi, zero(T), zero(T), i).*
+    jacobipoly(eta, T(2*i+1), zero(T), j).*((1 .- eta).^(i)).*
+    jacobipoly(z, T(2*i+2*j+2), zero(T), k).*((1 .- z).^(i+j))
   return P
 end
 
@@ -297,7 +310,7 @@ the right triangle.
 function diffproriolpoly(x::Array{T}, y::Array{T}, i::Int, j::Int) where {T<:Number}
   xi = zeros(T, size(x))
   for k = 1:length(x)
-    real(y[k]) != 1.0 ? xi[k] = 2.0*(1 + x[k])./(1 - y[k]) -1 : xi[k] = -1
+    real(y[k]) != one(real(one(T))) ? xi[k] = T(2)*(one(T) + x[k])./(one(T) - y[k]) - one(T) : xi[k] = -1
   end
   dPdx = zeros(T, size(x))
   dPdy = zeros(T, size(y))
@@ -305,14 +318,14 @@ function diffproriolpoly(x::Array{T}, y::Array{T}, i::Int, j::Int) where {T<:Num
     return dPdx, dPdy
   end
   # compute some terms for reuse
-  Jxi = jacobipoly(xi, 0.0, 0.0, i)
-  Jy = jacobipoly(y, convert(AbstractFloat, 2*i+1), 0.0, j)
-  dJxidxi = diffjacobipoly(xi, 0.0, 0.0, i)
-  dJydy = diffjacobipoly(y, convert(AbstractFloat, 2*i+1), 0.0, j)
+  Jxi = jacobipoly(xi, zero(T), zero(T), i)
+  Jy = jacobipoly(y, T(2*i+1), zero(T), j)
+  dJxidxi = diffjacobipoly(xi, zero(T), zero(T), i)
+  dJydy = diffjacobipoly(y, T(2*i+1), zero(T), j)
 
   if (i > 0)
     # dPdx is only nonzero if i > 0;
-    dPdx += sqrt(2).*dJxidxi.*Jy.*2.0.*((1 .- y).^(i-1))
+    dPdx += sqrt(T(2)).*dJxidxi.*Jy.*2.0.*((1 .- y).^(i-1))
     dPdy = -Jy.*i.*((1 .- y).^(i-1))
   end
   # dPdx is now finished, but dPdy needs additional terms
@@ -320,11 +333,11 @@ function diffproriolpoly(x::Array{T}, y::Array{T}, i::Int, j::Int) where {T<:Num
   dPdy .*= Jxi
   if (i >= 1)
     for k = 1:length(x)
-      real(y[k]) != 1.0 ? dPdy[k] += dJxidxi[k]*Jy[k]*2.0*(1+x[k])*((1-y[k])^(i-2)) : 
-      dPdy[k] += 0.0
+      real(y[k]) != one(real(one(T))) ? dPdy[k] += dJxidxi[k]*Jy[k]*2.0*(1+x[k])*((1-y[k])^(i-2)) : 
+      dPdy[k] += zero(T)
     end
   end
-  dPdy *= sqrt(2)
+  dPdy *= sqrt(T(2))
   
   return dPdx, dPdy
 end
@@ -354,10 +367,10 @@ function diffproriolpoly(x::Array{T}, y::Array{T}, z::Array{T}, i::Int, j::Int, 
   # each node is independent, so use complex step once for each coordinate. Care
   # is needed at the one vertex, where the xi and eta mappings become singular.
   # To avoid problems, directional derivatives are used.
-  eps_step = 1e-60+0im #getComplexStep(T)
-  xc = complex.(x,0)
-  yc = complex.(y,0)
-  zc = complex.(z,0)
+  eps_step = eps(real(one(T)))
+  xc = complex.(x, zero(T))
+  yc = complex.(y, zero(T))
+  zc = complex.(z, zero(T))
   # compute derivative with respect to z
   zc .-= eps_step*im
   Pc = proriolpoly(xc, yc, zc, i, j, k)
@@ -485,7 +498,7 @@ function vandermonde_monomial(p::Int, x::Array{T}; compute_grad::Bool=true, comp
   num_eq = p+1
   V = zeros(T, (nnodes, num_eq))
   Vdx = zeros(T, (nnodes, num_eq))
-  Vinteg = zeros(Float64, num_eq)
+  Vinteg = zeros(T, num_eq)
 
   for indx=1:num_eq
     a = indx-1;
@@ -534,7 +547,7 @@ function vandermonde_monomial(p::Int, x::Array{T}, y::Array{T}; compute_grad::Bo
   V = zeros(T, (nnodes, num_eq))
   Vdx = zeros(T, (nnodes, num_eq))
   Vdy = zeros(T, (nnodes, num_eq))
-  Vinteg = zeros(Float64, num_eq)
+  Vinteg = zeros(T, num_eq)
 
   for i=0:p
     for j=0:i
@@ -596,7 +609,7 @@ function vandermonde_monomial(p::Int, x::Array{T}, y::Array{T}, z::Array{T};
   Vdx = zeros(T, (nnodes, num_eq))
   Vdy = zeros(T, (nnodes, num_eq))
   Vdz = zeros(T, (nnodes, num_eq))
-  Vinteg = zeros(Float64, num_eq)
+  Vinteg = zeros(T, num_eq)
 
   for i=0:p
     for j=0:i
@@ -610,19 +623,19 @@ function vandermonde_monomial(p::Int, x::Array{T}, y::Array{T}, z::Array{T};
 
           if compute_grad
             if a == 0
-                Vdx[n, indx] = 0.0;
+                Vdx[n, indx] = zero(T);
             else 
                 Vdx[n, indx] = a * x[n]^(a-1) * y[n]^b * z[n]^c;
             end
 
             if b == 0
-                Vdy[n, indx]= 0.0;
+                Vdy[n, indx]= zero(T);
             else
                 Vdy[n, indx] = b * x[n]^a * y[n]^(b-1) * z[n]^c; 
             end
 
             if c == 0
-                Vdz[n, indx]= 0.0;
+                Vdz[n, indx]= zero(T);
             else
                 Vdz[n, indx] = c * x[n]^a * y[n]^(b) * z[n]^(c-1); 
             end
@@ -660,9 +673,9 @@ function vandermonde_arnoldi(p::Int, x::Array{T}; compute_grad::Bool=true) where
   nnodes = length(x)
   num_eq = p+1
   V = zeros(T, (nnodes, num_eq))
-  V[:,1] .= 1.0
+  V[:,1] .= one(T)
   Vdx = zeros(T, (nnodes, num_eq))
-  Hes = zeros(num_eq,num_eq-1)
+  Hes = zeros(T, num_eq, num_eq-1)
 
   for k = 1:num_eq-1
     v = x .* V[:,k]
@@ -670,7 +683,7 @@ function vandermonde_arnoldi(p::Int, x::Array{T}; compute_grad::Bool=true) where
       Hes[j,k] = (Matrix(V[:,j]') * v)[1]/nnodes
       v = v - Hes[j,k]*V[:,j]
     end
-    Hes[k+1,k] = norm(v)/sqrt(nnodes)
+    Hes[k+1,k] = norm(v)/sqrt(T(nnodes))
     V[:,k+1] = v/Hes[k+1,k]
     if compute_grad
       Vdx[:,k+1] = (x.*Vdx[:,k] - Vdx[:,1:k]*Hes[1:k,k] + V[:,k])/Hes[k+1,k]
@@ -702,11 +715,11 @@ function vandermonde_arnoldi(p::Int, x::Array{T}, y::Array{T}; compute_grad::Boo
   nnodes = length(x)
   num_eq = convert(Int, (p+1)*(p+2)/2)
   V = zeros(T, (nnodes, num_eq))
-  V[:,1] .= 1.0
+  V[:,1] .= one(T)
   Vdx = zeros(T, (nnodes, num_eq))
   Vdy = zeros(T, (nnodes, num_eq))
-  Hes = zeros(num_eq,num_eq)
-  Hes[1,1] = 1.0
+  Hes = zeros(T, num_eq, num_eq)
+  Hes[1,1] = one(T)
 
   # get list of indices for multivariate polynomials
   ab = zeros(2,num_eq)
@@ -738,33 +751,33 @@ function vandermonde_arnoldi(p::Int, x::Array{T}, y::Array{T}; compute_grad::Boo
   end
 
   xy = [x y]
-  dexi = zeros(nnodes)
-  deta = zeros(nnodes)
+  dexi = zeros(T, nnodes)
+  deta = zeros(T, nnodes)
   for indx=1:max_indx #size(ab,2)-1
     exi = xy[:,coords[indx]]
     eta = copy(exi)
 
     if coords[indx]==1
-        dexi = ones(nnodes)
-        deta = zeros(nnodes)
+        dexi = ones(T, nnodes)
+        deta = zeros(T, nnodes)
     elseif coords[indx]==2
-        dexi = zeros(nnodes)
-        deta = ones(nnodes)
+        dexi = zeros(T, nnodes)
+        deta = ones(T, nnodes)
     end
     
     v = diagm(exi)*V[:,ks[indx]]
     for t = 1:2
-        s = 1/nnodes .* V[:,1:indx]'*v
+        s = (one(T)/T(nnodes)) .* V[:,1:indx]'*v
         v = v - V[:,1:indx]*s
         Hes[1:indx,indx+1] =  Hes[1:indx,indx+1] + s
     end
 
-    Hes[indx+1,indx+1] = 1/sqrt(nnodes).*norm(v,2)
+    Hes[indx+1,indx+1] = (one(T)/sqrt(T(nnodes))) .* norm(v,2)
     V[:,indx+1] = v ./Hes[indx+1,indx+1];
 
     if compute_grad
-      s1 = 1/nnodes * Matrix(V[:,1:indx]')* diagm(exi)*V[:,ks[indx]]
-      s2 =  s1 - 1/nnodes *Matrix(V[:,1:indx]')*V[:,1:indx]*s1
+      s1 = (one(T)/T(nnodes)) * Matrix(V[:,1:indx]')* diagm(exi)*V[:,ks[indx]]
+      s2 =  s1 - (one(T)/T(nnodes)) *Matrix(V[:,1:indx]')*V[:,1:indx]*s1
       Vdx[:,indx+1] = (diagm(dexi)*V[:,ks[indx]]
                       + diagm(exi)*Vdx[:,ks[indx]]- Vdx[:,1:indx]*s1
                       - Vdx[:,1:indx]*s2) ./Hes[indx+1,indx+1]
@@ -832,12 +845,12 @@ function vandermonde_arnoldi(p::Int, x::Array{T}, y::Array{T}, z::Array{T}; comp
   nnodes = length(x)
   num_eq = convert(Int, (p+1)*(p+2)*(p+3)/6)
   V = zeros(T, (nnodes, num_eq))
-  V[:,1] .= 1.0
+  V[:,1] .= one(T)
   Vdx = zeros(T, (nnodes, num_eq))
   Vdy = zeros(T, (nnodes, num_eq))
   Vdz = zeros(T, (nnodes, num_eq))
-  Hes = zeros(num_eq,num_eq)
-  Hes[1,1] = 1.0
+  Hes = zeros(T, num_eq, num_eq)
+  Hes[1,1] = one(T)
 
   # get list of indices for multivariate polynomials
   abc = zeros(3,num_eq)
@@ -875,41 +888,41 @@ function vandermonde_arnoldi(p::Int, x::Array{T}, y::Array{T}, z::Array{T}; comp
   end
 
   xyz = [x y z]
-  dexi = zeros(nnodes)
-  deta = zeros(nnodes)
-  dzeta = zeros(nnodes)
+  dexi = zeros(T, nnodes)
+  deta = zeros(T, nnodes)
+  dzeta = zeros(T, nnodes)
   for indx=1:size(abc,2)-1
     exi = xyz[:,coords[indx]]
     eta = copy(exi)
     zeta = copy(exi)
 
     if coords[indx]==1
-      dexi = ones(nnodes)
-      deta = zeros(nnodes)
-      dzeta = zeros(nnodes)
+      dexi = ones(T, nnodes)
+      deta = zeros(T, nnodes)
+      dzeta = zeros(T, nnodes)
     elseif coords[indx]==2
-      dexi = zeros(nnodes)
-      deta = ones(nnodes)
-      dzeta = zeros(nnodes)
+      dexi = zeros(T, nnodes)
+      deta = ones(T, nnodes)
+      dzeta = zeros(T, nnodes)
     elseif coords[indx]==3
-      dexi = zeros(nnodes)
-      deta = zeros(nnodes)
-      dzeta = ones(nnodes)
+      dexi = zeros(T, nnodes)
+      deta = zeros(T, nnodes)
+      dzeta = ones(T, nnodes)
     end
     
     v = diagm(exi)*V[:,ks[indx]]
     for t = 1:2
-        s = 1/nnodes .* V[:,1:indx]'*v
+        s = (one(T)/T(nnodes)) .* V[:,1:indx]'*v
         v = v - V[:,1:indx]*s
         Hes[1:indx,indx+1] =  Hes[1:indx,indx+1] + s
     end
 
-    Hes[indx+1,indx+1] = 1/sqrt(nnodes).*norm(v,2)
+    Hes[indx+1,indx+1] = (one(T)/sqrt(T(nnodes))) .* norm(v,2)
     V[:,indx+1] = v ./Hes[indx+1,indx+1];
 
     if compute_grad
-      s1 = 1/nnodes * Matrix(V[:,1:indx]')* diagm(exi)*V[:,ks[indx]]
-      s2 =  s1 - 1/nnodes *Matrix(V[:,1:indx]')*V[:,1:indx]*s1
+      s1 = (one(T)/T(nnodes)) * Matrix(V[:,1:indx]')* diagm(exi)*V[:,ks[indx]]
+      s2 =  s1 - (one(T)/T(nnodes)) *Matrix(V[:,1:indx]')*V[:,1:indx]*s1
       Vdx[:,indx+1] = (diagm(dexi)*V[:,ks[indx]]
                       + diagm(exi)*Vdx[:,ks[indx]]- Vdx[:,1:indx]*s1
                       - Vdx[:,1:indx]*s2) ./Hes[indx+1,indx+1]
@@ -946,7 +959,7 @@ function vandermonde_full(p::Int, x::Array{T}) where {T}
   dim = size(x,1)
   num_nodes = size(x,2)
   num_eq = binomial(dim+p, dim)
-  V = zeros(num_nodes, num_eq)
+  V = zeros(T, num_nodes, num_eq)
   if dim == 2
     V, _, _ = vandermonde(p,x[1,:],x[2,:])
   elseif dim == 3

@@ -1,5 +1,173 @@
 # This file gathers together functions used to build the SBP operators
 
+function _lsq_solve(A::AbstractMatrix{T}, b::AbstractVecOrMat{T}) where {T}
+  if _supports_svd(T)
+    return pinv(A) * b
+  end
+
+  if T <: BigFloat
+    # Mixed-precision solve: Float64 least-squares + BigFloat refinement.
+    A64 = Float64.(A)
+    b64 = Float64.(b)
+    x64 = A64 \ b64
+    x = T.(x64)
+
+    bnorm = max(norm(b), one(T))
+    tol = T(10) * eps(real(one(T))) * bnorm
+    for _ = 1:10
+      r = b - A * x
+      if norm(r) <= tol
+        return x
+      end
+      r64 = Float64.(r)
+      dx64 = A64 \ r64
+      x += T.(dx64)
+    end
+
+    # Fallback: regularized normal equations in BigFloat.
+    m, n = size(A)
+    lambda = T(eps(real(one(T))))
+    bmat = ndims(b) == 1 ? reshape(b, :, 1) : b
+    xmat = nothing
+    for _ = 1:6
+      try
+        if m >= n
+          I_n = Matrix{T}(I, n, n)
+          AtA = Symmetric(A' * A + lambda * I_n)
+          xmat = cholesky(AtA) \ (A' * bmat)
+        else
+          I_m = Matrix{T}(I, m, m)
+          AtA = Symmetric(A * A' + lambda * I_m)
+          xmat = A' * (cholesky(AtA) \ bmat)
+        end
+        break
+      catch
+        lambda *= T(10)
+      end
+    end
+    if xmat === nothing
+      if m >= n
+        I_n = Matrix{T}(I, n, n)
+        xmat = (A' * A + lambda * I_n) \ (A' * bmat)
+      else
+        I_m = Matrix{T}(I, m, m)
+        xmat = A' * ((A * A' + lambda * I_m) \ bmat)
+      end
+    end
+    return ndims(b) == 1 ? vec(xmat) : xmat
+  end
+
+  local x
+  try
+    x = _qr_solve(A, b)
+  catch
+    # Fallback for near-singular systems; use light T-scaled regularization.
+    m, n = size(A)
+    lambda = T(eps(real(one(T))))
+    if m >= n
+      I_n = Matrix{T}(I, n, n)
+      x = (A' * A + lambda * I_n) \ (A' * b)
+    else
+      I_m = Matrix{T}(I, m, m)
+      x = A' * ((A * A' + lambda * I_m) \ b)
+    end
+  end
+
+  # Iterative refinement to push the residual toward type precision.
+  bnorm = max(norm(b), one(T))
+  tol = T(10) * eps(real(one(T))) * bnorm
+  prev_rnorm = typemax(real(one(T)))
+  for iter = 1:50
+    r = b - A * x
+    rnorm = norm(r)
+    if iter == 1 || iter % 10 == 0
+      println("_lsq_solve refinement iter ", iter, ": rnorm = ", rnorm)
+    end
+    if rnorm <= tol
+      break
+    end
+    if rnorm >= prev_rnorm
+      # Stagnation: use a high-accuracy normal-equations correction.
+      m, n = size(A)
+      lambda = T(eps(real(one(T)))^2)
+      if m >= n
+        I_n = Matrix{T}(I, n, n)
+        dx = (A' * A + lambda * I_n) \ (A' * r)
+      else
+        I_m = Matrix{T}(I, m, m)
+        dx = A' * ((A * A' + lambda * I_m) \ r)
+      end
+    else
+      t0 = time_ns()
+      dx = _qr_solve(A, r)
+      if iter == 1 || iter % 10 == 0
+        println("_lsq_solve refinement qr_solve: ", (time_ns() - t0) / 1e9, " s")
+      end
+    end
+    x += dx
+    prev_rnorm = rnorm
+  end
+  return x
+end
+
+
+function _lsq_solve_multi(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where {T}
+  if _supports_svd(T)
+    return pinv(A) * B
+  end
+
+  if T <: BigFloat
+    m, n = size(A)
+    lambda = T(eps(real(one(T))))
+    X = nothing
+    for _ = 1:6
+      try
+        if m >= n
+          I_n = Matrix{T}(I, n, n)
+          AtA = Symmetric(A' * A + lambda * I_n)
+          X = cholesky(AtA) \ (A' * B)
+        else
+          I_m = Matrix{T}(I, m, m)
+          AtA = Symmetric(A * A' + lambda * I_m)
+          X = A' * (cholesky(AtA) \ B)
+        end
+        break
+      catch
+        lambda *= T(10)
+      end
+    end
+    if X === nothing
+      if m >= n
+        I_n = Matrix{T}(I, n, n)
+        X = (A' * A + lambda * I_n) \ (A' * B)
+      else
+        I_m = Matrix{T}(I, m, m)
+        X = A' * ((A * A' + lambda * I_m) \ B)
+      end
+    end
+    return X
+  end
+
+  return _qr_solve(A, B)
+end
+
+function _qr_solve(A::AbstractMatrix{T}, b::AbstractVecOrMat{T}) where {T}
+  F = qr(A, ColumnNorm())
+  R = F.R
+  p = F.p
+  diagR = diag(R)
+  maxdiag = isempty(diagR) ? zero(T) : maximum(abs.(diagR))
+  tol = T(eps(real(one(T)))) * T(max(size(A)...)) * maxdiag
+  rnk = count(d -> abs(d) > tol, diagR)
+
+  bmat = ndims(b) == 1 ? reshape(b, :, 1) : b
+  Qtb = F.Q' * bmat
+  y = R[1:rnk, 1:rnk] \ Qtb[1:rnk, :]
+  x = zeros(T, size(A, 2), size(bmat, 2))
+  x[p[1:rnk], :] = y
+  return ndims(b) == 1 ? vec(x) : x
+end
+
 """
 ### SummationByParts.bndrynodalexpansion
 
@@ -33,9 +201,9 @@ function bndrynodalexpansion(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int) where {
   # uniform points in the interior for now
   ptr = numbndry+1
   for j = 1:(d-2)
-    eta = 2.0*j/d-1
+    eta = T(2)*j/d-1
     for i = 1:(d-j-1)
-      xi = 2.0*i/d-1
+      xi = T(2)*i/d-1
       xaug[ptr] = xi
       yaug[ptr] = eta
       ptr += 1
@@ -69,11 +237,11 @@ function bndrynodalexpansion(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int) where {
   # uniform points in the interior for now
   ptr = numbndry+1
   for k = 1:(d-3)
-    zeta = 2.0*k/d-1
+    zeta = T(2)*k/d-1
     for j = 1:(d-k-2)
-      eta = 2.0*j/d-1
+      eta = T(2)*j/d-1
       for i = 1:(d-j-k-1)
-        xi = 2.0*i/d-1
+        xi = T(2)*i/d-1
         xaug[ptr] = xi
         yaug[ptr] = eta
         zaug[ptr] = zeta
@@ -137,9 +305,9 @@ function nodalexpansion(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int) wher
   ptr = numbndry+1
   # set uniform nodes on interior to make Vandermonde unisolvent
   for j = 1:(d-2)
-    eta = 2.0*j/d-1
+    eta = T(2)*j/d-1
     for i = 1:(d-j-1)
-      xi = 2.0*i/d-1
+      xi = T(2)*i/d-1
       xaug[ptr] = xi
       yaug[ptr] = eta
       ptr += 1
@@ -176,13 +344,13 @@ function nodalexpansion(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int) wher
   yaug[1:numbub] = x[2,indices] 
   ptr = numbub+1
   for j = 0:e-1
-    xi = 2.0*j/e-1
+    xi = T(2)*j/e-1
     # bottom side
     xaug[ptr] = xi
-    yaug[ptr] = -1.0
+    yaug[ptr] = -one(T)
     ptr += 1
     # left side
-    xaug[ptr] = -1.0
+    xaug[ptr] = -one(T)
     yaug[ptr] = -xi
     ptr += 1
     # hypotenuse
@@ -380,7 +548,7 @@ function boundarymassmatrix(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int) where {T
   xbndry = vec(x[1,bndryindices[:,1]])
   P = zeros(T, (numbndrynodes,numbndrynodes))
   for j = 0:d
-    P[:,j+1] = OrthoPoly.jacobipoly(xbndry, 0.0, 0.0, j)
+    P[:,j+1] = OrthoPoly.jacobipoly(xbndry, zero(T), zero(T), j)
   end
   A = inv(P)
   Hbndry = A'*A
@@ -445,8 +613,8 @@ function accuracyconstraints(cub::LineSymCub{T}, vtx::Array{T,2}, d::Int,
   # loop over ortho polys up to degree d
   ptr = 0
   for r = dl:d
-    P = OrthoPoly.jacobipoly(vec(x[1,:]), 0.0, 0.0, r)
-    dPdx = OrthoPoly.diffjacobipoly(vec(x[1,:]), 0.0, 0.0, r)
+    P = OrthoPoly.jacobipoly(vec(x[1,:]), zero(T), zero(T), r)
+    dPdx = OrthoPoly.diffjacobipoly(vec(x[1,:]), zero(T), zero(T), r)
     # loop over the lower part of the skew-symmetric matrices
     for row = 2:cub.numnodes
       offset = convert(Int, (row-1)*(row-2)/2)
@@ -466,7 +634,7 @@ function accuracyconstraints(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int,
   x = SymCubatures.calcnodes(cub, vtx)
 #  Ex, Ey = SummationByParts.boundaryoperators(cub, vtx, d)
   w = SymCubatures.calcweights(cub)
-#  Ex *= 0.5; Ey *= 0.5
+#  Ex *= T(0.5); Ey *= T(0.5)
   # the number of unknowns for in the skew-symmetric matrices
   numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
   # the number of accuracy equations
@@ -504,7 +672,7 @@ function accuracyconstraints(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int,
   x = SymCubatures.calcnodes(cub, vtx) 
   #Ex, Ey, Ez = SummationByParts.boundaryoperators(cub, vtx, d)
   w = SymCubatures.calcweights(cub)
-  #Ex *= 0.5; Ey *= 0.5; Ez *= 0.5
+  #Ex *= T(0.5); Ey *= T(0.5); Ez *= T(0.5)
   # the number of unknowns for both skew-symmetric matrices Qx, Qy, and Qz
   numQvars = convert(Int, cub.numnodes*(cub.numnodes-1)/2)
   # the number of accuracy equations
@@ -592,7 +760,7 @@ function commuteerror(w::Array{T}, Qxpart::AbstractArray{T,2},
       for k = 1:numnodes
         Aij += (Qx[row,k]*Qy[k,col] - Qy[row,k]*Qx[k,col])/w[k]
       end
-      f += 0.5*Aij*Aij
+      f += T(0.5)*Aij*Aij
       for k = 1:numnodes
         dfdQx[row,k] += Aij*Qy[k,col]/w[k]
         dfdQx[k,col] -= Aij*Qy[row,k]/w[k]
@@ -638,11 +806,10 @@ function buildoperators(cub::LineSymCub{T}, vtx::Array{T,2}, d::Int) where {T}
   Q = zeros(T, (cub.numnodes,cub.numnodes,1) )
   SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
   E = copy(Q)
-  Q .*= 0.5 #scale!(Q, 0.5)
+  Q .*= T(0.5) #scale!(Q, T(0.5))
   
   A, bx = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
-  Ainv = pinv(A)
-  x = Ainv*bx
+  x = _lsq_solve(A, bx)
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
     for col = 1:row-1
@@ -661,7 +828,7 @@ function buildoperators(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int; vertices::Bo
   SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
   E = zeros(T, (cub.numnodes,cub.numnodes,2))
   E .= copy(Q)
-  Q .*= 0.5 #scale!(Q, 0.5)
+  Q .*= T(0.5) #scale!(Q, T(0.5))
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
 
   #F = svdfact(A)
@@ -674,8 +841,8 @@ function buildoperators(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int; vertices::Bo
   #x = Afact\bx; y = Afact\by
   #x = A\bx; y = A\by
   # use the minimum norm least-squares solution
-  Ainv = pinv(A)
-  x = Ainv*bx; y = Ainv*by
+  x = _lsq_solve(A, bx)
+  y = _lsq_solve(A, by)
   use_aux = false
   if use_aux
     # temporary test of using auxillary accuracy conditions; will leave this
@@ -689,15 +856,15 @@ function buildoperators(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int; vertices::Bo
     #println("rank(C) = ",rank(C))
     Y = svd[:V][:,1:rnk]
     Z = svd[:V][:,rnk+1:end]
-    xp = diagm(1.0/svd[:S][1:rnk])*(svd[:U][:,1:rnk]'*bx)
-    yp = diagm(1.0/svd[:S][1:rnk])*(svd[:U][:,1:rnk]'*by)
+    xp = diagm(one(T)/svd[:S][1:rnk])*(svd[:U][:,1:rnk]'*bx)
+    yp = diagm(one(T)/svd[:S][1:rnk])*(svd[:U][:,1:rnk]'*by)
     CZ = C*Z
     xn = (CZ'*CZ)\(Z'*C'*dx - CZ'*C*Y*xp)
     yn = (CZ'*CZ)\(Z'*C'*dy - CZ'*C*Y*yp)
     x = Y*xp + Z*xn
     y = Y*yp + Z*yn
 
-    @assert( norm(A*x - bx) < 1e-12)
+    @assert( norm(A*x - bx) < T(1e-12) )
     @assert( norm(A*y - by) < 1e-12)
     #println( norm(A*x - bx))
     #println( norm(A*y - by))
@@ -720,7 +887,8 @@ function buildoperators(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int; vertices::Bo
 end
 
 function buildoperators(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int; faceopertype::Symbol=:Omega,
-                        facecub::Union{TriSymCub{T}, Nothing}=nothing, facevtx::Union{Array{T,2}, Nothing}=nothing) where {T}
+                        facecub::Union{TriSymCub{T}, Nothing}=nothing, 
+                        facevtx::Union{Array{T,2}, Nothing}=nothing) where {T}
   w = SymCubatures.calcweights(cub)
   face = TetFace{T}(d, cub, vtx, faceopertype=faceopertype, facecub=facecub, facevtx=facevtx)
   Q = zeros(T, (cub.numnodes,cub.numnodes,3) )
@@ -729,7 +897,7 @@ function buildoperators(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int; faceopertype
   SummationByParts.boundaryoperator!(face, 3, view(Q,:,:,3))
   E = zeros(T, (cub.numnodes,cub.numnodes,3))
   E .= copy(Q)
-  Q .*= 0.5 #scale!(Q, 0.5)
+  Q .*= T(0.5) #scale!(Q, T(0.5))
   A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
 
   #w = SymCubatures.calcweights(cub)
@@ -749,7 +917,7 @@ function buildoperators(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int; faceopertype
   #println("rank(A) = ",rank(A))
   #println("ndof    = ",size(A,2)-rank(A))
 
-  if d <= 3
+  if d <= 3 && _supports_svd(T)
     F = svd(A) # svdfact(A)
     # for i = 1:size(A,2)
     #   @printf("singular value %d = %g\n",i,F[:S][i])
@@ -765,14 +933,16 @@ function buildoperators(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int; faceopertype
     #@assert(rank(A) == rnk)
     #@printf("rank(A) = %g, rnk = %g\n",rank(A),rnk)
     #rnk = rank(A)
-    x = F.V[:,1:rnk]*(diagm(1.0 ./F.S[1:rnk])*(F.U[:,1:rnk]'*bx))
-    y = F.V[:,1:rnk]*(diagm(1.0 ./F.S[1:rnk])*(F.U[:,1:rnk]'*by))
-    z = F.V[:,1:rnk]*(diagm(1.0 ./F.S[1:rnk])*(F.U[:,1:rnk]'*bz))
+    x = F.V[:,1:rnk]*(diagm(one(T) ./F.S[1:rnk])*(F.U[:,1:rnk]'*bx))
+    y = F.V[:,1:rnk]*(diagm(one(T) ./F.S[1:rnk])*(F.U[:,1:rnk]'*by))
+    z = F.V[:,1:rnk]*(diagm(one(T) ./F.S[1:rnk])*(F.U[:,1:rnk]'*bz))
   else
     # the p=4 case has one badly behaved singular value
     # Afact = qr(A)
     # x = (Afact.Q)\bx; y = (Afact.Q)\by; z = (Afact.Q)\bz
-    x = A\bx; y = A\by; z = A\bz
+    x = _lsq_solve(A, bx)
+    y = _lsq_solve(A, by)
+    z = _lsq_solve(A, bz)
   end
 
   for row = 2:cub.numnodes
@@ -830,7 +1000,7 @@ function buildoperators(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int, e::Int) wher
   # SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
   # Q[:,:,1] += P'*diagm(w)*dPdx - dPdx'*diagm(w)*P
   # Q[:,:,2] += P'*diagm(w)*dPdy - dPdy'*diagm(w)*P
-  # scale!(Q, 0.5)
+  # scale!(Q, T(0.5))
 
   return w, Q  
 end
@@ -861,7 +1031,7 @@ function buildsparseoperators(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int) where 
   Q = zeros(T, (cub.numnodes,cub.numnodes,2) )
   SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
-  Q .*= 0.5 #scale!(Q, 0.5)
+  Q .*= T(0.5) #scale!(Q, T(0.5))
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   # find a sparse solution for skew-symmetric Sx
   x = zeros(size(A,2))
@@ -870,7 +1040,7 @@ function buildsparseoperators(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int) where 
   y = zeros(size(A,2))
   SummationByParts.calcSparseSolution!(A, by, y)
   
-  @assert( norm(A*x - bx) < 1e-12)
+  @assert( norm(A*x - bx) < T(1e-12) )
   @assert( norm(A*y - by) < 1e-12)
 
   for row = 2:cub.numnodes
@@ -893,7 +1063,7 @@ function buildsparseoperators(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int) where 
   SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
   SummationByParts.boundaryoperator!(face, 3, view(Q,:,:,3))
-  scale!(Q, 0.5)
+  scale!(Q, T(0.5))
   A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
   #rankA = rank(A)
 
@@ -904,12 +1074,12 @@ function buildsparseoperators(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int) where 
     SummationByParts.calcSparseSolution!(A, bx, x)
     
     # s = zeros(size(A,2))
-    # SummationByParts.basispursuit!(A, bx, s, rho=1.5, alpha=1.0, hist=false,
+    # SummationByParts.basispursuit!(A, bx, s, rho=1.5, alpha=one(T), hist=false,
     #                                abstol=1e-6, reltol=1e-6)
     # P = zeros(size(A,2),rankA)
     # idx = sortperm(abs(s), rev=true)
     # for i = 1:rankA
-    #   P[idx[i],i] = 1.0
+    #   P[idx[i],i] = one(T)
     # end
     # AP = A*P
     # x = P*(AP\bx)
@@ -918,12 +1088,12 @@ function buildsparseoperators(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int) where 
     y = zeros(size(A,2))
     SummationByParts.calcSparseSolution!(A, by, y)
     
-    # SummationByParts.basispursuit!(A, by, s, rho=1.5, alpha=1.0, hist=false,
+    # SummationByParts.basispursuit!(A, by, s, rho=1.5, alpha=one(T), hist=false,
     #                                abstol=1e-6, reltol=1e-6)
-    # fill!(P, 0.0)
+    # fill!(P, zero(T))
     # idx = sortperm(abs(s), rev=true)
     # for i = 1:rankA
-    #   P[idx[i],i] = 1.0
+    #   P[idx[i],i] = one(T)
     # end
     # AP = A*P
     # y = P*(AP\by)
@@ -932,12 +1102,12 @@ function buildsparseoperators(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int) where 
     z = zeros(size(A,2))
     SummationByParts.calcSparseSolution!(A, bz, z)
     
-    # SummationByParts.basispursuit!(A, bz, s, rho=1.5, alpha=1.0, hist=false,
+    # SummationByParts.basispursuit!(A, bz, s, rho=1.5, alpha=one(T), hist=false,
     #                                abstol=1e-6, reltol=1e-6)
-    # fill!(P, 0.0)
+    # fill!(P, zero(T))
     # idx = sortperm(abs(s), rev=true)
     # for i = 1:rankA
-    #   P[idx[i],i] = 1.0
+    #   P[idx[i],i] = one(T)
     # end
     # AP = A*P
       # z = P*(AP\bz)
@@ -952,7 +1122,7 @@ function buildsparseoperators(cub::TetSymCub{T}, vtx::Array{T,2}, d::Int) where 
   println(norm(A*y - by))
   println(norm(A*z - bz))
   
-  #@assert( norm(A*x - bx) < 1e-12)
+  #@assert( norm(A*x - bx) < T(1e-12) )
   #@assert( norm(A*y - by) < 1e-12)
   #@assert( norm(A*z - bz) < 1e-12)
 
@@ -993,20 +1163,20 @@ operators.
 
 """
 function buildMinConditionOperators(cub::LineSymCub{T}, vtx::Array{T,2},
-                                       d::Int; tol::Float64=1e-13,
+                                       d::Int; tol::T=T(1e-13),
                                        vertices::Bool=true,
                                        opthist::Bool=false) where {T}
   w = SymCubatures.calcweights(cub)
   Q = zeros(T, (cub.numnodes,cub.numnodes,1))
   E = zeros(T, (cub.numnodes,cub.numnodes))
   idx = SymCubatures.getfacevertexindices(cub)
-  Q[idx[1],idx[1],1] = -1.0
-  Q[idx[2],idx[2],1] =  1.0
-  scale!(Q, 0.5)
+  Q[idx[1],idx[1],1] = -one(T)
+  Q[idx[2],idx[2],1] =  one(T)
+  scale!(Q, T(0.5))
   A, bx = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
-  Ainv = pinv(A)
+  Ainv = _pinv_or_reg(A)
   Znull = nullspace(A)
-  rho = 5.0 # <-- the KS penalty paramter
+  rho = T(5) # <-- the KS penalty paramter
   # find the minimum norm solution (a particular solution)
   xperp = Ainv*bx
   # define the objective and its gradient
@@ -1020,14 +1190,14 @@ function buildMinConditionOperators(cub::LineSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
                            BFGS(linesearch = BackTracking(order=3)),
-                           Optim.Options(g_tol = tol, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 1000,
+                           Optim.Options(g_tol = tol, x_abstol = T(1e-60),
+                                         f_reltol = T(1e-60), iterations = 1000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
   xred = Optim.minimizer(results)
   x = xperp + Znull*xred
-  @assert( norm(A*x - bx) < 1e-12)
+  @assert( norm(A*x - bx) < T(1e-12) )
   
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
@@ -1040,7 +1210,7 @@ function buildMinConditionOperators(cub::LineSymCub{T}, vtx::Array{T,2},
 end
 
 function buildMinConditionOperators(cub::TriSymCub{T}, vtx::Array{T,2},
-                                       d::Int; tol::Float64=1e-13,
+                                       d::Int; tol::T=T(1e-13),
                                        vertices::Bool=true,
                                        opthist::Bool=false) where {T}
   w = SymCubatures.calcweights(cub)
@@ -1049,11 +1219,11 @@ function buildMinConditionOperators(cub::TriSymCub{T}, vtx::Array{T,2},
   E = zeros(T, (cub.numnodes,cub.numnodes) )
   SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
-  Q .*= 0.5 #scale!(Q, 0.5)
+  Q .*= T(0.5) #scale!(Q, T(0.5))
   A, bx, by = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
-  Ainv = pinv(A)
+  Ainv = _pinv_or_reg(A)
   Znull = nullspace(A)
-  rho = 5.0 # <-- the KS penalty paramter
+  rho = T(5) # <-- the KS penalty paramter
 
   #--------------------------------------
   # the x-direction operator
@@ -1071,8 +1241,8 @@ function buildMinConditionOperators(cub::TriSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objX, objXGrad!, ones(size(Znull,2)),
                            BFGS(linesearch = BackTracking(order=3)),
-                           Optim.Options(g_tol = 1e-13, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 1000,
+                           Optim.Options(g_tol = 1e-13, x_abstol = T(1e-60),
+                                         f_reltol = T(1e-60), iterations = 1000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
@@ -1082,7 +1252,7 @@ function buildMinConditionOperators(cub::TriSymCub{T}, vtx::Array{T,2},
   # gather slice of objective function
   # N = 201
   # obj_slice = zeros(N)
-  # xred[1] += 1.0
+  # xred[1] += one(T)
   # for i = 1:N
   #   obj_slice[i] = objX(xred)
   #   xred[1] -= 2/(N-1)
@@ -1105,8 +1275,8 @@ function buildMinConditionOperators(cub::TriSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objY, objYGrad!, ones(size(Znull,2)),
                            BFGS(linesearch = BackTracking(order=3)),
-                           Optim.Options(g_tol = 1e-13, x_tol = 1e-60,
-                                         f_tol = 1e-60, iterations = 1000,
+                           Optim.Options(g_tol = 1e-13, x_abstol = T(1e-60),
+                                         f_reltol = T(1e-60), iterations = 1000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
@@ -1114,7 +1284,7 @@ function buildMinConditionOperators(cub::TriSymCub{T}, vtx::Array{T,2},
   y = yperp + Znull*yred
 
   #--------------------------------------
-  @assert( norm(A*x - bx) < 1e-12)
+  @assert( norm(A*x - bx) < T(1e-12) )
   @assert( norm(A*y - by) < 1e-12)
   for row = 2:cub.numnodes
     offset = convert(Int, (row-1)*(row-2)/2)
@@ -1129,7 +1299,7 @@ function buildMinConditionOperators(cub::TriSymCub{T}, vtx::Array{T,2},
 end
 
 function buildMinConditionOperators(cub::TetSymCub{T}, vtx::Array{T,2},
-                                       d::Int; tol::Float64=1e-2,
+                                       d::Int; tol::T=T(1e-2),
                                        vertices::Bool=false,
                                        opthist::Bool=false) where {T}
   w = SymCubatures.calcweights(cub)
@@ -1139,11 +1309,11 @@ function buildMinConditionOperators(cub::TetSymCub{T}, vtx::Array{T,2},
   SummationByParts.boundaryoperator!(face, 1, view(Q,:,:,1))
   SummationByParts.boundaryoperator!(face, 2, view(Q,:,:,2))
   SummationByParts.boundaryoperator!(face, 3, view(Q,:,:,3))
-  Q .*= 0.5 #scale!(Q, 0.5)
+  Q .*= T(0.5) #scale!(Q, T(0.5))
   A, bx, by, bz = SummationByParts.accuracyconstraints(cub, vtx, d, Q)
-  Ainv = pinv(A)
+  Ainv = _pinv_or_reg(A)
   Znull = nullspace(A)
-  rho = 5.0 # <-- the KS penalty paramter
+  rho = T(5) # <-- the KS penalty paramter
 
   #--------------------------------------
   # the x-direction operator
@@ -1161,8 +1331,8 @@ function buildMinConditionOperators(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objX, objXGrad!, randn(size(Znull,2)), 
                            BFGS(linesearch = BackTracking(order=3)),
-                           Optim.Options(g_tol = tol, x_tol = 1e-100,
-                                         f_tol = 1e-100, iterations = 100000,
+                           Optim.Options(g_tol = tol, x_abstol = Cubature.default_tol(T),
+                                         f_reltol = Cubature.default_tol(T), iterations = 100000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   #@assert( Optim.converged(results) )
@@ -1175,7 +1345,7 @@ function buildMinConditionOperators(cub::TetSymCub{T}, vtx::Array{T,2},
   # gather slice of objective function
   # N = 201
   # obj_slice = zeros(N)
-  # xred[1] += 1.0
+  # xred[1] += one(T)
   # for i = 1:N
   #   obj_slice[i] = objX(xred)
   #   xred[1] -= 2/(N-1)
@@ -1198,8 +1368,8 @@ function buildMinConditionOperators(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objY, objYGrad!, randn(size(Znull,2)),
                            BFGS(linesearch = BackTracking(order=3)),
-                           Optim.Options(g_tol = tol, x_tol = 1e-100,
-                                         f_tol = 1e-100, iterations = 100000,
+                           Optim.Options(g_tol = tol, x_abstol = Cubature.default_tol(T),
+                                         f_reltol = Cubature.default_tol(T), iterations = 100000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
@@ -1225,8 +1395,8 @@ function buildMinConditionOperators(cub::TetSymCub{T}, vtx::Array{T,2},
   # find the solution
   results = Optim.optimize(objZ, objZGrad!, randn(size(Znull,2)),
                            BFGS(linesearch = BackTracking(order=3)),
-                           Optim.Options(g_tol = tol, x_tol = 1e-100,
-                                         f_tol = 1e-100, iterations = 100000,
+                           Optim.Options(g_tol = tol, x_abstol = Cubature.default_tol(T),
+                                         f_reltol = Cubature.default_tol(T), iterations = 100000,
                                          store_trace=false, show_trace=opthist))
   # check that the optimization converged and then set solution
   @assert( Optim.converged(results) )
@@ -1237,7 +1407,7 @@ function buildMinConditionOperators(cub::TetSymCub{T}, vtx::Array{T,2},
   #println("spectral radius of z operator = ",spect)
 
   #--------------------------------------
-  @assert( norm(A*x - bx) < 1e-12)
+  @assert( norm(A*x - bx) < T(1e-12) )
   @assert( norm(A*y - by) < 1e-12)
   @assert( norm(A*z - bz) < 1e-12)
 
@@ -1262,7 +1432,7 @@ The node ordering produced by SymCubature is not convenient for mapping local to
 global node indices in the global residual assembly procedure.  This function
 returns a reordering that is more suited for local-to-global mapping.
 
-*Note*: the edge parameters of `cub` are assumed to be less than 0.5.
+*Note*: the edge parameters of `cub` are assumed to be less than T(0.5).
 
 *WARNING*: the `faceperm` array has not been thoroughly tested
 
@@ -1310,7 +1480,7 @@ function getnodepermutation(cub::TriSymCub{T}, d::Int) where {T}
   # respective edge parameters, accounting for symmetry about alpha = 1/2
   edgeparam = cub.params[paramptr+1:paramptr+cub.numedge]
   #for i = 1:cub.numedge
-  #  edgeparam[i] > 0.5 ? edgeparam[i] = 1 - edgeparam[i] : nothing
+  #  edgeparam[i] > T(0.5) ? edgeparam[i] = 1 - edgeparam[i] : nothing
   #end
   # smaller parameters are further from the nodes, so do a reverse sort
   edgeperm = sortperm(edgeparam, rev=true)
@@ -1420,7 +1590,7 @@ function getnodepermutation(cub::TetSymCub{T}, d::Int) where {T}
   # respective edge parameters, accounting for symmetry about alpha = 1/2
   edgeparam = cub.params[paramptr+1:paramptr+cub.numedge]
   # for i = 1:cub.numedge
-  #  edgeparam[i] > 0.5 ? edgeparam[i] = 1.0 - edgeparam[i] : nothing
+  #  edgeparam[i] > T(0.5) ? edgeparam[i] = one(T) - edgeparam[i] : nothing
   # end
   # smaller parameters are further from the nodes, so do a reverse sort
   edgeperm = sortperm(edgeparam, rev=true)
@@ -1510,14 +1680,14 @@ function buildoperators_pocs(cub::TriSymCub{T}, vtx::Array{T,2}, d::Int; vertice
   Q = zeros(T, (cub.numnodes,cub.numnodes,2))
   D = zeros(T, (cub.numnodes,cub.numnodes,2))
 
-  Q[:,:,1] = S[:,:,1]+0.5.*E[:,:,1]
-  D[:,:,1] = diagm(1.0 ./ w) * Q[:,:,1]
+  Q[:,:,1] = S[:,:,1]+T(0.5).*E[:,:,1]
+  D[:,:,1] = diagm(one(T) ./ w) * Q[:,:,1]
   
   # vtxperm = [1; 2; 3]
   # perm = SymCubatures.getpermutation(cub, vtxperm)
   # S[:,:,2]= reshape(S[:,:,1], (cub.numnodes,size(perm,1)))
-  Q[:,:,2] = S[:,:,2]+0.5.*E[:,:,2]
-  D[:,:,2] = diagm(1.0 ./ w) * Q[:,:,2]
+  Q[:,:,2] = S[:,:,2]+T(0.5).*E[:,:,2]
+  D[:,:,2] = diagm(one(T) ./ w) * Q[:,:,2]
 
   # println(norm(D[:,:,1]*V))
   println(norm(D[:,:,1]*V - Vdx))

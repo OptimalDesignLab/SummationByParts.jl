@@ -42,12 +42,15 @@ function deriveTriCubatureOmega(;q::Int=1,
                                 numedge::Int=0, 
                                 numS111::Int=0, 
                                 centroid::Bool=false,
-                                delta1::Float64=1e-2,
-                                delta2::Float64=1e-2,
+                                delta1=1e-2,
+                                delta2=1e-2,
                                 verbose::Bool=false,
                                 xinit_sym_group=[],
                                 xinit=[],
                                 T=Float64)
+
+    delta1 = T(delta1)
+    delta2 = T(delta2)
 
     @assert(vertices==false && midedges==false && numedge==0, "Unsupported type of symmetry group provided.")
 
@@ -72,7 +75,7 @@ function deriveTriCubatureOmega(;q::Int=1,
         end
     end
 
-    tol = 5e-14
+    tol = Cubature.default_tol(T)
     vtx = T[-1 -1; 1 -1; -1 1]
     cub = SymCubatures.TriSymCub{T}(vertices=vertices, 
                                     midedges=midedges, 
@@ -90,13 +93,13 @@ function deriveTriCubatureOmega(;q::Int=1,
 
     # If initial guess is provided, sort them to match the ordering of symmetry groups considered in the main code
     if length(xinit)==numparams
-        x_w = 0.1 .* ones(numweights,1)
+        x_w = T(0.1) .* ones(T, numweights, 1)
         xinit = collect(Iterators.flatten(collect(Iterators.flatten(vcat(xinit, x_w)))))
     end
 
     sym_group = ["vertices", "midedges", "numS21", "numedge", "numS111", "centroid"]
-    param_dict = OrderedDict{String, Vector{Float64}}()
-    weight_dict = OrderedDict{String, Vector{Float64}}()    
+    param_dict = OrderedDict{String, Vector{T}}()
+    weight_dict = OrderedDict{String, Vector{T}}()    
     if xinit != []
         p_loc = [0]
         w_loc = [numparams]
@@ -180,12 +183,15 @@ function deriveTriCubatureGamma(;q::Int=1,
                                 numedge::Int=0, 
                                 numS111::Int=0, 
                                 centroid::Bool=false,
-                                delta1::Float64=1e-2,
-                                delta2::Float64=1e-2,
+                                delta1=1e-2,
+                                delta2=1e-2,
                                 verbose::Bool=false,
                                 xinit_sym_group=[], 
                                 xinit=[],
                                 T=Float64)
+
+    delta1 = T(delta1)
+    delta2 = T(delta2)
 
     if xinit_sym_group==[]
         if vertices==true
@@ -208,7 +214,7 @@ function deriveTriCubatureGamma(;q::Int=1,
         end
     end
 
-    tol = 5e-14
+    tol = Cubature.default_tol(T)
     vtx = T[-1 -1; 1 -1; -1 1]
     cub = SymCubatures.TriSymCub{T}(vertices=vertices, 
                                     midedges=midedges, 
@@ -226,7 +232,7 @@ function deriveTriCubatureGamma(;q::Int=1,
 
     # If initial guess is provided, sort them to match the ordering of symmetry groups considered in the main code
     if length(xinit)==numparams
-        x_w = 0.1 .* ones(numweights,1)
+        x_w = T(0.1) .* ones(T, numweights, 1)
         xinit = collect(Iterators.flatten(collect(Iterators.flatten(vcat(xinit, x_w)))))
     end
     sym_group = ["vertices", "midedges", "numS21", "numedge", "numS111", "centroid"]
@@ -252,8 +258,8 @@ function deriveTriCubatureGamma(;q::Int=1,
             end
         end
 
-        param_dict = OrderedDict{String, Vector{Float64}}()
-        weight_dict = OrderedDict{String, Vector{Float64}}()
+        param_dict = OrderedDict{String, Vector{T}}()
+        weight_dict = OrderedDict{String, Vector{T}}()
         p_cnt = 1
         for i=eachindex(xinit_sym_group)
             if (xinit_sym_group[i] ∉ ["vertices", "midedges", "centroid"])
@@ -320,14 +326,17 @@ function deriveTriCubatureDiagE(;q::Int=1,
                                 numedge::Int=0, 
                                 numS111::Int=0, 
                                 centroid::Bool=false,
-                                delta1::Float64=1e-2,
-                                delta2::Float64=1e-2,
+                                delta1=1e-2,
+                                delta2=1e-2,
                                 verbose::Bool=false,
                                 xinit_sym_group=[], 
                                 xinit=[],
                                 xedge_sym_group=[], 
                                 xedge=[],
                                 T=Float64)
+
+    delta1 = T(delta1)
+    delta2 = T(delta2)
 
     if xinit_sym_group==[]
         if vertices==true
@@ -362,7 +371,7 @@ function deriveTriCubatureDiagE(;q::Int=1,
         end
     end
 
-    tol = 5e-14
+    tol = Cubature.default_tol(T)
     vtx = T[-1 -1; 1 -1; -1 1]
     cub = SymCubatures.TriSymCub{T}(vertices=vertices, 
                                     midedges=midedges, 
@@ -381,15 +390,15 @@ function deriveTriCubatureDiagE(;q::Int=1,
 
     # If initial guess is provided, sort them to match the ordering of symmetry groups considered in the main code
     if length(xinit)==numparams
-        x_w = 0.1 .* ones(numweights,1)
+        x_w = T(0.1) .* ones(T, numweights, 1)
         xinit = collect(Iterators.flatten(collect(Iterators.flatten(vcat(xinit, x_w)))))
     end
     if xinit == []
         xinit = 0.1 .* ones(numparams+numweights, 1)
     end
     sym_group = ["vertices", "midedges", "numS21", "numedge", "numS111", "centroid"]
-    param_dict = OrderedDict{String, Vector{Float64}}()
-    weight_dict = OrderedDict{String, Vector{Float64}}()
+    param_dict = OrderedDict{String, Vector{T}}()
+    weight_dict = OrderedDict{String, Vector{T}}()
     if xinit != []
         p_loc = [0]
         w_loc = [numparams]
@@ -441,7 +450,7 @@ function deriveTriCubatureDiagE(;q::Int=1,
             end
         end
 
-        param_dict_edge = OrderedDict{String, Vector{Float64}}()
+        param_dict_edge = OrderedDict{String, Vector{T}}()
         p_cnt = 1
         for i=eachindex(xedge_sym_group)
             if (xedge_sym_group[i] ∉ ["vertices", "midedges", "centroid"])
@@ -516,12 +525,15 @@ function deriveTetCubatureOmega(;q::Int=1,
                                 facecentroid::Bool=false,
                                 numS1111::Int=0,
                                 centroid::Bool=false,
-                                delta1::Float64=1e-2,
-                                delta2::Float64=1e-2,
+                                delta1=1e-2,
+                                delta2=1e-2,
                                 verbose::Bool=false,
                                 xinit_sym_group=[],
                                 xinit=[],
                                 T=Float64)
+
+    delta1 = T(delta1)
+    delta2 = T(delta2)
 
     @assert(vertices==false && midedges==false && numedge==0, 
             numfaceS21==0 && numfaceS111==0 && facecentroid==false,
@@ -562,7 +574,7 @@ function deriveTetCubatureOmega(;q::Int=1,
             push!(xinit_sym_group,"centroid")
         end
     end
-    tol = 5e-14
+    tol = Cubature.default_tol(T)
     vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
     cub = SymCubatures.TetSymCub{T}(vertices=vertices, 
                                     numS31=numS31,
@@ -585,13 +597,13 @@ function deriveTetCubatureOmega(;q::Int=1,
 
     # If initial guess is provided, sort them to match the ordering of symmetry groups considered in the main code
     if length(xinit)==numparams
-        x_w = 0.1 .* ones(numweights,1)
+        x_w = T(0.1) .* ones(T, numweights, 1)
         xinit = collect(Iterators.flatten(collect(Iterators.flatten(vcat(xinit, x_w)))))
     end
     sym_group = ["vertices", "numS31", "midedges", "numS22", "numfaceS21", "numedge", 
                  "numS211", "numfaceS111", "facecentroid", "numS1111", "centroid"]
-    param_dict = OrderedDict{String, Vector{Float64}}()
-    weight_dict = OrderedDict{String, Vector{Float64}}()
+    param_dict = OrderedDict{String, Vector{T}}()
+    weight_dict = OrderedDict{String, Vector{T}}()
     if xinit != []
         p_loc = [0]
         w_loc = [numparams]
@@ -699,12 +711,15 @@ function deriveTetCubatureGamma(;q::Int=1,
                                 facecentroid::Bool=false,
                                 numS1111::Int=0,
                                 centroid::Bool=false,
-                                delta1::Float64=1e-2,
-                                delta2::Float64=1e-2,
+                                delta1=1e-2,
+                                delta2=1e-2,
                                 verbose::Bool=false,
                                 xinit_sym_group=[],
                                 xinit=[],
                                 T=Float64)
+
+    delta1 = T(delta1)
+    delta2 = T(delta2)
 
     if xinit_sym_group==[]
         if vertices==true
@@ -741,7 +756,7 @@ function deriveTetCubatureGamma(;q::Int=1,
             push!(xinit_sym_group,"centroid")
         end
     end
-    tol = 5e-14
+    tol = Cubature.default_tol(T)
     vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
     cub = SymCubatures.TetSymCub{T}(vertices=vertices, 
                                     numS31=numS31,
@@ -764,13 +779,13 @@ function deriveTetCubatureGamma(;q::Int=1,
 
     # If initial guess is provided, sort them to match the ordering of symmetry groups considered in the main code
     if length(xinit)==numparams
-        x_w = 0.1 .* ones(numweights,1)
+        x_w = T(0.1) .* ones(T, numweights, 1)
         xinit = collect(Iterators.flatten(collect(Iterators.flatten(vcat(xinit, x_w)))))
     end
     sym_group = ["vertices", "numS31", "midedges", "numS22", "numfaceS21", "numedge", 
                  "numS211", "numfaceS111", "facecentroid", "numS1111", "centroid"]
-    param_dict = OrderedDict{String, Vector{Float64}}()
-    weight_dict = OrderedDict{String, Vector{Float64}}()
+    param_dict = OrderedDict{String, Vector{T}}()
+    weight_dict = OrderedDict{String, Vector{T}}()
     if xinit != []
         p_loc = [0]
         w_loc = [numparams]
@@ -880,14 +895,17 @@ function deriveTetCubatureDiagE(;q::Int=1,
                                 facecentroid::Bool=false,
                                 numS1111::Int=0,
                                 centroid::Bool=false,
-                                delta1::Float64=1e-2,
-                                delta2::Float64=1e-2,
+                                delta1=1e-2,
+                                delta2=1e-2,
                                 verbose::Bool=false,
                                 xinit_sym_group=[],
                                 xinit=[],
                                 xedge_sym_group=[],
                                 xedge=[],
                                 T=Float64)
+
+    delta1 = T(delta1)
+    delta2 = T(delta2)
 
     if xinit_sym_group==[]
         if vertices==true
@@ -946,7 +964,7 @@ function deriveTetCubatureDiagE(;q::Int=1,
         end
     end
 
-    tol = 5e-14
+    tol = Cubature.default_tol(T)
     vtx = T[-1 -1 -1; 1 -1 -1; -1 1 -1; -1 -1 1]
     cub = SymCubatures.TetSymCub{T}(vertices=vertices, 
                                     numS31=numS31,
@@ -970,7 +988,7 @@ function deriveTetCubatureDiagE(;q::Int=1,
 
     # If initial guess is provided, sort them to match the ordering of symmetry groups considered in the main code
     if length(xinit)==numparams
-        x_w = 0.1 .* ones(numweights,1)
+        x_w = T(0.1) .* ones(T, numweights, 1)
         xinit = collect(Iterators.flatten(collect(Iterators.flatten(vcat(xinit, x_w)))))
     end
     if xinit == []
@@ -978,8 +996,8 @@ function deriveTetCubatureDiagE(;q::Int=1,
     end
     sym_group = ["vertices", "numS31", "midedges", "numS22", "numfaceS21", "numedge", 
                  "numS211", "numfaceS111", "facecentroid", "numS1111", "centroid"]
-    param_dict = OrderedDict{String, Vector{Float64}}()
-    weight_dict = OrderedDict{String, Vector{Float64}}()
+    param_dict = OrderedDict{String, Vector{T}}()
+    weight_dict = OrderedDict{String, Vector{T}}()
     if xinit != []
         p_loc = [0]
         w_loc = [numparams]
@@ -1049,7 +1067,7 @@ function deriveTetCubatureDiagE(;q::Int=1,
             end
         end
 
-        param_dict_edge = OrderedDict{String, Vector{Float64}}()
+        param_dict_edge = OrderedDict{String, Vector{T}}()
         p_cnt = 1
         for i=eachindex(xedge_sym_group)
             if (xedge_sym_group[i] ∉ ["vertices", "midedges", "facecentroid","centroid"])

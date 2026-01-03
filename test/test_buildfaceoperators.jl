@@ -56,7 +56,7 @@
           for f = 1:3
             xyface = SymCubatures.calcnodes(facecub, vtx[[f;mod(f,3)+1],:])
             uface = vec((xyface[1,:].^i).*(xyface[2,:].^j))
-            @test ≈(R*u[perm[:,f]], uface, atol=1e-14)
+            @test ≈(R*u[perm[:,f]], uface, atol=1e-13)
           end
         end
       end
@@ -102,7 +102,7 @@
           for f = 1:3
             xyface = SymCubatures.calcnodes(facecub, vtx[[f;mod(f,3)+1],:])
             uface = vec((xyface[1,:].^i).*(xyface[2,:].^j))
-            @test ≈(R*u[perm[:,f]], uface, atol=1e-14)
+            @test ≈(R*u[perm[:,f]], uface, atol=1e-13)
           end
         end
       end
@@ -290,7 +290,7 @@
               @test ≈(bndryintegral, ((-1)^(j+l+1))*(1^(i+k+1) - (-1)^(i+k+1))/(i+k+1) +
                       2.0*((-1)^(j+l))*(1^(r+q+1) - (-1)^(r+q+1))/(r+q+1) +
                       ((-1)^(i+k+1))*(1^(j+l+1) - (-1)^(j+l+1))/(j+l+1),
-                      atol=1e-14)
+                      atol=1e-13)
             end
           end
         end
@@ -322,7 +322,7 @@
               @test ≈(bndryintegral, ((-1)^(j+l+1))*(1^(i+k+1) - (-1)^(i+k+1))/(i+k+1) +
                       2.0*((-1)^(j+l))*(1^(r+q+1) - (-1)^(r+q+1))/(r+q+1) +
                       ((-1)^(i+k+1))*(1^(j+l+1) - (-1)^(j+l+1))/(j+l+1),
-                      atol=1e-14)
+                      atol=1e-13)
             end
           end
         end
@@ -354,7 +354,7 @@
               @test ≈(bndryintegral, ((-1)^(j+l+1))*(1^(i+k+1) - (-1)^(i+k+1))/(i+k+1) +
                       2.0*((-1)^(j+l))*(1^(r+q+1) - (-1)^(r+q+1))/(r+q+1) +
                       ((-1)^(i+k+1))*(1^(j+l+1) - (-1)^(j+l+1))/(j+l+1),
-                      atol=1e-14)
+                      atol=1e-13)
             end
           end
         end

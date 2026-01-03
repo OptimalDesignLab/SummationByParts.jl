@@ -76,6 +76,7 @@ export interiorFaceIntegrate_jac!
 export edgestabilize!, permuteinterface!
 
 export minTriCubatureDiagE, minTriCubatureOmega
+export _supports_svd, _pinv_reg, _pinv_or_reg
 
 """
 ### SBP.UnaryFunctor
@@ -112,6 +113,7 @@ function (update::Subtract)(scalar)
 end
 
 include("sbp_types.jl") #<--- holds all the abstract and concrete types
+include("utils.jl") # <--- miscellaneous functions
 include("outerconstructors.jl") #<--- outer constructors and factories
 include("buildfaceoperators.jl") #<--- functions related to building face ops
 include("buildoperators.jl") #<--- functions related to building SBP operators
@@ -133,7 +135,6 @@ include("faceintegrate.jl") #<--- functions for integration over faces
 include("faceintegrate_rev.jl") #<--- reverse mode of faceintegrate.jl
 include("faceintegrate_jac.jl") #<--- Jacobians for combined face operations
 include("edgestabilize.jl") #<--- functions related to edge stabilization
-include("utils.jl") # <--- miscellaneous functions
 include("derivecubature.jl") # <--- functions to derive cubature rules
 
 end # module

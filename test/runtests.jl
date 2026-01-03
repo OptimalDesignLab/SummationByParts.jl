@@ -32,3 +32,4 @@ include("test_buildoperators.jl") # need to check last test
 include("test_directionaldifferentiate.jl")
 include("test_edgestabilize.jl")
 
+println("All tests are completed.")

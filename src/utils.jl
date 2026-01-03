@@ -319,6 +319,34 @@ function permuteface!(permvec::AbstractArray{Ti, 1},
   return nothing
 end
 
+@inline _supports_svd(::Type{T}) where {T} = T <: Union{Float32, Float64, ComplexF32, ComplexF64}
+
+function _pinv_reg(A::AbstractMatrix{T}) where {T}
+  m, n = size(A)
+  lambda = T(eps(real(one(T))))
+  if m >= n
+    I_n = Matrix{T}(I, n, n)
+    return (A' * A + lambda * I_n) \ A'
+  end
+  I_m = Matrix{T}(I, m, m)
+  return A' * ((A * A' + lambda * I_m) \ I_m)
+end
+
+@inline function _pinv_or_reg(A::AbstractMatrix{T}) where {T}
+  _supports_svd(T) ? pinv(A) : _pinv_reg(A)
+end
+
+function _rank_or_qr(A::AbstractMatrix{T}) where {T}
+  if _supports_svd(T)
+    return rank(A)
+  end
+  F = qr(A, ColumnNorm())
+  diagR = diag(F.R)
+  maxdiag = isempty(diagR) ? zero(T) : maximum(abs.(diagR))
+  tol = T(eps(real(one(T)))) * T(max(size(A)...)) * maxdiag
+  return count(d -> abs(d) > tol, diagR)
+end
+
 """
 ### SummationByParts.basispursuit!
 
@@ -347,15 +375,15 @@ for our purposes, it is best used as a means of identifying the sparsity
 pattern.
 
 """
-function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
-                       x::AbstractVector{Float64}; rho::Float64=1.0,
-                       alpha::Float64=1.0, hist::Bool=false,
-                       abstol::Float64=1e-4, reltol::Float64=1e-2)
+function basispursuit!(A::AbstractArray{T,2}, b::AbstractVector{T},
+                       x::AbstractVector{T}; rho::T=one(T),
+                       alpha::T=one(T), hist::Bool=false,
+                       abstol::T=T(1e-4), reltol::T=T(1e-2)) where {T}
   @assert( size(A,1) == size(b,1) )
   @assert( size(A,2) == size(x,1) )
-  @assert( rho > 0.0 )
-  @assert( alpha >= 1.0 && alpha <= 1.8 )
-  @assert( abstol > 0.0 && reltol > 0.0 )
+  @assert( rho > zero(T) )
+  @assert( alpha >= one(T) && alpha <= T(1.8) )
+  @assert( abstol > zero(T) && reltol > zero(T) )
   function objective(x)
     return norm(x,1)    
   end
@@ -365,9 +393,9 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
 
   maxiter = 10000
   (m, n) = size(A)
-  fill!(x, 0.0)
-  z = zeros(size(x))
-  u = zeros(size(x))
+  fill!(x, zero(T))
+  z = zeros(T, size(x))
+  u = zeros(T, size(x))
   
   if hist
     @printf("%10s %10s %10s %10s %10s %10s\n", "iter", "r norm", "eps pri",
@@ -378,7 +406,7 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
   #AAt = A*A'
   #P = eye(n,n) - A'*(AAt\A) # eye(n) - V*V' where V are the right sing. vecs
   #q = A'*(AAt \ b)
-  Ainv = pinv(A)
+  Ainv = _pinv_or_reg(A)
   P = I(n) - Ainv*A
   q = Ainv*b
 
@@ -388,8 +416,8 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
 
     # z-update
     zold = z
-    x_hat = alpha*x + (1 - alpha)*zold
-    z = shrinkage(x_hat + u, 1/rho)
+    x_hat = alpha*x + (one(T) - alpha)*zold
+    z = shrinkage(x_hat + u, one(T)/rho)
 
     u += (x_hat - z)
     
@@ -398,8 +426,8 @@ function basispursuit!(A::AbstractArray{Float64,2}, b::AbstractVector{Float64},
     r_norm = norm(x - z)
     s_norm = norm(-rho*(z - zold))
     
-    eps_pri = sqrt(n)*abstol + reltol*max(norm(x), norm(-z))
-    eps_dual = sqrt(n)*abstol + reltol*norm(rho*u)
+    eps_pri = sqrt(T(n))*abstol + reltol*max(norm(x), norm(-z))
+    eps_dual = sqrt(T(n))*abstol + reltol*norm(rho*u)
 
     if hist
       @printf("%10d %10f %10f %10f %10f %10f\n", k, r_norm, eps_pri, s_norm, eps_dual,
@@ -428,27 +456,27 @@ from `A`, from which an accurate solution is found.
 * `x`: sparse solution of the problem
 
 """
-function calcSparseSolution!(A::AbstractArray{Float64,2},
-                             b::AbstractVector{Float64},
-                             x::AbstractVector{Float64})
+function calcSparseSolution!(A::AbstractArray{T,2},
+                             b::AbstractVector{T},
+                             x::AbstractVector{T}) where {T}
   @assert( size(A,1) == size(b,1) )
   @assert( size(A,2) == size(x,1) )
   # find an approximate solution
-  basispursuit!(A, b, x, rho=1.5, alpha=1.0, hist=false, abstol=1e-6,
-                reltol=1e-6)
+  basispursuit!(A, b, x, rho=T(1.5), alpha=one(T), hist=false, abstol=T(1e-6),
+                reltol=T(1e-6))
   # use the approximate solution to identify the non-zero entries
-  rankA = rank(A)
-  P = zeros(size(A,2),rankA)
+  rankA = _rank_or_qr(A)
+  P = zeros(T, size(A,2), rankA)
   idx = sortperm(abs.(x), rev=true)
   for i = 1:rankA
-    P[idx[i],i] = 1.0
+    P[idx[i],i] = one(T)
   end
   # find the reduced (full-rank) matrix and invert
   AP = A*P
   #println("size(AP) = ",size(AP))
   #println("rank(AP) = ",rank(AP))
   #x[:] = P*(AP\b)
-  x[:] = P*(pinv(AP)*b)
+  x[:] = P*(_pinv_or_reg(AP)*b)
 end
 
 
@@ -484,7 +512,7 @@ function absMatrix!(A::AbstractArray{T,2}, Aabs::AbstractArray{T,2}) where {T}
   end
 end
 
-function compareEigs(x::Float64, y::Float64)
+function compareEigs(x::T, y::T) where {T<:Real}
   if isless(x,y)
     return true
   else
@@ -492,8 +520,8 @@ function compareEigs(x::Float64, y::Float64)
   end
 end
 
-function compareEigs(x::Complex, y::Complex)
-  if abs(abs(x) - abs(y)) < 10*eps(Float64)
+function compareEigs(x::Complex{T}, y::Complex{T}) where {T<:Real}
+  if abs(abs(x) - abs(y)) < T(10)*eps(T)
     # moduli are close, sort by imaginary part
     if imag(x) < imag(y)
       return true
@@ -593,18 +621,19 @@ the objective is differentiable.
 * `obj`: approximate condition number of `A` as defined above.
 
 """
-function conditionObj(xred::AbstractVector{Float64}, p,
-                      xperp::AbstractVector{Float64},
-                      Znull::AbstractArray{Float64,2},
-                      E::AbstractArray{Float64,2})
+function conditionObj(xred::AbstractVector{T}, p,
+                      xperp::AbstractVector{T},
+                      Znull::AbstractArray{T,2},
+                      E::AbstractArray{T,2}) where {T}
   @assert( length(xperp) == size(Znull,1) )
   @assert( length(xred) == size(Znull,2) )
   @assert( size(E,1) == size(E,2) )
-  @assert( p >= 1.0 )
+  @assert( p >= one(T) )
+  pT = T(p)
   n = size(E,1)
   x = Znull*xred + xperp
   # insert into (S + 1/2 |E|)
-  A = zeros(n,n)
+  A = zeros(T, n, n)
   for i = 1:n
     for j = 1:n
       A[i,j] = E[i,j]
@@ -620,13 +649,13 @@ function conditionObj(xred::AbstractVector{Float64}, p,
 
   # compute the SVD of A
   U, S, V = svd(A)
-  maxKS = 0.0
-  minKS = 0.0
+  maxKS = zero(T)
+  minKS = zero(T)
   for i = 1:n
-    maxKS += exp(p*(S[i] - S[1]))
-    minKS += exp(p*(1/S[i] - 1/S[end]))
+    maxKS += exp(pT*(S[i] - S[1]))
+    minKS += exp(pT*(1/S[i] - 1/S[end]))
   end
-  return (S[1] + (1/p)*log(maxKS/n))*(1/S[end] + (1/p)*log(minKS/n))
+  return (S[1] + (one(T)/pT)*log(maxKS/T(n)))*(1/S[end] + (one(T)/pT)*log(minKS/T(n)))
 end
 
 """
@@ -648,21 +677,22 @@ and returns it in the array `g`.
 * `g`: gradient of the objective `conditionObj` with respect to `xred`
 
 """
-function conditionObjGrad!(xred::AbstractVector{Float64}, p,
-                           xperp::AbstractVector{Float64},
-                           Znull::AbstractArray{Float64,2},
-                           E::AbstractArray{Float64,2},
-                           g::AbstractVector{Float64})
+function conditionObjGrad!(xred::AbstractVector{T}, p,
+                           xperp::AbstractVector{T},
+                           Znull::AbstractArray{T,2},
+                           E::AbstractArray{T,2},
+                           g::AbstractVector{T}) where {T}
   @assert( length(xperp) == size(Znull,1) )
   @assert( length(xred) == size(Znull,2) )
   @assert( size(E,1) == size(E,2) )
   @assert( length(g) == length(xred) )
-  @assert( p >= 1.0 )
+  @assert( p >= one(T) )
+  pT = T(p)
   n = size(E,1)
-  x = zeros(size(xperp))
+  x = zeros(T, size(xperp))
   x = Znull*xred + xperp
   # insert into (S + 1/2 |E|)
-  A = zeros(n,n)
+  A = zeros(T, n, n)
   for i = 1:n
     for j = 1:n
       A[i,j] = E[i,j]
@@ -678,31 +708,31 @@ function conditionObjGrad!(xred::AbstractVector{Float64}, p,
 
   # partial forward sweep; get the SVD of A and some intermediate vars
   U, S, V = svd(A)
-  maxKS = 0.0
-  minKS = 0.0
+  maxKS = zero(T)
+  minKS = zero(T)
   for i = 1:n
-    maxKS += exp(p*(S[i] - S[1]))
-    minKS += exp(p*(1/S[i] - 1/S[end]))
+    maxKS += exp(pT*(S[i] - S[1]))
+    minKS += exp(pT*(1/S[i] - 1/S[end]))
   end
 
   # start reverse sweep
-  S_bar = zeros(size(S))
-  #return (S[1] + (1/p)*log(maxKS/n))*(1/S[end] + (1/p)*log(minKS/n))
-  maxKS_bar = (1/S[end] + (1/p)*log(minKS/n))/(p*maxKS)
-  minKS_bar = (S[1] + (1/p)*log(maxKS/n))/(p*minKS)
-  S_bar[1] = (1/S[end] + (1/p)*log(minKS/n))
-  S_bar[end] = -(S[1] + (1/p)*log(maxKS/n))/(S[end]^2)
+  S_bar = zeros(T, size(S))
+  #return (S[1] + (one(T)/pT)*log(maxKS/T(n)))*(1/S[end] + (one(T)/pT)*log(minKS/T(n)))
+  maxKS_bar = (1/S[end] + (one(T)/pT)*log(minKS/T(n)))/(pT*maxKS)
+  minKS_bar = (S[1] + (one(T)/pT)*log(maxKS/T(n)))/(pT*minKS)
+  S_bar[1] = (1/S[end] + (one(T)/pT)*log(minKS/T(n)))
+  S_bar[end] = -(S[1] + (one(T)/pT)*log(maxKS/T(n)))/(S[end]^2)
   for i = 1:n
-    # maxKS += exp(p*(S[i] - S[1]))
-    S_bar[i] += maxKS_bar*exp(p*(S[i] - S[1]))*p
-    S_bar[1] -= maxKS_bar*exp(p*(S[i] - S[1]))*p
-    # minKS += exp(p*(1/S[i] - 1/S[end]))
-    S_bar[i] -= minKS_bar*exp(p*(1/S[i] - 1/S[end]))*p/(S[i]^2)
-    S_bar[end] += minKS_bar*exp(p*(1/S[i] - 1/S[end]))*p/(S[end]^2)
+    # maxKS += exp(pT*(S[i] - S[1]))
+    S_bar[i] += maxKS_bar*exp(pT*(S[i] - S[1]))*pT
+    S_bar[1] -= maxKS_bar*exp(pT*(S[i] - S[1]))*pT
+    # minKS += exp(pT*(1/S[i] - 1/S[end]))
+    S_bar[i] -= minKS_bar*exp(pT*(1/S[i] - 1/S[end]))*pT/(S[i]^2)
+    S_bar[end] += minKS_bar*exp(pT*(1/S[i] - 1/S[end]))*pT/(S[end]^2)
   end
   A_bar = U*diagm(S_bar)*V'
 
-  x_bar = zeros(size(x))
+  x_bar = zeros(T, size(x))
   for i = 2:n
     offset = convert(Int, (i-1)*(i-2)/2)
     for j = 1:i-1
@@ -743,12 +773,12 @@ end
 #   @assert( length(xred) == size(Znull,2) )
 #   @assert( size(E,1) == size(E,2) )
 #   @assert( size(Hess,1) == size(Hess,2) == length(xred) )
-#   @assert( p >= 1.0 )
+#   @assert( p >= one(T) )
 #   n = size(E,1)
 #   x = zeros(xperp)
 #   x = Znull*xred + xperp
 #   insert into (S + 1/2 |E|)
-#   A = zeros(n,n)
+#   A = zeros(T, n, n)
 #   for i = 1:n
 #     for j = 1:n
 #       A[i,j] = abs(E[i,j])
@@ -764,11 +794,11 @@ end
 
 #   partial forward sweep; get the SVD of A and some intermediate vars
 #   U, S, V = svd(A)
-#   maxKS = 0.0
-#   minKS = 0.0
+#   maxKS = zero(T)
+#   minKS = zero(T)
 #   for i = 1:n
-#     maxKS += exp(p*(S[i] - S[1]))
-#     minKS += exp(p*(1/S[i] - 1/S[end]))
+#     maxKS += exp(pT*(S[i] - S[1]))
+#     minKS += exp(pT*(1/S[i] - 1/S[end]))
 #   end
 
 #   get the sensitivity of the singular values to the matrix A
@@ -779,26 +809,26 @@ end
 
 #   get the Hessian of the objective w.r.t. the singular values
 #   dSbar = zeros(n,n)
-#   maxKS_bar = (1/S[end] + (1/p)*log(minKS/n))/(p*maxKS)
-#   minKS_bar = (S[1] + (1/p)*log(maxKS/n))/(p*minKS)
-#   S_bar[1] = (1/S[end] + (1/p)*log(minKS/n))
-#   S_bar[end] = -(S[1] + (1/p)*log(maxKS/n))/(S[end]^2)
+#   maxKS_bar = (1/S[end] + (one(T)/pT)*log(minKS/T(n)))/(pT*maxKS)
+#   minKS_bar = (S[1] + (one(T)/pT)*log(maxKS/T(n)))/(pT*minKS)
+#   S_bar[1] = (1/S[end] + (one(T)/pT)*log(minKS/T(n)))
+#   S_bar[end] = -(S[1] + (one(T)/pT)*log(maxKS/T(n)))/(S[end]^2)
   
   
 #   start reverse sweep
 #   S_bar = zeros(S)
-#   return (S[1] + (1/p)*log(maxKS/n))*(1/S[end] + (1/p)*log(minKS/n))
-#   maxKS_bar = (1/S[end] + (1/p)*log(minKS/n))/(p*maxKS)
-#   minKS_bar = (S[1] + (1/p)*log(maxKS/n))/(p*minKS)
-#   S_bar[1] = (1/S[end] + (1/p)*log(minKS/n))
-#   S_bar[end] = -(S[1] + (1/p)*log(maxKS/n))/(S[end]^2)
+#   return (S[1] + (one(T)/pT)*log(maxKS/T(n)))*(1/S[end] + (one(T)/pT)*log(minKS/T(n)))
+#   maxKS_bar = (1/S[end] + (one(T)/pT)*log(minKS/T(n)))/(pT*maxKS)
+#   minKS_bar = (S[1] + (one(T)/pT)*log(maxKS/T(n)))/(pT*minKS)
+#   S_bar[1] = (1/S[end] + (one(T)/pT)*log(minKS/T(n)))
+#   S_bar[end] = -(S[1] + (one(T)/pT)*log(maxKS/T(n)))/(S[end]^2)
 #   for i = 1:n
-#     maxKS += exp(p*(S[i] - S[1]))
-#     S_bar[i] += maxKS_bar*exp(p*(S[i] - S[1]))*p
-#     S_bar[1] -= maxKS_bar*exp(p*(S[i] - S[1]))*p
-#     minKS += exp(p*(1/S[i] - 1/S[end]))
-#     S_bar[i] -= minKS_bar*exp(p*(1/S[i] - 1/S[end]))*p/(S[i]^2)
-#     S_bar[end] += minKS_bar*exp(p*(1/S[i] - 1/S[end]))*p/(S[end]^2)
+#     maxKS += exp(pT*(S[i] - S[1]))
+#     S_bar[i] += maxKS_bar*exp(pT*(S[i] - S[1]))*pT
+#     S_bar[1] -= maxKS_bar*exp(pT*(S[i] - S[1]))*pT
+#     minKS += exp(pT*(1/S[i] - 1/S[end]))
+#     S_bar[i] -= minKS_bar*exp(pT*(1/S[i] - 1/S[end]))*pT/(S[i]^2)
+#     S_bar[end] += minKS_bar*exp(pT*(1/S[i] - 1/S[end]))*pT/(S[end]^2)
 #   end
 #   A_bar = U*diagm(S_bar)*V'
 
@@ -838,11 +868,11 @@ discretization of linear advection.
 * `obj`: the 2p-norm of the moduli of the eigenvalues of `A` as defined above.
 
 """
-function eigenvalueObj(xred::AbstractVector{Float64}, p::Int,
-                       xperp::AbstractVector{Float64},
-                       Znull::AbstractArray{Float64,2},
-                       w::AbstractVector{Float64},
-                       E::AbstractArray{Float64,2})
+function eigenvalueObj(xred::AbstractVector{T}, p::Int,
+                       xperp::AbstractVector{T},
+                       Znull::AbstractArray{T,2},
+                       w::AbstractVector{T},
+                       E::AbstractArray{T,2}) where {T}
   @assert( length(xperp) == size(Znull,1) )
   @assert( length(xred) == size(Znull,2) )
   @assert( size(E,1) == size(E,2) == length(w) )
@@ -850,27 +880,27 @@ function eigenvalueObj(xred::AbstractVector{Float64}, p::Int,
   n = size(E,1)
   x = Znull*xred + xperp
   # insert into H^-1(S + 1/2 |E|)
-  A = zeros(ComplexF64, (n,n))
+  A = zeros(Complex{T}, (n,n))
   for i = 1:n
     for j = 1:n
-      A[i,j] = complex(abs(E[i,j]), 0.0)
+      A[i,j] = complex(abs(E[i,j]), zero(T))
     end
   end
   for i = 2:n
     offset = convert(Int, (i-1)*(i-2)/2)
     for j = 1:i-1
-      A[i,j] += complex(x[offset+j], 0.0)
-      A[j,i] -= complex(x[offset+j], 0.0)
+      A[i,j] += complex(x[offset+j], zero(T))
+      A[j,i] -= complex(x[offset+j], zero(T))
     end
   end
   for i = 1:n
-    fac = 1.0/w[i]
+    fac = one(T)/w[i]
     for j = 1:n
       A[i,j] *= fac
     end
   end
   # compute the (sorted) eigenvalues of A, and the objective
-  λ = zeros(ComplexF64, n)
+  λ = zeros(Complex{T}, n)
   calcMatrixEigs!(A, λ)
   return abs(λ[end])
 end
@@ -895,42 +925,42 @@ and returns it in the array `g`.
 * `g`: gradient of the objective `eigenvalueObj` with respect to `xred`
 
 """
-function eigenvalueObjGrad!(xred::AbstractVector{Float64}, p::Int,
-                            xperp::AbstractVector{Float64},
-                            Znull::AbstractArray{Float64,2},
-                            w::AbstractVector{Float64},
-                            E::AbstractArray{Float64,2},
-                            g::AbstractVector{Float64})
+function eigenvalueObjGrad!(xred::AbstractVector{T}, p::Int,
+                            xperp::AbstractVector{T},
+                            Znull::AbstractArray{T,2},
+                            w::AbstractVector{T},
+                            E::AbstractArray{T,2},
+                            g::AbstractVector{T}) where {T}
   @assert( length(xperp) == size(Znull,1) )
   @assert( length(xred) == size(Znull,2) )
   @assert( size(E,1) == size(E,2) == length(w) )
   @assert( length(g) == length(xred) )
   @assert( p >= 1 )
   n = size(E,1)
-  x = zeros(size(xperp))
+  x = zeros(T, size(xperp))
   x = Znull*xred + xperp
   # insert into H^-1(S + 1/2 |E|)
-  A = zeros(ComplexF64, (n,n))
+  A = zeros(Complex{T}, (n,n))
   for i = 1:n
     for j = 1:n
-      A[i,j] = complex(abs(E[i,j]), 0.0)
+      A[i,j] = complex(abs(E[i,j]), zero(T))
     end
   end
   for i = 2:n
     offset = convert(Int, (i-1)*(i-2)/2)
     for j = 1:i-1
-      A[i,j] += complex(x[offset+j], 0.0)
-      A[j,i] -= complex(x[offset+j], 0.0)
+      A[i,j] += complex(x[offset+j], zero(T))
+      A[j,i] -= complex(x[offset+j], zero(T))
     end
   end
   for i = 1:n
-    fac = 1.0/w[i]
+    fac = one(T)/w[i]
     for j = 1:n
       A[i,j] *= fac
     end
   end
   # compute the (sorted) eigenvalues of A and the objective
-  λ = zeros(ComplexF64, n)
+  λ = zeros(Complex{T}, n)
   calcMatrixEigs!(A, λ)
 
   λ_bar = zeros(eltype(λ),size(λ))
@@ -938,13 +968,13 @@ function eigenvalueObjGrad!(xred::AbstractVector{Float64}, p::Int,
   A_bar = zeros(eltype(A), size(A))
   calcMatrixEigs_rev!(A, λ, λ_bar, A_bar)
   for i = 1:n
-    fac = 1.0/w[i]
+    fac = one(T)/w[i]
     for j = 1:n
       A_bar[i,j] *= fac
     end
   end
   # place A_bar into x_bar
-  x_bar = zeros(size(x))
+  x_bar = zeros(T, size(x))
   for i = 2:n
     offset = convert(Int, (i-1)*(i-2)/2)
     for j = 1:i-1
@@ -982,7 +1012,7 @@ function truncErr(d::Int, x::Array{T}, w::Array{T}, Q::Array{T}) where T
 
   D = zeros(size(Q))
   for i=1:dim
-    D[:,:,i] = diagm(1 ./w)*Q[:,:,i]
+    D[:,:,i] = diagm(one(T) ./ w)*Q[:,:,i]
   end
 
   V = zeros(T, (numnodes, n))
@@ -998,7 +1028,7 @@ function truncErr(d::Int, x::Array{T}, w::Array{T}, Q::Array{T}) where T
     Vd = [Vdx, Vdy, Vdz]
   end
 
-  trunc_err = 0.0
+  trunc_err = zero(T)
   for j = 1:dim
     err = D[:,:,j]*V - Vd[j]
     for i = 1:n
@@ -1040,8 +1070,8 @@ function computeConditionNumber(p::Int, opertype::Symbol, vtx::Array{T,2}; verti
   SummationByParts.boundaryoperator!(face, 2, view(E,:,:,2))
 
   S = zeros(T, (oper.cub.numnodes,oper.cub.numnodes,2) )
-  S[:,:,1] = oper.Q[:,:,1] - 0.5 .* E[:,:,1]
-  S[:,:,2] = oper.Q[:,:,2] - 0.5 .* E[:,:,2]
+  S[:,:,1] = oper.Q[:,:,1] - T(0.5) .* E[:,:,1]
+  S[:,:,2] = oper.Q[:,:,2] - T(0.5) .* E[:,:,2]
 
   A = zeros(T, oper.cub.numnodes,oper.cub.numnodes)
   for i = 1:2
@@ -1069,15 +1099,15 @@ to construct a sparse skew-symmetric S matrix.
 * `S`: the sparsified skew-symmetric matrix
 """
 function pocs_sparse_s(S::Array{T},H::Array{T},E::Array{T},V::Array{T},Vdx::Array{T}) where T
-  tol = 5e-14
-  err1 = 1.0
-  err2 = 1.0
+  tol = T(5e-14)
+  err1 = one(T)
+  err2 = one(T)
   nnodes = size(S[:,:,1],1)
   zz = 3
 
   while ((err1 > tol) || (err2 > tol))
-      S[:,:,1] = 0.5.*(S[:,:,1]-S[:,:,1]')
-      S[:,:,1] = S[:,:,1]+(H*Vdx - 0.5.* E[:,:,1]*V - S[:,:,1]*V) * pinv(V)
+      S[:,:,1] = T(0.5).*(S[:,:,1]-S[:,:,1]')
+      S[:,:,1] = S[:,:,1]+(H*Vdx - T(0.5).* E[:,:,1]*V - S[:,:,1]*V) * pinv(V)
       # for i=1:nnodes
       #     for j=1:nnodes
       #         if abs(S[i,j]) < 1.9e-4
@@ -1099,7 +1129,7 @@ function pocs_sparse_s(S::Array{T},H::Array{T},E::Array{T},V::Array{T},Vdx::Arra
       end
       
       err1 = norm(S[:,:,1] + Matrix(S[:,:,1]'))
-      err2 = norm(S[:,:,1]*V - H*Vdx + 0.5 .* E[:,:,1]*V)
+      err2 = norm(S[:,:,1]*V - H*Vdx + T(0.5) .* E[:,:,1]*V)
       println("err1: ", err1, "   ", "err2: ", err2)
   end
 
@@ -1183,7 +1213,7 @@ function checkInteriorNodeLocaton(cub::TriSymCub{T}; vtx::Array{T,2}=T[-1 -1; 1 
   # set all nodes with 3-symmetries
   # set S21 orbit nodes
   for i = 1:cub.numS21
-    alpha = 0.5*cub.params[paramptr+1]
+    alpha = T(0.5)*cub.params[paramptr+1]
     A = T[alpha alpha (1-2*alpha);
           (1-2*alpha) alpha alpha;
           alpha (1-2*alpha) alpha]
@@ -1198,8 +1228,8 @@ function checkInteriorNodeLocaton(cub::TriSymCub{T}; vtx::Array{T,2}=T[-1 -1; 1 
   end
   # set S111 orbit nodes
   for i = 1:cub.numS111
-    alpha = 0.5*cub.params[paramptr+1]
-    beta = 0.5*cub.params[paramptr+2]
+    alpha = T(0.5)*cub.params[paramptr+1]
+    beta = T(0.5)*cub.params[paramptr+2]
     A = T[alpha beta (1-alpha-beta);
           beta alpha (1-alpha-beta);
           (1-alpha-beta) alpha beta;
@@ -1217,8 +1247,8 @@ function checkInteriorNodeLocaton(cub::TriSymCub{T}; vtx::Array{T,2}=T[-1 -1; 1 
     ptr += 1
   end
 
-  tol = 1e-10 
-  if (any(a -> a <= -1.0+tol, x) || any(a ->a >=tol, x[1,:]+x[2,:]))
+  tol = T(1e-10) 
+  if (any(a -> a <= -one(T)+tol, x) || any(a ->a >=tol, x[1,:]+x[2,:]))
     println("minimum x = ", minimum(x))
     println("maximum x+y= ", maximum(x[1,:]+x[2,:]))
     error("Some interior nodes are on the boundary or outside the domain")
@@ -1242,7 +1272,7 @@ function checkInteriorNodeLocaton(cub::TetSymCub{T}; vtx::Array{T,2}= T[-1 -1 -1
   # set all nodes with 4-symmetries
   # set S31 orbit nodes
   for i = 1:cub.numS31
-    alpha = cub.params[paramptr+1]/3
+    alpha = cub.params[paramptr+1]/T(3)
     A = T[alpha alpha alpha (1-3*alpha);
           alpha alpha (1-3*alpha) alpha;
           (1-3*alpha) alpha alpha alpha;
@@ -1254,13 +1284,13 @@ function checkInteriorNodeLocaton(cub::TetSymCub{T}; vtx::Array{T,2}= T[-1 -1 -1
   # set all nodes with 6-symmetries
   # set S22 oribt nodes
   for i = 1:cub.numS22
-    alpha = 0.5*cub.params[paramptr+1]
-    A = T[alpha alpha (0.5-alpha) (0.5-alpha);
-          alpha (0.5-alpha) alpha (0.5-alpha);
-          alpha (0.5-alpha) (0.5-alpha) alpha;
-          (0.5-alpha) alpha alpha (0.5-alpha);
-          (0.5-alpha) alpha (0.5-alpha) alpha;
-          (0.5-alpha) (0.5-alpha) alpha alpha]
+    alpha = T(0.5)*cub.params[paramptr+1]
+    A = T[alpha alpha (T(0.5)-alpha) (T(0.5)-alpha);
+          alpha (T(0.5)-alpha) alpha (T(0.5)-alpha);
+          alpha (T(0.5)-alpha) (T(0.5)-alpha) alpha;
+          (T(0.5)-alpha) alpha alpha (T(0.5)-alpha);
+          (T(0.5)-alpha) alpha (T(0.5)-alpha) alpha;
+          (T(0.5)-alpha) (T(0.5)-alpha) alpha alpha]
     x[:,ptr+1:ptr+6] = (A*vtx)'
     ptr += 6
     paramptr += 1
@@ -1276,8 +1306,8 @@ function checkInteriorNodeLocaton(cub::TetSymCub{T}; vtx::Array{T,2}= T[-1 -1 -1
   end
   # set S211 orbit nodes
   for i = 1:cub.numS211
-    alpha = 0.5*cub.params[paramptr+1]
-    beta = 0.5*cub.params[paramptr+2]
+    alpha = T(0.5)*cub.params[paramptr+1]
+    beta = T(0.5)*cub.params[paramptr+2]
     A = T[alpha alpha (1-2*alpha-beta) beta;
           (1-2*alpha-beta) alpha alpha beta;
           alpha (1-2*alpha-beta) alpha beta]
@@ -1299,9 +1329,9 @@ function checkInteriorNodeLocaton(cub::TetSymCub{T}; vtx::Array{T,2}= T[-1 -1 -1
   # set nodes with 4-symmetries
   # set S1111 orbit nodes
   for i = 1:cub.numS1111
-    alpha = 0.5*cub.params[paramptr+1]
-    beta = 0.5*cub.params[paramptr+2]
-    gamma = 0.5*cub.params[paramptr+3]
+    alpha = T(0.5)*cub.params[paramptr+1]
+    beta = T(0.5)*cub.params[paramptr+2]
+    gamma = T(0.5)*cub.params[paramptr+3]
     A = T[alpha beta (1-alpha-beta-gamma) gamma;
           beta alpha (1-alpha-beta-gamma) gamma;
           (1-alpha-beta-gamma) alpha beta gamma;
@@ -1326,8 +1356,8 @@ function checkInteriorNodeLocaton(cub::TetSymCub{T}; vtx::Array{T,2}= T[-1 -1 -1
   end
   x = x[:,1:ptr]
 
-  tol = 1e-10 
-  if (any(a -> a <= -1.0+tol, x) || any(a ->a >=-1-tol, x[1,:]+x[2,:]+x[3,:]))
+  tol = T(1e-10) 
+  if (any(a -> a <= -one(T)+tol, x) || any(a ->a >=-one(T)-tol, x[1,:]+x[2,:]+x[3,:]))
     println("minimum x = ", minimum(x))
     println("maximum x+y+z= ", maximum(x[1,:]+x[2,:]+x[3,:]))
     println(x)

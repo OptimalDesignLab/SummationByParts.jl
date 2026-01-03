@@ -267,6 +267,8 @@ function (::Type{TriFace{T}})(degree::Int, volcub::TriSymCub{T},
   end
   D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx,
                                                    degree)
+  # perm = Matrix{Int}(perm)
+  # Dperm = Matrix{Int}(Dperm)
   nbrperm = SymCubatures.getneighbourpermutation(facecub)
   wface = SymCubatures.calcweights(facecub)
   stencilsize = size(R,2)
@@ -354,7 +356,7 @@ function (::Type{TetFace{T}})(degree::Int, volcub::TetSymCub{T},
   #dstencilsize = size(D,1)
   #new(degree, facecub.numnodes, stencilsize, dstencilsize, facecub, wface,
   #    normal, R', perm, D, Dperm, nbrperm)
-  TetFace{T}(degree, facecub, facevtx, Matrix(R'), perm)
+  TetFace{T}(degree, facecub, facevtx, Matrix{T}(R'), perm)
 end
 
 """
