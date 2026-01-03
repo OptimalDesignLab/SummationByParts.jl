@@ -38,7 +38,7 @@ function differentiate!(sbp::AbstractSBP{Tsbp}, di::Int,
   @assert( sbp.numnodes == size(flux,1) && sbp.numnodes == size(res,1) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
-  Hinv = 1.0 ./sbp.w
+  Hinv = one(Tsbp) ./sbp.w
   for elem = 1:size(flux,2)
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
@@ -56,7 +56,7 @@ function differentiate!(sbp::AbstractSBP{Tsbp}, di::Int,
   @assert( sbp.numnodes == size(flux,2) && sbp.numnodes == size(res,2) )
   @assert( length(flux) == length(res) )
   @assert( di > 0 && di <= size(sbp.Q,3) )
-  Hinv = 1.0 ./sbp.w
+  Hinv = one(Tsbp) ./sbp.w
   for elem = 1:size(flux,3)
     for i = 1:sbp.numnodes
       for j = 1:sbp.numnodes
@@ -140,7 +140,7 @@ function differentiateElement!(sbp::AbstractSBP{Tsbp}, di::Int,
   if trans # apply transposed D
     Hinvflux = zeros(Tres, (size(flux,1)))
     for i = 1:sbp.numnodes
-      Hinv = 1.0 /sbp.w[i]
+      Hinv = one(Tsbp) / sbp.w[i]
       for field = 1:size(flux,1)
         Hinvflux[field] = Hinv*flux[field,i]
       end
@@ -157,7 +157,7 @@ function differentiateElement!(sbp::AbstractSBP{Tsbp}, di::Int,
           res[field,i] += ±(sbp.Q[i,j,di]*flux[field,j])
         end
       end
-      Hinv = 1.0/sbp.w[i]
+      Hinv = one(Tsbp) / sbp.w[i]
       for field = 1:size(flux,1)
         res[field,i] *= Hinv
       end

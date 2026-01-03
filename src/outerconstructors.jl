@@ -227,7 +227,7 @@ Returns a trival face for line-segment elements.
 
 """
 function getLineSegFace(degree::Int, volcub::LineSymCub{T}, vtx::Array{T,2}) where {T}
-  facecub, facevtx = SummationByParts.Cubature.pointCubature()
+  facecub, facevtx = SummationByParts.Cubature.pointCubature(T)
   R, perm = SummationByParts.buildfacereconstruction(facecub, volcub, vtx, degree)
   D, Dperm = SummationByParts.buildfacederivatives(facecub, volcub, vtx, degree)
   wface = SymCubatures.calcweights(facecub)

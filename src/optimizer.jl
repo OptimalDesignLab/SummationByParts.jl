@@ -113,8 +113,8 @@ function pso(fun::Function, ne::Int, cub::SymCub{T}, q::Int, mask::AbstractArray
                     v[i,j] = v[i,j].*vmax/abs(v[i,j])
                 end
             end
-            if norm(v)<=1e-14
-                v .= v .+1e-3
+            if norm(v) <= T(1e-14)
+                v .= v .+ T(1e-3)
             end 
             # update position
             xp[i,mask] = x[i,mask] + v[i,mask]
@@ -169,7 +169,7 @@ function pso(fun::Function, ne::Int, cub::SymCub{T}, q::Int, mask::AbstractArray
 
             # if no improvement is shown after several purterbations, then use large perturbations
             if mod(cntr_perturb,5) == 0
-                if fgb>1e-1
+                if fgb > T(1e-1)
                     delta2 = 0.5
                 else
                     delta1 = T(0.2)
@@ -180,8 +180,8 @@ function pso(fun::Function, ne::Int, cub::SymCub{T}, q::Int, mask::AbstractArray
             if fgb > one(T)
                 maxval /= abs(fgb)
             end
-            if (fgb>T(1e-1) && maxval<=T(1e-4))
-                x[:,mask] = (1-delta2) .*x[:,mask] + delta2 .*rand(np, ne)[:,mask]
+            if (fgb > T(1e-1) && maxval <= T(1e-4))
+                x[:,mask] = (1-delta2) .* x[:,mask] + delta2 .* rand(T, np, ne)[:,mask]
                 for i = 1:np
                     SymCubatures.setparams!(cub, x[i,:][1:cub.numparams])
                     SymCubatures.setweights!(cub, x[i,:][cub.numparams+1:end])
@@ -193,9 +193,9 @@ function pso(fun::Function, ne::Int, cub::SymCub{T}, q::Int, mask::AbstractArray
                 fgb = minimum(fpb)
                 cntr_perturb += 1
                 nperturb += 1
-            elseif (fgb<=1e-1 && maxval<=1e-8)
+            elseif (fgb <= T(1e-1) && maxval <= T(1e-8))
                 # x[:, mask] += (fgb*(xR-xL)/delta1) .*rand(np,ne)[:,mask]
-                x[:,mask] = (1-delta1) .*x[:,mask] + delta1 .*rand(np, ne)[:,mask]
+                x[:,mask] = (1-delta1) .* x[:,mask] + delta1 .* rand(T, np, ne)[:,mask]
                 for i = 1:np
                     SymCubatures.setparams!(cub, x[i,:][1:cub.numparams])
                     SymCubatures.setweights!(cub, x[i,:][cub.numparams+1:end])
@@ -209,7 +209,7 @@ function pso(fun::Function, ne::Int, cub::SymCub{T}, q::Int, mask::AbstractArray
                 nperturb += 1
             end
             
-            if fgb1<5e-15 && fgb <5e-15
+            if fgb1 < T(5e-15) && fgb < T(5e-15)
                 break
             end
             fgb1 = copy(fgb)
@@ -448,9 +448,9 @@ function levenberg_marquardt(fun::Function, cub::SymCub{T}, q::Int64, mask::Abst
             SymCubatures.setparams!(cub, v[1:cub.numparams])
             SymCubatures.setweights!(cub, v[cub.numparams+1:end])
             F, dF = fun(cub, q, compute_grad=true)
-            nu *= 5.0
+            nu *= T(5)
         else
-            nu /= 5.0
+            nu /= T(5)
             res_old = res
         end
         alpha=one(T)
